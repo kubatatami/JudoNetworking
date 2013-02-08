@@ -1,16 +1,14 @@
 package com.implix.jsonrpc;
 
-import com.google.gson.JsonElement;
-
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
- * Date: 08.02.2013
- * Time: 09:20
+ * Date: 07.02.2013
+ * Time: 11:01
  * To change this template use File | Settings | File Templates.
  */
-public class JsonResponseModel {
+public interface WrapObserver<T> {
 
-    JsonElement result;
+    public void update(T data);
 
 }

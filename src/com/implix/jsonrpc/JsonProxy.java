@@ -76,12 +76,22 @@ class JsonProxy implements InvocationHandler {
                     if(rpc.isTransaction())
                     {
                         rpc.registerAsyncRequest(request);
+                        return null;
                     }
                     else
                     {
-                        new Thread(request).start();
+                        Thread thread = new Thread(request);
+                        thread.start();
+                        if(m.getReturnType().equals(Thread.class))
+                        {
+                            return thread;
+                        }
+                        else
+                        {
+                            return null;
+                        }
                     }
-                    return null;
+
                 }
             }
 		}

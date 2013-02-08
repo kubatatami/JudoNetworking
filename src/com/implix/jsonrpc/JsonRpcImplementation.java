@@ -2,12 +2,15 @@ package com.implix.jsonrpc;
 
 import android.content.Context;
 import android.os.Handler;
+import android.util.Base64;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.lang.reflect.Proxy;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -21,26 +24,26 @@ class JsonRpcImplementation implements JsonRpc {
     private Gson parser;
     private String apiKey = null;
     private ExclusionStrategy exclusionStrategy = new SerializationExclusionStrategy();
+    private String authKey=null;
 
-
-    public JsonRpcImplementation(Context context, String url) {
-        this.connection = new Connection(context, url, this);
+    public JsonRpcImplementation(String url) {
+        this.connection = new Connection(url, this);
         this.parser = new GsonBuilder().addSerializationExclusionStrategy(exclusionStrategy).create();
     }
 
-    public JsonRpcImplementation(Context context, String url, GsonBuilder builder) {
-        this.connection = new Connection(context, url, this);
+    public JsonRpcImplementation(String url, GsonBuilder builder) {
+        this.connection = new Connection(url, this);
         this.parser = builder.addSerializationExclusionStrategy(exclusionStrategy).create();
     }
 
-    public JsonRpcImplementation(Context context, String url, String apiKey) {
-        this.connection = new Connection(context, url, this);
+    public JsonRpcImplementation(String url, String apiKey) {
+        this.connection = new Connection(url, this);
         this.parser = new GsonBuilder().addSerializationExclusionStrategy(exclusionStrategy).create();
         this.apiKey = apiKey;
     }
 
-    public JsonRpcImplementation(Context context, String url, String apiKey, GsonBuilder builder) {
-        this.connection = new Connection(context, url, this);
+    public JsonRpcImplementation(String url, String apiKey, GsonBuilder builder) {
+        this.connection = new Connection(url, this);
         this.parser = builder.addSerializationExclusionStrategy(exclusionStrategy).create();
         this.apiKey = apiKey;
     }
@@ -56,6 +59,25 @@ class JsonRpcImplementation implements JsonRpc {
         }
     }
 
+    public void setPasswordAuthentication(final String username,final String password)
+    {
+       authKey=auth(username, password);
+    }
+
+    @Override
+    public void setJsonVersion(JsonRpcVersion version) {
+        connection.setJsonVersion(version);
+    }
+
+    @Override
+    public void setDebugFlags(int flags) {
+        connection.setDebugFlags(flags);
+    }
+
+    private String auth(String login, String pass) {
+        String source = login + ":" + pass;
+        return "Basic " + Base64.encodeToString(source.getBytes(), Base64.NO_WRAP);
+    }
 
     @SuppressWarnings("unchecked")
     public <T> T getService(Class<T> obj) {
@@ -121,5 +143,9 @@ class JsonRpcImplementation implements JsonRpc {
 
     public String getApiKey() {
         return apiKey;
+    }
+
+    public String getAuthKey() {
+        return authKey;
     }
 }

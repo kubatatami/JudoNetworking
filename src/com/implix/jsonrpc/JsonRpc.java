@@ -16,4 +16,15 @@ public interface JsonRpc {
     public Thread endTransaction();
     public Thread endTransaction(JsonTransactionCallback callback);
 
+    public void setPasswordAuthentication(final String username,final String password);
+
+    public void setJsonVersion(JsonRpcVersion version);
+
+    public void setDebugFlags(int flags);
+    public static final int TIME_DEBUG=1;
+    public static final int REQUEST_DEBUG=2;
+    public static final int RESPONSE_DEBUG=4;
+
+
+
 }
