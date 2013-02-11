@@ -7,9 +7,16 @@ package com.implix.jsonrpc;
  * Time: 10:55
  * To change this template use File | Settings | File Templates.
  */
-public interface  JsonCallback<T> {
+public class  JsonCallback<T> {
 
-    public void onFinish(T result);
-    public void onError(Exception e);
+    public void onFinish(T result)
+    {
+
+    }
+
+    public void onError(Exception e)
+    {
+
+    }
 
 }

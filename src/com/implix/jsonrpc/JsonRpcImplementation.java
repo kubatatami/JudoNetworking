@@ -2,6 +2,7 @@ package com.implix.jsonrpc;
 
 import android.content.Context;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Base64;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
@@ -20,7 +21,7 @@ class JsonRpcImplementation implements JsonRpc {
     private Connection connection;
     private boolean transaction = false;
     private List<JsonRequest> requests = new ArrayList<JsonRequest>();
-    private Handler handler = new Handler(); // new Handler(Looper.getMainLooper());
+    private Handler handler = new Handler();
     private Gson parser;
     private String apiKey = null;
     private ExclusionStrategy exclusionStrategy = new SerializationExclusionStrategy();
@@ -67,6 +68,25 @@ class JsonRpcImplementation implements JsonRpc {
     @Override
     public void setJsonVersion(JsonRpcVersion version) {
         connection.setJsonVersion(version);
+    }
+
+    @Override
+    public void setTimeouts(int connectionTimeout, int methodTimeout, int reconnections) {
+        connection.setConnectTimeout(connectionTimeout);
+        connection.setMethodTimeout(methodTimeout);
+        connection.setReconnections(reconnections);
+    }
+
+    @Override
+    public void setCallbackThread(boolean alwaysMainThread) {
+        if(alwaysMainThread)
+        {
+            handler = new Handler(Looper.getMainLooper());
+        }
+        else
+        {
+            handler = new Handler();
+        }
     }
 
     @Override

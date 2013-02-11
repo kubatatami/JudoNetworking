@@ -7,7 +7,7 @@ package com.implix.jsonrpc;
  * Time: 10:55
  * To change this template use File | Settings | File Templates.
  */
-public class JsonWrapperCallback<T> implements  JsonCallback<T> {
+public class JsonWrapperCallback<T> extends  JsonCallback<T> {
 
     ObservableWrapper<T> wrapper;
 
@@ -16,14 +16,11 @@ public class JsonWrapperCallback<T> implements  JsonCallback<T> {
         this.wrapper=wrapper;
     }
 
+    @Override
     public void onFinish(T result)
     {
         wrapper.set(result);
     }
 
-    public void onError(Exception e)
-    {
-
-    }
 
 }

@@ -18,6 +18,10 @@ class Connection {
     JsonRpcImplementation rpc;
     JsonRpcVersion version = JsonRpcVersion.VERSION_2_0;
     int flags = 0;
+    int reconnections=3;
+    int connectTimeout=15000;
+    int methodTimeout=10000;
+
 
     public Connection(String url, JsonRpcImplementation rpc) {
         this.url = url;
@@ -90,19 +94,36 @@ class Connection {
     }
 
     private HttpURLConnection conn(Object request, Integer timeout) throws IOException {
-
-        HttpURLConnection urlConnection = (HttpURLConnection) new URL(url).openConnection();
+        HttpURLConnection urlConnection=null;
+        if(flags>0)
+        {
+            System.out.println("CONNECTION: START");
+        }
+        for(int i=1;i<=reconnections;i++)
+        {
+            try
+            {
+                urlConnection = (HttpURLConnection) new URL(url).openConnection();
+                break;
+            }
+            catch(IOException e) {
+                if(i==reconnections)
+                {
+                    throw e;
+                }
+            }
+        }
         urlConnection.addRequestProperty("Content-Type", "application/json");
 
         if (rpc.getAuthKey() != null) {
             urlConnection.addRequestProperty("Authorization", rpc.getAuthKey());
         }
 
-        urlConnection.setConnectTimeout(10000);
+        urlConnection.setConnectTimeout(connectTimeout);
         if (timeout != null) {
             urlConnection.setReadTimeout(timeout);
         } else {
-            urlConnection.setReadTimeout(10000);
+            urlConnection.setReadTimeout(methodTimeout);
         }
         urlConnection.setDoOutput(true);
         Writer writer = new BufferedWriter(new OutputStreamWriter(urlConnection.getOutputStream()));
@@ -166,15 +187,49 @@ class Connection {
     }
 
     public <T> T call(int id, String name, String[] params, Object[] args, Type type, Integer timeout, String apiKey) throws Exception {
-        HttpURLConnection conn = conn(createRequest(id, name, params, args, apiKey), timeout);
+        long createTime = 0, connectionTime = 0, readTime = 0, parseTime = 0, time = System.currentTimeMillis();
+        long startTime = time;
+        String connectionType = "";
+
+        JsonRequestModel request = createRequest(id, name, params, args, apiKey);
+
+        createTime = System.currentTimeMillis() - time;
+        time = System.currentTimeMillis();
+
+        HttpURLConnection conn = conn(request, timeout);
+
+        connectionTime = System.currentTimeMillis() - time;
+        time = System.currentTimeMillis();
+
+
+        if (conn.getHeaderField("Connection") != null) {
+            connectionType += conn.getHeaderField("Connection");
+        }
+
+        if (conn.getHeaderField("Content-Encoding") != null) {
+            connectionType += "," + conn.getHeaderField("Content-Encoding");
+        }
 
         JsonResponseModel response = readResponse(conn.getInputStream());
+
+        readTime = System.currentTimeMillis() - time;
+        time = System.currentTimeMillis();
 
         T res;
         if (!type.equals(Void.TYPE)) {
             res = parseResponse(response.result, type);
         } else {
             res = null;
+        }
+
+
+        parseTime = System.currentTimeMillis() - time;
+
+        if ((flags & JsonRpc.TIME_DEBUG) > 0) {
+            System.out.println("Single request(" + connectionType + "): create(" + (createTime) + "ms)" +
+                    " connection&send(" + connectionTime + "ms)" +
+                    " read(" + readTime + "ms) parse(" + parseTime + "ms)" +
+                    " all(" + (System.currentTimeMillis() - startTime) + "ms)");
         }
 
         conn.disconnect();
@@ -309,4 +364,15 @@ class Connection {
         this.flags = flags;
     }
 
+    public void setReconnections(int reconnections) {
+        this.reconnections = reconnections;
+    }
+
+    public void setConnectTimeout(int connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public void setMethodTimeout(int methodTimeout) {
+        this.methodTimeout = methodTimeout;
+    }
 }

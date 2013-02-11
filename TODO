@@ -2,7 +2,10 @@
 -autogrupowanie z okreslonym czasem oczekiwania
 -mozliwosc okreslenia metody ping-pong i jej cykliczne wywolywania w celu utrzymania polaczenia
 -okreslenie max ilosci polaczen per host i grupowanie requestow (byc moze z rozpoznaniem jakosci sieci)
--zmienic package, porozbijac klasy na package
--lepszy pomiar czasu?
 -synchroniczne batchowanie
+
+
+-rename transaction to batch
+-batche oparte na runnable
+-nazwy parametrow przez adnotacje
 

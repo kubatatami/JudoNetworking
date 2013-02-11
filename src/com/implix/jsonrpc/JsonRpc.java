@@ -20,7 +20,12 @@ public interface JsonRpc {
 
     public void setJsonVersion(JsonRpcVersion version);
 
+    public void setTimeouts(int connectionTimeout, int methodTimeout, int reconnections);
+
+    public void setCallbackThread(boolean alwaysMainThread);
+
     public void setDebugFlags(int flags);
+
     public static final int TIME_DEBUG=1;
     public static final int REQUEST_DEBUG=2;
     public static final int RESPONSE_DEBUG=4;
