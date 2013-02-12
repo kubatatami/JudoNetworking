@@ -22,5 +22,4 @@ public class JsonWrapperCallback<T> extends  JsonCallback<T> {
         wrapper.set(result);
     }
 
-
 }

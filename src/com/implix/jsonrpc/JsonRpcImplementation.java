@@ -19,13 +19,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 class JsonRpcImplementation implements JsonRpc {
     int timeout = 10000;
     private Connection connection;
-    private boolean transaction = false;
-    private List<JsonRequest> requests = new ArrayList<JsonRequest>();
     private Handler handler = new Handler();
     private Gson parser;
     private String apiKey = null;
     private ExclusionStrategy exclusionStrategy = new SerializationExclusionStrategy();
-    private String authKey=null;
+    private String authKey = null;
 
     public JsonRpcImplementation(String url) {
         this.connection = new Connection(url, this);
@@ -60,9 +58,8 @@ class JsonRpcImplementation implements JsonRpc {
         }
     }
 
-    public void setPasswordAuthentication(final String username,final String password)
-    {
-       authKey=auth(username, password);
+    public void setPasswordAuthentication(final String username, final String password) {
+        authKey = auth(username, password);
     }
 
     @Override
@@ -79,12 +76,9 @@ class JsonRpcImplementation implements JsonRpc {
 
     @Override
     public void setCallbackThread(boolean alwaysMainThread) {
-        if(alwaysMainThread)
-        {
+        if (alwaysMainThread) {
             handler = new Handler(Looper.getMainLooper());
-        }
-        else
-        {
+        } else {
             handler = new Handler();
         }
     }
@@ -99,51 +93,56 @@ class JsonRpcImplementation implements JsonRpc {
         return "Basic " + Base64.encodeToString(source.getBytes(), Base64.NO_WRAP);
     }
 
-    @SuppressWarnings("unchecked")
     public <T> T getService(Class<T> obj) {
-        return (T) Proxy.newProxyInstance(obj.getClassLoader(), new Class<?>[]{obj}, new JsonProxy(this, apiKey));
+        return getService(obj, new JsonProxy(this, apiKey, false));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T getService(Class<T> obj,  JsonProxy proxy) {
+        return (T) Proxy.newProxyInstance(obj.getClassLoader(), new Class<?>[]{obj}, proxy);
     }
 
     @Override
-    public void startTransaction(int timeout) {
-        transaction = true;
-        this.timeout = timeout;
+    public <T> void callInBatch(Class<T> obj, JsonBatch<T> batch) {
+        callInBatch(obj, 0, false, batch);
     }
 
     @Override
-    public void startTransaction() {
-        transaction = true;
+    public <T> void callInBatch(Class<T> obj, int timeout, JsonBatch<T> batch) {
+        callInBatch(obj, timeout, false, batch);
     }
 
     @Override
-    public Thread endTransaction() {
-        return endTransaction(null);
+    public <T> void callInBatch(Class<T> obj, boolean wait, JsonBatch<T> batch) {
+        callInBatch(obj, 0, wait, batch);
     }
 
     @Override
-    public Thread endTransaction(final JsonTransactionCallback callback) {
-        transaction = false;
+    public <T> void callInBatch(Class<T> obj, final int timeout, boolean wait, final JsonBatch<T> batch) {
+
+        final JsonProxy pr = new JsonProxy(this, apiKey, true);
+        T proxy = getService(obj, pr);
+        batch.run(proxy);
+
 
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                if (requests.size() > 0) {
-                    connection.callBatch(requests, callback);
-                }
+                pr.callBatch(timeout, batch);
             }
         });
+
         t.start();
+        if (wait) {
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
-        return t;
     }
 
-    public void registerAsyncRequest(JsonRequest request) {
-        requests.add(request);
-    }
-
-    public boolean isTransaction() {
-        return transaction;
-    }
 
     public Handler getHandler() {
         return handler;

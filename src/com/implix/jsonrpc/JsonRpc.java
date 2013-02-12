@@ -11,12 +11,15 @@ public interface JsonRpc {
 
     public <T> T getService(Class<T> obj);
 
-    public void startTransaction();
-    public void startTransaction(int timeout);
-    public Thread endTransaction();
-    public Thread endTransaction(JsonTransactionCallback callback);
+    public <T> void callInBatch(Class<T> obj, JsonBatch<T> batch);
 
-    public void setPasswordAuthentication(final String username,final String password);
+    public <T> void callInBatch(Class<T> obj, int timeout, JsonBatch<T> batch);
+
+    public <T> void callInBatch(Class<T> obj, boolean wait, JsonBatch<T> batch);
+
+    public <T> void callInBatch(Class<T> obj, int timeout, boolean wait, JsonBatch<T> batch);
+
+    public void setPasswordAuthentication(final String username, final String password);
 
     public void setJsonVersion(JsonRpcVersion version);
 
@@ -26,10 +29,9 @@ public interface JsonRpc {
 
     public void setDebugFlags(int flags);
 
-    public static final int TIME_DEBUG=1;
-    public static final int REQUEST_DEBUG=2;
-    public static final int RESPONSE_DEBUG=4;
-
+    public static final int TIME_DEBUG = 1;
+    public static final int REQUEST_DEBUG = 2;
+    public static final int RESPONSE_DEBUG = 4;
 
 
 }

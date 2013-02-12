@@ -4,22 +4,22 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 class JsonProxy implements InvocationHandler {
 
     String apiKey=null;
     JsonRpcImplementation rpc;
     int id=0;
+    boolean transaction;
+    private List<JsonRequest> requests = new ArrayList<JsonRequest>();
 
-    public JsonProxy(JsonRpcImplementation rpc)
-    {
-        this.rpc=rpc;
-    }
-
-	public JsonProxy(JsonRpcImplementation rpc,String apiKey)
+	public JsonProxy(JsonRpcImplementation rpc,String apiKey, boolean transaction)
 	{
         this.rpc=rpc;
         this.apiKey=apiKey;
+        this.transaction=transaction;
 	}
 
     private Method getMethod(Object obj, String name) {
@@ -73,9 +73,9 @@ class JsonProxy implements InvocationHandler {
                 else
                 {
                     JsonRequest request = callAsync(++id,name,paramNames,args,m.getGenericParameterTypes(),timeout,apiKey);
-                    if(rpc.isTransaction())
+                    if(transaction)
                     {
-                        rpc.registerAsyncRequest(request);
+                        requests.add(request);
                         return null;
                     }
                     else
@@ -113,6 +113,15 @@ class JsonProxy implements InvocationHandler {
         }
         Type type = ((ParameterizedType)types[args.length-1]).getActualTypeArguments()[0];
         return new JsonRequest(id,rpc,callback,name,params,newArgs,type,timeout,apiKey);
+    }
+
+    public void callBatch(int timeout, final JsonBatch batch)
+    {
+        transaction=false;
+        if (requests.size() > 0) {
+           rpc.getConnection().callBatch(requests,batch,timeout);
+           requests.clear();
+        }
     }
 
 }

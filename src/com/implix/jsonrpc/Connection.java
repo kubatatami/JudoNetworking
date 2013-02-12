@@ -18,9 +18,9 @@ class Connection {
     JsonRpcImplementation rpc;
     JsonRpcVersion version = JsonRpcVersion.VERSION_2_0;
     int flags = 0;
-    int reconnections=3;
-    int connectTimeout=15000;
-    int methodTimeout=10000;
+    int reconnections = 3;
+    int connectTimeout = 15000;
+    int methodTimeout = 10000;
 
 
     public Connection(String url, JsonRpcImplementation rpc) {
@@ -42,7 +42,7 @@ class Connection {
     }
 
     private void longStrToConsole(String tag, String str) {
-        System.out.println(tag+":");
+        System.out.println(tag + ":");
         int i;
         for (i = 0; i < str.length() - 256; i += 256) {
             System.out.println(str.substring(i, i + 256));
@@ -94,21 +94,16 @@ class Connection {
     }
 
     private HttpURLConnection conn(Object request, Integer timeout) throws IOException {
-        HttpURLConnection urlConnection=null;
-        if(flags>0)
-        {
-            System.out.println("CONNECTION: START");
-        }
-        for(int i=1;i<=reconnections;i++)
-        {
-            try
-            {
+        HttpURLConnection urlConnection = null;
+//        if (flags > 0) {
+//            System.out.println("Connection: start");
+//        }
+        for (int i = 1; i <= reconnections; i++) {
+            try {
                 urlConnection = (HttpURLConnection) new URL(url).openConnection();
                 break;
-            }
-            catch(IOException e) {
-                if(i==reconnections)
-                {
+            } catch (IOException e) {
+                if (i == reconnections) {
                     throw e;
                 }
             }
@@ -130,7 +125,7 @@ class Connection {
 
         if ((flags & JsonRpc.REQUEST_DEBUG) > 0) {
             String req = rpc.getParser().toJson(request);
-            longStrToConsole("REQ",req);
+            longStrToConsole("REQ", req);
             writer.write(req);
         } else {
             rpc.getParser().toJson(request, writer);
@@ -147,7 +142,7 @@ class Connection {
         if ((flags & JsonRpc.RESPONSE_DEBUG) > 0) {
 
             String resStr = convertStreamToString(stream);
-            longStrToConsole("RES",resStr);
+            longStrToConsole("RES", resStr);
 
             if (version == JsonRpcVersion.VERSION_2_0) {
                 JsonResponseModel2 response = rpc.getParser().fromJson(resStr, JsonResponseModel2.class);
@@ -248,9 +243,9 @@ class Connection {
     }
 
 
-    public void callBatch(List<JsonRequest> requests, JsonTransactionCallback transactionCallback) {
+    public void callBatch(List<JsonRequest> requests, JsonBatch batch, Integer timeout) {
         int i = 0;
-        long createTime = 0, connectionTime = 0, readTime = 0, parseTime = 0, time = System.currentTimeMillis();
+        long createTime, parseTime, connectionTime = 0, readTime = 0, time = System.currentTimeMillis();
         long startTime = time;
         String connectionType = "";
         HttpURLConnection conn = null;
@@ -264,11 +259,15 @@ class Connection {
             i++;
         }
 
+        if (timeout == null) {
+            timeout = rpc.getTimeout();
+        }
+
         createTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();
 
         try {
-            conn = conn(requestsJson, rpc.getTimeout());
+            conn = conn(requestsJson, timeout);
             InputStream stream = conn.getInputStream();
 
 
@@ -288,7 +287,7 @@ class Connection {
             if ((flags & JsonRpc.RESPONSE_DEBUG) > 0) {
 
                 String resStr = convertStreamToString(stream);
-                longStrToConsole("RES",resStr);
+                longStrToConsole("RES", resStr);
                 responses = rpc.getParser().fromJson(resStr,
                         new TypeToken<List<JsonResponseModel2>>() {
                         }.getType());
@@ -339,12 +338,10 @@ class Connection {
                 conn.disconnect();
             }
 
-            if (transactionCallback != null) {
-                if (ex == null) {
-                    JsonRequest.invokeTransactionCallback(rpc, transactionCallback, results);
-                } else {
-                    JsonRequest.invokeTransactionCallback(rpc, transactionCallback, ex);
-                }
+            if (ex == null) {
+                JsonRequest.invokeTransactionCallback(rpc, batch, results);
+            } else {
+                JsonRequest.invokeTransactionCallback(rpc, batch, ex);
             }
 
             parseTime = System.currentTimeMillis() - time;

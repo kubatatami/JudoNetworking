@@ -3,18 +3,18 @@ package com.implix.jsonrpc;
 class AsyncResult implements Runnable
     {
         JsonCallback<Object> callback;
-        JsonTransactionCallback transaction;
+        JsonBatch<?> transaction;
         Object result=null;
         Object results[]=null;
         Exception e=null;
 
 
-        AsyncResult(JsonTransactionCallback callback,Object results[]) {
+        AsyncResult(JsonBatch<?> callback,Object results[]) {
             this.results = results;
             this.transaction = callback;
         }
 
-        AsyncResult(JsonTransactionCallback callback,Exception e) {
+        AsyncResult(JsonBatch<?> callback,Exception e) {
             this.e = e;
             this.transaction = callback;
         }
