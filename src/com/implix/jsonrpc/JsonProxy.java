@@ -1,5 +1,7 @@
 package com.implix.jsonrpc;
 
+import android.os.AsyncTask;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -63,16 +65,16 @@ class JsonProxy implements InvocationHandler {
                 }
                 if(m.getReturnType().equals(Void.TYPE) && !async && notification)
                 {
-                    rpc.getConnection().notify(name, paramNames, args, timeout, apiKey);
+                    rpc.getJsonConnection().notify(name, paramNames, args, timeout, apiKey);
                     return null;
                 }
                 else if(!async)
                 {
-                    return rpc.getConnection().call(++id, name, paramNames, args, m.getGenericReturnType(), timeout, apiKey);
+                    return rpc.getJsonConnection().call(++id, name, paramNames, args, m.getGenericReturnType(), timeout, apiKey);
                 }
                 else
                 {
-                    JsonRequest request = callAsync(++id,name,paramNames,args,m.getGenericParameterTypes(),timeout,apiKey);
+                    final JsonRequest request = callAsync(++id,name,paramNames,args,m.getGenericParameterTypes(),timeout,apiKey);
                     if(transaction)
                     {
                         requests.add(request);
@@ -80,11 +82,19 @@ class JsonProxy implements InvocationHandler {
                     }
                     else
                     {
-                        Thread thread = new Thread(request);
-                        thread.start();
-                        if(m.getReturnType().equals(Thread.class))
+                        AsyncTask task = new AsyncTask<Void,Void,Void>() {
+
+                            @Override
+                            protected Void doInBackground(Void... voids) {
+                                request.run();
+                                return null;
+                            }
+                        }.execute();
+
+
+                        if(m.getReturnType().equals(AsyncTask.class))
                         {
-                            return thread;
+                            return task;
                         }
                         else
                         {
@@ -119,7 +129,7 @@ class JsonProxy implements InvocationHandler {
     {
         transaction=false;
         if (requests.size() > 0) {
-           rpc.getConnection().callBatch(requests,batch,timeout);
+           rpc.getJsonConnection().callBatch(requests,batch,timeout);
            requests.clear();
         }
     }

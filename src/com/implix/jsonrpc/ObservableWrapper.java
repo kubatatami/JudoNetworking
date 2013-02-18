@@ -11,7 +11,10 @@ public class ObservableWrapper<T> {
     public void addObserver(WrapObserver<T> observer)
     {
         observers.add(observer);
-        observer.update(object);
+        if(object!=null)
+        {
+            observer.update(object);
+        }
     }
 
     public void deleteObserver(WrapObserver<T> observer)
@@ -24,6 +27,10 @@ public class ObservableWrapper<T> {
     }
 
     public void set(T object) {
+        if(object==null)
+        {
+            throw new RuntimeException("Do not set null to WrapObserver.");
+        }
         this.object = object;
         notifyObservers();
     }

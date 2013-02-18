@@ -28,7 +28,7 @@ class JsonRequest implements Runnable {
     @Override
     public void run() {
         try {
-            Object result = rpc.getConnection().call(id, name, params, args, type, timeout, apiKey);
+            Object result = rpc.getJsonConnection().call(id, name, params, args, type, timeout, apiKey);
             invokeCallback(result);
         } catch (Exception e) {
             invokeCallback(e);

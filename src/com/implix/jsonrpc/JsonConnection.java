@@ -12,7 +12,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
 
-class Connection {
+class JsonConnection {
 
     String url;
     JsonRpcImplementation rpc;
@@ -23,14 +23,14 @@ class Connection {
     int methodTimeout = 10000;
 
 
-    public Connection(String url, JsonRpcImplementation rpc) {
+    public JsonConnection(String url, JsonRpcImplementation rpc) {
         this.url = url;
         this.rpc = rpc;
         disableConnectionReuseIfNecessary();
     }
 
     private void disableConnectionReuseIfNecessary() {
-        if (Integer.parseInt(Build.VERSION.SDK) < Build.VERSION_CODES.FROYO) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
             System.setProperty("http.keepAlive", "false");
         }
     }
@@ -320,11 +320,15 @@ class Connection {
                 i++;
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             for (JsonRequest request : requests) {
                 request.invokeCallback(e);
             }
             ex = e;
+            if(connectionType.equals(""))
+            {
+                connectionType="error";
+            }
         } finally {
 
             requests.clear();
@@ -332,7 +336,7 @@ class Connection {
                 if (reader != null) {
                     reader.close();
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
             }
             if (conn != null) {
                 conn.disconnect();
