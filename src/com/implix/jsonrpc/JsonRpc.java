@@ -32,6 +32,7 @@ public interface JsonRpc {
     public static final int TIME_DEBUG = 1;
     public static final int REQUEST_DEBUG = 2;
     public static final int RESPONSE_DEBUG = 4;
+    public static final int BATCH_DEBUG = 8;
 
-
+    public static final int FULL_DEBUG = 15;
 }

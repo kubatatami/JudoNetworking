@@ -252,11 +252,18 @@ class JsonConnection {
         Object[] results = new Object[requests.size()];
         Object[] requestsJson = new Object[requests.size()];
         Exception ex = null;
+
+        String requestsName="";
         for (JsonRequest request : requests) {
             requestsJson[i] = createRequest(request.getId(), request.getName(), request.getParams(),
                     request.getArgs(), request.getApiKey());
+            requestsName+=" "+request.getName();
             i++;
         }
+        if ((flags & JsonRpc.BATCH_DEBUG) > 0) {
+            JsonLoggerImpl.log("Batch:"+requestsName);
+        }
+
 
         if (timeout == null) {
             timeout = rpc.getTimeout();
@@ -349,7 +356,7 @@ class JsonConnection {
 
             parseTime = System.currentTimeMillis() - time;
             if ((flags & JsonRpc.TIME_DEBUG) > 0) {
-                JsonLoggerImpl.log("Transaction(" + connectionType + "): createRequests(" + (createTime) + "ms)" +
+                JsonLoggerImpl.log("Batch(" + connectionType + "): createRequests(" + (createTime) + "ms)" +
                         " connection&send(" + connectionTime + "ms)" +
                         " read(" + readTime + "ms) parse(" + parseTime + "ms)" +
                         " all(" + (System.currentTimeMillis() - startTime) + "ms)");
