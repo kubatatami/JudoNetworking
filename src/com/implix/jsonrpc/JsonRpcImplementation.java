@@ -12,7 +12,7 @@ import com.google.gson.GsonBuilder;
 import java.lang.reflect.Proxy;
 
 class JsonRpcImplementation implements JsonRpc {
-    int timeout = 10000;
+    private int timeout = 10000;
     private JsonConnection jsonConnection;
     private Handler handler = new Handler();
     private Gson parser;
@@ -164,4 +164,6 @@ class JsonRpcImplementation implements JsonRpc {
     public String getAuthKey() {
         return authKey;
     }
+
+
 }

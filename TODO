@@ -1,3 +1,4 @@
 -okreslenie max ilosci polaczen per host i grupowanie requestow (byc moze z rozpoznaniem jakosci sieci)
 -mozliwosc okreslenia metody ping-pong i jej cykliczne wywolywania w celu utrzymania polaczenia
 -nazwy parametrow przez adnotacje
+

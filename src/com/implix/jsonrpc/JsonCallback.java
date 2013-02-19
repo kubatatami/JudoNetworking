@@ -1,5 +1,8 @@
 package com.implix.jsonrpc;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -16,7 +19,10 @@ public class  JsonCallback<T> {
 
     public void onError(Exception e)
     {
-        e.printStackTrace();
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        JsonLoggerImpl.log(sw.toString());
     }
 
 }

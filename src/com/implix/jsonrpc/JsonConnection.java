@@ -1,7 +1,6 @@
 package com.implix.jsonrpc;
 
 import android.os.Build;
-import android.text.TextUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
@@ -42,12 +41,12 @@ class JsonConnection {
     }
 
     private void longStrToConsole(String tag, String str) {
-        System.out.println(tag + ":");
+        JsonLoggerImpl.log(tag + ":");
         int i;
         for (i = 0; i < str.length() - 256; i += 256) {
-            System.out.println(str.substring(i, i + 256));
+            JsonLoggerImpl.log(str.substring(i, i + 256));
         }
-        System.out.println(str.substring(i, str.length()));
+        JsonLoggerImpl.log(str.substring(i, str.length()));
 
     }
 
@@ -221,7 +220,7 @@ class JsonConnection {
         parseTime = System.currentTimeMillis() - time;
 
         if ((flags & JsonRpc.TIME_DEBUG) > 0) {
-            System.out.println("Single request(" + connectionType + "): create(" + (createTime) + "ms)" +
+            JsonLoggerImpl.log("Single request(" + connectionType + "): create(" + (createTime) + "ms)" +
                     " connection&send(" + connectionTime + "ms)" +
                     " read(" + readTime + "ms) parse(" + parseTime + "ms)" +
                     " all(" + (System.currentTimeMillis() - startTime) + "ms)");
@@ -350,7 +349,7 @@ class JsonConnection {
 
             parseTime = System.currentTimeMillis() - time;
             if ((flags & JsonRpc.TIME_DEBUG) > 0) {
-                System.out.println("Transaction(" + connectionType + "): createRequests(" + (createTime) + "ms)" +
+                JsonLoggerImpl.log("Transaction(" + connectionType + "): createRequests(" + (createTime) + "ms)" +
                         " connection&send(" + connectionTime + "ms)" +
                         " read(" + readTime + "ms) parse(" + parseTime + "ms)" +
                         " all(" + (System.currentTimeMillis() - startTime) + "ms)");
