@@ -17,24 +17,24 @@ public class JsonRpcFactory {
 
     public static JsonRpc getJsonRpc(Context context,String url)
     {
-        return new JsonRpcImplementation(url);
+        return new JsonRpcImplementation(context,url);
     }
 
     public static JsonRpc getJsonRpc(Context context,String url,GsonBuilder builder)
     {
-        return new JsonRpcImplementation(url, builder);
+        return new JsonRpcImplementation(context,url, builder);
     }
 
 
     public static JsonRpc getJsonRpc(Context context,String url,String apiKey)
     {
-        return new JsonRpcImplementation(url, apiKey);
+        return new JsonRpcImplementation(context,url, apiKey);
     }
 
 
     public static JsonRpc getJsonRpc(Context context,String url,String apiKey,GsonBuilder builder)
     {
-        return new JsonRpcImplementation(url, apiKey, builder);
+        return new JsonRpcImplementation(context,url, apiKey, builder);
     }
 
 }

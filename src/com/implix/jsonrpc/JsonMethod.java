@@ -11,7 +11,7 @@ public @interface JsonMethod
 {
 	public String name() default  "";
     public String[] paramNames() default {};
-	public int timeout() default 5000;
+	public int timeout() default 0;
     public boolean async() default false;
     public boolean notification() default false;
 }

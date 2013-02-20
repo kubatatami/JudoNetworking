@@ -23,16 +23,17 @@ public interface JsonRpc {
 
     public void setJsonVersion(JsonRpcVersion version);
 
-    public void setTimeouts(int connectionTimeout, int methodTimeout, int reconnections);
+    public void setTimeouts(int connectionTimeout, int methodTimeout, int reconnectionAttempts);
 
     public void setCallbackThread(boolean alwaysMainThread);
 
     public void setDebugFlags(int flags);
 
+    public void setMultiBatchConnections(int maxConnections, boolean wifiOnly);
+
     public static final int TIME_DEBUG = 1;
     public static final int REQUEST_DEBUG = 2;
     public static final int RESPONSE_DEBUG = 4;
-    public static final int BATCH_DEBUG = 8;
 
-    public static final int FULL_DEBUG = 15;
+    public static final int FULL_DEBUG = 7;
 }

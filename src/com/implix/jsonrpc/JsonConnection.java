@@ -92,7 +92,7 @@ class JsonConnection {
         this.version = version;
     }
 
-    private HttpURLConnection conn(Object request, Integer timeout) throws IOException {
+    private HttpURLConnection conn(Object request, int timeout) throws IOException {
         HttpURLConnection urlConnection = null;
 //        if (flags > 0) {
 //            System.out.println("Connection: start");
@@ -114,11 +114,12 @@ class JsonConnection {
         }
 
         urlConnection.setConnectTimeout(connectTimeout);
-        if (timeout != null) {
-            urlConnection.setReadTimeout(timeout);
-        } else {
-            urlConnection.setReadTimeout(methodTimeout);
+        if (timeout == 0) {
+            timeout = methodTimeout;
         }
+
+        urlConnection.setReadTimeout(timeout);
+
         urlConnection.setDoOutput(true);
         Writer writer = new BufferedWriter(new OutputStreamWriter(urlConnection.getOutputStream()));
 
@@ -180,7 +181,7 @@ class JsonConnection {
 
     }
 
-    public <T> T call(int id, String name, String[] params, Object[] args, Type type, Integer timeout, String apiKey) throws Exception {
+    public <T> T call(int id, String name, String[] params, Object[] args, Type type, int timeout, String apiKey) throws Exception {
         long createTime = 0, connectionTime = 0, readTime = 0, parseTime = 0, time = System.currentTimeMillis();
         long startTime = time;
         String connectionType = "";
@@ -220,7 +221,8 @@ class JsonConnection {
         parseTime = System.currentTimeMillis() - time;
 
         if ((flags & JsonRpc.TIME_DEBUG) > 0) {
-            JsonLoggerImpl.log("Single request(" + connectionType + "): create(" + (createTime) + "ms)" +
+            JsonLoggerImpl.log("Single request(" + name + "): connection("+connectionType+")"+
+                    " timeout(" + conn.getReadTimeout() + "ms) create(" + (createTime) + "ms)" +
                     " connection&send(" + connectionTime + "ms)" +
                     " read(" + readTime + "ms) parse(" + parseTime + "ms)" +
                     " all(" + (System.currentTimeMillis() - startTime) + "ms)");
@@ -242,128 +244,72 @@ class JsonConnection {
     }
 
 
-    public void callBatch(List<JsonRequest> requests, JsonBatch batch, Integer timeout) {
+    public List<JsonResponseModel2> callBatch(List<JsonRequest> requests, Integer timeout) throws IOException {
         int i = 0;
-        long createTime, parseTime, connectionTime = 0, readTime = 0, time = System.currentTimeMillis();
+        long createTime, connectionTime = 0, time = System.currentTimeMillis();
         long startTime = time;
         String connectionType = "";
         HttpURLConnection conn = null;
         JsonReader reader = null;
-        Object[] results = new Object[requests.size()];
         Object[] requestsJson = new Object[requests.size()];
-        Exception ex = null;
+        List<JsonResponseModel2> responses = null;
+        String requestsName = "";
 
-        String requestsName="";
+
         for (JsonRequest request : requests) {
             requestsJson[i] = createRequest(request.getId(), request.getName(), request.getParams(),
                     request.getArgs(), request.getApiKey());
-            requestsName+=" "+request.getName();
+            requestsName += " " + request.getName();
             i++;
-        }
-        if ((flags & JsonRpc.BATCH_DEBUG) > 0) {
-            JsonLoggerImpl.log("Batch:"+requestsName);
-        }
-
-
-        if (timeout == null) {
-            timeout = rpc.getTimeout();
         }
 
         createTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();
 
-        try {
-            conn = conn(requestsJson, timeout);
-            InputStream stream = conn.getInputStream();
+
+        conn = conn(requestsJson, timeout);
+        InputStream stream = conn.getInputStream();
 
 
-            if (conn.getHeaderField("Connection") != null) {
-                connectionType += conn.getHeaderField("Connection");
-            }
-
-            if (conn.getHeaderField("Content-Encoding") != null) {
-                connectionType += "," + conn.getHeaderField("Content-Encoding");
-            }
-
-            connectionTime = System.currentTimeMillis() - time;
-            time = System.currentTimeMillis();
-
-            List<JsonResponseModel2> responses = null;
-
-            if ((flags & JsonRpc.RESPONSE_DEBUG) > 0) {
-
-                String resStr = convertStreamToString(stream);
-                longStrToConsole("RES", resStr);
-                responses = rpc.getParser().fromJson(resStr,
-                        new TypeToken<List<JsonResponseModel2>>() {
-                        }.getType());
-            } else {
-                reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
-                responses = rpc.getParser().fromJson(reader,
-                        new TypeToken<List<JsonResponseModel2>>() {
-                        }.getType());
-            }
-
-
-            readTime = System.currentTimeMillis() - time;
-            time = System.currentTimeMillis();
-
-            i = 0;
-            for (JsonRequest request : requests) {
-                try {
-                    JsonResponseModel2 response = responses.get(i);
-                    if (response.error != null) {
-                        throw new JsonException(request.getName() + ": " + response.error.message, response.error.code);
-                    }
-                    results[i] = parseResponse(response.result, request.getType());
-                    request.invokeCallback(results[i]);
-                } catch (Exception e) {
-                    if (ex == null) {
-                        ex = e;
-                    }
-                    request.invokeCallback(e);
-                }
-                i++;
-            }
-
-        } catch (Exception e) {
-            for (JsonRequest request : requests) {
-                request.invokeCallback(e);
-            }
-            ex = e;
-            if(connectionType.equals(""))
-            {
-                connectionType="error";
-            }
-        } finally {
-
-            requests.clear();
-            try {
-                if (reader != null) {
-                    reader.close();
-                }
-            } catch (Exception e) {
-            }
-            if (conn != null) {
-                conn.disconnect();
-            }
-
-            if (ex == null) {
-                JsonRequest.invokeTransactionCallback(rpc, batch, results);
-            } else {
-                JsonRequest.invokeTransactionCallback(rpc, batch, ex);
-            }
-
-            parseTime = System.currentTimeMillis() - time;
-            if ((flags & JsonRpc.TIME_DEBUG) > 0) {
-                JsonLoggerImpl.log("Batch(" + connectionType + "): createRequests(" + (createTime) + "ms)" +
-                        " connection&send(" + connectionTime + "ms)" +
-                        " read(" + readTime + "ms) parse(" + parseTime + "ms)" +
-                        " all(" + (System.currentTimeMillis() - startTime) + "ms)");
-            }
-
+        if (conn.getHeaderField("Connection") != null) {
+            connectionType += conn.getHeaderField("Connection");
         }
 
+        if (conn.getHeaderField("Content-Encoding") != null) {
+            connectionType += "," + conn.getHeaderField("Content-Encoding");
+        }
+
+        connectionTime = System.currentTimeMillis() - time;
+        time = System.currentTimeMillis();
+
+        if ((flags & JsonRpc.RESPONSE_DEBUG) > 0) {
+
+            String resStr = convertStreamToString(stream);
+            longStrToConsole("RES", resStr);
+            responses = rpc.getParser().fromJson(resStr,
+                    new TypeToken<List<JsonResponseModel2>>() {
+                    }.getType());
+        } else {
+            reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
+            responses = rpc.getParser().fromJson(reader,
+                    new TypeToken<List<JsonResponseModel2>>() {
+                    }.getType());
+            reader.close();
+        }
+
+        Collections.sort(responses);
+
+        if ((flags & JsonRpc.TIME_DEBUG) > 0) {
+            JsonLoggerImpl.log("Batch request(" + requestsName.substring(1) + "): connection("+connectionType+")"+
+                    " timeout(" + conn.getReadTimeout() + "ms)" +
+                    " createRequests(" + (createTime) + "ms)" +
+                    " connection&send(" + connectionTime + "ms)" +
+                    " read(" + (System.currentTimeMillis() - time) + "ms)" +
+                    " all(" + (System.currentTimeMillis() - startTime) + "ms)");
+        }
+
+        conn.disconnect();
+        return responses;
     }
 
 

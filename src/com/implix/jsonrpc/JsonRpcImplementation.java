@@ -1,5 +1,6 @@
 package com.implix.jsonrpc;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
@@ -12,34 +13,41 @@ import com.google.gson.GsonBuilder;
 import java.lang.reflect.Proxy;
 
 class JsonRpcImplementation implements JsonRpc {
-    private int timeout = 10000;
+
+    private int maxBatchConnections =0;
+    private boolean wifiOnly=true;
     private JsonConnection jsonConnection;
     private Handler handler = new Handler();
     private Gson parser;
     private String apiKey = null;
     private ExclusionStrategy exclusionStrategy = new SerializationExclusionStrategy();
     private String authKey = null;
+    private Context context;
 
-    public JsonRpcImplementation(String url) {
+    public JsonRpcImplementation(Context context, String url) {
         this.jsonConnection = new JsonConnection(url, this);
         this.parser = new GsonBuilder().addSerializationExclusionStrategy(exclusionStrategy).create();
+        this.context = context;
     }
 
-    public JsonRpcImplementation(String url, GsonBuilder builder) {
+    public JsonRpcImplementation(Context context, String url, GsonBuilder builder) {
         this.jsonConnection = new JsonConnection(url, this);
         this.parser = builder.addSerializationExclusionStrategy(exclusionStrategy).create();
+        this.context = context;
     }
 
-    public JsonRpcImplementation(String url, String apiKey) {
+    public JsonRpcImplementation(Context context, String url, String apiKey) {
         this.jsonConnection = new JsonConnection(url, this);
         this.parser = new GsonBuilder().addSerializationExclusionStrategy(exclusionStrategy).create();
         this.apiKey = apiKey;
+        this.context = context;
     }
 
-    public JsonRpcImplementation(String url, String apiKey, GsonBuilder builder) {
+    public JsonRpcImplementation(Context context, String url, String apiKey, GsonBuilder builder) {
         this.jsonConnection = new JsonConnection(url, this);
         this.parser = builder.addSerializationExclusionStrategy(exclusionStrategy).create();
         this.apiKey = apiKey;
+        this.context = context;
     }
 
     private class SerializationExclusionStrategy implements ExclusionStrategy {
@@ -63,10 +71,10 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     @Override
-    public void setTimeouts(int connectionTimeout, int methodTimeout, int reconnections) {
+    public void setTimeouts(int connectionTimeout, int methodTimeout, int reconnectionAttempts) {
         jsonConnection.setConnectTimeout(connectionTimeout);
         jsonConnection.setMethodTimeout(methodTimeout);
-        jsonConnection.setReconnections(reconnections);
+        jsonConnection.setReconnections(reconnectionAttempts);
     }
 
     @Override
@@ -83,13 +91,20 @@ class JsonRpcImplementation implements JsonRpc {
         jsonConnection.setDebugFlags(flags);
     }
 
+    @Override
+    public void setMultiBatchConnections(int maxConnections, boolean wifiOnly) {
+        this.maxBatchConnections=maxConnections;
+        this.wifiOnly=wifiOnly;
+        System.setProperty("http.maxConnections", maxConnections+1+"");
+    }
+
     private String auth(String login, String pass) {
         String source = login + ":" + pass;
         return "Basic " + Base64.encodeToString(source.getBytes(), Base64.NO_WRAP);
     }
 
     public <T> T getService(Class<T> obj) {
-        return getService(obj, new JsonProxy(this, apiKey, false));
+        return getService(obj, new JsonProxy(context,this, apiKey, false));
     }
 
     @SuppressWarnings("unchecked")
@@ -115,7 +130,7 @@ class JsonRpcImplementation implements JsonRpc {
     @Override
     public <T> void callInBatch(Class<T> obj, final int timeout, boolean wait, final JsonBatch<T> batch) {
 
-        final JsonProxy pr = new JsonProxy(this, apiKey, true);
+        final JsonProxy pr = new JsonProxy(context, this, apiKey, true);
         T proxy = getService(obj, pr);
         batch.run(proxy);
 
@@ -149,21 +164,20 @@ class JsonRpcImplementation implements JsonRpc {
         return jsonConnection;
     }
 
-    public int getTimeout() {
-        return timeout;
-    }
 
     public Gson getParser() {
         return parser;
-    }
-
-    public String getApiKey() {
-        return apiKey;
     }
 
     public String getAuthKey() {
         return authKey;
     }
 
+    public int getMaxBatchConnections() {
+        return maxBatchConnections;
+    }
 
+    public boolean isWifiOnly() {
+        return wifiOnly;
+    }
 }
