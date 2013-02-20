@@ -11,13 +11,9 @@ public interface JsonRpc {
 
     public <T> T getService(Class<T> obj);
 
-    public <T> void callInBatch(Class<T> obj, JsonBatch<T> batch);
+    public <T> Thread callInBatch(Class<T> obj, JsonBatch<T> batch);
 
-    public <T> void callInBatch(Class<T> obj, int timeout, JsonBatch<T> batch);
-
-    public <T> void callInBatch(Class<T> obj, boolean wait, JsonBatch<T> batch);
-
-    public <T> void callInBatch(Class<T> obj, int timeout, boolean wait, JsonBatch<T> batch);
+    public <T> Thread callInBatch(Class<T> obj, int timeout,  JsonBatch<T> batch);
 
     public void setPasswordAuthentication(final String username, final String password);
 
@@ -30,6 +26,8 @@ public interface JsonRpc {
     public void setDebugFlags(int flags);
 
     public void setMultiBatchConnections(int maxConnections, boolean wifiOnly);
+
+    public void setApiKey(String apiKey);
 
     public static final int TIME_DEBUG = 1;
     public static final int REQUEST_DEBUG = 2;

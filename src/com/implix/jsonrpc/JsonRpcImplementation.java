@@ -1,7 +1,6 @@
 package com.implix.jsonrpc;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
@@ -104,7 +103,7 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     public <T> T getService(Class<T> obj) {
-        return getService(obj, new JsonProxy(context,this, apiKey, false));
+        return getService(obj, new JsonProxy(context,this, false));
     }
 
     @SuppressWarnings("unchecked")
@@ -113,48 +112,32 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     @Override
-    public <T> void callInBatch(Class<T> obj, JsonBatch<T> batch) {
-        callInBatch(obj, 0, false, batch);
+    public <T> Thread callInBatch(Class<T> obj, JsonBatch<T> batch) {
+        return callInBatch(obj, 0, batch);
     }
 
     @Override
-    public <T> void callInBatch(Class<T> obj, int timeout, JsonBatch<T> batch) {
-        callInBatch(obj, timeout, false, batch);
-    }
+    public <T> Thread callInBatch(Class<T> obj, final int timeout, final JsonBatch<T> batch) {
 
-    @Override
-    public <T> void callInBatch(Class<T> obj, boolean wait, JsonBatch<T> batch) {
-        callInBatch(obj, 0, wait, batch);
-    }
-
-    @Override
-    public <T> void callInBatch(Class<T> obj, final int timeout, boolean wait, final JsonBatch<T> batch) {
-
-        final JsonProxy pr = new JsonProxy(context, this, apiKey, true);
+        final JsonProxy pr = new JsonProxy(context, this, true);
         T proxy = getService(obj, pr);
         batch.run(proxy);
 
 
-        AsyncTask task = new AsyncTask<Void,Void,Void>() {
-
+        Thread thread = new Thread(new Runnable() {
             @Override
-            protected Void doInBackground(Void... voids) {
+            public void run() {
                 pr.callBatch(timeout, batch);
-                return null;
             }
-        }.execute();
-
-
-        if (wait) {
-            try {
-                task.get();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
+        });
+        thread.start();
+        return thread;
     }
 
+    @Override
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
 
     public Handler getHandler() {
         return handler;
@@ -179,5 +162,9 @@ class JsonRpcImplementation implements JsonRpc {
 
     public boolean isWifiOnly() {
         return wifiOnly;
+    }
+
+    public String getApiKey() {
+        return apiKey;
     }
 }

@@ -3,7 +3,6 @@ package com.implix.jsonrpc;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
 import com.google.gson.JsonElement;
 
 import java.io.IOException;
@@ -17,15 +16,13 @@ import java.util.List;
 class JsonProxy implements InvocationHandler {
 
     Context context;
-    String apiKey = null;
     JsonRpcImplementation rpc;
     int id = 0;
     boolean transaction;
     private List<JsonRequest> batchRequests = new ArrayList<JsonRequest>();
 
-    public JsonProxy(Context context, JsonRpcImplementation rpc, String apiKey, boolean transaction) {
+    public JsonProxy(Context context, JsonRpcImplementation rpc, boolean transaction) {
         this.rpc = rpc;
-        this.apiKey = apiKey;
         this.context = context;
         this.transaction = transaction;
     }
@@ -62,28 +59,21 @@ class JsonProxy implements InvocationHandler {
                     timeout = ann.timeout();
                 }
                 if (m.getReturnType().equals(Void.TYPE) && !async && notification) {
-                    rpc.getJsonConnection().notify(name, paramNames, args, timeout, apiKey);
+                    rpc.getJsonConnection().notify(name, paramNames, args, timeout, rpc.getApiKey());
                     return null;
                 } else if (!async) {
-                    return rpc.getJsonConnection().call(++id, name, paramNames, args, m.getGenericReturnType(), timeout, apiKey);
+                    return rpc.getJsonConnection().call(++id, name, paramNames, args, m.getGenericReturnType(), timeout, rpc.getApiKey());
                 } else {
-                    final JsonRequest request = callAsync(++id, name, paramNames, args, m.getGenericParameterTypes(), timeout, apiKey);
+                    final JsonRequest request = callAsync(++id, name, paramNames, args, m.getGenericParameterTypes(), timeout, rpc.getApiKey());
                     if (transaction) {
                         batchRequests.add(request);
                         return null;
                     } else {
-                        AsyncTask task = new AsyncTask<Void, Void, Void>() {
+                        Thread thread = new Thread(request) ;
+                        thread.start();
 
-                            @Override
-                            protected Void doInBackground(Void... voids) {
-                                request.run();
-                                return null;
-                            }
-                        }.execute();
-
-
-                        if (m.getReturnType().equals(AsyncTask.class)) {
-                            return task;
+                        if (m.getReturnType().equals(Thread.class)) {
+                            return thread;
                         } else {
                             return null;
                         }
@@ -115,8 +105,14 @@ class JsonProxy implements InvocationHandler {
             try {
                 List<JsonResponseModel2> responses = sendBatchRequest(timeout);
                 parseBatchResponse(batch, responses);
-            } catch (Exception e) {
-                batch.onError(e);
+            } catch (final Exception e) {
+                rpc.getHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        batch.onError(e);
+                    }
+                });
+
             }
 
             batchRequests.clear();
@@ -218,9 +214,7 @@ class JsonProxy implements InvocationHandler {
                 results[i] = parseResponse(response.result, request.getType());
                 request.invokeCallback(results[i]);
             } catch (Exception e) {
-                if (ex == null) {
-                    ex = e;
-                }
+                ex = e;
                 request.invokeCallback(e);
             }
             i++;
