@@ -37,9 +37,9 @@ public class ObservableWrapper<T> {
 
     private void notifyObservers()
     {
-       for(WrapObserver<T> observer : observers)
-       {
-           observer.update(object);
-       }
+        for(int i=observers.size()-1; i>=0;i--)
+        {
+            observers.get(i).update(object);
+        }
     }
 }
