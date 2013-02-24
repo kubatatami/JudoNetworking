@@ -22,6 +22,7 @@ class JsonRpcImplementation implements JsonRpc {
     private ExclusionStrategy exclusionStrategy = new SerializationExclusionStrategy();
     private String authKey = null;
     private Context context;
+    private boolean byteArrayAsBase64=false;
 
     public JsonRpcImplementation(Context context, String url) {
         this.jsonConnection = new JsonConnection(url, this);
@@ -137,6 +138,15 @@ class JsonRpcImplementation implements JsonRpc {
     @Override
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
+    }
+
+    @Override
+    public void setByteArraySerializationType(boolean asBase64) {
+        this.byteArrayAsBase64=asBase64;
+    }
+
+    public boolean isByteArrayAsBase64() {
+        return byteArrayAsBase64;
     }
 
     public Handler getHandler() {

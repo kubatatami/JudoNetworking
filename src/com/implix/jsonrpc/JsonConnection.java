@@ -1,6 +1,7 @@
 package com.implix.jsonrpc;
 
 import android.os.Build;
+import android.util.Base64;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
@@ -53,6 +54,19 @@ class JsonConnection {
 
     private JsonRequestModel createRequest(Integer currId, String name, String[] params, Object[] args, String apiKey) {
         Object finalArgs = null;
+        if(args!=null && rpc.isByteArrayAsBase64())
+        {
+            int i=0;
+            for(Object object : args)
+            {
+                if(object instanceof byte[])
+                {
+                    args[i]=Base64.encodeToString((byte[]) object,Base64.NO_WRAP);
+                }
+                i++;
+            }
+        }
+
         if (params != null) {
             int i = 0;
             Map<String, Object> paramObjects = new HashMap<String, Object>();

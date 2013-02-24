@@ -29,6 +29,9 @@ public interface JsonRpc {
 
     public void setApiKey(String apiKey);
 
+    public void setByteArraySerializationType(boolean asBase64);
+
+
     public static final int TIME_DEBUG = 1;
     public static final int REQUEST_DEBUG = 2;
     public static final int RESPONSE_DEBUG = 4;
