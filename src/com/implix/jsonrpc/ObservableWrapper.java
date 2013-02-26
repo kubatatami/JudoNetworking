@@ -1,11 +1,14 @@
 package com.implix.jsonrpc;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ObservableWrapper<T> {
     T object=null;
-
+    Handler handler = new Handler(Looper.getMainLooper());
     List<WrapObserver<T>> observers=new ArrayList<WrapObserver<T>>();
 
     public void addObserver(WrapObserver<T> observer)
@@ -37,9 +40,24 @@ public class ObservableWrapper<T> {
 
     private void notifyObservers()
     {
-        for(int i=observers.size()-1; i>=0;i--)
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                for(int i=observers.size()-1; i>=0;i--)
+                {
+                    observers.get(i).update(object);
+                }
+            }
+        };
+
+        if(Looper.getMainLooper().getThread().equals(Thread.currentThread()))
         {
-            observers.get(i).update(object);
+            runnable.run();
         }
+        else
+        {
+           handler.post(runnable);
+        }
+
     }
 }
