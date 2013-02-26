@@ -7,21 +7,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ObservableWrapper<T> {
-    T object=null;
+    T object = null;
     Handler handler = new Handler(Looper.getMainLooper());
-    List<WrapObserver<T>> observers=new ArrayList<WrapObserver<T>>();
+    List<WrapObserver<T>> observers = new ArrayList<WrapObserver<T>>();
+    boolean notifyInUiThread = true;
 
-    public void addObserver(WrapObserver<T> observer)
-    {
+    public ObservableWrapper() {
+
+    }
+
+    public ObservableWrapper(boolean notifyInUiThread) {
+        this.notifyInUiThread = notifyInUiThread;
+    }
+
+    public void addObserver(WrapObserver<T> observer) {
         observers.add(observer);
-        if(object!=null)
-        {
+        if (object != null) {
             observer.update(object);
         }
     }
 
-    public void deleteObserver(WrapObserver<T> observer)
-    {
+    public void deleteObserver(WrapObserver<T> observer) {
         observers.remove(observer);
     }
 
@@ -30,33 +36,27 @@ public class ObservableWrapper<T> {
     }
 
     public void set(T object) {
-        if(object==null)
-        {
+        if (object == null) {
             throw new RuntimeException("Do not set null to WrapObserver.");
         }
         this.object = object;
         notifyObservers();
     }
 
-    private void notifyObservers()
-    {
+    public void notifyObservers() {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                for(int i=observers.size()-1; i>=0;i--)
-                {
+                for (int i = observers.size() - 1; i >= 0; i--) {
                     observers.get(i).update(object);
                 }
             }
         };
 
-        if(Looper.getMainLooper().getThread().equals(Thread.currentThread()))
-        {
+        if (Looper.getMainLooper().getThread().equals(Thread.currentThread()) || !notifyInUiThread) {
             runnable.run();
-        }
-        else
-        {
-           handler.post(runnable);
+        } else {
+            handler.post(runnable);
         }
 
     }
