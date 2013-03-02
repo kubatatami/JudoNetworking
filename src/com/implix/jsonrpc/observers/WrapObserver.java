@@ -1,4 +1,4 @@
-package com.implix.jsonrpc;
+package com.implix.jsonrpc.observers;
 
 /**
  * Created with IntelliJ IDEA.

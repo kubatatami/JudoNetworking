@@ -95,7 +95,12 @@ class JsonRpcImplementation implements JsonRpc {
     public void setMultiBatchConnections(int maxConnections, boolean wifiOnly) {
         this.maxBatchConnections=maxConnections;
         this.wifiOnly=wifiOnly;
-        System.setProperty("http.maxConnections", maxConnections+1+"");
+
+        String currentMaxConnections =System.getProperty("http.maxConnections");
+        if(currentMaxConnections == null || Integer.parseInt(currentMaxConnections) < maxConnections*2)
+        {
+            System.setProperty("http.maxConnections", maxConnections*2+"");
+        }
     }
 
     private String auth(String login, String pass) {

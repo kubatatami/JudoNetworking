@@ -1,4 +1,7 @@
-package com.implix.jsonrpc;
+package com.implix.jsonrpc.observers;
+
+import com.implix.jsonrpc.JsonCallback;
+import com.implix.jsonrpc.observers.ObservableWrapper;
 
 /**
  * Created with IntelliJ IDEA.
@@ -7,7 +10,7 @@ package com.implix.jsonrpc;
  * Time: 10:55
  * To change this template use File | Settings | File Templates.
  */
-public class JsonWrapperCallback<T> extends  JsonCallback<T> {
+public class JsonWrapperCallback<T> extends JsonCallback<T> {
 
     ObservableWrapper<T> wrapper;
 
