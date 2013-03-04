@@ -11,6 +11,8 @@ public interface JsonRpc {
 
     public <T> T getService(Class<T> obj);
 
+    public <T> T getService(Class<T> obj, boolean autoBatch);
+
     public <T> Thread callInBatch(Class<T> obj, JsonBatch<T> batch);
 
     public <T> Thread callInBatch(Class<T> obj, int timeout,  JsonBatch<T> batch);
@@ -31,6 +33,7 @@ public interface JsonRpc {
 
     public void setByteArraySerializationType(boolean asBase64);
 
+    public void setAutoBatchTime(int autoBatchTime);
 
     public static final int TIME_DEBUG = 1;
     public static final int REQUEST_DEBUG = 2;

@@ -1,4 +1,3 @@
--mozliwosc okreslenia metody ping-pong i jej cykliczne wywolywania w celu utrzymania polaczenia
 -nazwy parametrow przez adnotacje
-
+-
 -refaktoryzacja kodu jsonconnection

@@ -51,12 +51,12 @@ class JsonRequest implements Runnable {
         }
     }
 
-    public static void invokeTransactionCallback(JsonRpcImplementation rpc, JsonBatch<?> batch, Exception e)
+    public static void invokeBatchCallback(JsonRpcImplementation rpc, JsonBatch<?> batch, Exception e)
     {
         rpc.getHandler().post(new AsyncResult(batch, e));
     }
 
-    public static void invokeTransactionCallback(JsonRpcImplementation rpc, JsonBatch<?> batch, Object[] results)
+    public static void invokeBatchCallback(JsonRpcImplementation rpc, JsonBatch<?> batch, Object[] results)
     {
         rpc.getHandler().post(new AsyncResult(batch, results));
     }

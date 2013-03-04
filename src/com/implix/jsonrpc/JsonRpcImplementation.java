@@ -23,6 +23,7 @@ class JsonRpcImplementation implements JsonRpc {
     private String authKey = null;
     private Context context;
     private boolean byteArrayAsBase64=false;
+    private int autoBatchTime=20; //milliseconds
 
     public JsonRpcImplementation(Context context, String url) {
         this.jsonConnection = new JsonConnection(url, this);
@@ -109,7 +110,11 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     public <T> T getService(Class<T> obj) {
-        return getService(obj, new JsonProxy(context,this, false));
+        return getService(obj, false);
+    }
+
+    public <T> T getService(Class<T> obj, boolean autoBatch) {
+        return getService(obj, new JsonProxy(context,this,autoBatch ? JsonBatchMode.AUTO : JsonBatchMode.NONE));
     }
 
     @SuppressWarnings("unchecked")
@@ -125,7 +130,7 @@ class JsonRpcImplementation implements JsonRpc {
     @Override
     public <T> Thread callInBatch(Class<T> obj, final int timeout, final JsonBatch<T> batch) {
 
-        final JsonProxy pr = new JsonProxy(context, this, true);
+        final JsonProxy pr = new JsonProxy(context, this, JsonBatchMode.AUTO);
         T proxy = getService(obj, pr);
         batch.run(proxy);
 
@@ -181,5 +186,13 @@ class JsonRpcImplementation implements JsonRpc {
 
     public String getApiKey() {
         return apiKey;
+    }
+
+    public int getAutoBatchTime() {
+        return autoBatchTime;
+    }
+
+    public void setAutoBatchTime(int autoBatchTime) {
+        this.autoBatchTime = autoBatchTime;
     }
 }

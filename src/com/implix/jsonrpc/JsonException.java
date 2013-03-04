@@ -11,6 +11,11 @@ public class JsonException extends Exception {
     private String message;
     private int code;
 
+
+    public JsonException(String name, Exception e) {
+        super("Error in method: "+name,e);
+    }
+
     public JsonException(String message) {
         this.message = message;
     }

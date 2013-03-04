@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 class JsonProxy implements InvocationHandler {
@@ -18,13 +19,17 @@ class JsonProxy implements InvocationHandler {
     Context context;
     JsonRpcImplementation rpc;
     int id = 0;
-    boolean transaction;
-    private List<JsonRequest> batchRequests = new ArrayList<JsonRequest>();
+    boolean batch = false;
+    private final List<JsonRequest> batchRequests = new ArrayList<JsonRequest>();
+    JsonBatchMode mode = JsonBatchMode.NONE;
 
-    public JsonProxy(Context context, JsonRpcImplementation rpc, boolean transaction) {
+    public JsonProxy(Context context, JsonRpcImplementation rpc, JsonBatchMode mode) {
         this.rpc = rpc;
         this.context = context;
-        this.transaction = transaction;
+        this.mode = mode;
+        if (mode == JsonBatchMode.MANUAL) {
+            batch = true;
+        }
     }
 
     private Method getMethod(Object obj, String name) {
@@ -65,18 +70,48 @@ class JsonProxy implements InvocationHandler {
                     return rpc.getJsonConnection().call(++id, name, paramNames, args, m.getGenericReturnType(), timeout, rpc.getApiKey());
                 } else {
                     final JsonRequest request = callAsync(++id, name, paramNames, args, m.getGenericParameterTypes(), timeout, rpc.getApiKey());
-                    if (transaction) {
-                        batchRequests.add(request);
+
+                    if (batch) {
+                        synchronized (batchRequests) {
+                            batchRequests.add(request);
+                            batch = true;
+                        }
                         return null;
                     } else {
-                        Thread thread = new Thread(request) ;
-                        thread.start();
 
-                        if (m.getReturnType().equals(Thread.class)) {
-                            return thread;
-                        } else {
+                        if (mode == JsonBatchMode.AUTO) {
+
+                            synchronized (batchRequests) {
+                                batchRequests.add(request);
+                                batch = true;
+                            }
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        Thread.sleep(rpc.getAutoBatchTime());
+                                    } catch (InterruptedException e) {
+                                    }
+                                    JsonProxy.this.callBatch(rpc.getJsonConnection().methodTimeout * batchRequests.size(), new JsonBatch());
+                                }
+                            }).start();
+
                             return null;
+                        } else {
+
+
+                            Thread thread = new Thread(request);
+                            thread.start();
+
+                            if (m.getReturnType().equals(Thread.class)) {
+                                return thread;
+                            } else {
+                                return null;
+                            }
+
                         }
+
+
                     }
 
                 }
@@ -99,12 +134,19 @@ class JsonProxy implements InvocationHandler {
     }
 
     public void callBatch(int timeout, final JsonBatch batch) {
-        transaction = false;
+        List<JsonRequest> batches = null;
         if (batchRequests.size() > 0) {
 
+
+            synchronized (batchRequests) {
+                batches = new ArrayList<JsonRequest>(batchRequests.size());
+                batches.addAll(batchRequests);
+                batchRequests.clear();
+                this.batch = false;
+            }
             try {
-                List<JsonResponseModel2> responses = sendBatchRequest(timeout);
-                parseBatchResponse(batch, responses);
+                List<JsonResponseModel2> responses = sendBatchRequest(batches, timeout);
+                parseBatchResponse(batches, batch, responses);
             } catch (final Exception e) {
                 rpc.getHandler().post(new Runnable() {
                     @Override
@@ -115,17 +157,18 @@ class JsonProxy implements InvocationHandler {
 
             }
 
-            batchRequests.clear();
+
+        } else {
+            this.batch = false;
         }
     }
 
-    class BatchTask implements Runnable
-    {
+    class BatchTask implements Runnable {
         private Integer timeout;
         private List<JsonRequest> requests;
         private Thread thread = new Thread(this);
-        private List<JsonResponseModel2> response=null;
-        private IOException ex=null;
+        private List<JsonResponseModel2> response = null;
+        private IOException ex = null;
 
         public BatchTask(Integer timeout, List<JsonRequest> requests) {
             this.timeout = timeout;
@@ -143,14 +186,13 @@ class JsonProxy implements InvocationHandler {
         @Override
         public void run() {
             try {
-                this.response=rpc.getJsonConnection().callBatch(this.requests, this.timeout);
+                this.response = rpc.getJsonConnection().callBatch(this.requests, this.timeout);
             } catch (IOException e) {
-                this.ex=e;
+                this.ex = e;
             }
         }
 
-        public void execute()
-        {
+        public void execute() {
             thread.start();
         }
 
@@ -162,69 +204,73 @@ class JsonProxy implements InvocationHandler {
 
     private static <T> List<List<T>> splitList(List<T> list, final int partsNo) {
         int i;
-        final int partSize=Math.max(1,list.size()/partsNo);
+        final int partSize = Math.max(1, list.size() / partsNo);
         List<List<T>> parts = new ArrayList<List<T>>(partsNo);
-        for (i = 0; i < partsNo-1; i++) {
+        for (i = 0; i < partsNo - 1; i++) {
             parts.add(list.subList(i * partSize, (i + 1) * partSize));
         }
-        parts.add(list.subList(i*partSize,list.size()));
+        parts.add(list.subList(i * partSize, list.size()));
         return parts;
     }
 
-    private List<JsonResponseModel2> sendBatchRequest(final Integer timeout) throws Exception {
-        if (batchRequests.size() > 1 && (!rpc.isWifiOnly() || isWifi()) && rpc.getMaxBatchConnections()>0) {
-            int connections = Math.min(batchRequests.size(), rpc.getMaxBatchConnections());
-            List<List<JsonRequest>> requestParts=splitList(batchRequests, connections);
-            List<JsonResponseModel2> response = new ArrayList<JsonResponseModel2>(batchRequests.size());
+    private List<JsonResponseModel2> sendBatchRequest(List<JsonRequest> batches, final Integer timeout) throws Exception {
+        if (batches.size() > 1 && (!rpc.isWifiOnly() || isWifi()) && rpc.getMaxBatchConnections() > 0) {
+            int connections = Math.min(batches.size(), rpc.getMaxBatchConnections());
+            List<List<JsonRequest>> requestParts = splitList(batches, connections);
+            List<JsonResponseModel2> response = new ArrayList<JsonResponseModel2>(batches.size());
             List<BatchTask> tasks = new ArrayList<BatchTask>(connections);
-            for(List<JsonRequest> requests : requestParts)
-            {
-                BatchTask task = new BatchTask(timeout,requests);
+            for (List<JsonRequest> requests : requestParts) {
+                BatchTask task = new BatchTask(timeout, requests);
                 tasks.add(task);
                 task.execute();
             }
-            for(BatchTask task : tasks)
-            {
+            for (BatchTask task : tasks) {
                 task.join();
-                if(task.ex!=null)
-                {
+                if (task.ex != null) {
                     throw task.getEx();
-                }
-                else
-                {
+                } else {
                     response.addAll(task.getResponse());
                 }
             }
             return response;
         } else {
-            return rpc.getJsonConnection().callBatch(batchRequests, timeout);
+            return rpc.getJsonConnection().callBatch(batches, timeout);
         }
     }
 
-    private void parseBatchResponse(JsonBatch batch, List<JsonResponseModel2> responses) {
-        Object[] results = new Object[batchRequests.size()];
+    private void parseBatchResponse(List<JsonRequest> requests, JsonBatch batch, List<JsonResponseModel2> responses) {
+        Object[] results = new Object[requests.size()];
         Exception ex = null;
         int i = 0;
-        for (JsonRequest request : batchRequests) {
+        for (JsonRequest request : requests) {
             try {
                 JsonResponseModel2 response = responses.get(i);
                 if (response.error != null) {
                     throw new JsonException(request.getName() + ": " + response.error.message, response.error.code);
                 }
-                results[i] = parseResponse(response.result, request.getType());
+                if(request.getType()!=Void.class)
+                {
+                    results[i] = parseResponse(response.result, request.getType());
+                }
+                else
+                {
+                    results[i] = null;
+                }
                 request.invokeCallback(results[i]);
             } catch (Exception e) {
                 ex = e;
-                request.invokeCallback(e);
+
+                request.invokeCallback(new JsonException(request.getName(),e));
             }
             i++;
         }
 
         if (ex == null) {
-            JsonRequest.invokeTransactionCallback(rpc, batch, results);
+            JsonRequest.invokeBatchCallback(rpc, batch, results);
         } else {
-            JsonRequest.invokeTransactionCallback(rpc, batch, ex);
+            JsonRequest.invokeBatchCallback(rpc, batch, ex);
         }
+
     }
 
     private boolean isWifi() {

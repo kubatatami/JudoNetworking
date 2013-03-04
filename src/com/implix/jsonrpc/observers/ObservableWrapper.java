@@ -32,7 +32,7 @@ public class ObservableWrapper<T> {
         {
             observers.add(observer);
             if (object != null) {
-                observer.update(object);
+                observer.update(get());
             }
         }
     }
