@@ -152,6 +152,7 @@ class JsonProxy implements InvocationHandler {
             }
             try {
                 List<JsonResponseModel2> responses = sendBatchRequest(batches);
+                Collections.sort(responses);
                 parseBatchResponse(batches, batch, responses);
             } catch (final Exception e) {
                 rpc.getHandler().post(new Runnable() {
@@ -209,13 +210,22 @@ class JsonProxy implements InvocationHandler {
     }
 
     private static <T> List<List<T>> splitList(List<T> list, final int partsNo) {
-        int i;
-        final int partSize = Math.max(1, list.size() / partsNo);
+        int i=0;
         List<List<T>> parts = new ArrayList<List<T>>(partsNo);
-        for (i = 0; i < partsNo - 1; i++) {
-            parts.add(list.subList(i * partSize, (i + 1) * partSize));
+        for(i=0;i<partsNo;i++)
+        {
+            parts.add(new ArrayList<T>());
         }
-        parts.add(list.subList(i * partSize, list.size()));
+        i=0;
+        for (T elem : list) {
+           parts.get(i).add(elem);
+           i++;
+           if(i==partsNo)
+           {
+               i=0;
+           }
+        }
+
         return parts;
     }
 

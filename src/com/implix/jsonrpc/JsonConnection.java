@@ -65,7 +65,7 @@ class JsonConnection {
             }
         }
 
-        if (params != null) {
+        if (params != null && args!=null) {
             int i = 0;
             Map<String, Object> paramObjects = new HashMap<String, Object>();
             for (String param : params) {
@@ -307,7 +307,7 @@ class JsonConnection {
             reader.close();
         }
 
-        Collections.sort(responses);
+
 
         if ((flags & JsonRpc.TIME_DEBUG) > 0) {
             JsonLoggerImpl.log("Batch request(" + requestsName.substring(1) + "):" +
