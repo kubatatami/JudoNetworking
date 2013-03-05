@@ -24,6 +24,7 @@ class JsonRpcImplementation implements JsonRpc {
     private Context context;
     private boolean byteArrayAsBase64=false;
     private int autoBatchTime=20; //milliseconds
+    private JsonBatchTimeoutMode timeoutMode =JsonBatchTimeoutMode.TIMEOUTS_SUM;
 
     public JsonRpcImplementation(Context context, String url) {
         this.jsonConnection = new JsonConnection(url, this);
@@ -123,12 +124,7 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     @Override
-    public <T> Thread callInBatch(Class<T> obj, JsonBatch<T> batch) {
-        return callInBatch(obj, 0, batch);
-    }
-
-    @Override
-    public <T> Thread callInBatch(Class<T> obj, final int timeout, final JsonBatch<T> batch) {
+    public <T> Thread callInBatch(Class<T> obj, final JsonBatch<T> batch) {
 
         final JsonProxy pr = new JsonProxy(context, this, JsonBatchMode.AUTO);
         T proxy = getService(obj, pr);
@@ -138,7 +134,7 @@ class JsonRpcImplementation implements JsonRpc {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                pr.callBatch(timeout, batch);
+                pr.callBatch(batch);
             }
         });
         thread.start();
@@ -194,5 +190,14 @@ class JsonRpcImplementation implements JsonRpc {
 
     public void setAutoBatchTime(int autoBatchTime) {
         this.autoBatchTime = autoBatchTime;
+    }
+
+    @Override
+    public void setBatchTimeoutMode(JsonBatchTimeoutMode mode) {
+        this.timeoutMode =mode;
+    }
+
+    public JsonBatchTimeoutMode getTimeoutMode() {
+        return timeoutMode;
     }
 }

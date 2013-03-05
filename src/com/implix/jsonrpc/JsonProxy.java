@@ -49,7 +49,7 @@ class JsonProxy implements InvocationHandler {
             } else {
                 String paramNames[] = null;
                 String name = m.getName();
-                Integer timeout = null;
+                int timeout = rpc.getJsonConnection().getMethodTimeout();
                 boolean async = false, notification = false;
                 JsonMethod ann = m.getAnnotation(JsonMethod.class);
                 if (ann != null) {
@@ -61,8 +61,13 @@ class JsonProxy implements InvocationHandler {
                     }
                     async = ann.async();
                     notification = ann.notification();
-                    timeout = ann.timeout();
+                    if(ann.timeout()!=0)
+                    {
+                        timeout = ann.timeout();
+                    }
                 }
+
+
                 if (m.getReturnType().equals(Void.TYPE) && !async && notification) {
                     rpc.getJsonConnection().notify(name, paramNames, args, timeout, rpc.getApiKey());
                     return null;
@@ -91,8 +96,9 @@ class JsonProxy implements InvocationHandler {
                                     try {
                                         Thread.sleep(rpc.getAutoBatchTime());
                                     } catch (InterruptedException e) {
+                                        e.printStackTrace();
                                     }
-                                    JsonProxy.this.callBatch(rpc.getJsonConnection().methodTimeout * batchRequests.size(), new JsonBatch());
+                                    JsonProxy.this.callBatch(new JsonBatch());
                                 }
                             }).start();
 
@@ -122,7 +128,7 @@ class JsonProxy implements InvocationHandler {
     }
 
 
-    public JsonRequest callAsync(int id, String name, String[] params, Object[] args, Type[] types, Integer timeout, String apiKey) throws Exception {
+    public JsonRequest callAsync(int id, String name, String[] params, Object[] args, Type[] types, int timeout, String apiKey) throws Exception {
         Object[] newArgs = null;
         JsonCallback<Object> callback = (JsonCallback<Object>) args[args.length - 1];
         if (args.length > 1) {
@@ -133,7 +139,7 @@ class JsonProxy implements InvocationHandler {
         return new JsonRequest(id, rpc, callback, name, params, newArgs, type, timeout, apiKey);
     }
 
-    public void callBatch(int timeout, final JsonBatch batch) {
+    public void callBatch(final JsonBatch batch) {
         List<JsonRequest> batches = null;
         if (batchRequests.size() > 0) {
 
@@ -145,7 +151,7 @@ class JsonProxy implements InvocationHandler {
                 this.batch = false;
             }
             try {
-                List<JsonResponseModel2> responses = sendBatchRequest(batches, timeout);
+                List<JsonResponseModel2> responses = sendBatchRequest(batches);
                 parseBatchResponse(batches, batch, responses);
             } catch (final Exception e) {
                 rpc.getHandler().post(new Runnable() {
@@ -168,7 +174,7 @@ class JsonProxy implements InvocationHandler {
         private List<JsonRequest> requests;
         private Thread thread = new Thread(this);
         private List<JsonResponseModel2> response = null;
-        private IOException ex = null;
+        private Exception ex = null;
 
         public BatchTask(Integer timeout, List<JsonRequest> requests) {
             this.timeout = timeout;
@@ -179,7 +185,7 @@ class JsonProxy implements InvocationHandler {
             return this.response;
         }
 
-        public IOException getEx() {
+        public Exception getEx() {
             return ex;
         }
 
@@ -187,7 +193,7 @@ class JsonProxy implements InvocationHandler {
         public void run() {
             try {
                 this.response = rpc.getJsonConnection().callBatch(this.requests, this.timeout);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 this.ex = e;
             }
         }
@@ -213,14 +219,35 @@ class JsonProxy implements InvocationHandler {
         return parts;
     }
 
-    private List<JsonResponseModel2> sendBatchRequest(List<JsonRequest> batches, final Integer timeout) throws Exception {
+    private int calculateTimeout(List<JsonRequest> batches)
+    {
+        int timeout=0;
+        if(rpc.getTimeoutMode()==JsonBatchTimeoutMode.TIMEOUTS_SUM)
+        {
+            for(JsonRequest req : batches)
+            {
+                timeout+=req.getTimeout();
+            }
+        }
+        else
+        {
+            for(JsonRequest req : batches)
+            {
+                timeout=Math.max(timeout, req.getTimeout());
+            }
+        }
+        return timeout;
+    }
+
+    private List<JsonResponseModel2> sendBatchRequest(List<JsonRequest> batches) throws Exception {
         if (batches.size() > 1 && (!rpc.isWifiOnly() || isWifi()) && rpc.getMaxBatchConnections() > 0) {
             int connections = Math.min(batches.size(), rpc.getMaxBatchConnections());
             List<List<JsonRequest>> requestParts = splitList(batches, connections);
             List<JsonResponseModel2> response = new ArrayList<JsonResponseModel2>(batches.size());
             List<BatchTask> tasks = new ArrayList<BatchTask>(connections);
             for (List<JsonRequest> requests : requestParts) {
-                BatchTask task = new BatchTask(timeout, requests);
+
+                BatchTask task = new BatchTask(calculateTimeout(requests), requests);
                 tasks.add(task);
                 task.execute();
             }
@@ -234,7 +261,8 @@ class JsonProxy implements InvocationHandler {
             }
             return response;
         } else {
-            return rpc.getJsonConnection().callBatch(batches, timeout);
+
+            return rpc.getJsonConnection().callBatch(batches, calculateTimeout(batches));
         }
     }
 
@@ -259,7 +287,6 @@ class JsonProxy implements InvocationHandler {
                 request.invokeCallback(results[i]);
             } catch (Exception e) {
                 ex = e;
-
                 request.invokeCallback(new JsonException(request.getName(),e));
             }
             i++;

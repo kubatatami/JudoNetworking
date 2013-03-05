@@ -9,6 +9,7 @@ import com.google.gson.stream.JsonReader;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.*;
 
@@ -54,14 +55,11 @@ class JsonConnection {
 
     private JsonRequestModel createRequest(Integer currId, String name, String[] params, Object[] args, String apiKey) {
         Object finalArgs = null;
-        if(args!=null && rpc.isByteArrayAsBase64())
-        {
-            int i=0;
-            for(Object object : args)
-            {
-                if(object instanceof byte[])
-                {
-                    args[i]=Base64.encodeToString((byte[]) object,Base64.NO_WRAP);
+        if (args != null && rpc.isByteArrayAsBase64()) {
+            int i = 0;
+            for (Object object : args) {
+                if (object instanceof byte[]) {
+                    args[i] = Base64.encodeToString((byte[]) object, Base64.NO_WRAP);
                 }
                 i++;
             }
@@ -156,7 +154,7 @@ class JsonConnection {
         if ((flags & JsonRpc.RESPONSE_DEBUG) > 0) {
 
             String resStr = convertStreamToString(stream);
-            longStrToConsole("RES", resStr);
+            longStrToConsole("RES(" + resStr.length() + ")", resStr);
 
             if (version == JsonRpcVersion.VERSION_2_0) {
                 JsonResponseModel2 response = rpc.getParser().fromJson(resStr, JsonResponseModel2.class);
@@ -235,7 +233,7 @@ class JsonConnection {
         parseTime = System.currentTimeMillis() - time;
 
         if ((flags & JsonRpc.TIME_DEBUG) > 0) {
-            JsonLoggerImpl.log("Single request(" + name + "): connection("+connectionType+")"+
+            JsonLoggerImpl.log("Single request(" + name + "): connection(" + connectionType + ")" +
                     " timeout(" + conn.getReadTimeout() + "ms) create(" + (createTime) + "ms)" +
                     " connection&send(" + connectionTime + "ms)" +
                     " read(" + readTime + "ms) parse(" + parseTime + "ms)" +
@@ -258,7 +256,7 @@ class JsonConnection {
     }
 
 
-    public List<JsonResponseModel2> callBatch(List<JsonRequest> requests, Integer timeout) throws IOException {
+    public List<JsonResponseModel2> callBatch(List<JsonRequest> requests, Integer timeout) throws Exception {
         int i = 0;
         long createTime, connectionTime = 0, time = System.currentTimeMillis();
         long startTime = time;
@@ -280,10 +278,8 @@ class JsonConnection {
         createTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();
 
-
         conn = conn(requestsJson, timeout);
         InputStream stream = conn.getInputStream();
-
 
         if (conn.getHeaderField("Connection") != null) {
             connectionType += conn.getHeaderField("Connection");
@@ -299,7 +295,7 @@ class JsonConnection {
         if ((flags & JsonRpc.RESPONSE_DEBUG) > 0) {
 
             String resStr = convertStreamToString(stream);
-            longStrToConsole("RES", resStr);
+            longStrToConsole("RES(" + resStr.length() + ")", resStr);
             responses = rpc.getParser().fromJson(resStr,
                     new TypeToken<List<JsonResponseModel2>>() {
                     }.getType());
@@ -314,7 +310,8 @@ class JsonConnection {
         Collections.sort(responses);
 
         if ((flags & JsonRpc.TIME_DEBUG) > 0) {
-            JsonLoggerImpl.log("Batch request(" + requestsName.substring(1) + "): connection("+connectionType+")"+
+            JsonLoggerImpl.log("Batch request(" + requestsName.substring(1) + "):" +
+                    " connection(" + connectionType + ")" +
                     " timeout(" + conn.getReadTimeout() + "ms)" +
                     " createRequests(" + (createTime) + "ms)" +
                     " connection&send(" + connectionTime + "ms)" +
@@ -341,5 +338,9 @@ class JsonConnection {
 
     public void setMethodTimeout(int methodTimeout) {
         this.methodTimeout = methodTimeout;
+    }
+
+    public int getMethodTimeout() {
+        return methodTimeout;
     }
 }

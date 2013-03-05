@@ -10,10 +10,10 @@ class JsonRequest implements Runnable {
     private String[] params;
     private Object[] args;
     private Type type;
-    private Integer timeout;
+    private int timeout;
     private String apiKey;
 
-    JsonRequest(Integer id, JsonRpcImplementation rpc, JsonCallback<Object> callback, String name, String[] params, Object[] args, Type type, Integer timeout, String apiKey) {
+    JsonRequest(Integer id, JsonRpcImplementation rpc, JsonCallback<Object> callback, String name, String[] params, Object[] args, Type type, int timeout, String apiKey) {
         this.id = id;
         this.rpc = rpc;
         this.callback = callback;
@@ -83,5 +83,9 @@ class JsonRequest implements Runnable {
 
     public String getApiKey() {
         return apiKey;
+    }
+
+    public Integer getTimeout() {
+        return timeout;
     }
 }
