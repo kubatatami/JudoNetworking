@@ -16,12 +16,12 @@ import java.util.List;
 
 class JsonProxy implements InvocationHandler {
 
-    Context context;
-    JsonRpcImplementation rpc;
-    int id = 0;
-    boolean batch = false;
+    private Context context;
+    private JsonRpcImplementation rpc;
+    private int id = 0;
+    private boolean batch = false;
     private final List<JsonRequest> batchRequests = new ArrayList<JsonRequest>();
-    JsonBatchMode mode = JsonBatchMode.NONE;
+    private JsonBatchMode mode = JsonBatchMode.NONE;
 
     public JsonProxy(Context context, JsonRpcImplementation rpc, JsonBatchMode mode) {
         this.rpc = rpc;
@@ -259,6 +259,8 @@ class JsonProxy implements InvocationHandler {
 
                 BatchTask task = new BatchTask(calculateTimeout(requests), requests);
                 tasks.add(task);
+            }
+            for (BatchTask task : tasks) {
                 task.execute();
             }
             for (BatchTask task : tasks) {

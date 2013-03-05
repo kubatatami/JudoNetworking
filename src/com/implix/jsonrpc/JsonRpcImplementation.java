@@ -126,7 +126,7 @@ class JsonRpcImplementation implements JsonRpc {
     @Override
     public <T> Thread callInBatch(Class<T> obj, final JsonBatch<T> batch) {
 
-        final JsonProxy pr = new JsonProxy(context, this, JsonBatchMode.AUTO);
+        final JsonProxy pr = new JsonProxy(context, this, JsonBatchMode.MANUAL);
         T proxy = getService(obj, pr);
         batch.run(proxy);
 

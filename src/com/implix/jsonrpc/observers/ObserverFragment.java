@@ -40,10 +40,8 @@ public class ObserverFragment extends Fragment {
                         public void update(Object data) {
                             try {
                                 method.invoke(ObserverFragment.this, data);
-                            } catch (IllegalAccessException e) {
-                                e.printStackTrace();
-                            } catch (InvocationTargetException e) {
-                                e.printStackTrace();
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
                             }
                         }
                     };
