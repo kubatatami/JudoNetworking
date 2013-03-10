@@ -1,5 +1,7 @@
 package com.implix.jsonrpc;
 
+import java.lang.reflect.Method;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -25,7 +27,7 @@ public interface JsonRpc {
 
     public void setDebugFlags(int flags);
 
-    public void setMultiBatchConnections(int maxConnections, boolean wifiOnly);
+    public void setMultiBatchConnections(int maxMobileConnections, int maxWifiConnections);
 
     public void setApiKey(String apiKey);
 
@@ -35,9 +37,16 @@ public interface JsonRpc {
 
     public void setBatchTimeoutMode(JsonBatchTimeoutMode mode);
 
+    public void setCacheEnabled(boolean enabled);
+
+    public void clearCache();
+
+    public void clearCache(Method method);
+
     public static final int TIME_DEBUG = 1;
     public static final int REQUEST_DEBUG = 2;
     public static final int RESPONSE_DEBUG = 4;
+    public static final int CACHE_DEBUG = 8;
 
-    public static final int FULL_DEBUG = 7;
+    public static final int FULL_DEBUG = 15;
 }

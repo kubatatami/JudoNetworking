@@ -3,18 +3,23 @@ package com.implix.jsonrpc;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.v4.util.LruCache;
 import android.util.Base64;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 class JsonRpcImplementation implements JsonRpc {
 
-    private int maxBatchConnections =0;
-    private boolean wifiOnly=true;
+    private int maxMobileConnections=1;
+    private int maxWifiConnections=1;
     private JsonConnection jsonConnection;
     private Handler handler = new Handler();
     private Gson parser;
@@ -23,8 +28,11 @@ class JsonRpcImplementation implements JsonRpc {
     private String authKey = null;
     private Context context;
     private boolean byteArrayAsBase64=false;
+    private boolean cacheEnabled=false;
     private int autoBatchTime=20; //milliseconds
     private JsonBatchTimeoutMode timeoutMode =JsonBatchTimeoutMode.TIMEOUTS_SUM;
+    private JsonCache cache=new JsonCache(this);
+    private int debugFlags = 0;
 
     public JsonRpcImplementation(Context context, String url) {
         this.jsonConnection = new JsonConnection(url, this);
@@ -88,20 +96,16 @@ class JsonRpcImplementation implements JsonRpc {
         }
     }
 
-    @Override
-    public void setDebugFlags(int flags) {
-        jsonConnection.setDebugFlags(flags);
-    }
 
     @Override
-    public void setMultiBatchConnections(int maxConnections, boolean wifiOnly) {
-        this.maxBatchConnections=maxConnections;
-        this.wifiOnly=wifiOnly;
-
+    public void setMultiBatchConnections(int maxMobileConnections, int maxWifiConnections) {
+        this.maxMobileConnections=maxMobileConnections;
+        this.maxWifiConnections=maxWifiConnections;
+        int max = Math.max(maxMobileConnections,maxWifiConnections);
         String currentMaxConnections =System.getProperty("http.maxConnections");
-        if(currentMaxConnections == null || Integer.parseInt(currentMaxConnections) < maxConnections*2)
+        if(currentMaxConnections == null || Integer.parseInt(currentMaxConnections) < max*2)
         {
-            System.setProperty("http.maxConnections", maxConnections*2+"");
+            System.setProperty("http.maxConnections", max*2+"");
         }
     }
 
@@ -172,12 +176,13 @@ class JsonRpcImplementation implements JsonRpc {
         return authKey;
     }
 
-    public int getMaxBatchConnections() {
-        return maxBatchConnections;
+
+    public int getMaxMobileConnections() {
+        return maxMobileConnections;
     }
 
-    public boolean isWifiOnly() {
-        return wifiOnly;
+    public int getMaxWifiConnections() {
+        return maxWifiConnections;
     }
 
     public String getApiKey() {
@@ -197,7 +202,39 @@ class JsonRpcImplementation implements JsonRpc {
         this.timeoutMode =mode;
     }
 
+    @Override
+    public void setCacheEnabled(boolean enabled) {
+       this.cacheEnabled=enabled;
+    }
+
+    @Override
+    public void clearCache() {
+        cache.clearCache();
+    }
+
+    @Override
+    public void clearCache(Method method) {
+        cache.clearCache(JsonProxy.getMethodName(method));
+    }
+
     public JsonBatchTimeoutMode getTimeoutMode() {
         return timeoutMode;
+    }
+
+    public boolean isCacheEnabled() {
+        return cacheEnabled;
+    }
+
+    public JsonCache getCache() {
+        return cache;
+    }
+
+    @Override
+    public void setDebugFlags(int flags) {
+        this.debugFlags = flags;
+    }
+
+    public int getDebugFlags() {
+        return debugFlags;
     }
 }

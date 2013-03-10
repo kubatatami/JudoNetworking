@@ -12,8 +12,11 @@ class JsonRequest implements Runnable {
     private Type type;
     private int timeout;
     private String apiKey;
+    private boolean cachable;
+    private int cacheLifeTime;
+    private int cacheSize;
 
-    JsonRequest(Integer id, JsonRpcImplementation rpc, JsonCallback<Object> callback, String name, String[] params, Object[] args, Type type, int timeout, String apiKey) {
+    JsonRequest(Integer id, JsonRpcImplementation rpc, JsonCallback<Object> callback, String name, String[] params, Object[] args, Type type, int timeout, String apiKey, boolean cachable, int cacheLifeTime,int cacheSize) {
         this.id = id;
         this.rpc = rpc;
         this.callback = callback;
@@ -23,12 +26,16 @@ class JsonRequest implements Runnable {
         this.type = type;
         this.timeout = timeout;
         this.apiKey = apiKey;
+        this.cachable = cachable;
+        this.cacheLifeTime = cacheLifeTime;
+        this.cacheSize = cacheSize;
+
     }
 
     @Override
     public void run() {
         try {
-            Object result = rpc.getJsonConnection().call(id, name, params, args, type, timeout, apiKey);
+            Object result = rpc.getJsonConnection().call(id, name, params, args, type, timeout, apiKey,cachable,cacheLifeTime, cacheSize);
             invokeCallback(result);
         } catch (Exception e) {
             invokeCallback(e);
@@ -87,5 +94,17 @@ class JsonRequest implements Runnable {
 
     public Integer getTimeout() {
         return timeout;
+    }
+
+    public int getCacheLifeTime() {
+        return cacheLifeTime;
+    }
+
+    public boolean isCachable() {
+        return cachable;
+    }
+
+    public int getCacheSize() {
+        return cacheSize;
     }
 }

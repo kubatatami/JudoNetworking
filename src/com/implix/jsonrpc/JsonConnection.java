@@ -18,7 +18,6 @@ class JsonConnection {
     String url;
     JsonRpcImplementation rpc;
     JsonRpcVersion version = JsonRpcVersion.VERSION_2_0;
-    int flags = 0;
     int reconnections = 3;
     int connectTimeout = 15000;
     int methodTimeout = 10000;
@@ -135,7 +134,7 @@ class JsonConnection {
         urlConnection.setDoOutput(true);
         Writer writer = new BufferedWriter(new OutputStreamWriter(urlConnection.getOutputStream()));
 
-        if ((flags & JsonRpc.REQUEST_DEBUG) > 0) {
+        if ((rpc.getDebugFlags() & JsonRpc.REQUEST_DEBUG) > 0) {
             String req = rpc.getParser().toJson(request);
             longStrToConsole("REQ", req);
             writer.write(req);
@@ -151,7 +150,7 @@ class JsonConnection {
 
 
     private JsonResponseModel readResponse(InputStream stream) throws Exception {
-        if ((flags & JsonRpc.RESPONSE_DEBUG) > 0) {
+        if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
 
             String resStr = convertStreamToString(stream);
             longStrToConsole("RES(" + resStr.length() + ")", resStr);
@@ -193,10 +192,19 @@ class JsonConnection {
 
     }
 
-    public <T> T call(int id, String name, String[] params, Object[] args, Type type, int timeout, String apiKey) throws Exception {
+    public <T> T call(int id, String name, String[] params, Object[] args, Type type, int timeout, String apiKey, boolean cachable, int cacheLifeTime,int cacheSize) throws Exception {
         long createTime = 0, connectionTime = 0, readTime = 0, parseTime = 0, time = System.currentTimeMillis();
         long startTime = time;
         String connectionType = "";
+
+        if(rpc.isCacheEnabled() && cachable)
+        {
+            Object cacheObject=rpc.getCache().get(name,args,cacheLifeTime);
+            if(cacheObject!=null)
+            {
+                return (T) cacheObject;
+            }
+        }
 
         JsonRequestModel request = createRequest(id, name, params, args, apiKey);
 
@@ -219,6 +227,11 @@ class JsonConnection {
 
         JsonResponseModel response = readResponse(conn.getInputStream());
 
+        if(response==null)
+        {
+            throw new JsonException("Empty response.");
+        }
+
         readTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();
 
@@ -232,7 +245,7 @@ class JsonConnection {
 
         parseTime = System.currentTimeMillis() - time;
 
-        if ((flags & JsonRpc.TIME_DEBUG) > 0) {
+        if ((rpc.getDebugFlags() & JsonRpc.TIME_DEBUG) > 0) {
             JsonLoggerImpl.log("Single request(" + name + "): connection(" + connectionType + ")" +
                     " timeout(" + conn.getReadTimeout() + "ms) create(" + (createTime) + "ms)" +
                     " connection&send(" + connectionTime + "ms)" +
@@ -241,6 +254,12 @@ class JsonConnection {
         }
 
         conn.disconnect();
+
+        if(rpc.isCacheEnabled())
+        {
+            rpc.getCache().put(name,args,res, cacheSize);
+        }
+
         return res;
 
     }
@@ -292,7 +311,7 @@ class JsonConnection {
         connectionTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();
 
-        if ((flags & JsonRpc.RESPONSE_DEBUG) > 0) {
+        if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
 
             String resStr = convertStreamToString(stream);
             longStrToConsole("RES(" + resStr.length() + ")", resStr);
@@ -307,9 +326,12 @@ class JsonConnection {
             reader.close();
         }
 
+        if(responses==null)
+        {
+            throw new JsonException("Empty response.");
+        }
 
-
-        if ((flags & JsonRpc.TIME_DEBUG) > 0) {
+        if ((rpc.getDebugFlags() & JsonRpc.TIME_DEBUG) > 0) {
             JsonLoggerImpl.log("Batch request(" + requestsName.substring(1) + "):" +
                     " connection(" + connectionType + ")" +
                     " timeout(" + conn.getReadTimeout() + "ms)" +
@@ -324,9 +346,7 @@ class JsonConnection {
     }
 
 
-    public void setDebugFlags(int flags) {
-        this.flags = flags;
-    }
+
 
     public void setReconnections(int reconnections) {
         this.reconnections = reconnections;
