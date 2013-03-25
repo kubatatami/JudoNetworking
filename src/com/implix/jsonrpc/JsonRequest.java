@@ -2,7 +2,7 @@ package com.implix.jsonrpc;
 
 import java.lang.reflect.Type;
 
-class JsonRequest implements Runnable {
+class JsonRequest implements Runnable, Comparable<JsonRequest> {
     private Integer id;
     private JsonRpcImplementation rpc;
     private JsonCallback<Object> callback;
@@ -35,7 +35,7 @@ class JsonRequest implements Runnable {
     @Override
     public void run() {
         try {
-            Object result = rpc.getJsonConnection().call(id, name, params, args, type, timeout, apiKey,cachable,cacheLifeTime, cacheSize);
+            Object result = rpc.getJsonConnector().call(id, name, params, args, type, timeout, apiKey,cachable,cacheLifeTime, cacheSize);
             invokeCallback(result);
         } catch (Exception e) {
             invokeCallback(e);
@@ -106,5 +106,22 @@ class JsonRequest implements Runnable {
 
     public int getCacheSize() {
         return cacheSize;
+    }
+
+    public long getWeight()
+    {
+        if(rpc.getStats().containsKey(name))
+        {
+            return rpc.getStats().get(name).avgTime;
+        }
+        else
+        {
+            return timeout/2;
+        }
+    }
+
+    @Override
+    public int compareTo(JsonRequest another) {
+        return Long.valueOf(another.getWeight()).compareTo(getWeight());  //To change body of implemented methods use File | Settings | File Templates.
     }
 }

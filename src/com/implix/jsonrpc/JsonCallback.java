@@ -19,10 +19,17 @@ public class  JsonCallback<T> {
 
     public void onError(Exception e)
     {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        JsonLoggerImpl.log(sw.toString());
+        if(e!=null)
+        {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            JsonLoggerImpl.log(sw.toString());
+        }
+        else
+        {
+            JsonLoggerImpl.log("NULL EXCEPTION");
+        }
     }
 
 }

@@ -39,6 +39,12 @@ public interface JsonRpc {
 
     public void setCacheEnabled(boolean enabled);
 
+    public void setTimeProfilerEnabled(boolean enabled);
+
+    public void showTimeProfilerInfo();
+
+    public void clearTimeProfilerStat();
+
     public void clearCache();
 
     public void clearCache(Method method);

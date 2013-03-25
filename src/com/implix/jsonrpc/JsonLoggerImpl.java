@@ -2,6 +2,9 @@ package com.implix.jsonrpc;
 
 import android.util.Log;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -36,6 +39,13 @@ class JsonLoggerImpl {
         }
     }
 
+    public static void log(Exception e)
+    {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        JsonLoggerImpl.log(sw.toString());
+    }
 
     public static void setTag(String tag) {
         JsonLoggerImpl.tag = tag;

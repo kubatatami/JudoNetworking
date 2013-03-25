@@ -33,13 +33,13 @@ class AsyncResult implements Runnable
         public void run() {
             if(callback!=null)
             {
-                if(result!=null)
-                {
-                    callback.onFinish(result);
-                }
-                else if(e!=null)
+                if(e!=null)
                 {
                     callback.onError(e);
+                }
+                else
+                {
+                    callback.onFinish(result);
                 }
             }
             else

@@ -5,9 +5,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Pair;
 import com.google.gson.JsonElement;
-import org.w3c.dom.EntityReference;
+import com.google.gson.JsonSyntaxException;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -41,10 +40,9 @@ class JsonProxy implements InvocationHandler {
         return null;
     }
 
-    public static String getMethodName(Method method)
-    {
+    public static String getMethodName(Method method) {
         String name = method.getName();
-        JsonMethod ann =method.getAnnotation(JsonMethod.class);
+        JsonMethod ann = method.getAnnotation(JsonMethod.class);
         if (ann != null) {
             if (!ann.name().equals("")) {
                 name = ann.name();
@@ -61,7 +59,7 @@ class JsonProxy implements InvocationHandler {
             } else {
                 String paramNames[] = null;
                 String name = getMethodName(m);
-                int timeout = rpc.getJsonConnection().getMethodTimeout();
+                int timeout = rpc.getJsonConnector().getMethodTimeout();
                 int cacheLifeTime = 0, cacheSize = 0;
                 boolean async = false, notification = false, cachable = false;
                 JsonMethod ann = m.getAnnotation(JsonMethod.class);
@@ -81,10 +79,10 @@ class JsonProxy implements InvocationHandler {
 
 
                 if (m.getReturnType().equals(Void.TYPE) && !async && notification) {
-                    rpc.getJsonConnection().notify(name, paramNames, args, timeout, rpc.getApiKey());
+                    rpc.getJsonConnector().notify(name, paramNames, args, timeout, rpc.getApiKey());
                     return null;
                 } else if (!async) {
-                    return rpc.getJsonConnection().call(++id, name, paramNames, args, m.getGenericReturnType(), timeout, rpc.getApiKey(), cachable, cacheLifeTime, cacheSize);
+                    return rpc.getJsonConnector().call(++id, name, paramNames, args, m.getGenericReturnType(), timeout, rpc.getApiKey(), cachable, cacheLifeTime, cacheSize);
                 } else {
                     final JsonRequest request = callAsync(++id, name, paramNames, args, m.getGenericParameterTypes(), timeout, rpc.getApiKey(), cachable, cacheLifeTime, cacheSize);
 
@@ -139,7 +137,7 @@ class JsonProxy implements InvocationHandler {
         }
     }
 
-
+    @SuppressWarnings("unchecked")
     public JsonRequest callAsync(int id, String name, String[] params, Object[] args, Type[] types, int timeout, String apiKey, boolean cachable, int cacheLifeTime, int cacheSize) throws Exception {
         Object[] newArgs = null;
         JsonCallback<Object> callback = (JsonCallback<Object>) args[args.length - 1];
@@ -163,41 +161,41 @@ class JsonProxy implements InvocationHandler {
                 this.batch = false;
             }
             try {
-                Map<Integer, Pair<JsonRequest,Object>> cacheObjects = new HashMap<Integer, Pair<JsonRequest,Object>>();
+                Map<Integer, Pair<JsonRequest, Object>> cacheObjects = new HashMap<Integer, Pair<JsonRequest, Object>>();
                 if (rpc.isCacheEnabled()) {
                     for (int i = batches.size() - 1; i >= 0; i--) {
                         JsonRequest req = batches.get(0);
                         Object object = rpc.getCache().get(req.getName(), req.getArgs(), req.getCacheLifeTime());
                         if (req.isCachable() && object != null) {
-                            cacheObjects.put(i, new Pair<JsonRequest, Object>(req,object));
+                            cacheObjects.put(i, new Pair<JsonRequest, Object>(req, object));
                             batches.remove(i);
                         }
                     }
                 }
                 List<JsonResponseModel2> responses = null;
-                if(batches.size()>0)
-                {
-                    responses=sendBatchRequest(batches);
+                if (batches.size() > 0) {
+                    responses = sendBatchRequest(batches);
                     Collections.sort(responses);
-                }
-                else
-                {
-                    responses=new ArrayList<JsonResponseModel2>();
+                } else {
+                    responses = new ArrayList<JsonResponseModel2>();
                 }
 
                 for (Map.Entry<Integer, Pair<JsonRequest, Object>> pairs : cacheObjects.entrySet()) {
                     responses.add(pairs.getKey(), new JsonResponseModel2(pairs.getValue().second));
                     batches.add(pairs.getKey(), pairs.getValue().first);
                 }
-
+                Collections.sort(batches,new Comparator<JsonRequest>() {
+                    @Override
+                    public int compare(JsonRequest lhs, JsonRequest rhs) {
+                        return lhs.getId().compareTo(rhs.getId());
+                    }
+                });
                 parseBatchResponse(batches, batch, responses);
             } catch (final Exception e) {
-                if(mode==JsonBatchMode.AUTO)
-                {
-                   for(JsonRequest req : batches)
-                   {
-                       req.invokeCallback(e);
-                   }
+                if (mode == JsonBatchMode.AUTO) {
+                    for (JsonRequest req : batches) {
+                        req.invokeCallback(e);
+                    }
                 }
                 rpc.getHandler().post(new Runnable() {
                     @Override
@@ -237,7 +235,7 @@ class JsonProxy implements InvocationHandler {
         @Override
         public void run() {
             try {
-                this.response = rpc.getJsonConnection().callBatch(this.requests, this.timeout);
+                this.response = rpc.getJsonConnector().callBatch(this.requests, this.timeout);
             } catch (Exception e) {
                 this.ex = e;
             }
@@ -253,14 +251,53 @@ class JsonProxy implements InvocationHandler {
 
     }
 
-    private static <T> List<List<T>> splitList(List<T> list, final int partsNo) {
+    private List<List<JsonRequest>> assignRequestsToConnections(List<JsonRequest> list, final int partsNo) {
+        if (rpc.isTimeProfiler()) {
+            return timeAssignRequests(list, partsNo);
+        } else {
+            return simpleAssignRequests(list, partsNo);
+        }
+    }
+
+    private int getSmallestPart( long[] parts)
+    {
+        int res=0;
+
+        for (int i=0;i<parts.length;i++)
+        {
+            if (parts[i] < parts[res])
+            {
+                res=i;
+            }
+        }
+        return res;
+    }
+
+    private List<List<JsonRequest>> timeAssignRequests(List<JsonRequest> list, final int partsNo) {
+        List<List<JsonRequest>> parts = new ArrayList<List<JsonRequest>>(partsNo);
+        long[] weights = new long[partsNo];
+        for (int i = 0; i < partsNo; i++) {
+            parts.add(new ArrayList<JsonRequest>());
+        }
+        Collections.sort(list);
+        for(JsonRequest req : list)
+        {
+            int i = getSmallestPart(weights);
+            weights[i]+=req.getWeight();
+            parts.get(i).add(req);
+        }
+
+        return parts;
+    }
+
+    private static List<List<JsonRequest>> simpleAssignRequests(List<JsonRequest> list, final int partsNo) {
         int i = 0;
-        List<List<T>> parts = new ArrayList<List<T>>(partsNo);
+        List<List<JsonRequest>> parts = new ArrayList<List<JsonRequest>>(partsNo);
         for (i = 0; i < partsNo; i++) {
-            parts.add(new ArrayList<T>());
+            parts.add(new ArrayList<JsonRequest>());
         }
         i = 0;
-        for (T elem : list) {
+        for (JsonRequest elem : list) {
             parts.get(i).add(elem);
             i++;
             if (i == partsNo) {
@@ -290,7 +327,7 @@ class JsonProxy implements InvocationHandler {
 
         if (batches.size() > 1 && conn > 1) {
             int connections = Math.min(batches.size(), conn);
-            List<List<JsonRequest>> requestParts = splitList(batches, connections);
+            List<List<JsonRequest>> requestParts = assignRequestsToConnections(batches, connections);
             List<JsonResponseModel2> response = new ArrayList<JsonResponseModel2>(batches.size());
             List<BatchTask> tasks = new ArrayList<BatchTask>(connections);
             for (List<JsonRequest> requests : requestParts) {
@@ -312,7 +349,7 @@ class JsonProxy implements InvocationHandler {
             return response;
         } else {
 
-            return rpc.getJsonConnection().callBatch(batches, calculateTimeout(batches));
+            return rpc.getJsonConnector().callBatch(batches, calculateTimeout(batches));
         }
     }
 
@@ -329,13 +366,16 @@ class JsonProxy implements InvocationHandler {
                     if (response.error != null) {
                         throw new JsonException(request.getName() + ": " + response.error.message, response.error.code);
                     }
+
                     if (request.getType() != Void.class) {
-                        results[i] = parseResponse(response.result, request.getType());
-                        if (rpc.isCacheEnabled() && request.isCachable()) {
-                            rpc.getCache().put(request.getName(),request.getArgs(),results[i],request.getCacheSize());
+                        try {
+                            results[i] = parseResponse(response.result, request.getType());
+                        } catch (JsonSyntaxException e) {
+                            throw new JsonException(request.getName(), e);
                         }
-                    } else {
-                        results[i] = null;
+                        if (rpc.isCacheEnabled() && request.isCachable()) {
+                            rpc.getCache().put(request.getName(), request.getArgs(), results[i], request.getCacheSize());
+                        }
                     }
                 }
                 request.invokeCallback(results[i]);

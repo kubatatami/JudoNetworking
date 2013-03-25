@@ -3,13 +3,13 @@ package com.implix.jsonrpc;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.v4.util.LruCache;
 import android.util.Base64;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
@@ -18,46 +18,53 @@ import java.util.Map;
 
 class JsonRpcImplementation implements JsonRpc {
 
-    private int maxMobileConnections=1;
-    private int maxWifiConnections=1;
-    private JsonConnection jsonConnection;
+    private int maxMobileConnections = 1;
+    private int maxWifiConnections = 1;
+    private JsonConnector jsonConnector;
     private Handler handler = new Handler();
     private Gson parser;
     private String apiKey = null;
     private ExclusionStrategy exclusionStrategy = new SerializationExclusionStrategy();
     private String authKey = null;
     private Context context;
-    private boolean byteArrayAsBase64=false;
-    private boolean cacheEnabled=false;
-    private int autoBatchTime=20; //milliseconds
-    private JsonBatchTimeoutMode timeoutMode =JsonBatchTimeoutMode.TIMEOUTS_SUM;
-    private JsonCache cache=new JsonCache(this);
+    private boolean byteArrayAsBase64 = false;
+    private boolean cacheEnabled = false;
+    private boolean timeProfiler = false;
+    private int autoBatchTime = 20; //milliseconds
+    private JsonBatchTimeoutMode timeoutMode = JsonBatchTimeoutMode.TIMEOUTS_SUM;
+    private JsonCache cache = new JsonCache(this);
     private int debugFlags = 0;
+    private Map<String, JsonStat> stats;
+    private File statFile;
 
     public JsonRpcImplementation(Context context, String url) {
-        this.jsonConnection = new JsonConnection(url, this);
+        this.jsonConnector = new JsonConnector(url, this);
         this.parser = new GsonBuilder().addSerializationExclusionStrategy(exclusionStrategy).create();
         this.context = context;
+        statFile = new File(context.getCacheDir(), "stats");
     }
 
     public JsonRpcImplementation(Context context, String url, GsonBuilder builder) {
-        this.jsonConnection = new JsonConnection(url, this);
+        this.jsonConnector = new JsonConnector(url, this);
         this.parser = builder.addSerializationExclusionStrategy(exclusionStrategy).create();
         this.context = context;
+        statFile = new File(context.getCacheDir(), "stats");
     }
 
     public JsonRpcImplementation(Context context, String url, String apiKey) {
-        this.jsonConnection = new JsonConnection(url, this);
+        this.jsonConnector = new JsonConnector(url, this);
         this.parser = new GsonBuilder().addSerializationExclusionStrategy(exclusionStrategy).create();
         this.apiKey = apiKey;
         this.context = context;
+        statFile = new File(context.getCacheDir(), "stats");
     }
 
     public JsonRpcImplementation(Context context, String url, String apiKey, GsonBuilder builder) {
-        this.jsonConnection = new JsonConnection(url, this);
+        this.jsonConnector = new JsonConnector(url, this);
         this.parser = builder.addSerializationExclusionStrategy(exclusionStrategy).create();
         this.apiKey = apiKey;
         this.context = context;
+        statFile = new File(context.getCacheDir(), "stats");
     }
 
     private class SerializationExclusionStrategy implements ExclusionStrategy {
@@ -77,14 +84,14 @@ class JsonRpcImplementation implements JsonRpc {
 
     @Override
     public void setJsonVersion(JsonRpcVersion version) {
-        jsonConnection.setJsonVersion(version);
+        jsonConnector.setJsonVersion(version);
     }
 
     @Override
     public void setTimeouts(int connectionTimeout, int methodTimeout, int reconnectionAttempts) {
-        jsonConnection.setConnectTimeout(connectionTimeout);
-        jsonConnection.setMethodTimeout(methodTimeout);
-        jsonConnection.setReconnections(reconnectionAttempts);
+        jsonConnector.setConnectTimeout(connectionTimeout);
+        jsonConnector.setMethodTimeout(methodTimeout);
+        jsonConnector.setReconnections(reconnectionAttempts);
     }
 
     @Override
@@ -99,13 +106,12 @@ class JsonRpcImplementation implements JsonRpc {
 
     @Override
     public void setMultiBatchConnections(int maxMobileConnections, int maxWifiConnections) {
-        this.maxMobileConnections=maxMobileConnections;
-        this.maxWifiConnections=maxWifiConnections;
-        int max = Math.max(maxMobileConnections,maxWifiConnections);
-        String currentMaxConnections =System.getProperty("http.maxConnections");
-        if(currentMaxConnections == null || Integer.parseInt(currentMaxConnections) < max*2)
-        {
-            System.setProperty("http.maxConnections", max*2+"");
+        this.maxMobileConnections = maxMobileConnections;
+        this.maxWifiConnections = maxWifiConnections;
+        int max = Math.max(maxMobileConnections, maxWifiConnections);
+        String currentMaxConnections = System.getProperty("http.maxConnections");
+        if (currentMaxConnections == null || Integer.parseInt(currentMaxConnections) < max * 2) {
+            System.setProperty("http.maxConnections", (max * 2) + "");
         }
     }
 
@@ -119,11 +125,11 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     public <T> T getService(Class<T> obj, boolean autoBatch) {
-        return getService(obj, new JsonProxy(context,this,autoBatch ? JsonBatchMode.AUTO : JsonBatchMode.NONE));
+        return getService(obj, new JsonProxy(context, this, autoBatch ? JsonBatchMode.AUTO : JsonBatchMode.NONE));
     }
 
     @SuppressWarnings("unchecked")
-    private <T> T getService(Class<T> obj,  JsonProxy proxy) {
+    private <T> T getService(Class<T> obj, JsonProxy proxy) {
         return (T) Proxy.newProxyInstance(obj.getClassLoader(), new Class<?>[]{obj}, proxy);
     }
 
@@ -152,7 +158,7 @@ class JsonRpcImplementation implements JsonRpc {
 
     @Override
     public void setByteArraySerializationType(boolean asBase64) {
-        this.byteArrayAsBase64=asBase64;
+        this.byteArrayAsBase64 = asBase64;
     }
 
     public boolean isByteArrayAsBase64() {
@@ -163,8 +169,8 @@ class JsonRpcImplementation implements JsonRpc {
         return handler;
     }
 
-    public JsonConnection getJsonConnection() {
-        return jsonConnection;
+    public JsonConnector getJsonConnector() {
+        return jsonConnector;
     }
 
 
@@ -199,12 +205,32 @@ class JsonRpcImplementation implements JsonRpc {
 
     @Override
     public void setBatchTimeoutMode(JsonBatchTimeoutMode mode) {
-        this.timeoutMode =mode;
+        this.timeoutMode = mode;
     }
 
     @Override
     public void setCacheEnabled(boolean enabled) {
-       this.cacheEnabled=enabled;
+        this.cacheEnabled = enabled;
+    }
+
+    @Override
+    public void setTimeProfilerEnabled(boolean enabled) {
+        this.timeProfiler = enabled;
+    }
+
+    @Override
+    public void showTimeProfilerInfo() {
+        if (stats != null) {
+            for (Map.Entry<String, JsonStat> entry : stats.entrySet()) {
+                JsonLoggerImpl.log(entry.getKey() + ":" + entry.getValue());
+            }
+        }
+    }
+
+    @Override
+    public void clearTimeProfilerStat() {
+        statFile.delete();
+        stats=Collections.synchronizedMap(new HashMap<String, JsonStat>());
     }
 
     @Override
@@ -237,4 +263,44 @@ class JsonRpcImplementation implements JsonRpc {
     public int getDebugFlags() {
         return debugFlags;
     }
+
+    public boolean isTimeProfiler() {
+        return timeProfiler;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, JsonStat> getStats() {
+        if (stats == null) {
+            if(statFile.exists())
+            {
+
+                try {
+                    FileInputStream fileStream = new FileInputStream(statFile);
+                    ObjectInputStream os = new ObjectInputStream(fileStream);
+                    stats = (Map<String, JsonStat>)os.readObject();
+                    os.close();
+                } catch (Exception e) {
+                   JsonLoggerImpl.log(e);
+                }
+            }
+            else
+            {
+                stats = Collections.synchronizedMap(new HashMap<String, JsonStat>());
+            }
+        }
+        return stats;
+    }
+
+    public void saveStat() {
+        try {
+            ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(statFile));
+            os.writeObject(stats);
+            os.flush();
+            os.close();
+        } catch (IOException e) {
+            JsonLoggerImpl.log(e);
+        }
+
+    }
+
 }

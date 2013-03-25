@@ -8,28 +8,23 @@ package com.implix.jsonrpc;
  * To change this template use File | Settings | File Templates.
  */
 public class JsonException extends Exception {
-    private String message;
     private int code;
 
 
     public JsonException(String name, Exception e) {
-        super("Error in method: "+name,e);
+        super(name,e);
     }
 
     public JsonException(String message) {
-        this.message = message;
+        super(message);
     }
 
     public JsonException(String message, int code) {
-        this.message = message;
+        super(message);
         this.code = code;
     }
-
-    public String getMessage() {
-        return message;
-    }
-
     public int getCode() {
         return code;
     }
+
 }
