@@ -6,13 +6,14 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
-import org.apache.http.conn.ssl.AllowAllHostnameVerifier;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.*;
 
@@ -54,8 +55,28 @@ class JsonConnector {
 
     }
 
+    private String createGetRequest(String name, String[] params, Object[] args, String apiKey)
+    {
+        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+        int i=0;
+        if(apiKey!=null && params.length-1==args.length)
+        {
+            nameValuePairs.add(new BasicNameValuePair(params[0], apiKey));
+            i++;
+        }
 
-    private JsonRequestModel createRequest(Integer currId, String name, String[] params, Object[] args, String apiKey) {
+        for(Object arg : args)
+        {
+            nameValuePairs.add(new BasicNameValuePair(params[i], arg.toString()));
+            i++;
+        }
+
+
+        return (name+"?"+URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8)).replaceAll("\\+","%20");
+    }
+
+
+    private JsonRequestModel createJsonRequest(Integer currId, String name, String[] params, Object[] args, String apiKey) {
         Object finalArgs = null;
         if (args != null && rpc.isByteArrayAsBase64()) {
             int i = 0;
@@ -106,12 +127,40 @@ class JsonConnector {
         this.version = version;
     }
 
-
-    private HttpURLConnection conn(Object request, int timeout) throws IOException {
+    private HttpURLConnection get(String request, int timeout) throws IOException {
         HttpURLConnection urlConnection = null;
-//        if (flags > 0) {
-//            System.out.println("Connection: start");
-//        }
+
+        for (int i = 1; i <= reconnections; i++) {
+            try {
+                urlConnection = (HttpURLConnection) new URL(url + request).openConnection();
+                break;
+            } catch (IOException e) {
+                if (i == reconnections) {
+                    throw e;
+                }
+            }
+        }
+
+        if (rpc.getAuthKey() != null) {
+            urlConnection.addRequestProperty("Authorization", rpc.getAuthKey());
+        }
+
+        urlConnection.setConnectTimeout(connectTimeout);
+        if (timeout == 0) {
+            timeout = methodTimeout;
+        }
+        urlConnection.setReadTimeout(timeout);
+
+        if ((rpc.getDebugFlags() & JsonRpc.REQUEST_DEBUG) > 0) {
+            longStrToConsole("REQ(GET)", request);
+        }
+
+        return urlConnection;
+
+    }
+
+    private HttpURLConnection post(Object request, int timeout) throws IOException {
+        HttpURLConnection urlConnection = null;
 
         for (int i = 1; i <= reconnections; i++) {
             try {
@@ -152,7 +201,6 @@ class JsonConnector {
             writer.close();
 
         }
-
 
 
         return urlConnection;
@@ -204,8 +252,9 @@ class JsonConnector {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T call(int id, String name, String[] params, Object[] args, Type type, int timeout, String apiKey, boolean cachable, int cacheLifeTime, int cacheSize) throws Exception {
-        long allTime=0, createTime = 0, connectionTime = 0, readTime = 0, parseTime = 0, time = System.currentTimeMillis();
+    public <T> T call(int id, String name, String[] params, Object[] args, Type type, int timeout,
+                      String apiKey, boolean cachable, int cacheLifeTime, int cacheSize, MethodType methodType) throws Exception {
+        long allTime = 0, createTime = 0, connectionTime = 0, readTime = 0, parseTime = 0, time = System.currentTimeMillis();
         long startTime = time;
         String connectionType = "";
 
@@ -215,14 +264,21 @@ class JsonConnector {
                 return (T) cacheObject;
             }
         }
+        HttpURLConnection conn = null;
+        if (methodType == MethodType.JSON_RPC) {
+            JsonRequestModel request = createJsonRequest(id, name, params, args, apiKey);
 
-        JsonRequestModel request = createRequest(id, name, params, args, apiKey);
+            createTime = System.currentTimeMillis() - time;
+            time = System.currentTimeMillis();
 
-        createTime = System.currentTimeMillis() - time;
-        time = System.currentTimeMillis();
+            conn = post(request, timeout);
+        } else {
+            String request = createGetRequest(name, params, args, apiKey);
+            createTime = System.currentTimeMillis() - time;
+            time = System.currentTimeMillis();
 
-        HttpURLConnection conn = conn(request, timeout);
-
+            conn = get(request, timeout);
+        }
         connectionTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();
 
@@ -283,7 +339,7 @@ class JsonConnector {
     }
 
     public void notify(String name, String[] params, Object[] args, Integer timeout, String apiKey) throws Exception {
-        HttpURLConnection conn = conn(createRequest(null, name, params, args, apiKey), timeout);
+        HttpURLConnection conn = post(createJsonRequest(null, name, params, args, apiKey), timeout);
         conn.getInputStream();
         conn.disconnect();
     }
@@ -302,7 +358,7 @@ class JsonConnector {
 
 
         for (JsonRequest request : requests) {
-            requestsJson[i] = createRequest(request.getId(), request.getName(), request.getParams(),
+            requestsJson[i] = createJsonRequest(request.getId(), request.getName(), request.getParams(),
                     request.getArgs(), request.getApiKey());
             requestsName += " " + request.getName();
             i++;
@@ -311,7 +367,7 @@ class JsonConnector {
         createTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();
 
-        conn = conn(requestsJson, timeout);
+        conn = post(requestsJson, timeout);
         InputStream stream = conn.getInputStream();
 
         if (conn.getHeaderField("Connection") != null) {
@@ -351,7 +407,7 @@ class JsonConnector {
         if (rpc.isTimeProfiler()) {
 
             for (JsonRequest request : requests) {
-                refreshStat(request.getName(), allTime/requests.size());
+                refreshStat(request.getName(), allTime / requests.size());
             }
         }
 

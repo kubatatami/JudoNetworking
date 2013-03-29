@@ -14,7 +14,8 @@ public @interface JsonMethod
 	public int timeout() default 0;
     public boolean async() default false;
     public boolean notification() default false;
-    public boolean cachable() default false;
+    public boolean cacheable() default false;
     public int cacheLifeTime() default 0;
     public int cacheSize() default 100;
+    public MethodType type() default MethodType.JSON_RPC;
 }

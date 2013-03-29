@@ -9,33 +9,35 @@ class JsonRequest implements Runnable, Comparable<JsonRequest> {
     private String name;
     private String[] params;
     private Object[] args;
-    private Type type;
+    private Type returnType;
     private int timeout;
     private String apiKey;
     private boolean cachable;
     private int cacheLifeTime;
     private int cacheSize;
+    private MethodType methodType;
 
-    JsonRequest(Integer id, JsonRpcImplementation rpc, JsonCallback<Object> callback, String name, String[] params, Object[] args, Type type, int timeout, String apiKey, boolean cachable, int cacheLifeTime,int cacheSize) {
+    JsonRequest(Integer id, JsonRpcImplementation rpc, JsonCallback<Object> callback, String name, String[] params,
+                Object[] args, Type returnType, int timeout, String apiKey, boolean cachable, int cacheLifeTime,int cacheSize,MethodType methodType) {
         this.id = id;
         this.rpc = rpc;
         this.callback = callback;
         this.name = name;
         this.params = params;
         this.args = args;
-        this.type = type;
+        this.returnType = returnType;
         this.timeout = timeout;
         this.apiKey = apiKey;
         this.cachable = cachable;
         this.cacheLifeTime = cacheLifeTime;
         this.cacheSize = cacheSize;
-
+        this.methodType = methodType;
     }
 
     @Override
     public void run() {
         try {
-            Object result = rpc.getJsonConnector().call(id, name, params, args, type, timeout, apiKey,cachable,cacheLifeTime, cacheSize);
+            Object result = rpc.getJsonConnector().call(id, name, params, args, returnType, timeout, apiKey,cachable,cacheLifeTime, cacheSize,methodType);
             invokeCallback(result);
         } catch (Exception e) {
             invokeCallback(e);
@@ -84,8 +86,8 @@ class JsonRequest implements Runnable, Comparable<JsonRequest> {
         return args;
     }
 
-    public Type getType() {
-        return type;
+    public Type getReturnType() {
+        return returnType;
     }
 
     public String getApiKey() {

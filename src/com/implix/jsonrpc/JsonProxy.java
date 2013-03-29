@@ -62,16 +62,18 @@ class JsonProxy implements InvocationHandler {
                 int timeout = rpc.getJsonConnector().getMethodTimeout();
                 int cacheLifeTime = 0, cacheSize = 0;
                 boolean async = false, notification = false, cachable = false;
+                MethodType type = MethodType.JSON_RPC;
                 JsonMethod ann = m.getAnnotation(JsonMethod.class);
                 if (ann != null) {
                     if (ann.paramNames().length > 0) {
                         paramNames = ann.paramNames();
                     }
                     async = ann.async();
-                    cachable = ann.cachable();
+                    cachable = ann.cacheable();
                     cacheLifeTime = ann.cacheLifeTime();
                     notification = ann.notification();
                     cacheSize = ann.cacheSize();
+                    type = ann.type();
                     if (ann.timeout() != 0) {
                         timeout = ann.timeout();
                     }
@@ -82,9 +84,9 @@ class JsonProxy implements InvocationHandler {
                     rpc.getJsonConnector().notify(name, paramNames, args, timeout, rpc.getApiKey());
                     return null;
                 } else if (!async) {
-                    return rpc.getJsonConnector().call(++id, name, paramNames, args, m.getGenericReturnType(), timeout, rpc.getApiKey(), cachable, cacheLifeTime, cacheSize);
+                    return rpc.getJsonConnector().call(++id, name, paramNames, args, m.getGenericReturnType(), timeout, rpc.getApiKey(), cachable, cacheLifeTime, cacheSize,type);
                 } else {
-                    final JsonRequest request = callAsync(++id, name, paramNames, args, m.getGenericParameterTypes(), timeout, rpc.getApiKey(), cachable, cacheLifeTime, cacheSize);
+                    final JsonRequest request = callAsync(++id, name, paramNames, args, m.getGenericParameterTypes(), timeout, rpc.getApiKey(), cachable, cacheLifeTime, cacheSize,type);
 
                     if (batch) {
                         synchronized (batchRequests) {
@@ -138,15 +140,16 @@ class JsonProxy implements InvocationHandler {
     }
 
     @SuppressWarnings("unchecked")
-    public JsonRequest callAsync(int id, String name, String[] params, Object[] args, Type[] types, int timeout, String apiKey, boolean cachable, int cacheLifeTime, int cacheSize) throws Exception {
+    public JsonRequest callAsync(int id, String name, String[] params, Object[] args, Type[] types, int timeout,
+                                 String apiKey, boolean cachable, int cacheLifeTime, int cacheSize, MethodType type) throws Exception {
         Object[] newArgs = null;
         JsonCallback<Object> callback = (JsonCallback<Object>) args[args.length - 1];
         if (args.length > 1) {
             newArgs = new Object[args.length - 1];
             System.arraycopy(args, 0, newArgs, 0, args.length - 1);
         }
-        Type type = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
-        return new JsonRequest(id, rpc, callback, name, params, newArgs, type, timeout, apiKey, cachable, cacheLifeTime, cacheSize);
+        Type returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
+        return new JsonRequest(id, rpc, callback, name, params, newArgs, returnType, timeout, apiKey, cachable, cacheLifeTime, cacheSize,type);
     }
 
     public void callBatch(final JsonBatch batch) {
@@ -367,9 +370,9 @@ class JsonProxy implements InvocationHandler {
                         throw new JsonException(request.getName() + ": " + response.error.message, response.error.code);
                     }
 
-                    if (request.getType() != Void.class) {
+                    if (request.getReturnType() != Void.class) {
                         try {
-                            results[i] = parseResponse(response.result, request.getType());
+                            results[i] = parseResponse(response.result, request.getReturnType());
                         } catch (JsonSyntaxException e) {
                             throw new JsonException(request.getName(), e);
                         }
