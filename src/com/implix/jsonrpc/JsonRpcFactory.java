@@ -3,9 +3,6 @@ package com.implix.jsonrpc;
 import android.content.Context;
 import com.google.gson.GsonBuilder;
 
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
-
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki

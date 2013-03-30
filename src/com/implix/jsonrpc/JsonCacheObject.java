@@ -7,11 +7,11 @@ package com.implix.jsonrpc;
  * Time: 07:55
  * To change this template use File | Settings | File Templates.
  */
-class CacheObject {
+class JsonCacheObject {
     long createTime;
     Object object;
 
-    CacheObject(long createTime, Object object) {
+    JsonCacheObject(long createTime, Object object) {
         this.createTime = createTime;
         this.object = object;
     }

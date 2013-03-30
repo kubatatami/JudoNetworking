@@ -14,7 +14,7 @@ public class JsonLogger {
         JsonLoggerImpl.setTag(tag);
     }
 
-    public static void setLevel(LogLevel level) {
+    public static void setLevel(JsonLogLevel level) {
         JsonLoggerImpl.setLevel(level);
     }
 }

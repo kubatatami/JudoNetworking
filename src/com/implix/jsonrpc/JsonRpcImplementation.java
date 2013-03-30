@@ -21,6 +21,7 @@ class JsonRpcImplementation implements JsonRpc {
     private int maxMobileConnections = 1;
     private int maxWifiConnections = 1;
     private JsonConnector jsonConnector;
+    private JsonConnection connection;
     private Handler handler = new Handler();
     private Gson parser;
     private String apiKey = null;
@@ -38,29 +39,26 @@ class JsonRpcImplementation implements JsonRpc {
     private File statFile;
 
     public JsonRpcImplementation(Context context, String url) {
-        this.jsonConnector = new JsonConnector(url, this);
-        this.parser = new GsonBuilder().addSerializationExclusionStrategy(exclusionStrategy).create();
-        this.context = context;
-        statFile = new File(context.getCacheDir(), "stats");
+        init(context,url,null,new GsonBuilder());
     }
 
     public JsonRpcImplementation(Context context, String url, GsonBuilder builder) {
-        this.jsonConnector = new JsonConnector(url, this);
-        this.parser = builder.addSerializationExclusionStrategy(exclusionStrategy).create();
-        this.context = context;
-        statFile = new File(context.getCacheDir(), "stats");
+        init(context,url,null,builder);
     }
 
     public JsonRpcImplementation(Context context, String url, String apiKey) {
-        this.jsonConnector = new JsonConnector(url, this);
-        this.parser = new GsonBuilder().addSerializationExclusionStrategy(exclusionStrategy).create();
-        this.apiKey = apiKey;
-        this.context = context;
-        statFile = new File(context.getCacheDir(), "stats");
+        init(context,url,apiKey,new GsonBuilder());
     }
 
     public JsonRpcImplementation(Context context, String url, String apiKey, GsonBuilder builder) {
-        this.jsonConnector = new JsonConnector(url, this);
+        init(context,url,apiKey,builder);
+    }
+
+    private void init(Context context, String url, String apiKey, GsonBuilder builder)
+    {
+        //this.connection=new JsonHttpClientConnection(this);
+        this.connection=new JsonHttpUrlConnection(this);
+        this.jsonConnector = new JsonConnector(url, this,connection);
         this.parser = builder.addSerializationExclusionStrategy(exclusionStrategy).create();
         this.apiKey = apiKey;
         this.context = context;
@@ -109,10 +107,7 @@ class JsonRpcImplementation implements JsonRpc {
         this.maxMobileConnections = maxMobileConnections;
         this.maxWifiConnections = maxWifiConnections;
         int max = Math.max(maxMobileConnections, maxWifiConnections);
-        String currentMaxConnections = System.getProperty("http.maxConnections");
-        if (currentMaxConnections == null || Integer.parseInt(currentMaxConnections) < max * 2) {
-            System.setProperty("http.maxConnections", (max * 2) + "");
-        }
+        connection.setMaxConnections(max);
     }
 
     private String auth(String login, String pass) {
@@ -303,4 +298,8 @@ class JsonRpcImplementation implements JsonRpc {
 
     }
 
+
+    public Context getContext() {
+        return context;
+    }
 }

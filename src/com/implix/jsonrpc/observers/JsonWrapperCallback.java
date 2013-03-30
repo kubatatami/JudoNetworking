@@ -1,7 +1,6 @@
 package com.implix.jsonrpc.observers;
 
 import com.implix.jsonrpc.JsonCallback;
-import com.implix.jsonrpc.observers.ObservableWrapper;
 
 /**
  * Created with IntelliJ IDEA.

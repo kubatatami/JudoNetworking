@@ -1,7 +1,9 @@
 package com.implix.jsonrpc;
 
-import java.lang.reflect.Type;
-import java.util.List;
+import com.implix.jsonrpc.JsonTimeStat;
+
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,11 +14,15 @@ import java.util.List;
  */
 public interface JsonConnection {
 
-    public <T> T call(int id, String name, String[] params, Object[] args, Type type,
-                      int timeout, String apiKey, boolean cachable, int cacheLifeTime, int cacheSize) throws Exception;
 
-    public void notify(String name, String[] params, Object[] args, Integer timeout, String apiKey) throws Exception;
+    public HttpURLConnection get(String url, String request, int timeout,JsonTimeStat timeStat) throws Exception;
+    public HttpURLConnection post(String url, Object request, int timeout,JsonTimeStat timeStat) throws Exception;
 
-    public List<JsonResponseModel2> callBatch(List<JsonRequest> requests, Integer timeout) throws Exception;
+    public void setMaxConnections(int max);
+
+    public void setReconnections(int reconnections);
+    public void setConnectTimeout(int connectTimeout);
+    public void setMethodTimeout(int methodTimeout);
+    public int getMethodTimeout();
 
 }

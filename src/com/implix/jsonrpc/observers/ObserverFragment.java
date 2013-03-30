@@ -6,7 +6,6 @@ import android.util.Pair;
 import android.view.View;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +23,7 @@ public class ObserverFragment extends Fragment {
     private Object observableObject;
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         regObservers.clear();
@@ -98,6 +98,7 @@ public class ObserverFragment extends Fragment {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onDestroyView() {
         for (Pair<ObservableWrapper, WrapObserver> pair : regObservers) {
             pair.first.deleteObserver(pair.second);

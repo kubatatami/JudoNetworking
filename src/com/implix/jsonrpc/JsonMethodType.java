@@ -7,7 +7,7 @@ package com.implix.jsonrpc;
  * Time: 09:22
  * To change this template use File | Settings | File Templates.
  */
-public enum MethodType {
+public enum JsonMethodType {
     JSON_RPC,
     GET;
 

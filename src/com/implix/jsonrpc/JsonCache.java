@@ -1,7 +1,6 @@
 package com.implix.jsonrpc;
 
 import android.support.v4.util.LruCache;
-import com.implix.jsonrpc.CacheObject;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,7 +16,7 @@ import java.util.Map;
  */
 class JsonCache {
     private JsonRpcImplementation rpc;
-    private Map<String,LruCache<Integer, CacheObject>> cache = Collections.synchronizedMap(new HashMap<String, LruCache<Integer, CacheObject>>());
+    private Map<String,LruCache<Integer, JsonCacheObject>> cache = Collections.synchronizedMap(new HashMap<String, LruCache<Integer, JsonCacheObject>>());
 
     JsonCache(JsonRpcImplementation rpc) {
         this.rpc = rpc;
@@ -28,7 +27,7 @@ class JsonCache {
         if(cache.containsKey(method))
         {
             Integer hash= Arrays.deepHashCode(params);
-            CacheObject cacheObject= cache.get(method).get(hash);
+            JsonCacheObject cacheObject= cache.get(method).get(hash);
             if(cacheObject!=null)
             {
                 if(cacheLifeTime==0 || System.currentTimeMillis()-cacheObject.createTime<cacheLifeTime)
@@ -47,10 +46,10 @@ class JsonCache {
     {
         if(!cache.containsKey(method))
         {
-            cache.put(method,new LruCache<Integer, CacheObject>(cacheSize));
+            cache.put(method,new LruCache<Integer, JsonCacheObject>(cacheSize));
         }
         Integer hash= Arrays.deepHashCode(params);
-        cache.get(method).put(hash,new CacheObject(System.currentTimeMillis(),object));
+        cache.get(method).put(hash,new JsonCacheObject(System.currentTimeMillis(),object));
         if ((rpc.getDebugFlags() & JsonRpc.CACHE_DEBUG) > 0) {
             JsonLoggerImpl.log("Cache("+method+"): Saved in cache.");
         }
@@ -59,7 +58,7 @@ class JsonCache {
 
     public void clearCache()
     {
-        cache = Collections.synchronizedMap(new HashMap<String, LruCache<Integer, CacheObject>>());
+        cache = Collections.synchronizedMap(new HashMap<String, LruCache<Integer, JsonCacheObject>>());
     }
 
 

@@ -16,7 +16,7 @@ class JsonLoggerImpl {
 
 
     private static String tag="com.implix.jsonrpc";
-    private static LogLevel level=LogLevel.WARNING;
+    private static JsonLogLevel level= JsonLogLevel.WARNING;
 
 
 
@@ -51,7 +51,17 @@ class JsonLoggerImpl {
         JsonLoggerImpl.tag = tag;
     }
 
-    public static void setLevel(LogLevel level) {
+    public static void setLevel(JsonLogLevel level) {
         JsonLoggerImpl.level = level;
+    }
+
+    public static void longLog(String tag, String str) {
+        JsonLoggerImpl.log(tag + ":");
+        int i;
+        for (i = 0; i < str.length() - 256; i += 256) {
+            JsonLoggerImpl.log(str.substring(i, i + 256));
+        }
+        JsonLoggerImpl.log(str.substring(i, str.length()));
+
     }
 }

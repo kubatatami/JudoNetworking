@@ -17,5 +17,5 @@ public @interface JsonMethod
     public boolean cacheable() default false;
     public int cacheLifeTime() default 0;
     public int cacheSize() default 100;
-    public MethodType type() default MethodType.JSON_RPC;
+    public JsonMethodType type() default JsonMethodType.JSON_RPC;
 }
