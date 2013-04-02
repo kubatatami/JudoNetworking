@@ -98,7 +98,6 @@ public class JsonHttpUrlConnection implements JsonConnection {
         if ((rpc.getDebugFlags() & JsonRpc.REQUEST_DEBUG) > 0) {
             String req = rpc.getParser().toJson(request);
             JsonLoggerImpl.longLog("REQ", req);
-            urlConnection.setFixedLengthStreamingMode(req.length());
             OutputStream stream = urlConnection.getOutputStream();
             timeStat.tickConnectionTime();
             Writer writer = new BufferedWriter(new OutputStreamWriter(stream));
