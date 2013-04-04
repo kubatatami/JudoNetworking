@@ -276,6 +276,7 @@ class JsonRpcImplementation implements JsonRpc {
                     os.close();
                 } catch (Exception e) {
                    JsonLoggerImpl.log(e);
+                    stats = Collections.synchronizedMap(new HashMap<String, JsonStat>());
                 }
             }
             else

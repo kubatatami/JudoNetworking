@@ -23,6 +23,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest> {
     private int timeout;
     private String apiKey;
     private boolean cachable;
+    private boolean highPriority;
     private int cacheLifeTime;
     private int cacheSize;
     private JsonMethodType methodType;
@@ -38,7 +39,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest> {
 
     public JsonRequest(Integer id, JsonRpcImplementation rpc, JsonCallback<Object> callback, String name, String[] params,
                 Object[] args, Type returnType, int timeout, String apiKey, boolean cachable,
-                int cacheLifeTime,int cacheSize,JsonMethodType methodType) {
+                int cacheLifeTime,int cacheSize,JsonMethodType methodType, boolean highPriority) {
         this.id = id;
         this.rpc = rpc;
         this.callback = callback;
@@ -52,6 +53,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest> {
         this.cacheLifeTime = cacheLifeTime;
         this.cacheSize = cacheSize;
         this.methodType = methodType;
+        this.highPriority=highPriority;
     }
 
     public JsonRequest(Integer id, JsonRpcImplementation rpc, String name, String[] params,
@@ -208,7 +210,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest> {
     {
         if(rpc.getStats().containsKey(name))
         {
-            return rpc.getStats().get(name).avgTime;
+            return Math.max(rpc.getStats().get(name).avgTime,1);
         }
         else
         {
@@ -218,7 +220,17 @@ class JsonRequest implements Runnable, Comparable<JsonRequest> {
 
     @Override
     public int compareTo(JsonRequest another) {
-        return Long.valueOf(another.getWeight()).compareTo(getWeight());
+        if(highPriority && !another.highPriority)
+        {
+            return -1;
+        }
+        else if(!highPriority && another.highPriority)
+        {
+            return 1;
+        }
+        {
+            return Long.valueOf(another.getWeight()).compareTo(getWeight());
+        }
     }
 
     public JsonMethodType getMethodType() {

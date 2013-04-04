@@ -116,12 +116,13 @@ class JsonConnector {
         conn.disconnect();
 
         timeStat.tickParseTime();
+        timeStat.tickEndTime();
 
         if (rpc.isTimeProfiler()) {
             refreshStat(request.getName(), timeStat.getMethodTime());
         }
 
-        timeStat.tickEndTime();
+
         if ((rpc.getDebugFlags() & JsonRpc.TIME_DEBUG) > 0) {
             timeStat.logTime("End single request(" + request.getName() + "):");
         }
@@ -152,7 +153,6 @@ class JsonConnector {
         String requestsName = "";
 
 
-
         for (JsonRequest request : requests) {
             requestsJson[i] = request.createJsonRequest(version);
             requestsName += " " + request.getName();
@@ -181,13 +181,19 @@ class JsonConnector {
                 timeStat.tickParseTime();
             }
         } catch (JsonSyntaxException e) {
-            throw new JsonException(requestsName.substring(1), e);
+            if (requestsName.length() > 0) {
+                throw new JsonException(requestsName.substring(1), e);
+            } else {
+                throw e;
+            }
         }
         if (responses == null) {
             throw new JsonException("Empty response.");
         }
         conn.disconnect();
 
+
+        timeStat.tickEndTime();
         if (rpc.isTimeProfiler()) {
 
             for (JsonRequest request : requests) {
@@ -196,7 +202,7 @@ class JsonConnector {
         }
 
 
-        timeStat.tickEndTime();
+
         if ((rpc.getDebugFlags() & JsonRpc.TIME_DEBUG) > 0) {
             timeStat.logTime("End batch request(" + requestsName.substring(1) + "):");
         }

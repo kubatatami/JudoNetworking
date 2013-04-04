@@ -61,7 +61,7 @@ class JsonProxy implements InvocationHandler {
                 String name = getMethodName(m);
                 int timeout = rpc.getJsonConnector().getMethodTimeout();
                 int cacheLifeTime = 0, cacheSize = 0;
-                boolean async = false, notification = false, cachable = false;
+                boolean async = false, notification = false, cachable = false,highPriority=false;
                 JsonMethodType type = JsonMethodType.JSON_RPC;
                 JsonMethod ann = m.getAnnotation(JsonMethod.class);
                 if (ann != null) {
@@ -73,6 +73,7 @@ class JsonProxy implements InvocationHandler {
                     cacheLifeTime = ann.cacheLifeTime();
                     notification = ann.notification();
                     cacheSize = ann.cacheSize();
+                    highPriority=ann.highPriority();
                     type = ann.type();
                     if (ann.timeout() != 0) {
                         timeout = ann.timeout();
@@ -88,7 +89,7 @@ class JsonProxy implements InvocationHandler {
                             timeout, rpc.getApiKey(), cachable, cacheLifeTime, cacheSize,type));
                 } else {
                     final JsonRequest request = callAsync(++id, name, paramNames, args, m.getGenericParameterTypes(),
-                            timeout, rpc.getApiKey(), cachable, cacheLifeTime, cacheSize,type);
+                            timeout, rpc.getApiKey(), cachable, cacheLifeTime, cacheSize,type,highPriority);
 
                     if (batch) {
                         synchronized (batchRequests) {
@@ -143,7 +144,7 @@ class JsonProxy implements InvocationHandler {
 
     @SuppressWarnings("unchecked")
     public JsonRequest callAsync(int id, String name, String[] params, Object[] args, Type[] types, int timeout,
-                                 String apiKey, boolean cachable, int cacheLifeTime, int cacheSize, JsonMethodType type) throws Exception {
+                                 String apiKey, boolean cachable, int cacheLifeTime, int cacheSize, JsonMethodType type, boolean highPriority) throws Exception {
         Object[] newArgs = null;
         JsonCallback<Object> callback = (JsonCallback<Object>) args[args.length - 1];
         if (args.length > 1) {
@@ -152,7 +153,7 @@ class JsonProxy implements InvocationHandler {
         }
         Type returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
         return new JsonRequest(id, rpc, callback, name, params, newArgs, returnType,
-                timeout, apiKey, cachable, cacheLifeTime, cacheSize,type);
+                timeout, apiKey, cachable, cacheLifeTime, cacheSize,type,highPriority);
     }
 
     public void callBatch(final JsonBatch batch) {
