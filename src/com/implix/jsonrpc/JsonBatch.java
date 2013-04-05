@@ -10,11 +10,9 @@ import java.io.StringWriter;
  * Time: 22:48
  * To change this template use File | Settings | File Templates.
  */
-public class JsonBatch<T> {
+public abstract class JsonBatch<T> implements JsonBatchInterface<T>{
 
-    public void run(final T api) {
-
-    }
+    public abstract void run(final T api);
 
     public void onFinish(Object[] results) {
 

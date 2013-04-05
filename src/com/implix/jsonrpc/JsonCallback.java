@@ -10,7 +10,7 @@ import java.io.StringWriter;
  * Time: 10:55
  * To change this template use File | Settings | File Templates.
  */
-public class  JsonCallback<T> {
+public class JsonCallback<T> implements JsonCallbackInterface<T>{
 
     public void onFinish(T result)
     {
@@ -28,7 +28,7 @@ public class  JsonCallback<T> {
         }
         else
         {
-            JsonLoggerImpl.log("NULL EXCEPTION");
+            JsonLoggerImpl.log("Null exception");
         }
     }
 

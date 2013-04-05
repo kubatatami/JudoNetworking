@@ -113,7 +113,7 @@ class JsonProxy implements InvocationHandler {
                                     } catch (InterruptedException e) {
                                         e.printStackTrace();
                                     }
-                                    JsonProxy.this.callBatch(new JsonBatch());
+                                    JsonProxy.this.callBatch(null);
                                 }
                             }).start();
 
@@ -146,7 +146,7 @@ class JsonProxy implements InvocationHandler {
     public JsonRequest callAsync(int id, String name, String[] params, Object[] args, Type[] types, int timeout,
                                  String apiKey, boolean cachable, int cacheLifeTime, int cacheSize, JsonMethodType type, boolean highPriority) throws Exception {
         Object[] newArgs = null;
-        JsonCallback<Object> callback = (JsonCallback<Object>) args[args.length - 1];
+        JsonCallbackInterface<Object> callback = (JsonCallbackInterface<Object>) args[args.length - 1];
         if (args.length > 1) {
             newArgs = new Object[args.length - 1];
             System.arraycopy(args, 0, newArgs, 0, args.length - 1);
@@ -204,13 +204,15 @@ class JsonProxy implements InvocationHandler {
                         req.invokeCallback(e);
                     }
                 }
-                rpc.getHandler().post(new Runnable() {
+                if(batch!=null)
+                {
+                    rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
                         batch.onError(e);
                     }
                 });
-
+                }
             }
 
 
@@ -305,13 +307,14 @@ class JsonProxy implements InvocationHandler {
             }
             i++;
         }
-
-        if (ex == null) {
-            JsonRequest.invokeBatchCallback(rpc, batch, results);
-        } else {
-            JsonRequest.invokeBatchCallback(rpc, batch, ex);
+        if(batch!=null)
+        {
+            if (ex == null) {
+                JsonRequest.invokeBatchCallback(rpc, batch, results);
+            } else {
+                JsonRequest.invokeBatchCallback(rpc, batch, ex);
+            }
         }
-
     }
 
     private boolean isWifi() {

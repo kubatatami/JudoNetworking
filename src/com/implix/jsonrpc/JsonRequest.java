@@ -15,7 +15,7 @@ import java.util.Map;
 class JsonRequest implements Runnable, Comparable<JsonRequest> {
     private Integer id;
     private JsonRpcImplementation rpc;
-    private JsonCallback<Object> callback;
+    private JsonCallbackInterface<Object> callback;
     private String name;
     private String[] params;
     private Object[] args;
@@ -37,7 +37,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest> {
         this.apiKey = apiKey;
     }
 
-    public JsonRequest(Integer id, JsonRpcImplementation rpc, JsonCallback<Object> callback, String name, String[] params,
+    public JsonRequest(Integer id, JsonRpcImplementation rpc, JsonCallbackInterface<Object> callback, String name, String[] params,
                 Object[] args, Type returnType, int timeout, String apiKey, boolean cachable,
                 int cacheLifeTime,int cacheSize,JsonMethodType methodType, boolean highPriority) {
         this.id = id;
