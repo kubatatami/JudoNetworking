@@ -1,3 +1,8 @@
+-przemyslenie dataobserver moze
+-custom tagi xmlowe ktore automatycznie ustawia wartosc z podanego pola
+-callbacki jako interfejsy ale z domyslnymi implementacjami jak dotychczas
+-ulepszone updaty w observerach
+
 -nazwy parametrow przez adnotacje
 -refaktoryzacja kodu jsonconnection
 -porzadek w exceptions (JsonException)
