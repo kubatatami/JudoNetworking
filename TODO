@@ -1,7 +1,5 @@
--przemyslenie dataobserver moze
+-przemyslenie dataobserver
 -custom tagi xmlowe ktore automatycznie ustawia wartosc z podanego pola
--ulepszone updaty w observerach
 
 -nazwy parametrow przez adnotacje
--refaktoryzacja kodu jsonconnection
 -porzadek w exceptions (JsonException)

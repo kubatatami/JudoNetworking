@@ -228,6 +228,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest> {
         {
             return 1;
         }
+        else
         {
             return Long.valueOf(another.getWeight()).compareTo(getWeight());
         }
@@ -235,5 +236,9 @@ class JsonRequest implements Runnable, Comparable<JsonRequest> {
 
     public JsonMethodType getMethodType() {
         return methodType;
+    }
+
+    boolean isHighPriority() {
+        return highPriority;
     }
 }

@@ -13,6 +13,7 @@ public class ObservableWrapper<T> {
     private ObservableWrapperListener<T> listener = null;
     private boolean notifyInUiThread = true;
     private long dataSetTime=0;
+    private long updateTime=0;
 
     public ObservableWrapper() {
 
@@ -21,6 +22,15 @@ public class ObservableWrapper<T> {
     public ObservableWrapper(boolean notifyInUiThread) {
         this.notifyInUiThread = notifyInUiThread;
     }
+
+    public ObservableWrapper(long updateTime) {
+
+    }
+
+    public ObservableWrapper(boolean notifyInUiThread,long updateTime) {
+        this.notifyInUiThread = notifyInUiThread;
+    }
+
 
     public void addObserver(WrapObserver<T> observer) {
         boolean add=true;
@@ -52,6 +62,10 @@ public class ObservableWrapper<T> {
     public T get() {
         if(listener!=null)
         {
+            if (updateTime != 0 && System.currentTimeMillis() - getDataSetTime() > updateTime) {
+                listener.onUpdate(this);
+            }
+
             listener.onGet(this);
         }
         return object;

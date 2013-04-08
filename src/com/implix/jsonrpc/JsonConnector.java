@@ -43,13 +43,17 @@ class JsonConnector {
             JsonLoggerImpl.longLog("RES(" + resStr.length() + ")", resStr);
             if (version == JsonRpcVersion.VERSION_2_0) {
                 JsonResponseModel2 response = rpc.getParser().fromJson(resStr, JsonResponseModel2.class);
-                if (response.error != null) {
+                if (response == null) {
+                    throw new JsonException("Can't parse response.");
+                } else if (response.error != null) {
                     throw new JsonException(response.error.message, response.error.code);
                 }
                 return response;
             } else {
                 JsonResponseModel1 response = rpc.getParser().fromJson(resStr, JsonResponseModel1.class);
-                if (response.error != null) {
+                if (response == null) {
+                    throw new JsonException("Can't parse response.");
+                } else if (response.error != null) {
                     throw new JsonException(response.error);
                 }
                 return response;
@@ -200,7 +204,6 @@ class JsonConnector {
                 refreshStat(request.getName(), timeStat.getMethodTime() / requests.size());
             }
         }
-
 
 
         if ((rpc.getDebugFlags() & JsonRpc.TIME_DEBUG) > 0) {

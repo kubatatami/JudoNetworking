@@ -2,6 +2,7 @@ package com.implix.jsonrpc;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 class JsonBatchTask implements Runnable {
@@ -66,6 +67,25 @@ class JsonBatchTask implements Runnable {
         for (i = 0; i < partsNo; i++) {
             parts.add(new ArrayList<JsonRequest>());
         }
+
+        Collections.sort(list,new Comparator<JsonRequest>() {
+            @Override
+            public int compare(JsonRequest lhs, JsonRequest rhs) {
+                if(lhs.isHighPriority() && !rhs.isHighPriority())
+                {
+                    return -1;
+                }
+                else if(!lhs.isHighPriority() && rhs.isHighPriority())
+                {
+                    return 1;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+        });
+
         i = 0;
         for (JsonRequest elem : list) {
             parts.get(i).add(elem);
