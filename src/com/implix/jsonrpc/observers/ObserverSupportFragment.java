@@ -1,8 +1,14 @@
 package com.implix.jsonrpc.observers;
 
-import android.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.util.Pair;
 import android.view.View;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -11,7 +17,7 @@ import android.view.View;
  * Time: 16:39
  * To change this template use File | Settings | File Templates.
  */
-public class ObserverFragment extends Fragment {
+public class ObserverSupportFragment extends Fragment {
 
     private ObserverHelper observerHelper = new ObserverHelper();
 

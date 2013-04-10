@@ -4,8 +4,8 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Pair;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson22.JsonElement;
+import com.google.gson22.JsonSyntaxException;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;

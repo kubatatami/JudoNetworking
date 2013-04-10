@@ -1,9 +1,11 @@
 package com.implix.jsonrpc;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
+
+
+import com.google.gson22.JsonElement;
+import com.google.gson22.JsonSyntaxException;
+import com.google.gson22.reflect.TypeToken;
+import com.google.gson22.stream.JsonReader;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;

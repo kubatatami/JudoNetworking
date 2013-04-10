@@ -1,7 +1,7 @@
 package com.implix.jsonrpc;
 
 import android.content.Context;
-import com.google.gson.GsonBuilder;
+import com.google.gson22.GsonBuilder;
 
 /**
  * Created with IntelliJ IDEA.

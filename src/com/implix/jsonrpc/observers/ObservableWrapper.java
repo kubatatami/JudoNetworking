@@ -24,11 +24,12 @@ public class ObservableWrapper<T> {
     }
 
     public ObservableWrapper(long updateTime) {
-
+       this.updateTime=updateTime;
     }
 
     public ObservableWrapper(boolean notifyInUiThread,long updateTime) {
         this.notifyInUiThread = notifyInUiThread;
+        this.updateTime=updateTime;
     }
 
 

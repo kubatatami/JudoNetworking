@@ -1,0 +1,29 @@
+package com.implix.jsonrpc.observers;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.view.ViewGroup;
+
+/**
+ * Created with IntelliJ IDEA.
+ * User: jbogacki
+ * Date: 08.04.2013
+ * Time: 22:27
+ * To change this template use File | Settings | File Templates.
+ */
+public class ObserverActivity extends Activity {
+
+    private ObserverHelper observerHelper = new ObserverHelper();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        observerHelper.start(this, ((ViewGroup) findViewById(android.R.id.content)).getChildAt(0));
+    }
+
+    @Override
+    protected void onDestroy() {
+        observerHelper.stop();
+        super.onDestroy();
+    }
+}

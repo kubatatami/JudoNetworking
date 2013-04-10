@@ -4,10 +4,10 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
-import com.google.gson.ExclusionStrategy;
-import com.google.gson.FieldAttributes;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson22.ExclusionStrategy;
+import com.google.gson22.FieldAttributes;
+import com.google.gson22.Gson;
+import com.google.gson22.GsonBuilder;
 
 import java.io.*;
 import java.lang.reflect.Method;
@@ -56,7 +56,6 @@ class JsonRpcImplementation implements JsonRpc {
 
     private void init(Context context, String url, String apiKey, GsonBuilder builder)
     {
-        //this.connection=new JsonHttpClientConnection(this);
         this.connection=new JsonHttpUrlConnection(this);
         this.jsonConnector = new JsonConnector(url, this,connection);
         this.parser = builder.addSerializationExclusionStrategy(exclusionStrategy).create();

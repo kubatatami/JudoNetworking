@@ -130,7 +130,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest> {
         }
 
         for (Object arg : args) {
-            nameValuePairs.add(new BasicNameValuePair(params[i], arg.toString()));
+            nameValuePairs.add(new BasicNameValuePair(params[i], arg==null ? "" : arg.toString()));
             i++;
         }
 

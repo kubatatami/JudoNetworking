@@ -1,6 +1,7 @@
 package com.implix.jsonrpc;
 
-import com.google.gson.JsonElement;
+
+import com.google.gson22.JsonElement;
 
 /**
  * Created with IntelliJ IDEA.
