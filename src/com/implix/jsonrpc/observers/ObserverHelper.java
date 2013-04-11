@@ -9,6 +9,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,6 +23,7 @@ public class ObserverHelper {
     private List<Pair<ObservableWrapper, WrapObserver>> regObservers = new ArrayList<Pair<ObservableWrapper, WrapObserver>>();
     private Object observableObject;
     private static final String splitter = "\\.";
+    private static final Pattern pattern = Pattern.compile("\\[[^\\]]*\\]");
 
     @SuppressWarnings("unchecked")
     public void start(final Object object, View view) {
@@ -51,42 +54,72 @@ public class ObserverHelper {
     @SuppressWarnings("unchecked")
     private void linkViewObserver(final View view) throws Exception {
         if (view.getTag() != null && view.getTag() instanceof String) {
-            String tag = (String) view.getTag();
+            final String tag = (String) view.getTag();
 
-            final Pair<ObservableWrapper, String> result = findObservableByTag(tag);
-            if (result != null) {
-                WrapObserver observer = new WrapObserver() {
-                    @Override
-                    public void update(Object data) {
-                        try {
-                            if (view instanceof TextView) {
-                                TextView textView = (TextView) view;
-                                if (result.second == null) {
-                                    textView.setText(data.toString());
-                                } else {
-                                    textView.setText(getFieldValue(result.second,data).toString());
-                                }
-                            }
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
+            final List<ObservableWrapper> results = findObservablesByTag(tag);
+
+            WrapObserver observer = new WrapObserver() {
+                @Override
+                public void update(Object data) {
+                    try {
+                        if (view instanceof TextView) {
+                            TextView textView = (TextView) view;
+
+                            String result = buildResult(tag.substring(1, tag.length() - 1));
+                            textView.setText(result);
+
                         }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
                     }
-                };
+                }
+            };
 
-                result.first.addObserver(observer);
-                regObservers.add(new Pair<ObservableWrapper, WrapObserver>(result.first, observer));
+            for (ObservableWrapper result : results) {
+                result.addObserver(observer);
+                regObservers.add(new Pair<ObservableWrapper, WrapObserver>(result, observer));
             }
+
         }
     }
 
+    private String buildResult(String tag) throws IllegalAccessException {
+        Matcher matcher = pattern.matcher(tag);
 
-    private Pair<ObservableWrapper, String> findObservableByTag(String tag) throws Exception {
-        String[] parts = tag.split(splitter);
-        if (parts.length > 1 && parts[0].length()==0) {
-            ObservableWrapper observableWrapper = (ObservableWrapper) getField(parts[1]).get(observableObject);
-            return new Pair<ObservableWrapper, String>(observableWrapper, tag.substring(parts[1].length()+2));
+        while (matcher.find()) {
+            String res = matcher.group(0);
+            String key = res.substring(1, res.length() - 1);
+            if (key.substring(0, 1).equals(".")) {
+                tag = tag.replace(res, getFieldFromObserver(key, observableObject).toString());
+            } else if (key.substring(0, 1).equals("R")) {
+                tag = tag.replace(res, getResource(key));
+            }
         }
-        return null;
+
+        return tag;
+    }
+
+    private String getResource(String tag) {
+        return "tekst";
+    }
+
+    private List<ObservableWrapper> findObservablesByTag(String tag) throws Exception {
+        List<ObservableWrapper> list = new ArrayList<ObservableWrapper>();
+        if (tag.matches("\\[.*\\]")) {
+            tag = tag.substring(1, tag.length() - 1);
+            Matcher matcher = pattern.matcher(tag);
+
+            while (matcher.find()) {
+                String res = matcher.group(0);
+                res = res.substring(1, res.length() - 1);
+                if (res.substring(0, 1).equals(".")) {
+                    String fields[] = res.split(splitter);
+                    list.add((ObservableWrapper) getField(fields[1]).get(observableObject));
+                }
+            }
+
+        }
+        return list;
     }
 
     @SuppressWarnings("unchecked")
@@ -112,9 +145,23 @@ public class ObserverHelper {
         }
     }
 
+    private Object getFieldFromObserver(String fieldName, Object object) throws IllegalAccessException {
+        String fields[] = fieldName.split(splitter);
+        ObservableWrapper observableWrapper = (ObservableWrapper) getField(fields[1]).get(object);
+        Object data = observableWrapper.get();
+        if(data==null)
+        {
+            return "";
+        }
+        else
+        {
+            return getFieldValue(fieldName.substring(fields[1].length()+2), data);
+        }
+    }
+
     private Object getFieldValue(String fieldName, Object object) throws IllegalAccessException {
         String parts[] = fieldName.split(splitter);
-        Class<?> clazz = null;
+        Class<?> clazz;
         for (String part : parts) {
             clazz = object.getClass();
             object = getField(part, clazz).get(object);
