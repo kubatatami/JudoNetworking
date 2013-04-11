@@ -1,5 +1,8 @@
 -przemyslenie dataobserver
--custom tagi xmlowe ktore automatycznie ustawia wartosc z podanego pola
+-wyrazenia regularne w json-rpc-client
+-[[.accountDetailsObserver.accountDetails.highestAchievedRank] [R.string.dupa]]
 
+
+-moze adnotacje w metodach modeli umozliwiajace parsowanie danych po wczytaniu? duza zlozonosc:(
 -nazwy parametrow przez adnotacje
 -porzadek w exceptions (JsonException)
