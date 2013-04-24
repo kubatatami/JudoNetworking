@@ -1,7 +1,6 @@
 package com.implix.jsonrpc;
 
 
-
 import com.google.gson22.JsonElement;
 import com.google.gson22.JsonSyntaxException;
 import com.google.gson22.reflect.TypeToken;
@@ -86,58 +85,63 @@ class JsonConnector {
 
     @SuppressWarnings("unchecked")
     public <T> T call(JsonRequest request) throws Exception {
-        JsonTimeStat timeStat = new JsonTimeStat();
+        try {
+            JsonTimeStat timeStat = new JsonTimeStat();
 
-        if (rpc.isCacheEnabled() && request.isCachable()) {
-            Object cacheObject = rpc.getCache().get(request.getName(), request.getArgs(), request.getCacheLifeTime());
-            if (cacheObject != null) {
-                return (T) cacheObject;
+            if (rpc.isCacheEnabled() && request.isCachable()) {
+                Object cacheObject = rpc.getCache().get(request.getName(), request.getArgs(), request.getCacheLifeTime());
+                if (cacheObject != null) {
+                    return (T) cacheObject;
+                }
             }
+            HttpURLConnection conn = null;
+            if (request.getMethodType() == JsonMethodType.JSON_RPC) {
+                JsonRequestModel jsonRequest = request.createJsonRequest(version);
+                timeStat.tickCreateTime();
+                conn = connection.post(url, jsonRequest, request.getTimeout(), timeStat);
+            } else {
+                String getRequest = request.createGetRequest();
+                timeStat.tickCreateTime();
+                conn = connection.get(url, getRequest, request.getTimeout(), timeStat);
+            }
+            timeStat.tickConnectionTime();
+
+            JsonResponseModel response = readResponse(conn.getInputStream());
+            if (response == null) {
+                throw new JsonException("Empty response.");
+            }
+            timeStat.tickReadTime();
+
+            T res;
+            if (!request.getReturnType().equals(Void.TYPE)) {
+                res = parseResponse(response.result, request.getReturnType());
+            } else {
+                res = null;
+            }
+
+            conn.disconnect();
+
+            timeStat.tickParseTime();
+            timeStat.tickEndTime();
+
+            if (rpc.isTimeProfiler()) {
+                refreshStat(request.getName(), timeStat.getMethodTime());
+            }
+
+
+            if ((rpc.getDebugFlags() & JsonRpc.TIME_DEBUG) > 0) {
+                timeStat.logTime("End single request(" + request.getName() + "):");
+            }
+
+            if (rpc.isCacheEnabled() && request.isCachable()) {
+                rpc.getCache().put(request.getName(), request.getArgs(), res, request.getCacheSize());
+            }
+
+            return res;
+        } catch (Exception e) {
+            refreshErrorStat(request.getName(),request.getTimeout());
+            throw e;
         }
-        HttpURLConnection conn = null;
-        if (request.getMethodType() == JsonMethodType.JSON_RPC) {
-            JsonRequestModel jsonRequest = request.createJsonRequest(version);
-            timeStat.tickCreateTime();
-            conn = connection.post(url, jsonRequest, request.getTimeout(), timeStat);
-        } else {
-            String getRequest = request.createGetRequest();
-            timeStat.tickCreateTime();
-            conn = connection.get(url, getRequest, request.getTimeout(), timeStat);
-        }
-        timeStat.tickConnectionTime();
-
-        JsonResponseModel response = readResponse(conn.getInputStream());
-        if (response == null) {
-            throw new JsonException("Empty response.");
-        }
-        timeStat.tickReadTime();
-
-        T res;
-        if (!request.getReturnType().equals(Void.TYPE)) {
-            res = parseResponse(response.result, request.getReturnType());
-        } else {
-            res = null;
-        }
-
-        conn.disconnect();
-
-        timeStat.tickParseTime();
-        timeStat.tickEndTime();
-
-        if (rpc.isTimeProfiler()) {
-            refreshStat(request.getName(), timeStat.getMethodTime());
-        }
-
-
-        if ((rpc.getDebugFlags() & JsonRpc.TIME_DEBUG) > 0) {
-            timeStat.logTime("End single request(" + request.getName() + "):");
-        }
-
-        if (rpc.isCacheEnabled() && request.isCachable()) {
-            rpc.getCache().put(request.getName(), request.getArgs(), res, request.getCacheSize());
-        }
-
-        return res;
     }
 
     private <T> T parseResponse(JsonElement result, Type type) {
@@ -151,69 +155,76 @@ class JsonConnector {
 
 
     public List<JsonResponseModel2> callBatch(List<JsonRequest> requests, Integer timeout) throws Exception {
-        int i = 0;
-        JsonTimeStat timeStat = new JsonTimeStat();
-        JsonReader reader = null;
-        Object[] requestsJson = new Object[requests.size()];
-        List<JsonResponseModel2> responses = null;
-        String requestsName = "";
-
-
-        for (JsonRequest request : requests) {
-            requestsJson[i] = request.createJsonRequest(version);
-            requestsName += " " + request.getName();
-            i++;
-        }
-        timeStat.tickCreateTime();
-        HttpURLConnection conn = connection.post(url, requestsJson, timeout, timeStat);
-        InputStream stream = conn.getInputStream();
         try {
-            if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
+            int i = 0;
+            JsonTimeStat timeStat = new JsonTimeStat();
+            JsonReader reader = null;
+            Object[] requestsJson = new Object[requests.size()];
+            List<JsonResponseModel2> responses = null;
+            String requestsName = "";
 
-                String resStr = convertStreamToString(stream);
-                timeStat.tickReadTime();
-                JsonLoggerImpl.longLog("RES(" + resStr.length() + ")", resStr);
-                responses = rpc.getParser().fromJson(resStr,
-                        new TypeToken<List<JsonResponseModel2>>() {
-                        }.getType());
-                timeStat.tickParseTime();
-            } else {
-                reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
-                responses = rpc.getParser().fromJson(reader,
-                        new TypeToken<List<JsonResponseModel2>>() {
-                        }.getType());
-                reader.close();
-                timeStat.tickReadTime();
-                timeStat.tickParseTime();
-            }
-        } catch (JsonSyntaxException e) {
-            if (requestsName.length() > 0) {
-                throw new JsonException(requestsName.substring(1), e);
-            } else {
-                throw e;
-            }
-        }
-        if (responses == null) {
-            throw new JsonException("Empty response.");
-        }
-        conn.disconnect();
-
-
-        timeStat.tickEndTime();
-        if (rpc.isTimeProfiler()) {
 
             for (JsonRequest request : requests) {
-                refreshStat(request.getName(), timeStat.getMethodTime() / requests.size());
+                requestsJson[i] = request.createJsonRequest(version);
+                requestsName += " " + request.getName();
+                i++;
             }
+            timeStat.tickCreateTime();
+            HttpURLConnection conn = connection.post(url, requestsJson, timeout, timeStat);
+            InputStream stream = conn.getInputStream();
+            try {
+                if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
+
+                    String resStr = convertStreamToString(stream);
+                    timeStat.tickReadTime();
+                    JsonLoggerImpl.longLog("RES(" + resStr.length() + ")", resStr);
+                    responses = rpc.getParser().fromJson(resStr,
+                            new TypeToken<List<JsonResponseModel2>>() {
+                            }.getType());
+                    timeStat.tickParseTime();
+                } else {
+                    reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
+                    responses = rpc.getParser().fromJson(reader,
+                            new TypeToken<List<JsonResponseModel2>>() {
+                            }.getType());
+                    reader.close();
+                    timeStat.tickReadTime();
+                    timeStat.tickParseTime();
+                }
+            } catch (JsonSyntaxException e) {
+                if (requestsName.length() > 0) {
+                    throw new JsonException(requestsName.substring(1), e);
+                } else {
+                    throw e;
+                }
+            }
+            if (responses == null) {
+                throw new JsonException("Empty response.");
+            }
+            conn.disconnect();
+
+
+            timeStat.tickEndTime();
+            if (rpc.isTimeProfiler()) {
+
+                for (JsonRequest request : requests) {
+                    refreshStat(request.getName(), timeStat.getMethodTime() / requests.size());
+                }
+            }
+
+
+            if ((rpc.getDebugFlags() & JsonRpc.TIME_DEBUG) > 0) {
+                timeStat.logTime("End batch request(" + requestsName.substring(1) + "):");
+            }
+
+
+            return responses;
+        } catch (Exception e) {
+            for (JsonRequest request : requests) {
+                refreshErrorStat(request.getName(),request.getTimeout());
+            }
+            throw e;
         }
-
-
-        if ((rpc.getDebugFlags() & JsonRpc.TIME_DEBUG) > 0) {
-            timeStat.logTime("End batch request(" + requestsName.substring(1) + "):");
-        }
-
-
-        return responses;
     }
 
     private JsonStat getStat(String method) {
@@ -234,6 +245,13 @@ class JsonConnector {
         rpc.saveStat();
     }
 
+    private void refreshErrorStat(String method, long timeout) {
+        JsonStat stat = getStat(method);
+        stat.avgTime = ((stat.avgTime * stat.requestCount) + timeout) / (stat.requestCount + 1);
+        stat.errors++;
+        stat.requestCount++;
+        rpc.saveStat();
+    }
 
     public void setReconnections(int reconnections) {
         connection.setReconnections(reconnections);

@@ -13,11 +13,12 @@ import android.view.ViewGroup;
  */
 public class ObserverActivity extends Activity {
 
-    private ObserverHelper observerHelper = new ObserverHelper();
+    private ObserverHelper observerHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        observerHelper = new ObserverHelper(this);
         observerHelper.start(this, ((ViewGroup) findViewById(android.R.id.content)).getChildAt(0));
     }
 

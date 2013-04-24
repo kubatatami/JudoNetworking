@@ -1,5 +1,6 @@
 package com.implix.jsonrpc.observers;
 
+import android.content.Context;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +25,19 @@ public class ObserverHelper {
     private Object observableObject;
     private static final String splitter = "\\.";
     private static final Pattern pattern = Pattern.compile("\\[[^\\]]*\\]");
+    private static final String convention = "Changed";
+    private final Class<?> resources;
+    private Context context;
+
+    public ObserverHelper(Context context) {
+        this.context = context;
+        String packageName = context.getApplicationContext().getPackageName();
+        try {
+            resources = Class.forName(packageName+".R");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @SuppressWarnings("unchecked")
     public void start(final Object object, View view) {
@@ -83,7 +97,7 @@ public class ObserverHelper {
         }
     }
 
-    private String buildResult(String tag) throws IllegalAccessException {
+    private String buildResult(String tag) throws IllegalAccessException, NoSuchFieldException {
         Matcher matcher = pattern.matcher(tag);
 
         while (matcher.find()) {
@@ -91,16 +105,20 @@ public class ObserverHelper {
             String key = res.substring(1, res.length() - 1);
             if (key.substring(0, 1).equals(".")) {
                 tag = tag.replace(res, getFieldFromObserver(key, observableObject).toString());
-            } else if (key.substring(0, 1).equals("R")) {
-                tag = tag.replace(res, getResource(key));
+            } else if (key.substring(0, 8).equals("@string/")) {
+                tag = tag.replace(res, getStringResource(key.substring(8)));
+
             }
         }
 
         return tag;
     }
 
-    private String getResource(String tag) {
-        return "tekst";
+    private String getStringResource(String stringName) throws NoSuchFieldException, IllegalAccessException {
+
+        Field f = resources.getField("string");
+        f=f.getClass().getField(stringName);
+        return context.getString(f.getInt(null));
     }
 
     private List<ObservableWrapper> findObservablesByTag(String tag) throws Exception {
@@ -191,7 +209,7 @@ public class ObserverHelper {
     }
 
     private ObservableWrapper getObservable(Method method) throws Exception {
-        final String convention = "Changed";
+
         DataObserver ann = method.getAnnotation(DataObserver.class);
 
         if (!ann.fieldName().equals("")) {

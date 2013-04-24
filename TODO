@@ -1,8 +1,7 @@
--przemyslenie dataobserver
--wyrazenia regularne w json-rpc-client
 -[[.accountDetailsObserver.accountDetails.highestAchievedRank] [R.string.dupa]]
 
-
--moze adnotacje w metodach modeli umozliwiajace parsowanie danych po wczytaniu? duza zlozonosc:(
+-moze jakies wsparcie dla zarzadzania wersjami API?
+-2 rodzaje cache, z clonem i bez
+-moze adnotacje w metodach modeli umozliwiajace przetwarzanie danych po wczytaniu? duza zlozonosc:(
 -nazwy parametrow przez adnotacje
 -porzadek w exceptions (JsonException)

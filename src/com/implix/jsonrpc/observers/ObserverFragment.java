@@ -1,5 +1,6 @@
 package com.implix.jsonrpc.observers;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
 import android.view.View;
@@ -13,7 +14,13 @@ import android.view.View;
  */
 public class ObserverFragment extends Fragment {
 
-    private ObserverHelper observerHelper = new ObserverHelper();
+    private ObserverHelper observerHelper;
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        observerHelper = new ObserverHelper(activity);
+    }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
