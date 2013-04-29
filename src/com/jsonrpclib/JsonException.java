@@ -5,7 +5,7 @@ package com.jsonrpclib;
  * User: jbogacki
  * Date: 11.01.2013
  * Time: 10:48
- * To change this template use File | Settings | File Templates.
+ *
  */
 public class JsonException extends Exception {
     private int code;

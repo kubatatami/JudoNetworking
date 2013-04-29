@@ -5,7 +5,7 @@ package com.jsonrpclib;
  * User: jbogacki
  * Date: 30.03.2013
  * Time: 11:10
- * To change this template use File | Settings | File Templates.
+ *
  */
 class JsonTimeStat {
     private long allTime = 0;

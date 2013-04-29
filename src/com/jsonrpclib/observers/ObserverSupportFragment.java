@@ -10,7 +10,7 @@ import android.view.View;
  * User: jbogacki
  * Date: 27.02.2013
  * Time: 16:39
- * To change this template use File | Settings | File Templates.
+ *
  */
 public class ObserverSupportFragment extends Fragment {
 

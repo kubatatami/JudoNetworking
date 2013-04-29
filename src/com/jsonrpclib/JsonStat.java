@@ -7,7 +7,7 @@ import java.io.Serializable;
  * User: jbogacki
  * Date: 23.03.2013
  * Time: 16:59
- * To change this template use File | Settings | File Templates.
+ *
  */
 class JsonStat implements Serializable{
     public long requestCount=0;

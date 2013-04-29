@@ -5,7 +5,6 @@ import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -18,7 +17,7 @@ import java.util.regex.Pattern;
  * User: jbogacki
  * Date: 08.04.2013
  * Time: 22:23
- * To change this template use File | Settings | File Templates.
+ *
  */
 public class ObserverHelper {
     private List<Pair<ObservableWrapper, WrapObserver>> regObservers = new ArrayList<Pair<ObservableWrapper, WrapObserver>>();

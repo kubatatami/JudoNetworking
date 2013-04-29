@@ -10,7 +10,7 @@ import java.util.List;
  * User: jbogacki
  * Date: 14.03.2013
  * Time: 13:56
- * To change this template use File | Settings | File Templates.
+ *
  */
 public class JsonAdapterCallback<T> extends JsonCallback<List<T>> {
 

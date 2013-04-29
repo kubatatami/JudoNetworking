@@ -5,7 +5,7 @@ package com.jsonrpclib.observers;
  * User: jbogacki
  * Date: 01.03.2013
  * Time: 13:28
- * To change this template use File | Settings | File Templates.
+ *
  */
 public interface ObservableWrapperListenerInterface<T> {
 

@@ -5,7 +5,7 @@ package com.jsonrpclib;
  * User: jbogacki
  * Date: 19.02.2013
  * Time: 12:06
- * To change this template use File | Settings | File Templates.
+ *
  */
 public class JsonLogger {
 

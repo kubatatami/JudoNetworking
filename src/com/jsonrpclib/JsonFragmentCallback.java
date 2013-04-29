@@ -11,7 +11,7 @@ import java.io.StringWriter;
  * User: jbogacki
  * Date: 23.04.2013
  * Time: 11:40
- * To change this template use File | Settings | File Templates.
+ *
  */
 public abstract class JsonFragmentCallback<T> extends JsonCallback<T> {
 

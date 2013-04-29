@@ -8,7 +8,7 @@ import com.google.gson22.JsonElement;
  * User: jbogacki
  * Date: 08.02.2013
  * Time: 09:20
- * To change this template use File | Settings | File Templates.
+ *
  */
 class JsonResponseModel implements Comparable<JsonResponseModel2>{
     Integer id;

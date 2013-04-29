@@ -9,7 +9,7 @@ import android.view.ViewGroup;
  * User: jbogacki
  * Date: 08.04.2013
  * Time: 22:27
- * To change this template use File | Settings | File Templates.
+ *
  */
 class ObserverActivity extends Activity {
 

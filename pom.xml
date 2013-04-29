@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>slidingmenu</artifactId>
-    <name>SlidingMenu</name>
+    <artifactId>jsonrpcclient</artifactId>
+    <name>JsonRpcClient</name>
     <packaging>apklib</packaging>
 
     <parent>
@@ -19,10 +19,12 @@
         <dependency>
             <groupId>com.google.android</groupId>
             <artifactId>android</artifactId>
+            <version>4.1.1.4</version>
         </dependency>
         <dependency>
             <groupId>com.google.android</groupId>
             <artifactId>support-v4</artifactId>
+            <version>r7</version>
         </dependency>
     </dependencies>
 

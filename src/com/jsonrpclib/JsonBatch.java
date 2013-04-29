@@ -8,7 +8,7 @@ import java.io.StringWriter;
  * User: jbogacki
  * Date: 11.02.2013
  * Time: 22:48
- * To change this template use File | Settings | File Templates.
+ *
  */
 public abstract class JsonBatch<T> implements JsonBatchInterface<T>{
 

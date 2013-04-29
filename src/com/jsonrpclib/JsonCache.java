@@ -12,7 +12,7 @@ import java.util.Map;
  * User: jbogacki
  * Date: 07.03.2013
  * Time: 08:05
- * To change this template use File | Settings | File Templates.
+ *
  */
 class JsonCache {
     private final JsonRpcImplementation rpc;

@@ -5,7 +5,7 @@ package com.jsonrpclib;
  * User: jbogacki
  * Date: 07.01.2013
  * Time: 14:27
- * To change this template use File | Settings | File Templates.
+ *
  */
 public interface JsonTransactionCallback {
 

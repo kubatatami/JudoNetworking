@@ -11,7 +11,7 @@ import java.util.List;
  * User: jbogacki
  * Date: 02.04.2013
  * Time: 09:57
- * To change this template use File | Settings | File Templates.
+ *
  */
 public class JsonAdapterSortCallback<T extends Comparable<T>> extends JsonCallback<List<T>> {
 

@@ -7,9 +7,9 @@ import java.net.HttpURLConnection;
  * User: jbogacki
  * Date: 24.03.2013
  * Time: 21:53
- * To change this template use File | Settings | File Templates.
+ *
  */
-public interface JsonConnection {
+interface JsonConnection {
 
 
     public HttpURLConnection get(String url, String request, int timeout,JsonTimeStat timeStat) throws Exception;

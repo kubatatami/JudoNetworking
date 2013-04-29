@@ -7,7 +7,7 @@ import com.jsonrpclib.JsonCallback;
  * User: jbogacki
  * Date: 07.01.2013
  * Time: 10:55
- * To change this template use File | Settings | File Templates.
+ *
  */
 public class JsonWrapperCallback<T> extends JsonCallback<T> {
 

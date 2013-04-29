@@ -5,7 +5,7 @@ package com.jsonrpclib;
  * User: jbogacki
  * Date: 07.03.2013
  * Time: 07:55
- * To change this template use File | Settings | File Templates.
+ *
  */
 class JsonCacheObject {
     final long createTime;

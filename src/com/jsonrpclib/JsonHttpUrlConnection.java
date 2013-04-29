@@ -11,9 +11,9 @@ import java.net.URL;
  * User: jbogacki
  * Date: 29.03.2013
  * Time: 13:14
- * To change this template use File | Settings | File Templates.
+ *
  */
-public class JsonHttpUrlConnection implements JsonConnection {
+class JsonHttpUrlConnection implements JsonConnection {
 
     private final JsonRpcImplementation rpc;
     private int reconnections = 3;
