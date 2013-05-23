@@ -115,4 +115,12 @@ public class ObservableWrapper<T> {
     {
         return observers.size();
     }
+
+    public long getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(long updateTime) {
+        this.updateTime = updateTime;
+    }
 }

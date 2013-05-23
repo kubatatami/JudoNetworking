@@ -37,6 +37,8 @@ class JsonRpcImplementation implements JsonRpc {
     private int debugFlags = 0;
     private Map<String, JsonStat> stats;
     private File statFile;
+    private HttpURLConnectionModifier httpURLConnectionModifier;
+    private int maxStatFileSize=50; //KB
 
     public JsonRpcImplementation(Context context, String url) {
         init(context,url,null,new GsonBuilder());
@@ -146,6 +148,11 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     @Override
+    public void setHttpUrlConnectionModifier(HttpURLConnectionModifier httpURLConnectionModifier) {
+        this.httpURLConnectionModifier=httpURLConnectionModifier;
+    }
+
+    @Override
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
     }
@@ -212,6 +219,14 @@ class JsonRpcImplementation implements JsonRpc {
         this.timeProfiler = enabled;
     }
 
+    public int getMaxStatFileSize() {
+        return maxStatFileSize;
+    }
+
+    public void setMaxStatFileSize(int maxStatFileSize) {
+        this.maxStatFileSize = maxStatFileSize;
+    }
+
     @Override
     public void showTimeProfilerInfo() {
         if (stats != null) {
@@ -265,7 +280,7 @@ class JsonRpcImplementation implements JsonRpc {
     @SuppressWarnings("unchecked")
     public Map<String, JsonStat> getStats() {
         if (stats == null) {
-            if(statFile.exists())
+            if(statFile.exists() && statFile.length() < maxStatFileSize*1024)
             {
 
                 try {
@@ -301,5 +316,9 @@ class JsonRpcImplementation implements JsonRpc {
 
     public Context getContext() {
         return context;
+    }
+
+    HttpURLConnectionModifier getHttpURLConnectionModifier() {
+        return httpURLConnectionModifier;
     }
 }

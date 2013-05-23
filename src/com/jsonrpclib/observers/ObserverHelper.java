@@ -103,7 +103,8 @@ public class ObserverHelper {
             String res = matcher.group(0);
             String key = res.substring(1, res.length() - 1);
             if (key.substring(0, 1).equals(".")) {
-                tag = tag.replace(res, getFieldFromObserver(key, observableObject).toString());
+                Object field = getFieldFromObserver(key, observableObject);
+                tag = tag.replace(res, field !=null ? field.toString() : "");
             } else if (key.substring(0, 8).equals("@string/")) {
                 tag = tag.replace(res, getStringResource(key.substring(8)));
 

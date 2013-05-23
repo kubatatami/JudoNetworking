@@ -60,6 +60,12 @@ class JsonHttpUrlConnection implements JsonConnection {
             if ((rpc.getDebugFlags() & JsonRpc.REQUEST_DEBUG) > 0) {
                 JsonLoggerImpl.longLog("REQ(GET)", request);
             }
+
+            if(rpc.getHttpURLConnectionModifier()!=null)
+            {
+                rpc.getHttpURLConnectionModifier().modify(urlConnection);
+            }
+
             urlConnection.getInputStream();
             timeStat.tickConnectionTime();
         }
@@ -80,6 +86,7 @@ class JsonHttpUrlConnection implements JsonConnection {
                 }
             }
         }
+
         urlConnection.addRequestProperty("Content-Type", "application/json");
 
         if (rpc.getAuthKey() != null) {
@@ -95,6 +102,10 @@ class JsonHttpUrlConnection implements JsonConnection {
         urlConnection.setReadTimeout(timeout);
         urlConnection.setDoOutput(true);
 
+        if(rpc.getHttpURLConnectionModifier()!=null)
+        {
+            rpc.getHttpURLConnectionModifier().modify(urlConnection);
+        }
 
         if ((rpc.getDebugFlags() & JsonRpc.REQUEST_DEBUG) > 0) {
             String req = rpc.getParser().toJson(request);

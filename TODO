@@ -1,7 +1,12 @@
 -[[.accountDetailsObserver.accountDetails.highestAchievedRank] [R.string.dupa]]
-
--moze jakies wsparcie dla zarzadzania wersjami API?
 -2 rodzaje cache, z clonem i bez
--moze adnotacje w metodach modeli umozliwiajace przetwarzanie danych po wczytaniu? duza zlozonosc:(
 -nazwy parametrow przez adnotacje
+-filtrowanie i przetwarzanie adapterow
+-przemyslenie reconnection
+-HttpOk dla SPDY
+
+-persistent cache
+-moze jakies wsparcie dla zarzadzania wersjami API?
+-moze adnotacje w metodach modeli umozliwiajace przetwarzanie danych po wczytaniu? duza zlozonosc:(
+
 -porzadek w exceptions (JsonException)

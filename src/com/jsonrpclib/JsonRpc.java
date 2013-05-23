@@ -36,6 +36,12 @@ public interface JsonRpc {
 
     /**
      *
+     * @param httpURLConnectionModifier
+     */
+    public void setHttpUrlConnectionModifier(HttpURLConnectionModifier httpURLConnectionModifier);
+
+    /**
+     *
      * @param username
      * @param password
      */
@@ -109,6 +115,18 @@ public interface JsonRpc {
      * @param enabled
      */
     public void setTimeProfilerEnabled(boolean enabled);
+
+    /**
+     *
+     * @return
+     */
+    public int getMaxStatFileSize();
+
+    /**
+     *
+     * @param maxStatFileSize
+     */
+    public void setMaxStatFileSize(int maxStatFileSize);
 
     /**
      * Writes time statistics to log.
