@@ -11,7 +11,6 @@ import java.util.List;
  * User: jbogacki
  * Date: 02.04.2013
  * Time: 09:57
- *
  */
 public class JsonAdapterSortCallback<T extends Comparable<T>> extends JsonCallback<List<T>> {
 
@@ -21,18 +20,23 @@ public class JsonAdapterSortCallback<T extends Comparable<T>> extends JsonCallba
         this.adapter = adapter;
     }
 
+    public boolean filtr(T result) {
+        return true;
+    }
+
     @Override
     public void onFinish(List<T> result) {
         adapter.clear();
         Collections.sort(result);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-            adapter.setNotifyOnChange(false);
-            for (T object : result) {
+
+        adapter.setNotifyOnChange(false);
+        for (T object : result) {
+            if(filtr(object))
+            {
                 adapter.add(object);
             }
-            adapter.notifyDataSetChanged();
-        } else {
-            adapter.addAll(result);
         }
+        adapter.notifyDataSetChanged();
+
     }
 }

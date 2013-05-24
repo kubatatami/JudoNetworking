@@ -37,6 +37,7 @@ class JsonRpcImplementation implements JsonRpc {
     private int debugFlags = 0;
     private Map<String, JsonStat> stats;
     private File statFile;
+    private HttpURLCreator httpURLCreator;
     private HttpURLConnectionModifier httpURLConnectionModifier;
     private int maxStatFileSize=50; //KB
 
@@ -58,6 +59,7 @@ class JsonRpcImplementation implements JsonRpc {
 
     private void init(Context context, String url, String apiKey, GsonBuilder builder)
     {
+        this.httpURLCreator=new HttpURLCreatorImplementation();
         this.connection=new JsonHttpUrlConnection(this);
         this.jsonConnector = new JsonConnector(url, this,connection);
         this.parser = builder.addSerializationExclusionStrategy(exclusionStrategy).create();
@@ -320,5 +322,13 @@ class JsonRpcImplementation implements JsonRpc {
 
     HttpURLConnectionModifier getHttpURLConnectionModifier() {
         return httpURLConnectionModifier;
+    }
+
+    public HttpURLCreator getHttpURLCreator() {
+        return httpURLCreator;
+    }
+
+    public void setHttpURLCreator(HttpURLCreator httpURLCreator) {
+        this.httpURLCreator = httpURLCreator;
     }
 }

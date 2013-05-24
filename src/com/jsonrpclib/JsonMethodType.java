@@ -9,6 +9,7 @@ package com.jsonrpclib;
  */
 public enum JsonMethodType {
     JSON_RPC,
-    GET
+    GET,
+    GET_SIMPLE
 
 }

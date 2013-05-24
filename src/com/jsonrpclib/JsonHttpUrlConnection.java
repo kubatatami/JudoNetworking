@@ -37,7 +37,7 @@ class JsonHttpUrlConnection implements JsonConnection {
 
         for (int i = 1; i <= reconnections; i++) {
             try {
-                urlConnection = (HttpURLConnection) new URL(url + request).openConnection();
+                urlConnection = rpc.getHttpURLCreator().create(url + request);
                 break;
             } catch (IOException e) {
                 if (i == reconnections) {
@@ -78,7 +78,7 @@ class JsonHttpUrlConnection implements JsonConnection {
 
         for (int i = 1; i <= reconnections; i++) {
             try {
-                urlConnection = (HttpURLConnection) new URL(url).openConnection();
+                urlConnection = rpc.getHttpURLCreator().create(url);
                 break;
             } catch (IOException e) {
                 if (i == reconnections) {

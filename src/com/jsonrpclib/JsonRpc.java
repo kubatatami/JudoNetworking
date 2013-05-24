@@ -124,6 +124,12 @@ public interface JsonRpc {
 
     /**
      *
+     * @param httpURLCreator
+     */
+    void setHttpURLCreator(HttpURLCreator httpURLCreator);
+
+    /**
+     *
      * @param maxStatFileSize
      */
     public void setMaxStatFileSize(int maxStatFileSize);

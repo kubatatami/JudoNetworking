@@ -10,7 +10,6 @@ import java.util.List;
  * User: jbogacki
  * Date: 14.03.2013
  * Time: 13:56
- *
  */
 public class JsonAdapterCallback<T> extends JsonCallback<List<T>> {
 
@@ -20,17 +19,21 @@ public class JsonAdapterCallback<T> extends JsonCallback<List<T>> {
         this.adapter = adapter;
     }
 
+    public boolean filtr(T result) {
+        return true;
+    }
+
     @Override
     public void onFinish(List<T> result) {
         adapter.clear();
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-            adapter.setNotifyOnChange(false);
-            for (T object : result) {
+
+        adapter.setNotifyOnChange(false);
+        for (T object : result) {
+            if(filtr(object))
+            {
                 adapter.add(object);
             }
-            adapter.notifyDataSetChanged();
-        } else {
-            adapter.addAll(result);
         }
+        adapter.notifyDataSetChanged();
     }
 }

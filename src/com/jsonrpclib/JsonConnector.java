@@ -106,17 +106,34 @@ class JsonConnector {
             }
             timeStat.tickConnectionTime();
 
-            JsonResponseModel response = readResponse(conn.getInputStream());
-            if (response == null) {
-                throw new JsonException("Empty response.");
-            }
-            timeStat.tickReadTime();
-
             T res;
-            if (!request.getReturnType().equals(Void.TYPE)) {
-                res = parseResponse(response.result, request.getReturnType());
-            } else {
-                res = null;
+            if (request.getMethodType() != JsonMethodType.GET_SIMPLE) {
+                JsonResponseModel response = readResponse(conn.getInputStream());
+                if (response == null) {
+                    throw new JsonException("Empty response.");
+                }
+                timeStat.tickReadTime();
+
+
+                if (!request.getReturnType().equals(Void.TYPE)) {
+                    res = parseResponse(response.result, request.getReturnType());
+                } else {
+                    res = null;
+                }
+            }
+            else
+            {
+                if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
+
+                    String resStr = convertStreamToString(conn.getInputStream());
+                    JsonLoggerImpl.longLog("RES(" + resStr.length() + ")", resStr);
+                    res=rpc.getParser().fromJson(resStr, request.getReturnType());
+                }
+                else
+                {
+                    JsonReader reader = new JsonReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+                    res=rpc.getParser().fromJson(reader, request.getReturnType());
+                }
             }
 
             conn.disconnect();
@@ -139,7 +156,7 @@ class JsonConnector {
 
             return res;
         } catch (Exception e) {
-            refreshErrorStat(request.getName(),request.getTimeout());
+            refreshErrorStat(request.getName(), request.getTimeout());
             throw e;
         }
     }
@@ -221,7 +238,7 @@ class JsonConnector {
             return responses;
         } catch (Exception e) {
             for (JsonRequest request : requests) {
-                refreshErrorStat(request.getName(),request.getTimeout());
+                refreshErrorStat(request.getName(), request.getTimeout());
             }
             throw e;
         }

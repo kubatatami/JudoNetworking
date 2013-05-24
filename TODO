@@ -1,12 +1,10 @@
--[[.accountDetailsObserver.accountDetails.highestAchievedRank] [R.string.dupa]]
+-przemyslenie reconnection
+-persistent cache
 -2 rodzaje cache, z clonem i bez
 -nazwy parametrow przez adnotacje
--filtrowanie i przetwarzanie adapterow
--przemyslenie reconnection
--HttpOk dla SPDY
 
--persistent cache
--moze jakies wsparcie dla zarzadzania wersjami API?
--moze adnotacje w metodach modeli umozliwiajace przetwarzanie danych po wczytaniu? duza zlozonosc:(
+weryfikacja:
+-[[.accountDetailsObserver.accountDetails.highestAchievedRank] [R.string.dupa]]
 
--porzadek w exceptions (JsonException)
+
+
