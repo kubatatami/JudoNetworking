@@ -12,9 +12,11 @@ class JsonBatchTask implements Runnable {
     private List<JsonResponseModel2> response = null;
     private Exception ex = null;
     private final JsonRpcImplementation rpc;
+    private JsonProgressObserver progressObserver;
 
-    public JsonBatchTask(JsonRpcImplementation rpc, Integer timeout, List<JsonRequest> requests) {
+    public JsonBatchTask(JsonRpcImplementation rpc, JsonProgressObserver progressObserver, Integer timeout, List<JsonRequest> requests) {
         this.rpc = rpc;
+        this.progressObserver = progressObserver;
         this.timeout = timeout;
         this.requests = requests;
     }
@@ -30,7 +32,7 @@ class JsonBatchTask implements Runnable {
     @Override
     public void run() {
         try {
-            this.response = rpc.getJsonConnector().callBatch(this.requests, this.timeout);
+            this.response = rpc.getJsonConnector().callBatch(this.requests,progressObserver, this.timeout);
         } catch (Exception e) {
             this.ex = e;
         }

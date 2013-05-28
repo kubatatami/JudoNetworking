@@ -7,10 +7,15 @@ class JsonAsyncResult implements Runnable
         private Object result=null;
         private Object[] results=null;
         private Exception e=null;
-
+        private int progress=0;
 
         JsonAsyncResult(JsonBatchInterface<?> callback, Object results[]) {
             this.results = results;
+            this.transaction = callback;
+        }
+
+        JsonAsyncResult(JsonBatchInterface<?> callback, int progress) {
+            this.progress = progress;
             this.transaction = callback;
         }
 
@@ -21,6 +26,11 @@ class JsonAsyncResult implements Runnable
 
         JsonAsyncResult(JsonCallbackInterface<Object> callback, Object result) {
             this.result = result;
+            this.callback = callback;
+        }
+
+        JsonAsyncResult(JsonCallbackInterface<Object> callback, int progress) {
+            this.progress = progress;
             this.callback = callback;
         }
 
@@ -37,6 +47,10 @@ class JsonAsyncResult implements Runnable
                 {
                     callback.onError(e);
                 }
+                else if(progress!=0)
+                {
+                    callback.onProgress(progress);
+                }
                 else
                 {
                     callback.onFinish(result);
@@ -47,6 +61,10 @@ class JsonAsyncResult implements Runnable
                 if(e!=null)
                 {
                     transaction.onError(e);
+                }
+                else if(progress!=0)
+                {
+                    transaction.onProgress(progress);
                 }
                 else
                 {

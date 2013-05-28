@@ -16,4 +16,6 @@ public interface JsonCallbackInterface<T> {
 
     public void onError(Exception e);
 
+    public void onProgress(int progress);
+
 }

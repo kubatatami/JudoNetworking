@@ -181,7 +181,8 @@ class JsonProxy implements InvocationHandler {
                 }
                 List<JsonResponseModel2> responses;
                 if (batches.size() > 0) {
-                    responses = sendBatchRequest(batches);
+                    JsonBatchProgressObserver batchProgressObserver = new JsonBatchProgressObserver(rpc,batch);
+                    responses = sendBatchRequest(batches,batchProgressObserver);
                     Collections.sort(responses);
                 } else {
                     responses = new ArrayList<JsonResponseModel2>();
@@ -244,7 +245,7 @@ class JsonProxy implements InvocationHandler {
         return timeout;
     }
 
-    private List<JsonResponseModel2> sendBatchRequest(List<JsonRequest> batches) throws Exception {
+    private List<JsonResponseModel2> sendBatchRequest(List<JsonRequest> batches,JsonProgressObserver progressObserver) throws Exception {
         int conn = isWifi() ? rpc.getMaxWifiConnections() : rpc.getMaxMobileConnections();
 
         if (batches.size() > 1 && conn > 1) {
@@ -252,9 +253,12 @@ class JsonProxy implements InvocationHandler {
             List<List<JsonRequest>> requestParts = assignRequestsToConnections(batches, connections);
             List<JsonResponseModel2> response = new ArrayList<JsonResponseModel2>(batches.size());
             List<JsonBatchTask> tasks = new ArrayList<JsonBatchTask>(connections);
+
+            progressObserver.setMaxProgress(requestParts.size()*JsonTimeStat.TICKS);
+
             for (List<JsonRequest> requests : requestParts) {
 
-                JsonBatchTask task = new JsonBatchTask(rpc, calculateTimeout(requests), requests);
+                JsonBatchTask task = new JsonBatchTask(rpc,progressObserver, calculateTimeout(requests), requests);
                 tasks.add(task);
             }
             for (JsonBatchTask task : tasks) {
@@ -271,7 +275,7 @@ class JsonProxy implements InvocationHandler {
             return response;
         } else {
 
-            return rpc.getJsonConnector().callBatch(batches, calculateTimeout(batches));
+            return rpc.getJsonConnector().callBatch(batches,progressObserver, calculateTimeout(batches));
         }
     }
 

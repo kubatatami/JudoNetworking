@@ -18,4 +18,5 @@ public interface JsonBatchInterface<T> {
 
     public void onError(Exception e);
 
+    public void onProgress(int progress);
 }

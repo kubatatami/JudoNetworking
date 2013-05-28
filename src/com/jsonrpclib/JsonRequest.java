@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class JsonRequest implements Runnable, Comparable<JsonRequest> {
+class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObserver {
     private Integer id;
     private final JsonRpcImplementation rpc;
     private JsonCallbackInterface<Object> callback;
@@ -27,6 +27,9 @@ class JsonRequest implements Runnable, Comparable<JsonRequest> {
     private int cacheLifeTime;
     private int cacheSize;
     private JsonMethodType methodType;
+
+    private int progress=0;
+    private int max=JsonTimeStat.TICKS;
 
     public JsonRequest(String name, JsonRpcImplementation rpc, String[] params, Object[] args, int timeout, String apiKey) {
         this.name = name;
@@ -240,5 +243,19 @@ class JsonRequest implements Runnable, Comparable<JsonRequest> {
 
     boolean isHighPriority() {
         return highPriority;
+    }
+
+    public void progressTick()
+    {
+        progress++;
+        if(callback!=null)
+        {
+            rpc.getHandler().post(new JsonAsyncResult(callback, progress*100/max));
+        }
+    }
+
+    @Override
+    public void setMaxProgress(int max) {
+        this.max=max;
     }
 }

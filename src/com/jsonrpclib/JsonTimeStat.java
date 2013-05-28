@@ -1,13 +1,15 @@
 package com.jsonrpclib;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
  * Date: 30.03.2013
  * Time: 11:10
- *
  */
-class JsonTimeStat {
+class JsonTimeStat  {
     private long allTime = 0;
     private long createTime = 0;
     private long connectionTime = 0;
@@ -17,45 +19,59 @@ class JsonTimeStat {
     private long time = 0;
     private long startTime = 0;
     private long timeout = 0;
+    private List<JsonProgressObserver> requests;
 
-    public JsonTimeStat()
-    {
+    public final static int TICKS=5;
+
+    public JsonTimeStat() {
         time = System.currentTimeMillis();
         startTime = time;
     }
 
-    public void tickCreateTime()
-    {
+    public JsonTimeStat(JsonProgressObserver request) {
+        this.requests = new ArrayList<JsonProgressObserver>();
+        requests.add(request);
+        time = System.currentTimeMillis();
+        startTime = time;
+    }
+
+    public <T extends JsonProgressObserver> JsonTimeStat(List<T> requests) {
+        this.requests = new ArrayList<JsonProgressObserver>(requests);
+        time = System.currentTimeMillis();
+        startTime = time;
+    }
+
+    public void tickCreateTime() {
         createTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();
+        progressTick();
     }
 
-    public void tickConnectionTime()
-    {
+    public void tickConnectionTime() {
         connectionTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();
+        progressTick();
     }
 
-    public void tickSendTime()
-    {
+    public void tickSendTime() {
         sendTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();
+        progressTick();
     }
 
-    public void tickReadTime()
-    {
+    public void tickReadTime() {
         readTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();
+        progressTick();
     }
 
-    public void tickParseTime()
-    {
+    public void tickParseTime() {
         parseTime = System.currentTimeMillis() - time;
+        progressTick();
     }
 
-    public void tickEndTime()
-    {
-        allTime=System.currentTimeMillis() - startTime;
+    public void tickEndTime() {
+        allTime = System.currentTimeMillis() - startTime;
     }
 
     long getAllTime() {
@@ -90,13 +106,11 @@ class JsonTimeStat {
         this.timeout = timeout;
     }
 
-    public long getMethodTime()
-    {
-        return allTime-connectionTime;
+    public long getMethodTime() {
+        return allTime - connectionTime;
     }
 
-    public void logTime(String text)
-    {
+    public void logTime(String text) {
         JsonLoggerImpl.log(text +
                 " create(" + (getCreateTime()) + "ms)" +
                 " connection(" + getConnectionTime() + "ms)" +
@@ -106,4 +120,11 @@ class JsonTimeStat {
                 " all(" + getAllTime() + "ms)");
     }
 
+    private void progressTick() {
+        if (requests != null) {
+            for (JsonProgressObserver request : requests) {
+                request.progressTick();
+            }
+        }
+    }
 }

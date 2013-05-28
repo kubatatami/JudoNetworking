@@ -14,15 +14,20 @@ public abstract class JsonBatch<T> implements JsonBatchInterface<T>{
 
     public abstract void run(final T api);
 
+    @Override
     public void onFinish(Object[] results) {
-
     }
 
+    @Override
     public void onError(Exception e) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
         JsonLoggerImpl.log(sw.toString());
+    }
+
+    @Override
+    public void onProgress(int progress){
     }
 
 }

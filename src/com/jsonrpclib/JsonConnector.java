@@ -86,7 +86,7 @@ class JsonConnector {
     @SuppressWarnings("unchecked")
     public <T> T call(JsonRequest request) throws Exception {
         try {
-            JsonTimeStat timeStat = new JsonTimeStat();
+            JsonTimeStat timeStat = new JsonTimeStat(request);
 
             if (rpc.isCacheEnabled() && request.isCachable()) {
                 Object cacheObject = rpc.getCache().get(request.getName(), request.getArgs(), request.getCacheLifeTime());
@@ -171,10 +171,12 @@ class JsonConnector {
     }
 
 
-    public List<JsonResponseModel2> callBatch(List<JsonRequest> requests, Integer timeout) throws Exception {
+    public List<JsonResponseModel2> callBatch(List<JsonRequest> requests,JsonProgressObserver progressObserver, Integer timeout) throws Exception {
         try {
             int i = 0;
-            JsonTimeStat timeStat = new JsonTimeStat();
+            List<JsonProgressObserver> progressObservers = new ArrayList<JsonProgressObserver>(requests);
+            progressObservers.add(progressObserver);
+            JsonTimeStat timeStat = new JsonTimeStat(progressObservers);
             JsonReader reader;
             Object[] requestsJson = new Object[requests.size()];
             List<JsonResponseModel2> responses;
