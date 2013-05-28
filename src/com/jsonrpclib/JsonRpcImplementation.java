@@ -10,6 +10,7 @@ import com.google.gson22.Gson;
 import com.google.gson22.GsonBuilder;
 
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
@@ -30,6 +31,7 @@ class JsonRpcImplementation implements JsonRpc {
     private Context context;
     private boolean byteArrayAsBase64 = false;
     private boolean cacheEnabled = false;
+    private JsonCacheMode cacheMode = JsonCacheMode.NORMAL;
     private boolean timeProfiler = false;
     private int autoBatchTime = 20; //milliseconds
     private JsonBatchTimeoutMode timeoutMode = JsonBatchTimeoutMode.TIMEOUTS_SUM;
@@ -39,29 +41,28 @@ class JsonRpcImplementation implements JsonRpc {
     private File statFile;
     private HttpURLCreator httpURLCreator;
     private HttpURLConnectionModifier httpURLConnectionModifier;
-    private int maxStatFileSize=50; //KB
+    private int maxStatFileSize = 50; //KB
 
     public JsonRpcImplementation(Context context, String url) {
-        init(context,url,null,new GsonBuilder());
+        init(context, url, null, new GsonBuilder());
     }
 
     public JsonRpcImplementation(Context context, String url, GsonBuilder builder) {
-        init(context,url,null,builder);
+        init(context, url, null, builder);
     }
 
     public JsonRpcImplementation(Context context, String url, String apiKey) {
-        init(context,url,apiKey,new GsonBuilder());
+        init(context, url, apiKey, new GsonBuilder());
     }
 
     public JsonRpcImplementation(Context context, String url, String apiKey, GsonBuilder builder) {
-        init(context,url,apiKey,builder);
+        init(context, url, apiKey, builder);
     }
 
-    private void init(Context context, String url, String apiKey, GsonBuilder builder)
-    {
-        this.httpURLCreator=new HttpURLCreatorImplementation();
-        this.connection=new JsonHttpUrlConnection(this);
-        this.jsonConnector = new JsonConnector(url, this,connection);
+    private void init(Context context, String url, String apiKey, GsonBuilder builder) {
+        this.httpURLCreator = new HttpURLCreatorImplementation();
+        this.connection = new JsonHttpUrlConnection(this);
+        this.jsonConnector = new JsonConnector(url, this, connection);
         this.parser = builder.addSerializationExclusionStrategy(exclusionStrategy).create();
         this.apiKey = apiKey;
         this.context = context;
@@ -151,7 +152,7 @@ class JsonRpcImplementation implements JsonRpc {
 
     @Override
     public void setHttpUrlConnectionModifier(HttpURLConnectionModifier httpURLConnectionModifier) {
-        this.httpURLConnectionModifier=httpURLConnectionModifier;
+        this.httpURLConnectionModifier = httpURLConnectionModifier;
     }
 
     @Override
@@ -217,6 +218,11 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     @Override
+    public void setCacheMode(JsonCacheMode mode) {
+        this.cacheMode = mode;
+    }
+
+    @Override
     public void setTimeProfilerEnabled(boolean enabled) {
         this.timeProfiler = enabled;
     }
@@ -241,7 +247,7 @@ class JsonRpcImplementation implements JsonRpc {
     @Override
     public void clearTimeProfilerStat() {
         boolean result = statFile.delete();
-        stats=Collections.synchronizedMap(new HashMap<String, JsonStat>());
+        stats = Collections.synchronizedMap(new HashMap<String, JsonStat>());
     }
 
     @Override
@@ -266,6 +272,20 @@ class JsonRpcImplementation implements JsonRpc {
         return cache;
     }
 
+    public <T> T clone(T object) throws IOException, ClassNotFoundException {
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream out = new ObjectOutputStream(bos);
+        out.writeObject(object);
+        out.flush();
+        out.close();
+        ObjectInputStream in = new ObjectInputStream(
+                new ByteArrayInputStream(bos.toByteArray()));
+        object = (T) in.readObject();
+
+        return object;
+    }
+
     @Override
     public void setDebugFlags(int flags) {
         this.debugFlags = flags;
@@ -282,21 +302,18 @@ class JsonRpcImplementation implements JsonRpc {
     @SuppressWarnings("unchecked")
     public Map<String, JsonStat> getStats() {
         if (stats == null) {
-            if(statFile.exists() && statFile.length() < maxStatFileSize*1024)
-            {
+            if (statFile.exists() && statFile.length() < maxStatFileSize * 1024) {
 
                 try {
                     FileInputStream fileStream = new FileInputStream(statFile);
                     ObjectInputStream os = new ObjectInputStream(fileStream);
-                    stats = (Map<String, JsonStat>)os.readObject();
+                    stats = (Map<String, JsonStat>) os.readObject();
                     os.close();
                 } catch (Exception e) {
-                   JsonLoggerImpl.log(e);
+                    JsonLoggerImpl.log(e);
                     stats = Collections.synchronizedMap(new HashMap<String, JsonStat>());
                 }
-            }
-            else
-            {
+            } else {
                 stats = Collections.synchronizedMap(new HashMap<String, JsonStat>());
             }
         }
@@ -315,6 +332,9 @@ class JsonRpcImplementation implements JsonRpc {
 
     }
 
+    JsonCacheMode getCacheMode() {
+        return cacheMode;
+    }
 
     public Context getContext() {
         return context;

@@ -174,6 +174,10 @@ class JsonProxy implements InvocationHandler {
                         JsonRequest req = batches.get(0);
                         Object object = rpc.getCache().get(req.getName(), req.getArgs(), req.getCacheLifeTime());
                         if (req.isCachable() && object != null) {
+                            if(rpc.getCacheMode()==JsonCacheMode.CLONE)
+                            {
+                                object=rpc.clone(object);
+                            }
                             cacheObjects.put(i, new Pair<JsonRequest, Object>(req, object));
                             batches.remove(i);
                         }
@@ -301,6 +305,10 @@ class JsonProxy implements InvocationHandler {
                         }
                         if (rpc.isCacheEnabled() && request.isCachable()) {
                             rpc.getCache().put(request.getName(), request.getArgs(), results[i], request.getCacheSize());
+                            if(rpc.getCacheMode()==JsonCacheMode.CLONE)
+                            {
+                                results[i]=rpc.clone(results[i]);
+                            }
                         }
                     }
                 }

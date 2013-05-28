@@ -111,6 +111,12 @@ public interface JsonRpc {
     public void setCacheEnabled(boolean enabled);
 
     /**
+     *
+     * @param mode
+     */
+    public void setCacheMode(JsonCacheMode mode);
+
+    /**
      * Enables statistics collection and
      * @param enabled
      */

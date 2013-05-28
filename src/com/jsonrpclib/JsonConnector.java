@@ -152,6 +152,10 @@ class JsonConnector {
 
             if (rpc.isCacheEnabled() && request.isCachable()) {
                 rpc.getCache().put(request.getName(), request.getArgs(), res, request.getCacheSize());
+                if(rpc.getCacheMode()==JsonCacheMode.CLONE)
+                {
+                    res=rpc.clone(res);
+                }
             }
 
             return res;
