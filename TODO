@@ -1,6 +1,7 @@
 -przemyslenie reconnection
 -persistent cache
-
+-czyszczenie cache metody wraz z parametrami
+-scheduled update on ObserverWrapper
 
 -nazwy parametrow przez adnotacje
 
