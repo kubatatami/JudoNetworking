@@ -167,8 +167,18 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
         }
     }
 
-    public static void invokeBatchCallback(JsonRpcImplementation rpc, JsonBatch<?> batch, Exception e)
+    public static void invokeBatchCallback(final JsonRpcImplementation rpc, JsonBatch<?> batch,final Exception e)
     {
+        if(rpc.getErrorLogger()!=null)
+        {
+            rpc.getHandler().post(new Runnable() {
+                @Override
+                public void run() {
+                    rpc.getErrorLogger().onError(e);
+                }
+            });
+
+        }
         rpc.getHandler().post(new JsonAsyncResult(batch, e));
     }
 

@@ -1,12 +1,11 @@
 -przemyslenie reconnection
 -persistent cache
--czyszczenie cache metody wraz z parametrami
 -scheduled update on ObserverWrapper
-
 -nazwy parametrow przez adnotacje
+-obsluga post
+-obsluga batchy get i post
+-nasluchiwanie na adaptery poprzez adnotacje dataobserver
 
-weryfikacja:
--[[.accountDetailsObserver.accountDetails.highestAchievedRank] [R.string.dupa]]
 
 
 

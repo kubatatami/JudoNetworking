@@ -10,7 +10,6 @@ import com.google.gson22.Gson;
 import com.google.gson22.GsonBuilder;
 
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
@@ -35,13 +34,16 @@ class JsonRpcImplementation implements JsonRpc {
     private boolean timeProfiler = false;
     private int autoBatchTime = 20; //milliseconds
     private JsonBatchTimeoutMode timeoutMode = JsonBatchTimeoutMode.TIMEOUTS_SUM;
-    private final JsonCache cache = new JsonCache(this);
+    private JsonCache cache = new JsonCacheImplementation(this);
     private int debugFlags = 0;
     private Map<String, JsonStat> stats;
     private File statFile;
     private HttpURLCreator httpURLCreator;
     private HttpURLConnectionModifier httpURLConnectionModifier;
     private int maxStatFileSize = 50; //KB
+    private JsonErrorLogger errorLogger;
+    private JsonClonner jsonClonner = new JsonClonnerImplementation();
+
 
     public JsonRpcImplementation(Context context, String url) {
         init(context, url, null, new GsonBuilder());
@@ -218,6 +220,11 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     @Override
+    public void setErrorLogger(JsonErrorLogger logger) {
+        this.errorLogger = logger;
+    }
+
+    @Override
     public void setCacheMode(JsonCacheMode mode) {
         this.cacheMode = mode;
     }
@@ -272,18 +279,8 @@ class JsonRpcImplementation implements JsonRpc {
         return cache;
     }
 
-    public <T> T clone(T object) throws IOException, ClassNotFoundException {
-
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = new ObjectOutputStream(bos);
-        out.writeObject(object);
-        out.flush();
-        out.close();
-        ObjectInputStream in = new ObjectInputStream(
-                new ByteArrayInputStream(bos.toByteArray()));
-        object = (T) in.readObject();
-
-        return object;
+    void setCache(JsonCache cache) {
+        this.cache = cache;
     }
 
     @Override
@@ -350,5 +347,17 @@ class JsonRpcImplementation implements JsonRpc {
 
     public void setHttpURLCreator(HttpURLCreator httpURLCreator) {
         this.httpURLCreator = httpURLCreator;
+    }
+
+    JsonErrorLogger getErrorLogger() {
+        return errorLogger;
+    }
+
+    JsonClonner getJsonClonner() {
+        return jsonClonner;
+    }
+
+    public void setJsonClonner(JsonClonner clonner) {
+        this.jsonClonner = clonner;
     }
 }

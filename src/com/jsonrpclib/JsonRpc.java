@@ -110,6 +110,10 @@ public interface JsonRpc {
      */
     public void setCacheEnabled(boolean enabled);
 
+
+
+    public void setErrorLogger(JsonErrorLogger logger);
+
     /**
      *
      * @param mode
@@ -149,6 +153,12 @@ public interface JsonRpc {
      * Clears time statistics.
      */
     public void clearTimeProfilerStat();
+
+    /**
+     *
+     * @param clonner
+     */
+    public void setJsonClonner(JsonClonner clonner);
 
     /**
      * Clears response cache.

@@ -1,10 +1,12 @@
 package com.jsonrpclib.observers;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -17,7 +19,6 @@ import java.util.regex.Pattern;
  * User: jbogacki
  * Date: 08.04.2013
  * Time: 22:23
- *
  */
 public class ObserverHelper {
     private List<Pair<ObservableWrapper, WrapObserver>> regObservers = new ArrayList<Pair<ObservableWrapper, WrapObserver>>();
@@ -25,17 +26,10 @@ public class ObserverHelper {
     private static final String splitter = "\\.";
     private static final Pattern pattern = Pattern.compile("\\[[^\\]]*\\]");
     private static final String convention = "Changed";
-    private final Class<?> resources;
     private Context context;
 
     public ObserverHelper(Context context) {
         this.context = context;
-        String packageName = context.getApplicationContext().getPackageName();
-        try {
-            resources = Class.forName(packageName+".R");
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -88,11 +82,16 @@ public class ObserverHelper {
                 }
             };
 
-            for (ObservableWrapper result : results) {
-                result.addObserver(observer);
-                regObservers.add(new Pair<ObservableWrapper, WrapObserver>(result, observer));
+            if (results.size() > 0) {
+                for (ObservableWrapper result : results) {
+                    result.addObserver(observer);
+                    regObservers.add(new Pair<ObservableWrapper, WrapObserver>(result, observer));
+                }
+            } else if (view instanceof TextView && tag.matches("\\[.*\\]")) {
+                TextView textView = (TextView) view;
+                String result = buildResult(tag.substring(1, tag.length() - 1));
+                textView.setText(result);
             }
-
         }
     }
 
@@ -104,7 +103,7 @@ public class ObserverHelper {
             String key = res.substring(1, res.length() - 1);
             if (key.substring(0, 1).equals(".")) {
                 Object field = getFieldFromObserver(key, observableObject);
-                tag = tag.replace(res, field !=null ? field.toString() : "");
+                tag = tag.replace(res, field != null ? field.toString() : "");
             } else if (key.substring(0, 8).equals("@string/")) {
                 tag = tag.replace(res, getStringResource(key.substring(8)));
 
@@ -114,11 +113,11 @@ public class ObserverHelper {
         return tag;
     }
 
-    private String getStringResource(String stringName) throws NoSuchFieldException, IllegalAccessException {
+    private String getStringResource(String stringName){
 
-        Field f = resources.getField("string");
-        f=f.getClass().getField(stringName);
-        return context.getString(f.getInt(null));
+        int resId = context.getResources().getIdentifier(stringName, "string", context.getApplicationContext().getPackageName());
+
+        return context.getString(resId);
     }
 
     private List<ObservableWrapper> findObservablesByTag(String tag) throws Exception {
@@ -145,12 +144,14 @@ public class ObserverHelper {
         for (final Method method : object.getClass().getMethods()) {
             if (method.isAnnotationPresent(DataObserver.class)) {
 
-                ObservableWrapper wrapper = getObservable(method);
+                final ObservableWrapper wrapper = getObservable(method);
                 WrapObserver observer = new WrapObserver() {
                     @Override
                     public void update(Object data) {
                         try {
-                            method.invoke(object, data);
+                            if (data != null || wrapper.isAllowNull()) {
+                                method.invoke(object, data);
+                            }
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
@@ -167,13 +168,10 @@ public class ObserverHelper {
         String fields[] = fieldName.split(splitter);
         ObservableWrapper observableWrapper = (ObservableWrapper) getField(fields[1]).get(object);
         Object data = observableWrapper.get();
-        if(data==null)
-        {
+        if (data == null) {
             return "";
-        }
-        else
-        {
-            return getFieldValue(fieldName.substring(fields[1].length()+2), data);
+        } else {
+            return getFieldValue(fieldName.substring(fields[1].length() + 2), data);
         }
     }
 
