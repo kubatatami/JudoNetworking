@@ -34,7 +34,7 @@ class JsonRpcImplementation implements JsonRpc {
     private boolean timeProfiler = false;
     private int autoBatchTime = 20; //milliseconds
     private JsonBatchTimeoutMode timeoutMode = JsonBatchTimeoutMode.TIMEOUTS_SUM;
-    private JsonCache cache = new JsonCacheImplementation(this);
+    private JsonCache cache;
     private int debugFlags = 0;
     private Map<String, JsonStat> stats;
     private File statFile;
@@ -69,6 +69,7 @@ class JsonRpcImplementation implements JsonRpc {
         this.apiKey = apiKey;
         this.context = context;
         statFile = new File(context.getCacheDir(), "stats");
+        cache = new JsonCacheImplementation(context);
     }
 
     private class SerializationExclusionStrategy implements ExclusionStrategy {
@@ -286,6 +287,10 @@ class JsonRpcImplementation implements JsonRpc {
     @Override
     public void setDebugFlags(int flags) {
         this.debugFlags = flags;
+        if(cache!=null)
+        {
+            cache.setDebugFlags(flags);
+        }
     }
 
     public int getDebugFlags() {

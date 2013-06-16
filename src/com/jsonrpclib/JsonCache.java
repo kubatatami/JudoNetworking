@@ -1,5 +1,6 @@
 package com.jsonrpclib;
 
+import android.content.Context;
 import android.support.v4.util.LruCache;
 
 import java.util.Arrays;
@@ -13,16 +14,25 @@ import java.util.HashMap;
  * Time: 15:09
  * To change this template use File | Settings | File Templates.
  */
-public interface JsonCache {
+public abstract class JsonCache {
 
-    public Object get(String method, Object params[],int cacheLifeTime);
+    protected Context context;
 
-    public void put(String method, Object params[], Object object,int cacheSize);
+    public JsonCache(Context context){
+        this.context=context;
+    }
 
-    public void clearCache();
+    public abstract Object get(String method, Object params[],int cacheLifeTime, boolean persist);
 
-    public void clearCache(String method);
+    public abstract void put(String method, Object params[], Object object,int cacheSize, boolean persist);
 
-    public void clearCache(String method, Object... params);
+    public abstract void clearCache();
 
+    public abstract void clearCache(String method);
+
+    public abstract void clearCache(String method, Object... params);
+
+    public abstract int getDebugFlags();
+
+    public abstract void setDebugFlags(int debugFlags);
 }
