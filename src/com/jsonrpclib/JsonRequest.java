@@ -17,64 +17,25 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
     private final JsonRpcImplementation rpc;
     private JsonCallbackInterface<Object> callback;
     private final String name;
-    private final String[] params;
-    private final Object[] args;
-    private Type returnType;
     private final int timeout;
-    private final String apiKey;
-    private boolean cachable;
-    private boolean highPriority;
-    private int cacheLifeTime;
-    private int cacheSize;
-    private JsonMethodType methodType;
-
+    private JsonMethod ann;
     private int progress=0;
     private int max=JsonTimeStat.TICKS;
+    private final Object[] args;
+    private Type returnType;
 
-    public JsonRequest(String name, JsonRpcImplementation rpc, String[] params, Object[] args, int timeout, String apiKey) {
+    public JsonRequest(Integer id,JsonRpcImplementation rpc, String name, JsonMethod ann,
+                       Object[] args,Type returnType, int timeout,JsonCallbackInterface<Object> callback) {
+        this.id=id;
         this.name = name;
-        this.rpc = rpc;
-        this.params = params;
-        this.args = args;
         this.timeout = timeout;
-        this.apiKey = apiKey;
+        this.rpc = rpc;
+        this.ann=ann;
+        this.args=args;
+        this.returnType=returnType;
+        this.callback=callback;
     }
 
-    public JsonRequest(Integer id, JsonRpcImplementation rpc, JsonCallbackInterface<Object> callback, String name, String[] params,
-                Object[] args, Type returnType, int timeout, String apiKey, boolean cachable,
-                int cacheLifeTime,int cacheSize,JsonMethodType methodType, boolean highPriority) {
-        this.id = id;
-        this.rpc = rpc;
-        this.callback = callback;
-        this.name = name;
-        this.params = params;
-        this.args = args;
-        this.returnType = returnType;
-        this.timeout = timeout;
-        this.apiKey = apiKey;
-        this.cachable = cachable;
-        this.cacheLifeTime = cacheLifeTime;
-        this.cacheSize = cacheSize;
-        this.methodType = methodType;
-        this.highPriority=highPriority;
-    }
-
-    public JsonRequest(Integer id, JsonRpcImplementation rpc, String name, String[] params,
-                       Object[] args, Type returnType, int timeout, String apiKey, boolean cachable,
-                       int cacheLifeTime,int cacheSize,JsonMethodType methodType) {
-        this.id = id;
-        this.rpc = rpc;
-        this.name = name;
-        this.params = params;
-        this.args = args;
-        this.returnType = returnType;
-        this.timeout = timeout;
-        this.apiKey = apiKey;
-        this.cachable = cachable;
-        this.cacheLifeTime = cacheLifeTime;
-        this.cacheSize = cacheSize;
-        this.methodType = methodType;
-    }
 
     public JsonRequestModel createJsonRequest(JsonRpcVersion version) {
         Object finalArgs;
@@ -88,27 +49,27 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
             }
         }
 
-        if (params != null && args != null) {
+        if (ann.paramNames().length>0 && args != null) {
             int i = 0;
             Map<String, Object> paramObjects = new HashMap<String, Object>();
-            for (String param : params) {
+            for (String param : ann.paramNames()) {
                 paramObjects.put(param, args[i]);
                 i++;
             }
             finalArgs = paramObjects;
-            if (apiKey != null) {
-                finalArgs = new Object[]{apiKey, finalArgs};
+            if (rpc.getApiKey() != null) {
+                finalArgs = new Object[]{rpc.getApiKey(), finalArgs};
             }
         } else {
             finalArgs = args;
-            if (apiKey != null) {
+            if (rpc.getApiKey() != null) {
                 if (args != null) {
                     Object[] finalArray = new Object[args.length + 1];
-                    finalArray[0] = apiKey;
+                    finalArray[0] = rpc.getApiKey();
                     System.arraycopy(args, 0, finalArray, 1, args.length);
                     finalArgs = finalArray;
                 } else {
-                    finalArgs = new Object[]{apiKey};
+                    finalArgs = new Object[]{rpc.getApiKey()};
                 }
             }
         }
@@ -127,18 +88,36 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
     public String createGetRequest() {
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
         int i = 0;
-        if (apiKey != null && params.length - 1 == args.length) {
-            nameValuePairs.add(new BasicNameValuePair(params[0], apiKey));
+        if (rpc.getApiKey() != null && ann.paramNames().length - 1 == args.length) {
+            nameValuePairs.add(new BasicNameValuePair(ann.paramNames()[0], rpc.getApiKey()));
             i++;
         }
 
         for (Object arg : args) {
-            nameValuePairs.add(new BasicNameValuePair(params[i], arg==null ? "" : arg.toString()));
+            nameValuePairs.add(new BasicNameValuePair(ann.paramNames()[i], arg==null ? "" : arg.toString()));
             i++;
         }
 
 
         return (name + "?" + URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8)).replaceAll("\\+", "%20");
+    }
+
+
+    public String createPostRequest() {
+        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+        int i = 0;
+        if (rpc.getApiKey() != null && ann.paramNames().length - 1 == args.length) {
+            nameValuePairs.add(new BasicNameValuePair(ann.paramNames()[0], rpc.getApiKey()));
+            i++;
+        }
+
+        for (Object arg : args) {
+            nameValuePairs.add(new BasicNameValuePair(ann.paramNames()[i], arg==null ? "" : arg.toString()));
+            i++;
+        }
+
+
+        return URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8).replaceAll("\\+", "%20");
     }
 
     @Override
@@ -208,15 +187,15 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
     }
 
     public int getCacheLifeTime() {
-        return cacheLifeTime;
+        return ann.cacheLifeTime();
     }
 
     public boolean isCachable() {
-        return cachable;
+        return ann.cacheable();
     }
 
     public int getCacheSize() {
-        return cacheSize;
+        return ann.cacheSize();
     }
 
     public long getWeight()
@@ -233,11 +212,11 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
 
     @Override
     public int compareTo(JsonRequest another) {
-        if(highPriority && !another.highPriority)
+        if(ann.highPriority() && !another.isHighPriority())
         {
             return -1;
         }
-        else if(!highPriority && another.highPriority)
+        else if(!ann.highPriority() && another.isHighPriority())
         {
             return 1;
         }
@@ -248,11 +227,11 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
     }
 
     public JsonMethodType getMethodType() {
-        return methodType;
+        return ann.type();
     }
 
     boolean isHighPriority() {
-        return highPriority;
+        return ann.highPriority();
     }
 
     public void progressTick()
@@ -267,5 +246,9 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
     @Override
     public void setMaxProgress(int max) {
         this.max=max;
+    }
+
+    boolean isCachePersist() {
+        return ann.cachePersist();
     }
 }

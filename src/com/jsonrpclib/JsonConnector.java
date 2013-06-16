@@ -89,7 +89,7 @@ class JsonConnector {
             JsonTimeStat timeStat = new JsonTimeStat(request);
 
             if (rpc.isCacheEnabled() && request.isCachable()) {
-                Object cacheObject = rpc.getCache().get(request.getName(), request.getArgs(), request.getCacheLifeTime());
+                Object cacheObject = rpc.getCache().get(request.getName(), request.getArgs(), request.getCacheLifeTime(),request.isCachePersist());
                 if (cacheObject != null) {
                     return (T) cacheObject;
                 }
@@ -155,7 +155,7 @@ class JsonConnector {
             }
 
             if (rpc.isCacheEnabled() && request.isCachable()) {
-                rpc.getCache().put(request.getName(), request.getArgs(), res, request.getCacheSize());
+                rpc.getCache().put(request.getName(), request.getArgs(), res, request.getCacheSize(),request.isCachePersist());
                 if(rpc.getCacheMode()==JsonCacheMode.CLONE)
                 {
                     res=rpc.getJsonClonner().clone(res);
