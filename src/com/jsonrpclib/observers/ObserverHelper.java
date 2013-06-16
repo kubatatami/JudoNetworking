@@ -1,7 +1,6 @@
 package com.jsonrpclib.observers;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +9,9 @@ import android.widget.TextView;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,12 +22,14 @@ import java.util.regex.Pattern;
  * Time: 22:23
  */
 public class ObserverHelper {
-    private List<Pair<ObservableWrapper, WrapObserver>> regObservers = new ArrayList<Pair<ObservableWrapper, WrapObserver>>();
+    private List<Pair<ObservableWrapper, WrapObserver>> dataObservers = new ArrayList<Pair<ObservableWrapper, WrapObserver>>();
+    private Map<View, Pair<ObservableWrapper, WrapObserver>> viewObservers = new HashMap<View, Pair<ObservableWrapper, WrapObserver>>();
     private Object observableObject;
     private static final String splitter = "\\.";
     private static final Pattern pattern = Pattern.compile("\\[[^\\]]*\\]");
     private static final String convention = "Changed";
     private Context context;
+
 
     public ObserverHelper(Context context) {
         this.context = context;
@@ -34,64 +37,70 @@ public class ObserverHelper {
 
     @SuppressWarnings("unchecked")
     public void start(final Object object, View view) {
+        dataObservers.clear();
+        viewObservers.clear();
+        if (JsonObserver.dataObject != null) {
+            observableObject = JsonObserver.dataObject;
+            findViewObserver(view);
+            findDataObserver(object);
+        }
+    }
+
+    private void findViewObserver(View view) {
         try {
-            regObservers.clear();
-            if (JsonObserver.dataObject != null) {
-                observableObject = JsonObserver.dataObject;
-                findViewObserver(view);
-                findDataObserver(object);
+            if (view instanceof ViewGroup) {
+                ViewGroup group = (ViewGroup) view;
+                //group.setOnHierarchyChangeListener(onHierarchyChangeListener);         //need test
+                for (int i = 0; i < group.getChildCount(); i++) {
+                    View viewElem = group.getChildAt(i);
+                    findViewObserver(viewElem);
+                }
+            } else {
+                linkViewObserver(view);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void findViewObserver(View view) throws Exception {
-        if (view instanceof ViewGroup) {
-            ViewGroup group = (ViewGroup) view;
-            for (int i = 0; i < group.getChildCount(); i++) {
-                View viewElem = group.getChildAt(i);
-                findViewObserver(viewElem);
-            }
-        } else {
-            linkViewObserver(view);
-        }
-    }
-
     @SuppressWarnings("unchecked")
-    private void linkViewObserver(final View view) throws Exception {
-        if (view.getTag() != null && view.getTag() instanceof String) {
-            final String tag = (String) view.getTag();
+    private void linkViewObserver(final View view) {
+        try {
+            if (view.getTag() != null && view.getTag() instanceof String) {
+                final String tag = (String) view.getTag();
 
-            final List<ObservableWrapper> results = findObservablesByTag(tag);
+                final List<ObservableWrapper> results = findObservablesByTag(tag);
 
-            WrapObserver observer = new WrapObserver() {
-                @Override
-                public void update(Object data) {
-                    try {
-                        if (view instanceof TextView) {
-                            TextView textView = (TextView) view;
+                WrapObserver observer = new WrapObserver() {
+                    @Override
+                    public void update(Object data) {
+                        try {
+                            if (view instanceof TextView) {
+                                TextView textView = (TextView) view;
 
-                            String result = buildResult(tag.substring(1, tag.length() - 1));
-                            textView.setText(result);
+                                String result = buildResult(tag.substring(1, tag.length() - 1));
+                                textView.setText(result);
 
+                            }
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
                         }
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
                     }
-                }
-            };
+                };
 
-            if (results.size() > 0) {
-                for (ObservableWrapper result : results) {
-                    result.addObserver(observer);
-                    regObservers.add(new Pair<ObservableWrapper, WrapObserver>(result, observer));
+                if (results.size() > 0) {
+                    for (ObservableWrapper result : results) {
+                        result.addObserver(observer);
+                        viewObservers.put(view, new Pair<ObservableWrapper, WrapObserver>(result, observer));
+                    }
+                } else if (view instanceof TextView && tag.matches("\\[.*\\]")) {
+                    TextView textView = (TextView) view;
+                    String result = buildResult(tag.substring(1, tag.length() - 1));
+                    textView.setText(result);
                 }
-            } else if (view instanceof TextView && tag.matches("\\[.*\\]")) {
-                TextView textView = (TextView) view;
-                String result = buildResult(tag.substring(1, tag.length() - 1));
-                textView.setText(result);
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -113,10 +122,8 @@ public class ObserverHelper {
         return tag;
     }
 
-    private String getStringResource(String stringName){
-
+    private String getStringResource(String stringName) {
         int resId = context.getResources().getIdentifier(stringName, "string", context.getApplicationContext().getPackageName());
-
         return context.getString(resId);
     }
 
@@ -140,7 +147,7 @@ public class ObserverHelper {
     }
 
     @SuppressWarnings("unchecked")
-    private void findDataObserver(final Object object) throws Exception {
+    private void findDataObserver(final Object object) {
         for (final Method method : object.getClass().getMethods()) {
             if (method.isAnnotationPresent(DataObserver.class)) {
 
@@ -159,7 +166,7 @@ public class ObserverHelper {
                 };
 
                 wrapper.addObserver(observer);
-                regObservers.add(new Pair<ObservableWrapper, WrapObserver>(wrapper, observer));
+                dataObservers.add(new Pair<ObservableWrapper, WrapObserver>(wrapper, observer));
             }
         }
     }
@@ -206,27 +213,63 @@ public class ObserverHelper {
         return field;
     }
 
-    private ObservableWrapper getObservable(Method method) throws Exception {
+    private ObservableWrapper getObservable(Method method) {
+        try {
+            DataObserver ann = method.getAnnotation(DataObserver.class);
 
-        DataObserver ann = method.getAnnotation(DataObserver.class);
+            if (!ann.fieldName().equals("")) {
+                return (ObservableWrapper) getField(ann.fieldName()).get(observableObject);
+            }
 
-        if (!ann.fieldName().equals("")) {
-            return (ObservableWrapper) getField(ann.fieldName()).get(observableObject);
+            String methodName = method.getName();
+            if (methodName.length() > convention.length() + 1) {
+                String fieldName = methodName.substring(0, methodName.length() - convention.length());
+                return (ObservableWrapper) getField(fieldName).get(observableObject);
+            }
+
+            return null;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-
-        String methodName = method.getName();
-        if (methodName.length() > convention.length() + 1) {
-            String fieldName = methodName.substring(0, methodName.length() - convention.length());
-            return (ObservableWrapper) getField(fieldName).get(observableObject);
-        }
-
-        return null;
     }
 
     @SuppressWarnings("unchecked")
     public void stop() {
-        for (Pair<ObservableWrapper, WrapObserver> pair : regObservers) {
+        for (Pair<ObservableWrapper, WrapObserver> pair : dataObservers) {
             pair.first.deleteObserver(pair.second);
         }
+        for (Pair<ObservableWrapper, WrapObserver> pair : viewObservers.values()) {
+            pair.first.deleteObserver(pair.second);
+        }
+
+        dataObservers.clear();
+        viewObservers.clear();
     }
+
+
+    private ViewGroup.OnHierarchyChangeListener onHierarchyChangeListener = new ViewGroup.OnHierarchyChangeListener() {
+
+        @Override
+        public void onChildViewAdded(View parent, View child) {
+            findViewObserver(child);
+        }
+
+        @Override
+        public void onChildViewRemoved(View parent, View child) {
+            removeViewObserver(parent);
+        }
+
+        private void removeViewObserver(View view) {
+            if (view instanceof ViewGroup) {
+                ViewGroup group = (ViewGroup) view;
+                for (int i = 0; i < group.getChildCount(); i++) {
+                    View viewElem = group.getChildAt(i);
+                    removeViewObserver(viewElem);
+                }
+            } else if (viewObservers.containsKey(view)) {
+                viewObservers.remove(view);
+            }
+        }
+
+    };
 }
