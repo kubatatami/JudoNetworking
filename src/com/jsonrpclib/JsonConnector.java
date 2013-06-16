@@ -99,15 +99,19 @@ class JsonConnector {
                 JsonRequestModel jsonRequest = request.createJsonRequest(version);
                 timeStat.tickCreateTime();
                 conn = connection.post(url, jsonRequest, request.getTimeout(), timeStat);
-            } else {
+            } else if(request.getMethodType() == JsonMethodType.GET || request.getMethodType() == JsonMethodType.GET_SIMPLE) {
                 String getRequest = request.createGetRequest();
                 timeStat.tickCreateTime();
                 conn = connection.get(url, getRequest, request.getTimeout(), timeStat);
+            } else {
+                String postRequest = request.createPostRequest();
+                timeStat.tickCreateTime();
+                conn = connection.post(url, postRequest, request.getTimeout(), timeStat);
             }
             timeStat.tickConnectionTime();
 
             T res;
-            if (request.getMethodType() != JsonMethodType.GET_SIMPLE) {
+            if (request.getMethodType() != JsonMethodType.GET_SIMPLE && request.getMethodType() != JsonMethodType.POST_SIMPLE) {
                 JsonResponseModel response = readResponse(conn.getInputStream());
                 if (response == null) {
                     throw new JsonException("Empty response.");
