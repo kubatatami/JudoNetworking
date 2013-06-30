@@ -1,13 +1,10 @@
 pilne
--rozbudowanie cache, podzial na metody na dysku, rozdzielenie adresow
+-rozbudowanie cache, rozdzielenie adresow
 -progress w cachowaniu
--rozbudowane wsparcie dla testowania - nazwy testow, start testu tylko w debug, numer wersji testu(plus analiza zmian w api)
-
-proste
--przemyslenie reconnection
--nazwy parametrow przez adnotacje
+-rozbudowane wsparcie dla testowania - nazwy testow, numer wersji testu(plus analiza zmian w api)
 
 srednie
+-rozdzielenie bibliotek rpc i observer
 -scheduled update on ObserverWrapper
 -obsluga batchy get i post
 -batche (łączenie tylko w kodzie) dla serwerów nie obslugujacych batchy :)

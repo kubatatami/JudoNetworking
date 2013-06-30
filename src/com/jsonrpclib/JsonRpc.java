@@ -171,10 +171,13 @@ public interface JsonRpc {
      */
     public void clearCache(Method method);
 
+
+
     /**
      *
+     * @param onlyInDebugMode
      */
-    public void startTest();
+    public void startTest(boolean onlyInDebugMode);
 
     /**
      *

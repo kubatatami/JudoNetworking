@@ -10,6 +10,7 @@ import com.google.gson22.Gson;
 import com.google.gson22.GsonBuilder;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
@@ -43,7 +44,7 @@ class JsonRpcImplementation implements JsonRpc {
     private int maxStatFileSize = 50; //KB
     private JsonErrorLogger errorLogger;
     private JsonClonner jsonClonner = new JsonClonnerImplementation();
-    private boolean test=false;
+    private boolean test = false;
 
     public JsonRpcImplementation(Context context, String url) {
         init(context, url, null, new GsonBuilder());
@@ -269,13 +270,32 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     @Override
-    public void startTest() {
-       this.test=true;
+    public void startTest(boolean onlyInDebugMode) {
+        String className = context.getApplicationContext().getPackageName() + ".BuildConfig";
+        try {
+            Class<?> clazz = Class.forName(className);
+
+            Field field = clazz.getDeclaredField("DEBUG");
+
+            Boolean debug = (Boolean)field.get(null);
+
+            if(onlyInDebugMode || debug)
+            {
+                this.test = true;
+            }
+
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+
     }
+
 
     @Override
     public void stopTest() {
-       this.test=false;
+        this.test = false;
     }
 
     public JsonBatchTimeoutMode getTimeoutMode() {
@@ -297,8 +317,7 @@ class JsonRpcImplementation implements JsonRpc {
     @Override
     public void setDebugFlags(int flags) {
         this.debugFlags = flags;
-        if(cache!=null)
-        {
+        if (cache != null) {
             cache.setDebugFlags(flags);
         }
     }
