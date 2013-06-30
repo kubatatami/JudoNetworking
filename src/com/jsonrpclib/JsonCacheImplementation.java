@@ -15,15 +15,18 @@ import java.util.Map;
  * Date: 07.03.2013
  * Time: 08:05
  */
-class JsonCacheImplementation extends JsonCache {
+class JsonCacheImplementation implements JsonCache {
     private int debugFlags;
     private Map<String, LruCache<Integer, JsonCacheObject>> cache
             = Collections.synchronizedMap(new HashMap<String, LruCache<Integer, JsonCacheObject>>());
 
 
-    public JsonCacheImplementation(Context context) {
-        super(context);
+    protected Context context;
+
+    public JsonCacheImplementation(Context context){
+        this.context=context;
     }
+
 
     @Override
     public JsonCacheResult get(String method, Object params[], int cacheLifeTime, int cacheSize, boolean persist) {

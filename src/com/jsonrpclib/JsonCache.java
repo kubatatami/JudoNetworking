@@ -14,13 +14,9 @@ import java.util.HashMap;
  * Time: 15:09
  * To change this template use File | Settings | File Templates.
  */
-public abstract class JsonCache {
+public interface JsonCache {
 
-    protected Context context;
 
-    public JsonCache(Context context){
-        this.context=context;
-    }
 
     public abstract JsonCacheResult get(String method, Object params[],int cacheLifeTime, int cacheSize, boolean persist);
 
