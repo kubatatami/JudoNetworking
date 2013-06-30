@@ -88,10 +88,10 @@ class JsonConnector {
         try {
             JsonTimeStat timeStat = new JsonTimeStat(request);
 
-            if (rpc.isCacheEnabled() && request.isCachable()) {
-                Object cacheObject = rpc.getCache().get(request.getName(), request.getArgs(), request.getCacheLifeTime(),request.isCachePersist());
-                if (cacheObject != null) {
-                    return (T) cacheObject;
+            if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
+                JsonCache.JsonCacheResult cacheObject = rpc.getCache().get(request.getName(), request.getArgs(), rpc.isTest() ? 0 : request.getCacheLifeTime(), request.getCacheSize(),request.isCachePersist() || rpc.isTest());
+                if (cacheObject.result) {
+                    return (T) cacheObject.object;
                 }
             }
             HttpURLConnection conn;
@@ -154,8 +154,8 @@ class JsonConnector {
                 timeStat.logTime("End single request(" + request.getName() + "):");
             }
 
-            if (rpc.isCacheEnabled() && request.isCachable()) {
-                rpc.getCache().put(request.getName(), request.getArgs(), res, request.getCacheSize(),request.isCachePersist());
+            if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
+                rpc.getCache().put(request.getName(), request.getArgs(), res, request.getCacheSize(),request.isCachePersist()|| rpc.isTest());
                 if(rpc.getCacheMode()==JsonCacheMode.CLONE)
                 {
                     res=rpc.getJsonClonner().clone(res);

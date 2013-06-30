@@ -22,7 +22,7 @@ public abstract class JsonCache {
         this.context=context;
     }
 
-    public abstract Object get(String method, Object params[],int cacheLifeTime, boolean persist);
+    public abstract JsonCacheResult get(String method, Object params[],int cacheLifeTime, int cacheSize, boolean persist);
 
     public abstract void put(String method, Object params[], Object object,int cacheSize, boolean persist);
 
@@ -35,4 +35,12 @@ public abstract class JsonCache {
     public abstract int getDebugFlags();
 
     public abstract void setDebugFlags(int debugFlags);
+
+    public class JsonCacheResult
+    {
+        public Object object;
+        public boolean result;
+
+    }
+
 }

@@ -25,22 +25,31 @@ class JsonCacheImplementation extends JsonCache {
     }
 
     @Override
-    public Object get(String method, Object params[], int cacheLifeTime, boolean persist) {
+    public JsonCacheResult get(String method, Object params[], int cacheLifeTime, int cacheSize, boolean persist) {
+        JsonCacheResult result = new JsonCacheResult();
+        Integer hash = Arrays.deepHashCode(params);
         if (cache.containsKey(method)) {
-            Integer hash = Arrays.deepHashCode(params);
             JsonCacheObject cacheObject = cache.get(method).get(hash);
             if (cacheObject != null) {
                 if (cacheLifeTime == 0 || System.currentTimeMillis() - cacheObject.createTime < cacheLifeTime) {
                     if ((debugFlags & JsonRpc.CACHE_DEBUG) > 0) {
-                        JsonLoggerImpl.log("Cache(" + method + "): Get from cache.");
+                        JsonLoggerImpl.log("Cache(" + method + "): Get from memory cache.");
                     }
-                    return cacheObject.getObject();
+                    result.object=cacheObject.getObject();
+                    result.result=true;
+                    return result;
                 }
-            } else if (persist) {
-                return loadObject(hash.toString(), cacheLifeTime);
             }
         }
-        return null;
+
+        if (persist) {
+            result = loadObject(method + hash, cacheLifeTime);
+            if (result.result) {
+                JsonLoggerImpl.log("Cache(" + method + "): Get from disc cache.");
+                put(method, params, result.object, cacheSize, false);
+            }
+        }
+        return result;
     }
 
     @Override
@@ -51,15 +60,17 @@ class JsonCacheImplementation extends JsonCache {
         Integer hash = Arrays.deepHashCode(params);
         cache.get(method).put(hash, new JsonCacheObject(System.currentTimeMillis(), object));
         if ((debugFlags & JsonRpc.CACHE_DEBUG) > 0) {
-            JsonLoggerImpl.log("Cache(" + method + "): Saved in cache.");
+            JsonLoggerImpl.log("Cache(" + method + "): Saved in memory cache.");
         }
 
         if (persist) {
-            saveObject(hash.toString(), object);
+            JsonLoggerImpl.log("Cache(" + method + "): Saved in disc cache.");
+            saveObject(method + hash, object);
         }
     }
 
-    public Object loadObject(String hash, int cacheLifeTime) {
+    public JsonCacheResult loadObject(String hash, int cacheLifeTime) {
+        JsonCacheResult result = new JsonCacheResult();
         ObjectInputStream os = null;
         FileInputStream fileStream = null;
         File file = new File(context.getCacheDir(), hash);
@@ -68,7 +79,9 @@ class JsonCacheImplementation extends JsonCache {
                 try {
                     fileStream = new FileInputStream(file);
                     os = new ObjectInputStream(fileStream);
-                    return os.readObject();
+                    result.object=os.readObject();
+                    result.result=true;
+                    return result;
                 } catch (Exception e) {
                     JsonLoggerImpl.log(e);
                 } finally {
@@ -84,7 +97,8 @@ class JsonCacheImplementation extends JsonCache {
                 file.delete();
             }
         }
-        return null;
+        result.result=false;
+        return result;
     }
 
 
@@ -103,6 +117,10 @@ class JsonCacheImplementation extends JsonCache {
     @Override
     public void clearCache() {
         cache = Collections.synchronizedMap(new HashMap<String, LruCache<Integer, JsonCacheObject>>());
+
+        for (File file : context.getCacheDir().listFiles()) {
+            file.delete();
+        }
     }
 
     @Override
@@ -110,6 +128,14 @@ class JsonCacheImplementation extends JsonCache {
         if (cache.containsKey(method)) {
             cache.remove(method);
         }
+
+        for (File file : context.getCacheDir().listFiles()) {
+            if(file.getName().contains(method))
+            {
+                file.delete();
+            }
+        }
+
     }
 
     @Override
@@ -118,6 +144,12 @@ class JsonCacheImplementation extends JsonCache {
             Integer hash = Arrays.deepHashCode(params);
             if (cache.get(method).get(hash) != null) {
                 cache.get(method).remove(hash);
+            }
+
+            File file = new File(context.getCacheDir(), method + hash);
+            if(file.exists())
+            {
+                file.delete();
             }
         }
     }
