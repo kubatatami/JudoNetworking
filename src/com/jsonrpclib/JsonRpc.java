@@ -172,6 +172,16 @@ public interface JsonRpc {
     public void clearCache(Method method);
 
     /**
+     *
+     */
+    public void startTest();
+
+    /**
+     *
+     */
+    public void stopTest();
+
+    /**
      * Log time of requests.
      */
     public static final int TIME_DEBUG = 1;

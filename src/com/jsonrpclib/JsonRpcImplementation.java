@@ -43,7 +43,7 @@ class JsonRpcImplementation implements JsonRpc {
     private int maxStatFileSize = 50; //KB
     private JsonErrorLogger errorLogger;
     private JsonClonner jsonClonner = new JsonClonnerImplementation();
-
+    private boolean test=false;
 
     public JsonRpcImplementation(Context context, String url) {
         init(context, url, null, new GsonBuilder());
@@ -268,6 +268,16 @@ class JsonRpcImplementation implements JsonRpc {
         cache.clearCache(JsonProxy.getMethodName(method));
     }
 
+    @Override
+    public void startTest() {
+       this.test=true;
+    }
+
+    @Override
+    public void stopTest() {
+       this.test=false;
+    }
+
     public JsonBatchTimeoutMode getTimeoutMode() {
         return timeoutMode;
     }
@@ -364,5 +374,9 @@ class JsonRpcImplementation implements JsonRpc {
 
     public void setJsonClonner(JsonClonner clonner) {
         this.jsonClonner = clonner;
+    }
+
+    boolean isTest() {
+        return test;
     }
 }

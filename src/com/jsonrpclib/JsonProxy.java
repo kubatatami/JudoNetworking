@@ -159,14 +159,18 @@ class JsonProxy implements InvocationHandler {
                 Map<Integer, Pair<JsonRequest, Object>> cacheObjects = new HashMap<Integer, Pair<JsonRequest, Object>>();
                 if (rpc.isCacheEnabled()) {
                     for (int i = batches.size() - 1; i >= 0; i--) {
-                        JsonRequest req = batches.get(0);
-                        Object object = rpc.getCache().get(req.getName(), req.getArgs(), req.getCacheLifeTime(),req.isCachePersist());
-                        if (req.isCachable() && object != null) {
-                            if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
-                                object = rpc.getJsonClonner().clone(object);
+                        JsonRequest req = batches.get(i);
+
+                        if (req.isCachable() || rpc.isTest()) {
+                            JsonCache.JsonCacheResult result = rpc.getCache().get(req.getName(), req.getArgs(), rpc.isTest() ? 0 : req.getCacheLifeTime(),req.getCacheSize(),req.isCachePersist() || rpc.isTest());
+                            if(result.result)
+                            {
+                                if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
+                                    result.object = rpc.getJsonClonner().clone(result.object);
+                                }
+                                cacheObjects.put(i, new Pair<JsonRequest, Object>(req, result.object));
+                                batches.remove(i);
                             }
-                            cacheObjects.put(i, new Pair<JsonRequest, Object>(req, object));
-                            batches.remove(i);
                         }
                     }
                 }
@@ -289,8 +293,8 @@ class JsonProxy implements InvocationHandler {
                         } catch (JsonSyntaxException e) {
                             throw new JsonException(request.getName(), e);
                         }
-                        if (rpc.isCacheEnabled() && request.isCachable()) {
-                            rpc.getCache().put(request.getName(), request.getArgs(), results[i], request.getCacheSize(),request.isCachePersist());
+                        if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
+                            rpc.getCache().put(request.getName(), request.getArgs(), results[i], request.getCacheSize(),request.isCachePersist()|| rpc.isTest());
                             if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
                                 results[i] = rpc.getJsonClonner().clone(results[i]);
                             }
