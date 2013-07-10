@@ -11,6 +11,7 @@ srednie
 -nasluchiwanie na adaptery poprzez adnotacje dataobserver
 
 trudne
+-optymalizacja
 -typ metody na poziomie serwisu, wprowadzenie abstrakcji standardu komunikacyjnego, mozliwosc rejestracji customowego typu metody
 -obsluga rest poprzez opis umieszczenia parametrow /category/{number}/name
 -jackson zamiast gson
