@@ -88,10 +88,25 @@ class JsonConnector {
         try {
             JsonTimeStat timeStat = new JsonTimeStat(request);
 
+
+
             if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
-                JsonCache.JsonCacheResult cacheObject = rpc.getCache().get(request.getName(), request.getArgs(), rpc.isTest() ? 0 : request.getCacheLifeTime(), request.getCacheSize(),request.isCachePersist() || rpc.isTest());
+                JsonCacheResult cacheObject = rpc.getMemoryCache().get(request.getMethod(), request.getArgs(), rpc.isTest() ? 0 : request.getCacheLifeTime(), request.getCacheSize());
                 if (cacheObject.result) {
                     return (T) cacheObject.object;
+                }
+                else if(request.isCachePersist() || rpc.isTest())
+                {
+                    JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(),rpc.getTestRevision(),url,request.getMethod());
+                    cacheObject =  rpc.getDiscCache().get(cacheMethod,request.getArgs(),request.getCacheLifeTime(), request.getCacheSize());
+                    if (cacheObject.result) {
+                        if(!rpc.isTest())
+                        {
+                            rpc.getMemoryCache().put(request.getMethod(), request.getArgs(),cacheObject.object,request.getCacheSize());
+                        }
+                        return (T) cacheObject.object;
+                    }
+
                 }
             }
             HttpURLConnection conn;
@@ -155,11 +170,19 @@ class JsonConnector {
             }
 
             if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
-                rpc.getCache().put(request.getName(), request.getArgs(), res, request.getCacheSize(),request.isCachePersist()|| rpc.isTest());
+                rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), res, request.getCacheSize());
                 if(rpc.getCacheMode()==JsonCacheMode.CLONE)
                 {
                     res=rpc.getJsonClonner().clone(res);
                 }
+
+                if(request.isCachePersist() || rpc.isTest())
+                {
+                    JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(),rpc.getTestRevision(),url,request.getMethod());
+                    rpc.getDiscCache().put(cacheMethod,request.getArgs(), res, request.getCacheSize());
+                }
+
+
             }
 
             return res;

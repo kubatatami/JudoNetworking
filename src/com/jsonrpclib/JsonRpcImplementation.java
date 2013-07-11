@@ -35,7 +35,8 @@ class JsonRpcImplementation implements JsonRpc {
     private boolean timeProfiler = false;
     private int autoBatchTime = 20; //milliseconds
     private JsonBatchTimeoutMode timeoutMode = JsonBatchTimeoutMode.TIMEOUTS_SUM;
-    private JsonCache cache;
+    private JsonMemoryCache memoryCache;
+    private JsonDiscCache discCache;
     private int debugFlags = 0;
     private Map<String, JsonStat> stats;
     private File statFile;
@@ -45,6 +46,9 @@ class JsonRpcImplementation implements JsonRpc {
     private JsonErrorLogger errorLogger;
     private JsonClonner jsonClonner = new JsonClonnerImplementation();
     private boolean test = false;
+    private String testName = null;
+    private int testRevision = 0;
+    private String url;
 
     public JsonRpcImplementation(Context context, String url) {
         init(context, url, null, new GsonBuilder());
@@ -69,8 +73,10 @@ class JsonRpcImplementation implements JsonRpc {
         this.parser = builder.addSerializationExclusionStrategy(exclusionStrategy).create();
         this.apiKey = apiKey;
         this.context = context;
+        this.url = url;
         statFile = new File(context.getCacheDir(), "stats");
-        cache = new JsonCacheImplementation(context);
+        memoryCache = new JsonMemoryCacheImplementation(context);
+        discCache = new JsonDiscCacheImplementation(context);
     }
 
     private class SerializationExclusionStrategy implements ExclusionStrategy {
@@ -259,18 +265,11 @@ class JsonRpcImplementation implements JsonRpc {
         stats = Collections.synchronizedMap(new HashMap<String, JsonStat>());
     }
 
-    @Override
-    public void clearCache() {
-        cache.clearCache();
-    }
+
 
     @Override
-    public void clearCache(Method method) {
-        cache.clearCache(JsonProxy.getMethodName(method));
-    }
+    public void startTest(boolean onlyInDebugMode, String name, int revision) {
 
-    @Override
-    public void startTest(boolean onlyInDebugMode) {
         String className = context.getApplicationContext().getPackageName() + ".BuildConfig";
         try {
             Class<?> clazz = Class.forName(className);
@@ -279,9 +278,11 @@ class JsonRpcImplementation implements JsonRpc {
 
             Boolean debug = (Boolean)field.get(null);
 
-            if(onlyInDebugMode || debug)
+            if(!onlyInDebugMode || debug)
             {
                 this.test = true;
+                this.testName=name;
+                this.testRevision=revision;
             }
 
 
@@ -292,6 +293,13 @@ class JsonRpcImplementation implements JsonRpc {
 
     }
 
+    String getTestName() {
+        return testName;
+    }
+
+    int getTestRevision() {
+        return testRevision;
+    }
 
     @Override
     public void stopTest() {
@@ -306,19 +314,30 @@ class JsonRpcImplementation implements JsonRpc {
         return cacheEnabled;
     }
 
-    public JsonCache getCache() {
-        return cache;
+
+    void setMemoryCache(JsonMemoryCache memoryCache) {
+        this.memoryCache = memoryCache;
     }
 
-    void setCache(JsonCache cache) {
-        this.cache = cache;
+
+    public JsonDiscCache getDiscCache() {
+        return discCache;
+    }
+
+
+    public JsonMemoryCache getMemoryCache() {
+        return memoryCache;
     }
 
     @Override
     public void setDebugFlags(int flags) {
         this.debugFlags = flags;
-        if (cache != null) {
-            cache.setDebugFlags(flags);
+        if (memoryCache != null) {
+            memoryCache.setDebugFlags(flags);
+        }
+
+        if (discCache != null) {
+            discCache.setDebugFlags(flags);
         }
     }
 
@@ -393,6 +412,10 @@ class JsonRpcImplementation implements JsonRpc {
 
     public void setJsonClonner(JsonClonner clonner) {
         this.jsonClonner = clonner;
+    }
+
+    String getUrl() {
+        return url;
     }
 
     boolean isTest() {

@@ -1,7 +1,5 @@
 pilne
--rozbudowanie cache, rozdzielenie adresow
 -progress w cachowaniu
--rozbudowane wsparcie dla testowania - nazwy testow, numer wersji testu(plus analiza zmian w api)
 
 srednie
 -rozdzielenie bibliotek rpc i observer

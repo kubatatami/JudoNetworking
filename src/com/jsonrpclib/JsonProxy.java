@@ -71,12 +71,12 @@ class JsonProxy implements InvocationHandler {
 
 
                 if (m.getReturnType().equals(Void.TYPE) && !async && notification) {
-                    rpc.getJsonConnector().notify(new JsonRequest(null,rpc, name,ann, args,null, timeout, null));
+                    rpc.getJsonConnector().notify(new JsonRequest(null,rpc,m, name,ann, args,null, timeout, null));
                     return null;
                 } else if (!async) {
-                    return rpc.getJsonConnector().call(new JsonRequest(++id,rpc, name,ann, args,m.getReturnType(), timeout, null));
+                    return rpc.getJsonConnector().call(new JsonRequest(++id,rpc,m, name,ann, args,m.getReturnType(), timeout, null));
                 } else {
-                    final JsonRequest request = callAsync(++id, name,  args, m.getGenericParameterTypes(), timeout, ann);
+                    final JsonRequest request = callAsync(++id,m, name,  args, m.getGenericParameterTypes(), timeout, ann);
 
                     if (batch) {
                         synchronized (batchRequests) {
@@ -133,7 +133,7 @@ class JsonProxy implements InvocationHandler {
     }
 
     @SuppressWarnings("unchecked")
-    JsonRequest callAsync(int id, String name, Object[] args, Type[] types, int timeout, JsonMethod ann) throws Exception {
+    JsonRequest callAsync(int id,Method m, String name, Object[] args, Type[] types, int timeout, JsonMethod ann) throws Exception {
         Object[] newArgs = null;
         JsonCallbackInterface<Object> callback = (JsonCallbackInterface<Object>) args[args.length - 1];
         if (args.length > 1) {
@@ -141,7 +141,7 @@ class JsonProxy implements InvocationHandler {
             System.arraycopy(args, 0, newArgs, 0, args.length - 1);
         }
         Type returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
-        return new JsonRequest(id,rpc, name,ann, newArgs,returnType, timeout, callback);
+        return new JsonRequest(id,rpc,m, name,ann, newArgs,returnType, timeout, callback);
     }
 
     public void callBatch(final JsonBatch batch) {
@@ -162,7 +162,7 @@ class JsonProxy implements InvocationHandler {
                         JsonRequest req = batches.get(i);
 
                         if (req.isCachable() || rpc.isTest()) {
-                            JsonCache.JsonCacheResult result = rpc.getCache().get(req.getName(), req.getArgs(), rpc.isTest() ? 0 : req.getCacheLifeTime(),req.getCacheSize(),req.isCachePersist() || rpc.isTest());
+                            JsonCacheResult result = rpc.getMemoryCache().get(req.getMethod(), req.getArgs(), rpc.isTest() ? 0 : req.getCacheLifeTime(),req.getCacheSize());
                             if(result.result)
                             {
                                 if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
@@ -170,6 +170,20 @@ class JsonProxy implements InvocationHandler {
                                 }
                                 cacheObjects.put(i, new Pair<JsonRequest, Object>(req, result.object));
                                 batches.remove(i);
+                            }
+                            else if(req.isCachePersist() || rpc.isTest())
+                            {
+                                JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(),rpc.getTestRevision(),rpc.getUrl(),req.getMethod());
+                                result =  rpc.getDiscCache().get(cacheMethod,req.getArgs(),req.getCacheLifeTime(), req.getCacheSize());
+                                if (result.result) {
+                                    if(!rpc.isTest())
+                                    {
+                                        rpc.getMemoryCache().put(req.getMethod(), req.getArgs(),result.object,req.getCacheSize());
+                                    }
+                                    cacheObjects.put(i, new Pair<JsonRequest, Object>(req, result.object));
+                                    batches.remove(i);
+                                }
+
                             }
                         }
                     }
@@ -294,10 +308,18 @@ class JsonProxy implements InvocationHandler {
                             throw new JsonException(request.getName(), e);
                         }
                         if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
-                            rpc.getCache().put(request.getName(), request.getArgs(), results[i], request.getCacheSize(),request.isCachePersist()|| rpc.isTest());
+                            rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), results[i], request.getCacheSize());
                             if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
                                 results[i] = rpc.getJsonClonner().clone(results[i]);
                             }
+
+                            if(request.isCachePersist() || rpc.isTest())
+                            {
+                                JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(),rpc.getTestRevision(),rpc.getUrl(),request.getMethod());
+                                rpc.getDiscCache().put(cacheMethod,request.getArgs(), results[i], request.getCacheSize());
+                            }
+
+
                         }
                     }
                 }

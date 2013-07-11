@@ -6,6 +6,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,12 +24,14 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
     private int max=JsonTimeStat.TICKS;
     private final Object[] args;
     private Type returnType;
+    private Method method;
 
-    public JsonRequest(Integer id,JsonRpcImplementation rpc, String name, JsonMethod ann,
+    public JsonRequest(Integer id,JsonRpcImplementation rpc,Method method, String name, JsonMethod ann,
                        Object[] args,Type returnType, int timeout,JsonCallbackInterface<Object> callback) {
         this.id=id;
         this.name = name;
         this.timeout = timeout;
+        this.method=method;
         this.rpc = rpc;
         this.ann=ann;
         this.args=args;
@@ -250,5 +253,9 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
 
     boolean isCachePersist() {
         return ann.cachePersist();
+    }
+
+    Method getMethod() {
+        return method;
     }
 }

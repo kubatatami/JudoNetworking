@@ -160,16 +160,13 @@ public interface JsonRpc {
      */
     public void setJsonClonner(JsonClonner clonner);
 
-    /**
-     * Clears response cache.
-     */
-    public void clearCache();
 
-    /**
-     * Clears cache for given method.
-     * @param method Method to clear
-     */
-    public void clearCache(Method method);
+
+    public JsonDiscCache getDiscCache();
+
+
+
+    public JsonMemoryCache getMemoryCache();
 
 
 
@@ -177,7 +174,7 @@ public interface JsonRpc {
      *
      * @param onlyInDebugMode
      */
-    public void startTest(boolean onlyInDebugMode);
+    public void startTest(boolean onlyInDebugMode, String name, int revision);
 
     /**
      *
