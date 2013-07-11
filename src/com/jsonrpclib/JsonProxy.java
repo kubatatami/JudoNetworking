@@ -188,13 +188,16 @@ class JsonProxy implements InvocationHandler {
                         }
                     }
                 }
+                JsonBatchProgressObserver batchProgressObserver = new JsonBatchProgressObserver(rpc, batch);
                 List<JsonResponseModel2> responses;
                 if (batches.size() > 0) {
-                    JsonBatchProgressObserver batchProgressObserver = new JsonBatchProgressObserver(rpc, batch);
-                    responses = sendBatchRequest(batches, batchProgressObserver);
+
+                    responses = sendBatchRequest(batches, batchProgressObserver,cacheObjects.size());
                     Collections.sort(responses);
                 } else {
                     responses = new ArrayList<JsonResponseModel2>();
+                    batchProgressObserver.setMaxProgress(1);
+                    batchProgressObserver.progressTick(1);
                 }
 
                 for (Map.Entry<Integer, Pair<JsonRequest, Object>> pairs : cacheObjects.entrySet()) {
@@ -253,7 +256,7 @@ class JsonProxy implements InvocationHandler {
         return timeout;
     }
 
-    private List<JsonResponseModel2> sendBatchRequest(List<JsonRequest> batches, JsonProgressObserver progressObserver) throws Exception {
+    private List<JsonResponseModel2> sendBatchRequest(List<JsonRequest> batches, JsonBatchProgressObserver progressObserver, int cachedRequests) throws Exception {
         int conn = isWifi() ? rpc.getMaxWifiConnections() : rpc.getMaxMobileConnections();
 
         if (batches.size() > 1 && conn > 1) {
@@ -262,7 +265,8 @@ class JsonProxy implements InvocationHandler {
             List<JsonResponseModel2> response = new ArrayList<JsonResponseModel2>(batches.size());
             List<JsonBatchTask> tasks = new ArrayList<JsonBatchTask>(connections);
 
-            progressObserver.setMaxProgress(requestParts.size() * JsonTimeStat.TICKS);
+            progressObserver.setMaxProgress((requestParts.size()+cachedRequests) * JsonTimeStat.TICKS);
+            progressObserver.progressTick(cachedRequests * JsonTimeStat.TICKS);
 
             for (List<JsonRequest> requests : requestParts) {
 
@@ -282,7 +286,8 @@ class JsonProxy implements InvocationHandler {
             }
             return response;
         } else {
-
+            progressObserver.setMaxProgress((batches.size()+cachedRequests) * JsonTimeStat.TICKS);
+            progressObserver.progressTick(cachedRequests * JsonTimeStat.TICKS);
             return rpc.getJsonConnector().callBatch(batches, progressObserver, calculateTimeout(batches));
         }
     }

@@ -41,6 +41,13 @@ class JsonTimeStat  {
         startTime = time;
     }
 
+    public void tickCacheTime() {
+        for(int i=0;i<TICKS;i++)
+        {
+            progressTick();
+        }
+    }
+
     public void tickCreateTime() {
         createTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();

@@ -19,12 +19,23 @@ public class JsonBatchProgressObserver implements JsonProgressObserver {
     }
 
     @Override
-    public synchronized void progressTick() {
-        progress++;
-        if (batch != null) {
+    public void progressTick() {
+        progressTick(1);
+    }
+
+
+    public synchronized void progressTick(int i) {
+        progress+=i;
+        publishProgress();
+    }
+
+
+    public void publishProgress() {
+        if (batch != null && progress>0) {
             rpc.getHandler().post(new JsonAsyncResult(batch, progress * 100 / max));
         }
     }
+
 
     @Override
     public void setMaxProgress(int max) {

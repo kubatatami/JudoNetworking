@@ -93,6 +93,8 @@ class JsonConnector {
             if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
                 JsonCacheResult cacheObject = rpc.getMemoryCache().get(request.getMethod(), request.getArgs(), rpc.isTest() ? 0 : request.getCacheLifeTime(), request.getCacheSize());
                 if (cacheObject.result) {
+                    //TODO
+                    timeStat.tickCacheTime();
                     return (T) cacheObject.object;
                 }
                 else if(request.isCachePersist() || rpc.isTest())
