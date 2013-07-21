@@ -41,7 +41,10 @@ public class ObserverHelper {
         viewObservers.clear();
         if (JsonObserver.dataObject != null) {
             observableObject = JsonObserver.dataObject;
-            findViewObserver(view);
+            if(view!=null)
+            {
+                findViewObserver(view);
+            }
             findDataObserver(object);
         }
     }

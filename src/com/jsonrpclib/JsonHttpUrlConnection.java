@@ -5,6 +5,7 @@ import android.os.Build;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Random;
 
 /**
  * Created with IntelliJ IDEA.
@@ -19,6 +20,8 @@ class JsonHttpUrlConnection implements JsonConnection {
     private int reconnections = 3;
     private int connectTimeout = 15000;
     private int methodTimeout = 10000;
+    private float percentLoss=0.0f;
+    private Random randomGenerator = new Random();
 
     public JsonHttpUrlConnection(JsonRpcImplementation rpc) {
         this.rpc = rpc;
@@ -31,9 +34,23 @@ class JsonHttpUrlConnection implements JsonConnection {
         }
     }
 
+    private void lossCheck() throws JsonException
+    {
+        if(percentLoss!=0 && randomGenerator.nextFloat() < percentLoss)
+        {
+            throw new JsonException("Random package lost.");
+        }
+    }
+
+    public void setPercentLoss(float percentLoss) {
+        this.percentLoss = percentLoss;
+    }
+
     @Override
     public HttpURLConnection get(String url, String request, int timeout, JsonTimeStat timeStat) throws Exception {
         HttpURLConnection urlConnection = null;
+
+        lossCheck();
 
         for (int i = 1; i <= reconnections; i++) {
             try {
@@ -75,6 +92,8 @@ class JsonHttpUrlConnection implements JsonConnection {
     @Override
     public HttpURLConnection post(String url, Object request, int timeout, JsonTimeStat timeStat) throws Exception {
         HttpURLConnection urlConnection = null;
+
+        lossCheck();
 
         for (int i = 1; i <= reconnections; i++) {
             try {

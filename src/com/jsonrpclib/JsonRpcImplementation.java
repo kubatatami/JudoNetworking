@@ -330,6 +330,11 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     @Override
+    public void setPercentLoss(float percentLoss) {
+        connection.setPercentLoss(percentLoss);
+    }
+
+    @Override
     public void setDebugFlags(int flags) {
         this.debugFlags = flags;
         if (memoryCache != null) {

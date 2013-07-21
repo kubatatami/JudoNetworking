@@ -168,7 +168,7 @@ public interface JsonRpc {
 
     public JsonMemoryCache getMemoryCache();
 
-
+    public void setPercentLoss(float percentLoss);
 
     /**
      *

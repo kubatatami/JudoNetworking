@@ -22,4 +22,5 @@ interface JsonConnection {
     public void setMethodTimeout(int methodTimeout);
     public int getMethodTimeout();
 
+    public void setPercentLoss(float percentLoss);
 }
