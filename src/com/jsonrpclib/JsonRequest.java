@@ -173,7 +173,7 @@ public class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgre
     }
 
 
-    boolean isHighPriority() {
+    public boolean isHighPriority() {
         return ann.highPriority();
     }
 
@@ -196,11 +196,11 @@ public class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgre
         return max;
     }
 
-    boolean isCachePersist() {
+    public boolean isCachePersist() {
         return ann.cachePersist();
     }
 
-    Method getMethod() {
+    public Method getMethod() {
         return method;
     }
 }
