@@ -10,5 +10,5 @@ package com.jsonrpclib;
 public interface JsonProgressObserver {
     public void progressTick();
     public void setMaxProgress(int max);
-
+    public int getMaxProgress();
 }

@@ -4,7 +4,6 @@ import android.os.Build;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Random;
 
 /**
@@ -47,14 +46,14 @@ class JsonHttpUrlConnection implements JsonConnection {
     }
 
     @Override
-    public HttpURLConnection get(String url, String request, int timeout, JsonTimeStat timeStat) throws Exception {
+    public HttpURLConnection get(String url, int timeout, JsonTimeStat timeStat) throws Exception {
         HttpURLConnection urlConnection = null;
 
         lossCheck();
 
         for (int i = 1; i <= reconnections; i++) {
             try {
-                urlConnection = rpc.getHttpURLCreator().create(url + request);
+                urlConnection = rpc.getHttpURLCreator().create(url);
                 break;
             } catch (IOException e) {
                 if (i == reconnections) {
@@ -75,7 +74,7 @@ class JsonHttpUrlConnection implements JsonConnection {
             timeStat.setTimeout(timeout);
 
             if ((rpc.getDebugFlags() & JsonRpc.REQUEST_DEBUG) > 0) {
-                JsonLoggerImpl.longLog("REQ(GET)", request);
+                JsonLoggerImpl.longLog("REQ(GET)", url);
             }
 
             if(rpc.getHttpURLConnectionModifier()!=null)
@@ -90,7 +89,7 @@ class JsonHttpUrlConnection implements JsonConnection {
     }
 
     @Override
-    public HttpURLConnection post(String url, Object request, int timeout, JsonTimeStat timeStat) throws Exception {
+    public HttpURLConnection post(ProtocolController protocolController,String url, Object request, int timeout, JsonTimeStat timeStat) throws Exception {
         HttpURLConnection urlConnection = null;
 
         lossCheck();
@@ -126,22 +125,14 @@ class JsonHttpUrlConnection implements JsonConnection {
             rpc.getHttpURLConnectionModifier().modify(urlConnection);
         }
 
-        if ((rpc.getDebugFlags() & JsonRpc.REQUEST_DEBUG) > 0) {
-            String req = rpc.getParser().toJson(request);
-            JsonLoggerImpl.longLog("REQ", req);
-            OutputStream stream = urlConnection.getOutputStream();
-            timeStat.tickConnectionTime();
-            Writer writer = new BufferedWriter(new OutputStreamWriter(stream));
-            writer.write(req);
-            writer.close();
-        } else {
-            OutputStream stream = urlConnection.getOutputStream();
-            timeStat.tickConnectionTime();
-            Writer writer = new BufferedWriter(new OutputStreamWriter(stream));
-            rpc.getParser().toJson(request, writer);
-            writer.close();
+        OutputStream stream = urlConnection.getOutputStream();
+        timeStat.tickConnectionTime();
+        Writer writer = new BufferedWriter(new OutputStreamWriter(stream));
 
-        }
+        protocolController.writeToStream(writer,request,rpc.getDebugFlags());
+
+
+        writer.close();
         timeStat.tickSendTime();
         return urlConnection;
     }

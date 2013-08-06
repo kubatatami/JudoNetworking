@@ -1,17 +1,20 @@
 latwe
+-zamiana przedrostka json na judo
+-wymyslenie nowej nazwy biblioteki
 
 srednie
+-nasluchiwanie na adaptery poprzez adnotacje dataobserver
 -rozdzielenie bibliotek rpc i observer
 -scheduled update on ObserverWrapper
--obsluga batchy get i post
--batche (łączenie tylko w kodzie) dla serwerów nie obslugujacych batchy :)
--nasluchiwanie na adaptery poprzez adnotacje dataobserver
+
 
 trudne
--optymalizacja
--typ metody na poziomie serwisu, wprowadzenie abstrakcji standardu komunikacyjnego, mozliwosc rejestracji customowego typu metody
 -obsluga rest poprzez opis umieszczenia parametrow /category/{number}/name
 -jackson zamiast gson
+-optymalizacja
+-wprowadzenie abstrakcji standardu komunikacyjnego
+
+
 
 
 

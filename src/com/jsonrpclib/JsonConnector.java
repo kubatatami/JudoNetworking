@@ -1,22 +1,17 @@
 package com.jsonrpclib;
 
 
-import com.google.gson22.JsonElement;
-import com.google.gson22.JsonSyntaxException;
-import com.google.gson22.reflect.TypeToken;
-import com.google.gson22.stream.JsonReader;
+import android.util.Base64;
 
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 class JsonConnector {
 
     private final String url;
     private final JsonRpcImplementation rpc;
-    private JsonRpcVersion version = JsonRpcVersion.VERSION_2_0;
     private final JsonConnection connection;
 
 
@@ -26,236 +21,155 @@ class JsonConnector {
         this.connection = connection;
     }
 
-    private String convertStreamToString(InputStream is) {
-        Scanner s = new Scanner(is).useDelimiter("\\A");
-        return s.hasNext() ? s.next() : "";
-    }
 
-
-    public void setJsonVersion(JsonRpcVersion version) {
-        this.version = version;
-    }
-
-
-    private JsonResponseModel readResponse(InputStream stream) throws Exception {
-        if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
-
-            String resStr = convertStreamToString(stream);
-            JsonLoggerImpl.longLog("RES(" + resStr.length() + ")", resStr);
-            if (version == JsonRpcVersion.VERSION_2_0) {
-                JsonResponseModel2 response = rpc.getParser().fromJson(resStr, JsonResponseModel2.class);
-                if (response == null) {
-                    throw new JsonException("Can't parse response.");
-                } else if (response.error != null) {
-                    throw new JsonException(response.error.message, response.error.code);
-                }
-                return response;
+    private JsonResult sendRequest(JsonRequest request, JsonTimeStat timeStat) {
+        try {
+            ProtocolController controller = rpc.getProtocolController();
+            HttpURLConnection conn;
+            ProtocolController.RequestInfo requestInfo = controller.createRequest(url, request, rpc.getApiKey());
+            timeStat.tickCreateTime();
+            if (controller.getConnectionType() == ProtocolController.ConnectionType.GET) {
+                conn = connection.get(requestInfo.url, request.getTimeout(), timeStat);
             } else {
-                JsonResponseModel1 response = rpc.getParser().fromJson(resStr, JsonResponseModel1.class);
-                if (response == null) {
-                    throw new JsonException("Can't parse response.");
-                } else if (response.error != null) {
-                    throw new JsonException(response.error);
-                }
-                return response;
-            }
-        } else {
-            JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
-            JsonResponseModel response;
-
-            if (version == JsonRpcVersion.VERSION_2_0) {
-                JsonResponseModel2 response2 = rpc.getParser().fromJson(reader, JsonResponseModel2.class);
-                if (response2.error != null) {
-                    throw new JsonException(response2.error.message, response2.error.code);
-                }
-                response = response2;
-            } else {
-                JsonResponseModel1 response1 = rpc.getParser().fromJson(reader, JsonResponseModel1.class);
-                if (response1.error != null) {
-                    throw new JsonException(response1.error);
-                }
-                response = response1;
+                conn = connection.post(controller, requestInfo.url, requestInfo.postRequest, request.getTimeout(), timeStat);
             }
 
-            reader.close();
-            return response;
+            timeStat.tickConnectionTime();
+
+            JsonResult result = controller.parseResponse(request, conn.getInputStream(), rpc.getDebugFlags(), timeStat);
+            conn.disconnect();
+            return result;
+        } catch (Exception e) {
+            return new JsonResult(e);
         }
 
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T call(JsonRequest request) throws Exception {
+    public Object call(JsonRequest request) throws Exception {
         try {
             JsonTimeStat timeStat = new JsonTimeStat(request);
-
 
 
             if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
                 JsonCacheResult cacheObject = rpc.getMemoryCache().get(request.getMethod(), request.getArgs(), rpc.isTest() ? 0 : request.getCacheLifeTime(), request.getCacheSize());
                 if (cacheObject.result) {
-                    //TODO
                     timeStat.tickCacheTime();
-                    return (T) cacheObject.object;
-                }
-                else if(request.isCachePersist() || rpc.isTest())
-                {
-                    JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(),rpc.getTestRevision(),url,request.getMethod());
-                    cacheObject =  rpc.getDiscCache().get(cacheMethod,request.getArgs(),request.getCacheLifeTime(), request.getCacheSize());
+                    return cacheObject.object;
+                } else if (request.isCachePersist() || rpc.isTest()) {
+                    JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), url, request.getMethod());
+                    cacheObject = rpc.getDiscCache().get(cacheMethod, request.getArgs(), request.getCacheLifeTime(), request.getCacheSize());
                     if (cacheObject.result) {
-                        if(!rpc.isTest())
-                        {
-                            rpc.getMemoryCache().put(request.getMethod(), request.getArgs(),cacheObject.object,request.getCacheSize());
+                        if (!rpc.isTest()) {
+                            rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), cacheObject.object, request.getCacheSize());
                         }
-                        return (T) cacheObject.object;
+                        return cacheObject.object;
                     }
 
                 }
             }
-            HttpURLConnection conn;
-            if (request.getMethodType() == JsonMethodType.JSON_RPC) {
-                JsonRequestModel jsonRequest = request.createJsonRequest(version);
-                timeStat.tickCreateTime();
-                conn = connection.post(url, jsonRequest, request.getTimeout(), timeStat);
-            } else if(request.getMethodType() == JsonMethodType.GET || request.getMethodType() == JsonMethodType.GET_SIMPLE) {
-                String getRequest = request.createGetRequest();
-                timeStat.tickCreateTime();
-                conn = connection.get(url, getRequest, request.getTimeout(), timeStat);
-            } else {
-                String postRequest = request.createPostRequest();
-                timeStat.tickCreateTime();
-                conn = connection.post(url, postRequest, request.getTimeout(), timeStat);
-            }
-            timeStat.tickConnectionTime();
-
-            T res;
-            if (request.getMethodType() != JsonMethodType.GET_SIMPLE && request.getMethodType() != JsonMethodType.POST_SIMPLE) {
-                JsonResponseModel response = readResponse(conn.getInputStream());
-                if (response == null) {
-                    throw new JsonException("Empty response.");
-                }
-                timeStat.tickReadTime();
 
 
-                if (!request.getReturnType().equals(Void.TYPE)) {
-                    res = parseResponse(response.result, request.getReturnType());
-                } else {
-                    res = null;
-                }
-            }
-            else
-            {
-                if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
-
-                    String resStr = convertStreamToString(conn.getInputStream());
-                    JsonLoggerImpl.longLog("RES(" + resStr.length() + ")", resStr);
-                    res=rpc.getParser().fromJson(resStr, request.getReturnType());
-                }
-                else
-                {
-                    JsonReader reader = new JsonReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
-                    res=rpc.getParser().fromJson(reader, request.getReturnType());
+            if (request.getArgs() != null && rpc.isByteArrayAsBase64()) {
+                int i = 0;
+                for (Object object : request.getArgs()) {
+                    if (object instanceof byte[]) {
+                        request.getArgs()[i] = Base64.encodeToString((byte[]) object, Base64.NO_WRAP);
+                    }
+                    i++;
                 }
             }
 
-            conn.disconnect();
+            JsonResult result = sendRequest(request,timeStat);
+            if (result.error != null) {
+                throw result.error;
+            }
 
-            timeStat.tickParseTime();
+
+
             timeStat.tickEndTime();
+
 
             if (rpc.isTimeProfiler()) {
                 refreshStat(request.getName(), timeStat.getMethodTime());
             }
-
 
             if ((rpc.getDebugFlags() & JsonRpc.TIME_DEBUG) > 0) {
                 timeStat.logTime("End single request(" + request.getName() + "):");
             }
 
             if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
-                rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), res, request.getCacheSize());
-                if(rpc.getCacheMode()==JsonCacheMode.CLONE)
-                {
-                    res=rpc.getJsonClonner().clone(res);
+                rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), result.result, request.getCacheSize());
+                if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
+                    result.result = rpc.getJsonClonner().clone(result.result);
                 }
 
-                if(request.isCachePersist() || rpc.isTest())
-                {
-                    JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(),rpc.getTestRevision(),url,request.getMethod());
-                    rpc.getDiscCache().put(cacheMethod,request.getArgs(), res, request.getCacheSize());
+                if (request.isCachePersist() || rpc.isTest()) {
+                    JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), url, request.getMethod());
+                    rpc.getDiscCache().put(cacheMethod, request.getArgs(), result.result, request.getCacheSize());
                 }
 
 
             }
 
-            return res;
+            return result.result;
         } catch (Exception e) {
             refreshErrorStat(request.getName(), request.getTimeout());
             throw e;
         }
     }
 
-    private <T> T parseResponse(JsonElement result, Type type) {
-        return rpc.getParser().fromJson(result, type);
-    }
-
-    public void notify(JsonRequest request) throws Exception {
-        HttpURLConnection conn = connection.post(url, request, request.getTimeout(), new JsonTimeStat());
-        conn.getInputStream().close();
-    }
-
-
-    public List<JsonResponseModel2> callBatch(List<JsonRequest> requests,JsonProgressObserver progressObserver, Integer timeout) throws Exception {
-        try {
-            int i = 0;
-            List<JsonProgressObserver> progressObservers = new ArrayList<JsonProgressObserver>(requests);
-            progressObservers.add(progressObserver);
-            JsonTimeStat timeStat = new JsonTimeStat(progressObservers);
-            JsonReader reader;
-            Object[] requestsJson = new Object[requests.size()];
-            List<JsonResponseModel2> responses;
-            String requestsName = "";
-
-
+    public List<JsonResult> callBatch(List<JsonRequest> requests, JsonProgressObserver progressObserver, Integer timeout) throws Exception {
+        String requestsName = "";
+        for (JsonRequest request : requests) {
+            requestsName += " " + request.getName();
+            if (request.getArgs() != null && rpc.isByteArrayAsBase64()) {
+                int i = 0;
+                for (Object object : request.getArgs()) {
+                    if (object instanceof byte[]) {
+                        request.getArgs()[i] = Base64.encodeToString((byte[]) object, Base64.NO_WRAP);
+                    }
+                    i++;
+                }
+            }
+        }
+        if (rpc.getProtocolController().isBatchSupported()) {
+            return callRealBatch(requests, progressObserver, timeout, requestsName);
+        } else {
+            List<JsonResult> results = new ArrayList<JsonResult>(requests.size());
+            JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
+            synchronized (progressObserver)
+            {
+                progressObserver.setMaxProgress(progressObserver.getMaxProgress()+(requests.size()-1)*JsonTimeStat.TICKS);
+            }
             for (JsonRequest request : requests) {
-                requestsJson[i] = request.createJsonRequest(version);
-                requestsName += " " + request.getName();
-                i++;
+                results.add(sendRequest(request, timeStat));
             }
+
+            return results;
+        }
+
+    }
+
+    public List<JsonResult> callRealBatch(List<JsonRequest> requests, JsonProgressObserver progressObserver, Integer timeout, String requestsName) throws Exception {
+
+        try {
+            ProtocolController controller = rpc.getProtocolController();
+            List<JsonResult> responses = null;
+            JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
+
+
+            ProtocolController.RequestInfo requestInfo = controller.createRequest(url, requests, rpc.getApiKey());
             timeStat.tickCreateTime();
-            HttpURLConnection conn = connection.post(url, requestsJson, timeout, timeStat);
+            HttpURLConnection conn = null;
+            if (controller.getConnectionType() == ProtocolController.ConnectionType.GET) {
+                conn = connection.get(requestInfo.url, timeout, timeStat);
+            } else {
+                conn = connection.post(controller, requestInfo.url, requestInfo.postRequest, timeout, timeStat);
+            }
             InputStream stream = conn.getInputStream();
-            try {
-                if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
-
-                    String resStr = convertStreamToString(stream);
-                    timeStat.tickReadTime();
-                    JsonLoggerImpl.longLog("RES(" + resStr.length() + ")", resStr);
-                    responses = rpc.getParser().fromJson(resStr,
-                            new TypeToken<List<JsonResponseModel2>>() {
-                            }.getType());
-                    timeStat.tickParseTime();
-                } else {
-                    reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
-                    responses = rpc.getParser().fromJson(reader,
-                            new TypeToken<List<JsonResponseModel2>>() {
-                            }.getType());
-                    reader.close();
-                    timeStat.tickReadTime();
-                    timeStat.tickParseTime();
-                }
-            } catch (JsonSyntaxException e) {
-                if (requestsName.length() > 0) {
-                    throw new JsonException(requestsName.substring(1), e);
-                } else {
-                    throw e;
-                }
-            }
-            if (responses == null) {
-                throw new JsonException("Empty response.");
-            }
+            responses = controller.parseResponses(requests, stream, rpc.getDebugFlags(), timeStat);
             conn.disconnect();
-
-
             timeStat.tickEndTime();
             if (rpc.isTimeProfiler()) {
 
@@ -275,7 +189,7 @@ class JsonConnector {
             for (JsonRequest request : requests) {
                 refreshErrorStat(request.getName(), request.getTimeout());
             }
-            throw e;
+            throw new JsonException(requestsName.substring(1), e);
         }
     }
 

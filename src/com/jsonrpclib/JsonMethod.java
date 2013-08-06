@@ -13,12 +13,10 @@ public @interface JsonMethod
     public String[] paramNames() default {};
 	public int timeout() default 0;
     public boolean async() default false;
-    public boolean notification() default false;
     public boolean cacheable() default false;
     public boolean cachePersist() default false;
     public int cacheLifeTime() default 0;
     public int cacheSize() default 100;
     public int cachePersistSize() default 100;
-    public JsonMethodType type() default JsonMethodType.JSON_RPC;
     public boolean highPriority() default false;
 }

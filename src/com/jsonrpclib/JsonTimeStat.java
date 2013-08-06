@@ -9,7 +9,7 @@ import java.util.List;
  * Date: 30.03.2013
  * Time: 11:10
  */
-class JsonTimeStat  {
+public class JsonTimeStat  {
     private long allTime = 0;
     private long createTime = 0;
     private long connectionTime = 0;

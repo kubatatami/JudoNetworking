@@ -4,14 +4,9 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
-import com.google.gson22.ExclusionStrategy;
-import com.google.gson22.FieldAttributes;
-import com.google.gson22.Gson;
-import com.google.gson22.GsonBuilder;
 
 import java.io.*;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,9 +19,7 @@ class JsonRpcImplementation implements JsonRpc {
     private JsonConnector jsonConnector;
     private JsonConnection connection;
     private Handler handler = new Handler();
-    private Gson parser;
     private String apiKey = null;
-    private final ExclusionStrategy exclusionStrategy = new SerializationExclusionStrategy();
     private String authKey = null;
     private Context context;
     private boolean byteArrayAsBase64 = false;
@@ -49,55 +42,33 @@ class JsonRpcImplementation implements JsonRpc {
     private String testName = null;
     private int testRevision = 0;
     private String url;
+    private ProtocolController protocolController;
 
-    public JsonRpcImplementation(Context context, String url) {
-        init(context, url, null, new GsonBuilder());
+    public JsonRpcImplementation(Context context,ProtocolController protocolController, String url) {
+        init(context,protocolController, url, null);
     }
 
-    public JsonRpcImplementation(Context context, String url, GsonBuilder builder) {
-        init(context, url, null, builder);
+    public JsonRpcImplementation(Context context,ProtocolController protocolController, String url, String apiKey) {
+        init(context,protocolController, url, apiKey);
     }
 
-    public JsonRpcImplementation(Context context, String url, String apiKey) {
-        init(context, url, apiKey, new GsonBuilder());
-    }
-
-    public JsonRpcImplementation(Context context, String url, String apiKey, GsonBuilder builder) {
-        init(context, url, apiKey, builder);
-    }
-
-    private void init(Context context, String url, String apiKey, GsonBuilder builder) {
+    private void init(Context context,ProtocolController protocolController, String url, String apiKey) {
         this.httpURLCreator = new HttpURLCreatorImplementation();
         this.connection = new JsonHttpUrlConnection(this);
         this.jsonConnector = new JsonConnector(url, this, connection);
-        this.parser = builder.addSerializationExclusionStrategy(exclusionStrategy).create();
         this.apiKey = apiKey;
         this.context = context;
+        this.protocolController=protocolController;
         this.url = url;
         statFile = new File(context.getCacheDir(), "stats");
         memoryCache = new JsonMemoryCacheImplementation(context);
         discCache = new JsonDiscCacheImplementation(context);
     }
 
-    private class SerializationExclusionStrategy implements ExclusionStrategy {
-        public boolean shouldSkipClass(Class<?> clazz) {
-            return false;
-        }
-
-        public boolean shouldSkipField(FieldAttributes f) {
-            JsonSerializationExclude ann = f.getAnnotation(JsonSerializationExclude.class);
-            return ann != null;
-        }
-    }
-
     public void setPasswordAuthentication(final String username, final String password) {
         authKey = auth(username, password);
     }
 
-    @Override
-    public void setJsonVersion(JsonRpcVersion version) {
-        jsonConnector.setJsonVersion(version);
-    }
 
     @Override
     public void setTimeouts(int connectionTimeout, int methodTimeout, int reconnectionAttempts) {
@@ -185,11 +156,6 @@ class JsonRpcImplementation implements JsonRpc {
 
     public JsonConnector getJsonConnector() {
         return jsonConnector;
-    }
-
-
-    public Gson getParser() {
-        return parser;
     }
 
     public String getAuthKey() {
@@ -425,5 +391,9 @@ class JsonRpcImplementation implements JsonRpc {
 
     boolean isTest() {
         return test;
+    }
+
+    ProtocolController getProtocolController() {
+        return protocolController;
     }
 }

@@ -41,4 +41,9 @@ public class JsonBatchProgressObserver implements JsonProgressObserver {
     public void setMaxProgress(int max) {
         this.max = max;
     }
+
+    @Override
+    public int getMaxProgress() {
+        return max;
+    }
 }

@@ -9,7 +9,7 @@ class JsonBatchTask implements Runnable {
     private final Integer timeout;
     private final List<JsonRequest> requests;
     private final Thread thread = new Thread(this);
-    private List<JsonResponseModel2> response = null;
+    private List<JsonResult> response = null;
     private Exception ex = null;
     private final JsonRpcImplementation rpc;
     private JsonProgressObserver progressObserver;
@@ -21,7 +21,7 @@ class JsonBatchTask implements Runnable {
         this.requests = requests;
     }
 
-    public List<JsonResponseModel2> getResponse() {
+    public List<JsonResult> getResponse() {
         return this.response;
     }
 

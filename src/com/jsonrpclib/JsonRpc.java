@@ -47,11 +47,7 @@ public interface JsonRpc {
      */
     public void setPasswordAuthentication(final String username, final String password);
 
-    /**
-     *
-     * @param version
-     */
-    public void setJsonVersion(JsonRpcVersion version);
+
 
     /**
      *

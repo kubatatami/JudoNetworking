@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObserver {
+public class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObserver {
     private Integer id;
     private final JsonRpcImplementation rpc;
     private JsonCallbackInterface<Object> callback;
@@ -40,70 +40,8 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
     }
 
 
-    public JsonRequestModel createJsonRequest(JsonRpcVersion version) {
-        Object finalArgs;
-        if (args != null && rpc.isByteArrayAsBase64()) {
-            int i = 0;
-            for (Object object : args) {
-                if (object instanceof byte[]) {
-                    args[i] = Base64.encodeToString((byte[]) object, Base64.NO_WRAP);
-                }
-                i++;
-            }
-        }
-
-        if (ann.paramNames().length>0 && args != null) {
-            int i = 0;
-            Map<String, Object> paramObjects = new HashMap<String, Object>();
-            for (String param : ann.paramNames()) {
-                paramObjects.put(param, args[i]);
-                i++;
-            }
-            finalArgs = paramObjects;
-            if (rpc.getApiKey() != null) {
-                finalArgs = new Object[]{rpc.getApiKey(), finalArgs};
-            }
-        } else {
-            finalArgs = args;
-            if (rpc.getApiKey() != null) {
-                if (args != null) {
-                    Object[] finalArray = new Object[args.length + 1];
-                    finalArray[0] = rpc.getApiKey();
-                    System.arraycopy(args, 0, finalArray, 1, args.length);
-                    finalArgs = finalArray;
-                } else {
-                    finalArgs = new Object[]{rpc.getApiKey()};
-                }
-            }
-        }
-        if (version == JsonRpcVersion.VERSION_1_0_NO_ID) {
-            return new JsonRequestModel(name, finalArgs, null);
-        } else if (version == JsonRpcVersion.VERSION_1_0) {
-            return new JsonRequestModel(name, finalArgs, id);
-        } else {
-            return new JsonRequestModel2(name, finalArgs, id);
-        }
 
 
-    }
-
-
-    public String createGetRequest() {
-        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
-        int i = 0;
-        if (rpc.getApiKey() != null && ann.paramNames().length - 1 == args.length) {
-            nameValuePairs.add(new BasicNameValuePair(ann.paramNames()[0], rpc.getApiKey()));
-            i++;
-        }
-
-        for (Object arg : args) {
-            nameValuePairs.add(new BasicNameValuePair(ann.paramNames()[i], arg==null ? "" : arg.toString()));
-            i++;
-        }
-
-
-        return (name + "?" + URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8)).replaceAll("\\+", "%20");
-    }
 
 
     public String createPostRequest() {
@@ -201,6 +139,11 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
         return ann.cacheSize();
     }
 
+    public String[] getParamNames()
+    {
+        return ann.paramNames();
+    }
+
     public long getWeight()
     {
         if(rpc.getStats().containsKey(name))
@@ -229,9 +172,6 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
         }
     }
 
-    public JsonMethodType getMethodType() {
-        return ann.type();
-    }
 
     boolean isHighPriority() {
         return ann.highPriority();
@@ -249,6 +189,11 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
     @Override
     public void setMaxProgress(int max) {
         this.max=max;
+    }
+
+    @Override
+    public int getMaxProgress() {
+        return max;
     }
 
     boolean isCachePersist() {

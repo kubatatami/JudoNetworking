@@ -12,8 +12,8 @@ import java.net.HttpURLConnection;
 interface JsonConnection {
 
 
-    public HttpURLConnection get(String url, String request, int timeout,JsonTimeStat timeStat) throws Exception;
-    public HttpURLConnection post(String url, Object request, int timeout,JsonTimeStat timeStat) throws Exception;
+    public HttpURLConnection get(String url, int timeout,JsonTimeStat timeStat) throws Exception;
+    public HttpURLConnection post(ProtocolController protocolController,String url, Object request, int timeout,JsonTimeStat timeStat) throws Exception;
 
     public void setMaxConnections(int max);
 
