@@ -7,13 +7,14 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 class JsonConnector {
 
     private final String url;
     private final JsonRpcImplementation rpc;
     private final JsonConnection connection;
-
+    private final Random randomGenerator = new Random();
 
     public JsonConnector(String url, JsonRpcImplementation rpc, JsonConnection connection) {
         this.url = url;
@@ -25,19 +26,16 @@ class JsonConnector {
     private JsonResult sendRequest(JsonRequest request, JsonTimeStat timeStat) {
         try {
             ProtocolController controller = rpc.getProtocolController();
-            HttpURLConnection conn;
             ProtocolController.RequestInfo requestInfo = controller.createRequest(url, request, rpc.getApiKey());
             timeStat.tickCreateTime();
-            if (controller.getConnectionType() == ProtocolController.ConnectionType.GET) {
-                conn = connection.get(requestInfo.url, request.getTimeout(), timeStat);
-            } else {
-                conn = connection.post(controller, requestInfo.url, requestInfo.postRequest, request.getTimeout(), timeStat);
-            }
+            lossCheck();
+
+            JsonConnection.Connection conn = connection.send(controller, requestInfo, request.getTimeout(), timeStat, rpc.getDebugFlags());
 
             timeStat.tickConnectionTime();
 
-            JsonResult result = controller.parseResponse(request, conn.getInputStream(), rpc.getDebugFlags(), timeStat);
-            conn.disconnect();
+            JsonResult result = controller.parseResponse(request, conn.getStream(), rpc.getDebugFlags(), timeStat);
+            conn.close();
             return result;
         } catch (Exception e) {
             return new JsonResult(e);
@@ -80,11 +78,10 @@ class JsonConnector {
                 }
             }
 
-            JsonResult result = sendRequest(request,timeStat);
+            JsonResult result = sendRequest(request, timeStat);
             if (result.error != null) {
                 throw result.error;
             }
-
 
 
             timeStat.tickEndTime();
@@ -138,9 +135,8 @@ class JsonConnector {
         } else {
             List<JsonResult> results = new ArrayList<JsonResult>(requests.size());
             JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
-            synchronized (progressObserver)
-            {
-                progressObserver.setMaxProgress(progressObserver.getMaxProgress()+(requests.size()-1)*JsonTimeStat.TICKS);
+            synchronized (progressObserver) {
+                progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (requests.size() - 1) * JsonTimeStat.TICKS);
             }
             for (JsonRequest request : requests) {
                 results.add(sendRequest(request, timeStat));
@@ -161,15 +157,11 @@ class JsonConnector {
 
             ProtocolController.RequestInfo requestInfo = controller.createRequest(url, requests, rpc.getApiKey());
             timeStat.tickCreateTime();
-            HttpURLConnection conn = null;
-            if (controller.getConnectionType() == ProtocolController.ConnectionType.GET) {
-                conn = connection.get(requestInfo.url, timeout, timeStat);
-            } else {
-                conn = connection.post(controller, requestInfo.url, requestInfo.postRequest, timeout, timeStat);
-            }
-            InputStream stream = conn.getInputStream();
+            lossCheck();
+            JsonConnection.Connection conn = connection.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags());
+            InputStream stream = conn.getStream();
             responses = controller.parseResponses(requests, stream, rpc.getDebugFlags(), timeStat);
-            conn.disconnect();
+            conn.close();
             timeStat.tickEndTime();
             if (rpc.isTimeProfiler()) {
 
@@ -190,6 +182,13 @@ class JsonConnector {
                 refreshErrorStat(request.getName(), request.getTimeout());
             }
             throw new JsonException(requestsName.substring(1), e);
+        }
+    }
+
+
+    private void lossCheck() throws JsonException {
+        if (rpc.getPercentLoss() != 0 && randomGenerator.nextFloat() < rpc.getPercentLoss()) {
+            throw new JsonException("Random package lost.");
         }
     }
 

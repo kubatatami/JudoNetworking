@@ -4,6 +4,10 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Base64;
+import com.jsonrpclib.connectors.HttpURLConnectionModifier;
+import com.jsonrpclib.connectors.HttpURLCreator;
+import com.jsonrpclib.connectors.HttpURLCreatorImplementation;
+import com.jsonrpclib.connectors.JsonHttpUrlConnection;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -20,7 +24,6 @@ class JsonRpcImplementation implements JsonRpc {
     private JsonConnection connection;
     private Handler handler = new Handler();
     private String apiKey = null;
-    private String authKey = null;
     private Context context;
     private boolean byteArrayAsBase64 = false;
     private boolean cacheEnabled = false;
@@ -33,8 +36,7 @@ class JsonRpcImplementation implements JsonRpc {
     private int debugFlags = 0;
     private Map<String, JsonStat> stats;
     private File statFile;
-    private HttpURLCreator httpURLCreator;
-    private HttpURLConnectionModifier httpURLConnectionModifier;
+    private float percentLoss;
     private int maxStatFileSize = 50; //KB
     private JsonErrorLogger errorLogger;
     private JsonClonner jsonClonner = new JsonClonnerImplementation();
@@ -44,17 +46,16 @@ class JsonRpcImplementation implements JsonRpc {
     private String url;
     private ProtocolController protocolController;
 
-    public JsonRpcImplementation(Context context,ProtocolController protocolController, String url) {
-        init(context,protocolController, url, null);
+    public JsonRpcImplementation(Context context,ProtocolController protocolController,JsonConnection connection, String url) {
+        init(context,protocolController, connection, url, null);
     }
 
-    public JsonRpcImplementation(Context context,ProtocolController protocolController, String url, String apiKey) {
-        init(context,protocolController, url, apiKey);
+    public JsonRpcImplementation(Context context,ProtocolController protocolController,JsonConnection connection, String url, String apiKey) {
+        init(context,protocolController, connection, url, apiKey);
     }
 
-    private void init(Context context,ProtocolController protocolController, String url, String apiKey) {
-        this.httpURLCreator = new HttpURLCreatorImplementation();
-        this.connection = new JsonHttpUrlConnection(this);
+    private void init(Context context,ProtocolController protocolController,JsonConnection connection, String url, String apiKey) {
+        this.connection = connection;
         this.jsonConnector = new JsonConnector(url, this, connection);
         this.apiKey = apiKey;
         this.context = context;
@@ -65,9 +66,7 @@ class JsonRpcImplementation implements JsonRpc {
         discCache = new JsonDiscCacheImplementation(context);
     }
 
-    public void setPasswordAuthentication(final String username, final String password) {
-        authKey = auth(username, password);
-    }
+
 
 
     @Override
@@ -95,10 +94,7 @@ class JsonRpcImplementation implements JsonRpc {
         connection.setMaxConnections(max);
     }
 
-    private String auth(String login, String pass) {
-        String source = login + ":" + pass;
-        return "Basic " + Base64.encodeToString(source.getBytes(), Base64.NO_WRAP);
-    }
+
 
     public <T> T getService(Class<T> obj) {
         return getService(obj, false);
@@ -132,11 +128,6 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     @Override
-    public void setHttpUrlConnectionModifier(HttpURLConnectionModifier httpURLConnectionModifier) {
-        this.httpURLConnectionModifier = httpURLConnectionModifier;
-    }
-
-    @Override
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
     }
@@ -156,10 +147,6 @@ class JsonRpcImplementation implements JsonRpc {
 
     public JsonConnector getJsonConnector() {
         return jsonConnector;
-    }
-
-    public String getAuthKey() {
-        return authKey;
     }
 
 
@@ -297,7 +284,7 @@ class JsonRpcImplementation implements JsonRpc {
 
     @Override
     public void setPercentLoss(float percentLoss) {
-        connection.setPercentLoss(percentLoss);
+        this.percentLoss=percentLoss;
     }
 
     @Override
@@ -361,23 +348,11 @@ class JsonRpcImplementation implements JsonRpc {
         return context;
     }
 
-    HttpURLConnectionModifier getHttpURLConnectionModifier() {
-        return httpURLConnectionModifier;
-    }
-
-    public HttpURLCreator getHttpURLCreator() {
-        return httpURLCreator;
-    }
-
-    public void setHttpURLCreator(HttpURLCreator httpURLCreator) {
-        this.httpURLCreator = httpURLCreator;
-    }
-
-    JsonErrorLogger getErrorLogger() {
+    public JsonErrorLogger getErrorLogger() {
         return errorLogger;
     }
 
-    JsonClonner getJsonClonner() {
+    public JsonClonner getJsonClonner() {
         return jsonClonner;
     }
 
@@ -385,7 +360,7 @@ class JsonRpcImplementation implements JsonRpc {
         this.jsonClonner = clonner;
     }
 
-    String getUrl() {
+    public String getUrl() {
         return url;
     }
 
@@ -393,7 +368,11 @@ class JsonRpcImplementation implements JsonRpc {
         return test;
     }
 
-    ProtocolController getProtocolController() {
+    public ProtocolController getProtocolController() {
         return protocolController;
+    }
+
+    public float getPercentLoss() {
+        return percentLoss;
     }
 }

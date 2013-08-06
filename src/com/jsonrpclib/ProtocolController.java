@@ -21,15 +21,11 @@ import java.util.Scanner;
  */
 public abstract class ProtocolController {
 
-    public enum ConnectionType
+    public static class RequestInfo
     {
-        GET,POST
-    }
-
-    public class RequestInfo
-    {
-        public Object postRequest;
         public String url;
+        public Object data;
+        public String mimeType;
     }
 
     protected void longLog(String tag, String message)
@@ -47,7 +43,6 @@ public abstract class ProtocolController {
 
     public abstract RequestInfo createRequest(String url, JsonRequest request, String apiKey);
     public abstract JsonResult parseResponse(JsonRequest request, InputStream stream, int debugFlag, JsonTimeStat timeStat);
-    public abstract ConnectionType getConnectionType();
 
     public boolean isBatchSupported() {
         return false;

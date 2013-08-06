@@ -1,5 +1,7 @@
 package com.jsonrpclib;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 
 /**
@@ -9,18 +11,27 @@ import java.net.HttpURLConnection;
  * Time: 21:53
  *
  */
-interface JsonConnection {
+public abstract class JsonConnection {
 
+    public abstract Connection send(ProtocolController protocolController,ProtocolController.RequestInfo requestInfo,
+                           int timeout,JsonTimeStat timeStat, int debugFlags) throws Exception;
 
-    public HttpURLConnection get(String url, int timeout,JsonTimeStat timeStat) throws Exception;
-    public HttpURLConnection post(ProtocolController protocolController,String url, Object request, int timeout,JsonTimeStat timeStat) throws Exception;
+    public abstract void setMaxConnections(int max);
 
-    public void setMaxConnections(int max);
+    public abstract void setReconnections(int reconnections);
+    public abstract void setConnectTimeout(int connectTimeout);
+    public abstract void setMethodTimeout(int methodTimeout);
+    public abstract int getMethodTimeout();
 
-    public void setReconnections(int reconnections);
-    public void setConnectTimeout(int connectTimeout);
-    public void setMethodTimeout(int methodTimeout);
-    public int getMethodTimeout();
+    protected void longLog(String tag, String message)
+    {
+        JsonLoggerImpl.longLog(tag, message);
+    }
 
-    public void setPercentLoss(float percentLoss);
+    public interface Connection
+    {
+        public InputStream getStream() throws IOException;
+        public void close();
+    }
+
 }

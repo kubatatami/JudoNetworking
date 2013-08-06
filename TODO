@@ -12,7 +12,6 @@ trudne
 -obsluga rest poprzez opis umieszczenia parametrow /category/{number}/name
 -jackson zamiast gson
 -optymalizacja
--wprowadzenie abstrakcji standardu komunikacyjnego
 
 
 

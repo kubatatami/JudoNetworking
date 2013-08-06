@@ -1,6 +1,6 @@
 package com.jsonrpclib;
 
-import java.lang.reflect.Method;
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -33,21 +33,6 @@ public interface JsonRpc {
      * @return Batch thread useful for synchronized wait
      */
     public <T> Thread callInBatch(Class<T> apiInterface, JsonBatch<T> batch);
-
-    /**
-     *
-     * @param httpURLConnectionModifier
-     */
-    public void setHttpUrlConnectionModifier(HttpURLConnectionModifier httpURLConnectionModifier);
-
-    /**
-     *
-     * @param username
-     * @param password
-     */
-    public void setPasswordAuthentication(final String username, final String password);
-
-
 
     /**
      *
@@ -128,11 +113,6 @@ public interface JsonRpc {
      */
     public int getMaxStatFileSize();
 
-    /**
-     *
-     * @param httpURLCreator
-     */
-    void setHttpURLCreator(HttpURLCreator httpURLCreator);
 
     /**
      *

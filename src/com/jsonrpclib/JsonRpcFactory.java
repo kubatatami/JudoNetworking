@@ -17,9 +17,9 @@ public class JsonRpcFactory {
      * @param url Server url.
      * @return JsonRpc instance.
      */
-    public static JsonRpc getJsonRpc(Context context, ProtocolController protocolController,String url)
+    public static JsonRpc getJsonRpc(Context context, ProtocolController protocolController, JsonConnection connection,String url)
     {
-        return new JsonRpcImplementation(context, protocolController,url);
+        return new JsonRpcImplementation(context, protocolController,connection,url);
     }
 
 
@@ -31,9 +31,9 @@ public class JsonRpcFactory {
      * @param apiKey Server api key.
      * @return JsonRpc instance.
      */
-    public static JsonRpc getJsonRpc(Context context,ProtocolController protocolController,String url,String apiKey)
+    public static JsonRpc getJsonRpc(Context context,ProtocolController protocolController, JsonConnection connection,String url,String apiKey)
     {
-        return new JsonRpcImplementation(context, protocolController,url, apiKey);
+        return new JsonRpcImplementation(context, protocolController,connection,url, apiKey);
     }
 
 

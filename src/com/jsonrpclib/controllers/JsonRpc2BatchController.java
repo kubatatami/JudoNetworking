@@ -35,10 +35,11 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
         requestInfo.url = url;
         Object[] requestsJson = new Object[requests.size()];
         for (JsonRequest request : requests) {
-            requestsJson[i] = createRequest(url, request, apiKey).postRequest;
+            requestsJson[i] = createRequest(url, request, apiKey).data;
             i++;
         }
-        requestInfo.postRequest = requestsJson;
+        requestInfo.data = requestsJson;
+        requestInfo.mimeType = "application/json";
         return requestInfo;
     }
 

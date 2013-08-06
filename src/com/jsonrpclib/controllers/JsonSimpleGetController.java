@@ -32,8 +32,4 @@ public class JsonSimpleGetController extends JsonSimpleController {
         return requestInfo;
     }
 
-    @Override
-    public ConnectionType getConnectionType() {
-        return ConnectionType.GET;
-    }
 }

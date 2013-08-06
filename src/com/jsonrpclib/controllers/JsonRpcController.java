@@ -1,8 +1,6 @@
 package com.jsonrpclib.controllers;
 
-import android.util.Base64;
 import com.google.gson22.GsonBuilder;
-import com.google.gson22.JsonElement;
 import com.jsonrpclib.*;
 
 import java.io.IOException;
@@ -56,7 +54,8 @@ public abstract class JsonRpcController extends JsonProtocolController {
                 }
             }
         }
-        requestInfo.postRequest = createRequestModel(request.getName(), finalArgs, request.getId());
+        requestInfo.data = createRequestModel(request.getName(), finalArgs, request.getId());
+        requestInfo.mimeType="application/json";
         return requestInfo;
     }
 
@@ -76,11 +75,6 @@ public abstract class JsonRpcController extends JsonProtocolController {
         } else {
             gson.toJson(request, writer);
         }
-    }
-
-    @Override
-    public ConnectionType getConnectionType() {
-        return ConnectionType.POST;
     }
 
 
