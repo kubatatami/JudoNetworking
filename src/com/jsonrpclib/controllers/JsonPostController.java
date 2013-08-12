@@ -21,7 +21,7 @@ public class JsonPostController extends JsonSimplePostController {
     }
 
     @Override
-    public JsonResult parseResponse(JsonRequest request, InputStream stream, int debugFlag, JsonTimeStat timeStat) {
+    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream, int debugFlag, JsonTimeInterface timeStat) {
         try {
             JsonGetOrPostResponseModel response = null;
             if ((debugFlag & JsonRpc.RESPONSE_DEBUG) > 0) {

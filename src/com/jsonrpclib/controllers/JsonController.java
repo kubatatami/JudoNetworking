@@ -1,6 +1,7 @@
 package com.jsonrpclib.controllers;
 
 import com.google.gson22.GsonBuilder;
+import com.jsonrpclib.JsonRequestInterface;
 import com.jsonrpclib.ProtocolController;
 import com.jsonrpclib.JsonRequest;
 import org.apache.http.NameValuePair;
@@ -20,7 +21,7 @@ import java.util.List;
  */
 abstract class JsonController  {
 
-    public static String createRequest(JsonRequest request, String apiKey) {
+    public static String createRequest(JsonRequestInterface request, String apiKey) {
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
         int i = 0;
         if (apiKey != null && request.getParamNames().length - 1 == request.getArgs().length) {

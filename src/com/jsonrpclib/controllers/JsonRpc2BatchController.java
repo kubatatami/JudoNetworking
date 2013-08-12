@@ -29,12 +29,12 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
     }
 
     @Override
-    public RequestInfo createRequest(String url, List<JsonRequest> requests, String apiKey) {
+    public RequestInfo createRequest(String url, List<JsonRequestInterface> requests, String apiKey) {
         int i = 0;
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url;
         Object[] requestsJson = new Object[requests.size()];
-        for (JsonRequest request : requests) {
+        for (JsonRequestInterface request : requests) {
             requestsJson[i] = createRequest(url, request, apiKey).data;
             i++;
         }
@@ -50,7 +50,7 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
     }
 
     @Override
-    public List<JsonResult> parseResponses(List<JsonRequest> requests, InputStream stream, int debugFlag, JsonTimeStat timeStat) throws Exception {
+    public List<JsonResult> parseResponses(List<JsonRequestInterface> requests, InputStream stream, int debugFlag, JsonTimeInterface timeStat) throws Exception {
         List<JsonRpcResponseModel2> responses = null;
 
         if ((debugFlag & JsonRpc.RESPONSE_DEBUG) > 0) {
@@ -76,9 +76,9 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
         }
 
         Collections.sort(responses);
-        Collections.sort(requests, new Comparator<JsonRequest>() {
+        Collections.sort(requests, new Comparator<JsonRequestInterface>() {
             @Override
-            public int compare(JsonRequest lhs, JsonRequest rhs) {
+            public int compare(JsonRequestInterface lhs, JsonRequestInterface rhs) {
                 return lhs.getId().compareTo(rhs.getId());
             }
         });

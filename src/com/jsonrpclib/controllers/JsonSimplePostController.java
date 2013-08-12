@@ -2,6 +2,7 @@ package com.jsonrpclib.controllers;
 
 import com.google.gson22.GsonBuilder;
 import com.jsonrpclib.JsonRequest;
+import com.jsonrpclib.JsonRequestInterface;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,7 +21,7 @@ public class JsonSimplePostController extends JsonSimpleController {
     }
 
     @Override
-    public RequestInfo createRequest(String url, JsonRequest request, String apiKey) {
+    public RequestInfo createRequest(String url, JsonRequestInterface request, String apiKey) {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url=url+request.getName();
         requestInfo.data =JsonController.createRequest(request, apiKey);

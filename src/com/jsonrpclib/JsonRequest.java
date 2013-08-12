@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObserver {
+class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObserver,JsonRequestInterface {
     private Integer id;
     private final JsonRpcImplementation rpc;
     private JsonCallbackInterface<Object> callback;
@@ -37,28 +37,6 @@ public class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgre
         this.args=args;
         this.returnType=returnType;
         this.callback=callback;
-    }
-
-
-
-
-
-
-    public String createPostRequest() {
-        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
-        int i = 0;
-        if (rpc.getApiKey() != null && ann.paramNames().length - 1 == args.length) {
-            nameValuePairs.add(new BasicNameValuePair(ann.paramNames()[0], rpc.getApiKey()));
-            i++;
-        }
-
-        for (Object arg : args) {
-            nameValuePairs.add(new BasicNameValuePair(ann.paramNames()[i], arg==null ? "" : arg.toString()));
-            i++;
-        }
-
-
-        return URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8).replaceAll("\\+", "%20");
     }
 
     @Override
@@ -107,20 +85,35 @@ public class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgre
         rpc.getHandler().post(new JsonAsyncResult(batch, results));
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public Object[] getArgs() {
         return args;
     }
 
+    @Override
     public Type getReturnType() {
         return returnType;
+    }
+
+    @Override
+    public String[] getParamNames()
+    {
+        return ann.paramNames();
+    }
+
+    @Override
+    public Method getMethod() {
+        return method;
     }
 
     public Integer getTimeout() {
@@ -137,11 +130,6 @@ public class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgre
 
     public int getCacheSize() {
         return ann.cacheSize();
-    }
-
-    public String[] getParamNames()
-    {
-        return ann.paramNames();
     }
 
     public long getWeight()
@@ -200,7 +188,5 @@ public class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgre
         return ann.cachePersist();
     }
 
-    public Method getMethod() {
-        return method;
-    }
+
 }

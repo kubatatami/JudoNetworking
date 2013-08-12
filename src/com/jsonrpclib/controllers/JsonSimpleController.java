@@ -2,10 +2,7 @@ package com.jsonrpclib.controllers;
 
 import com.google.gson22.GsonBuilder;
 import com.google.gson22.stream.JsonReader;
-import com.jsonrpclib.JsonRequest;
-import com.jsonrpclib.JsonResult;
-import com.jsonrpclib.JsonRpc;
-import com.jsonrpclib.JsonTimeStat;
+import com.jsonrpclib.*;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,7 +25,7 @@ public abstract class JsonSimpleController extends JsonProtocolController {
 
 
     @Override
-    public JsonResult parseResponse(JsonRequest request, InputStream stream, int debugFlag, JsonTimeStat timeStat) {
+    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream, int debugFlag, JsonTimeInterface timeStat) {
         try {
             Object res = null;
             if ((debugFlag & JsonRpc.RESPONSE_DEBUG) > 0) {

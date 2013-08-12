@@ -3,6 +3,7 @@ package com.jsonrpclib.controllers;
 import com.google.gson22.GsonBuilder;
 import com.google.gson22.stream.JsonReader;
 import com.jsonrpclib.JsonRequest;
+import com.jsonrpclib.JsonRequestInterface;
 import com.jsonrpclib.JsonRpc;
 import com.jsonrpclib.JsonTimeStat;
 
@@ -26,7 +27,7 @@ public class JsonSimpleGetController extends JsonSimpleController {
     }
 
     @Override
-    public RequestInfo createRequest(String url, JsonRequest request, String apiKey) {
+    public RequestInfo createRequest(String url, JsonRequestInterface request, String apiKey) {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url=url+request.getName()+"?"+JsonController.createRequest(request, apiKey);
         return requestInfo;

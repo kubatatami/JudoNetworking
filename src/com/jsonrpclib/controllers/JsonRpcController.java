@@ -24,7 +24,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
     }
 
     @Override
-    public RequestInfo createRequest(String url, JsonRequest request, String apiKey) {
+    public RequestInfo createRequest(String url, JsonRequestInterface request, String apiKey) {
         Object finalArgs;
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url=url;

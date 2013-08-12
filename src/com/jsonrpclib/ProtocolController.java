@@ -41,18 +41,18 @@ public abstract class ProtocolController {
 
 
 
-    public abstract RequestInfo createRequest(String url, JsonRequest request, String apiKey);
-    public abstract JsonResult parseResponse(JsonRequest request, InputStream stream, int debugFlag, JsonTimeStat timeStat);
+    public abstract RequestInfo createRequest(String url, JsonRequestInterface request, String apiKey);
+    public abstract JsonResult parseResponse(JsonRequestInterface request, InputStream stream, int debugFlag, JsonTimeInterface timeStat);
 
     public boolean isBatchSupported() {
         return false;
     }
 
-    public RequestInfo createRequest(String url, List<JsonRequest> requests,  String apiKey) throws Exception {
+    public RequestInfo createRequest(String url, List<JsonRequestInterface> requests,  String apiKey) throws Exception {
         throw new JsonException("CreateRequest not implemented.");
     }
 
-    public List<JsonResult> parseResponses(List<JsonRequest> requests, InputStream stream, int debugFlag, JsonTimeStat timeStat) throws Exception {
+    public List<JsonResult> parseResponses(List<JsonRequestInterface> requests, InputStream stream, int debugFlag, JsonTimeInterface timeStat) throws Exception {
         throw new JsonException("ParseResponses not implemented.");
     }
 
