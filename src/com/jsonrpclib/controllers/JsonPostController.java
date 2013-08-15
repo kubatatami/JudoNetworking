@@ -51,12 +51,12 @@ public class JsonPostController extends JsonSimplePostController {
             }
 
             if (!request.getReturnType().equals(Void.TYPE)) {
-                return new JsonResult(request.getId(),gson.fromJson(response.result, request.getReturnType()));
+                return new JsonSuccessResult(request.getId(), gson.fromJson(response.result, request.getReturnType()));
             }
             timeStat.tickParseTime();
-            return new JsonResult(request.getId(),null);
+            return new JsonSuccessResult(request.getId(), null);
         } catch (Exception e) {
-            return new JsonResult(request.getId(),e);
+            return new JsonErrorResult(request.getId(), e);
         }
     }
 

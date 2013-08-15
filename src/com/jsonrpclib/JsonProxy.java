@@ -55,7 +55,7 @@ class JsonProxy implements InvocationHandler {
             JsonMethod ann = m.getAnnotation(JsonMethod.class);
             if (method != null) {
                 return method.invoke(this, args);
-            } else if(ann != null){
+            } else if (ann != null) {
                 String name = getMethodName(m);
                 int timeout = rpc.getJsonConnector().getMethodTimeout();
 
@@ -114,10 +114,8 @@ class JsonProxy implements InvocationHandler {
                     }
 
                 }
-            }
-            else
-            {
-                throw new JsonException("No @JsonMethod on "+ m.getName());
+            } else {
+                throw new JsonException("No @JsonMethod on " + m.getName());
             }
         } catch (Exception e) {
             if (rpc.getErrorLogger() != null) {
@@ -192,7 +190,7 @@ class JsonProxy implements InvocationHandler {
                 }
 
                 for (Map.Entry<Integer, Pair<JsonRequest, Object>> pairs : cacheObjects.entrySet()) {
-                    responses.add(pairs.getKey(), new JsonResult(pairs.getValue().second));
+                    responses.add(pairs.getKey(), new JsonSuccessResult(pairs.getValue().second));
                     batches.add(pairs.getKey(), pairs.getValue().first);
                 }
                 Collections.sort(batches, new Comparator<JsonRequest>() {

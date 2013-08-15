@@ -7,35 +7,32 @@ import android.content.Context;
  * User: jbogacki
  * Date: 07.01.2013
  * Time: 12:50
- *
  */
 public class JsonRpcFactory {
 
     /**
      * Create JsonRpc instance.
+     *
      * @param context Android context.
-     * @param url Server url.
+     * @param url     Server url.
      * @return JsonRpc instance.
      */
-    public static JsonRpc getJsonRpc(Context context, ProtocolController protocolController, JsonConnection connection,String url)
-    {
-        return new JsonRpcImplementation(context, protocolController,connection,url);
+    public static JsonRpc getJsonRpc(Context context, ProtocolController protocolController, JsonConnection connection, String url) {
+        return new JsonRpcImplementation(context, protocolController, connection, url);
     }
-
 
 
     /**
      * Create JsonRpc instance.
+     *
      * @param context Android context.
-     * @param url Server url.
-     * @param apiKey Server api key.
+     * @param url     Server url.
+     * @param apiKey  Server api key.
      * @return JsonRpc instance.
      */
-    public static JsonRpc getJsonRpc(Context context,ProtocolController protocolController, JsonConnection connection,String url,String apiKey)
-    {
-        return new JsonRpcImplementation(context, protocolController,connection,url, apiKey);
+    public static JsonRpc getJsonRpc(Context context, ProtocolController protocolController, JsonConnection connection, String url, String apiKey) {
+        return new JsonRpcImplementation(context, protocolController, connection, url, apiKey);
     }
-
 
 
 }

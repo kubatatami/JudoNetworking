@@ -33,23 +33,21 @@ public class ObservableWrapper<T> {
         this.updateTime = updateTime;
     }
 
-    public ObservableWrapper(boolean notifyInUiThread,boolean allowNull) {
+    public ObservableWrapper(boolean notifyInUiThread, boolean allowNull) {
         this.notifyInUiThread = notifyInUiThread;
-        this.allowNull=allowNull;
+        this.allowNull = allowNull;
     }
 
-    public ObservableWrapper(long updateTime,boolean allowNull) {
+    public ObservableWrapper(long updateTime, boolean allowNull) {
         this.updateTime = updateTime;
-        this.allowNull=allowNull;
+        this.allowNull = allowNull;
     }
 
-    public ObservableWrapper(boolean notifyInUiThread, long updateTime,boolean allowNull) {
+    public ObservableWrapper(boolean notifyInUiThread, long updateTime, boolean allowNull) {
         this.notifyInUiThread = notifyInUiThread;
         this.updateTime = updateTime;
-        this.allowNull=allowNull;
+        this.allowNull = allowNull;
     }
-
-
 
 
     public void addObserver(WrapObserver<T> observer) {

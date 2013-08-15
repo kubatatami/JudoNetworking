@@ -32,7 +32,7 @@ public abstract class JsonProtocolController extends ProtocolController {
         JsonElement result;
     }
 
-    protected class JsonGetOrPostResponseModel extends JsonResponseModel  {
+    protected class JsonGetOrPostResponseModel extends JsonResponseModel {
         JsonErrorModel error;
     }
 

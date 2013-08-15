@@ -1,18 +1,17 @@
 package com.jsonrpclib;
 
 
-
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
  * Date: 07.01.2013
  * Time: 12:49
- *
  */
 public interface JsonRpc {
 
     /**
      * Create API proxy for given interface.
+     *
      * @param apiInterface API interface class
      * @return Api proxy object.
      */
@@ -20,22 +19,23 @@ public interface JsonRpc {
 
     /**
      * Create API proxy for given interface.
+     *
      * @param apiInterface API interface class
-     * @param autoBatch Enable auto batch mode.
+     * @param autoBatch    Enable auto batch mode.
      * @return API proxy object.
      */
     public <T> T getService(Class<T> apiInterface, boolean autoBatch);
 
     /**
      * Create batch request.
+     *
      * @param apiInterface API interface class
-     * @param batch Batch callback
+     * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
     public <T> Thread callInBatch(Class<T> apiInterface, JsonBatch<T> batch);
 
     /**
-     *
      * @param connectionTimeout
      * @param methodTimeout
      * @param reconnectionAttempts
@@ -43,79 +43,72 @@ public interface JsonRpc {
     public void setTimeouts(int connectionTimeout, int methodTimeout, int reconnectionAttempts);
 
     /**
-     *
      * @param alwaysMainThread
      */
     public void setCallbackThread(boolean alwaysMainThread);
 
     /**
-     *
      * @param flags
      */
     public void setDebugFlags(int flags);
 
     /**
-     *
      * @param maxMobileConnections
      * @param maxWifiConnections
      */
     public void setMultiBatchConnections(int maxMobileConnections, int maxWifiConnections);
 
     /**
-     *
      * @param apiKey
      */
     public void setApiKey(String apiKey);
 
     /**
      * Set byte array serialization type.
+     *
      * @param asBase64 If true byte array will be serialize to base64 otherwise it will be normal array
      */
     public void setByteArraySerializationType(boolean asBase64);
 
     /**
-     *
      * @param autoBatchTime
      */
     public void setAutoBatchTime(int autoBatchTime);
 
     /**
-     *
      * @param mode
      */
     public void setBatchTimeoutMode(JsonBatchTimeoutMode mode);
 
     /**
      * Enables response cache.
+     *
      * @param enabled If true cache is enable
      */
     public void setCacheEnabled(boolean enabled);
 
 
-
     public void setErrorLogger(JsonErrorLogger logger);
 
     /**
-     *
      * @param mode
      */
     public void setCacheMode(JsonCacheMode mode);
 
     /**
      * Enables statistics collection and
+     *
      * @param enabled
      */
     public void setTimeProfilerEnabled(boolean enabled);
 
     /**
-     *
      * @return
      */
     public int getMaxStatFileSize();
 
 
     /**
-     *
      * @param maxStatFileSize
      */
     public void setMaxStatFileSize(int maxStatFileSize);
@@ -131,15 +124,12 @@ public interface JsonRpc {
     public void clearTimeProfilerStat();
 
     /**
-     *
      * @param clonner
      */
     public void setJsonClonner(JsonClonner clonner);
 
 
-
     public JsonDiscCache getDiscCache();
-
 
 
     public JsonMemoryCache getMemoryCache();
@@ -147,7 +137,6 @@ public interface JsonRpc {
     public void setPercentLoss(float percentLoss);
 
     /**
-     *
      * @param onlyInDebugMode
      */
     public void startTest(boolean onlyInDebugMode, String name, int revision);

@@ -1,42 +1,32 @@
 package com.jsonrpclib;
 
-import android.util.Base64;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObserver,JsonRequestInterface {
+class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObserver, JsonRequestInterface {
     private Integer id;
     private final JsonRpcImplementation rpc;
     private JsonCallbackInterface<Object> callback;
     private final String name;
     private final int timeout;
     private JsonMethod ann;
-    private int progress=0;
-    private int max=JsonTimeStat.TICKS;
+    private int progress = 0;
+    private int max = JsonTimeStat.TICKS;
     private final Object[] args;
     private Type returnType;
     private Method method;
 
-    public JsonRequest(Integer id,JsonRpcImplementation rpc,Method method, String name, JsonMethod ann,
-                       Object[] args,Type returnType, int timeout,JsonCallbackInterface<Object> callback) {
-        this.id=id;
+    public JsonRequest(Integer id, JsonRpcImplementation rpc, Method method, String name, JsonMethod ann,
+                       Object[] args, Type returnType, int timeout, JsonCallbackInterface<Object> callback) {
+        this.id = id;
         this.name = name;
         this.timeout = timeout;
-        this.method=method;
+        this.method = method;
         this.rpc = rpc;
-        this.ann=ann;
-        this.args=args;
-        this.returnType=returnType;
-        this.callback=callback;
+        this.ann = ann;
+        this.args = args;
+        this.returnType = returnType;
+        this.callback = callback;
     }
 
     @Override
@@ -49,26 +39,20 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
         }
     }
 
-    public void invokeCallback(Exception e)
-    {
-        if(callback!=null)
-        {
+    public void invokeCallback(Exception e) {
+        if (callback != null) {
             rpc.getHandler().post(new JsonAsyncResult(callback, e));
         }
     }
 
-    public void invokeCallback(Object result)
-    {
-        if(callback!=null)
-        {
+    public void invokeCallback(Object result) {
+        if (callback != null) {
             rpc.getHandler().post(new JsonAsyncResult(callback, result));
         }
     }
 
-    public static void invokeBatchCallback(final JsonRpcImplementation rpc, JsonBatch<?> batch,final Exception e)
-    {
-        if(rpc.getErrorLogger()!=null)
-        {
+    public static void invokeBatchCallback(final JsonRpcImplementation rpc, JsonBatch<?> batch, final Exception e) {
+        if (rpc.getErrorLogger() != null) {
             rpc.getHandler().post(new Runnable() {
                 @Override
                 public void run() {
@@ -80,8 +64,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
         rpc.getHandler().post(new JsonAsyncResult(batch, e));
     }
 
-    public static void invokeBatchCallback(JsonRpcImplementation rpc, JsonBatch<?> batch, Object[] results)
-    {
+    public static void invokeBatchCallback(JsonRpcImplementation rpc, JsonBatch<?> batch, Object[] results) {
         rpc.getHandler().post(new JsonAsyncResult(batch, results));
     }
 
@@ -106,8 +89,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
     }
 
     @Override
-    public String[] getParamNames()
-    {
+    public String[] getParamNames() {
         return ann.paramNames();
     }
 
@@ -132,30 +114,21 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
         return ann.cacheSize();
     }
 
-    public long getWeight()
-    {
-        if(rpc.getStats().containsKey(name))
-        {
-            return Math.max(rpc.getStats().get(name).avgTime,1);
-        }
-        else
-        {
-            return timeout/2;
+    public long getWeight() {
+        if (rpc.getStats().containsKey(name)) {
+            return Math.max(rpc.getStats().get(name).avgTime, 1);
+        } else {
+            return timeout / 2;
         }
     }
 
     @Override
     public int compareTo(JsonRequest another) {
-        if(ann.highPriority() && !another.isHighPriority())
-        {
+        if (ann.highPriority() && !another.isHighPriority()) {
             return -1;
-        }
-        else if(!ann.highPriority() && another.isHighPriority())
-        {
+        } else if (!ann.highPriority() && another.isHighPriority()) {
             return 1;
-        }
-        else
-        {
+        } else {
             return Long.valueOf(another.getWeight()).compareTo(getWeight());
         }
     }
@@ -165,18 +138,16 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>,JsonProgressObser
         return ann.highPriority();
     }
 
-    public void progressTick()
-    {
+    public void progressTick() {
         progress++;
-        if(callback!=null)
-        {
-            rpc.getHandler().post(new JsonAsyncResult(callback, progress*100/max));
+        if (callback != null) {
+            rpc.getHandler().post(new JsonAsyncResult(callback, progress * 100 / max));
         }
     }
 
     @Override
     public void setMaxProgress(int max) {
-        this.max=max;
+        this.max = max;
     }
 
     @Override

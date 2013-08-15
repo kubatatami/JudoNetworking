@@ -2,12 +2,14 @@ package com.jsonrpclib.connectors;
 
 import android.os.Build;
 import android.util.Base64;
-import com.jsonrpclib.*;
+import com.jsonrpclib.JsonConnection;
+import com.jsonrpclib.JsonRpc;
+import com.jsonrpclib.JsonTimeStat;
+import com.jsonrpclib.ProtocolController;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Random;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,7 +22,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
     private int reconnections = 3;
     private int connectTimeout = 15000;
     private int methodTimeout = 10000;
-    private String authKey=null;
+    private String authKey = null;
     private HttpURLCreator httpURLCreator = null;
     private HttpURLConnectionModifier httpURLConnectionModifier = null;
 
@@ -37,10 +39,9 @@ public class JsonHttpUrlConnection extends JsonConnection {
         init(httpURLCreator, httpURLConnectionModifier);
     }
 
-    private void init(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier)
-    {
-        this.httpURLCreator=httpURLCreator;
-        this.httpURLConnectionModifier=httpURLConnectionModifier;
+    private void init(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier) {
+        this.httpURLCreator = httpURLCreator;
+        this.httpURLConnectionModifier = httpURLConnectionModifier;
         disableConnectionReuseIfNecessary();
     }
 
@@ -72,13 +73,10 @@ public class JsonHttpUrlConnection extends JsonConnection {
                            int timeout, JsonTimeStat timeStat, int debugFlags) throws Exception {
 
         HttpURLConnection urlConnection = null;
-        if(requestInfo.data ==null)
-        {
-            urlConnection = get(requestInfo.url,  timeout, timeStat, debugFlags);
+        if (requestInfo.data == null) {
+            urlConnection = get(requestInfo.url, timeout, timeStat, debugFlags);
 
-        }
-        else
-        {
+        } else {
             urlConnection = post(protocolController, requestInfo, timeout, timeStat, debugFlags);
         }
 
@@ -153,8 +151,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
             }
         }
 
-        if(requestInfo.mimeType!=null)
-        {
+        if (requestInfo.mimeType != null) {
             urlConnection.addRequestProperty("Content-Type", requestInfo.mimeType);
         }
 

@@ -45,9 +45,9 @@ public abstract class JsonSimpleController extends JsonProtocolController {
                 timeStat.tickReadTime();
                 timeStat.tickParseTime();
             }
-            return new JsonResult(request.getId(),res);
+            return new JsonSuccessResult(request.getId(), res);
         } catch (Exception e) {
-            return new JsonResult(request.getId(),e);
+            return new JsonErrorResult(request.getId(), e);
         }
     }
 

@@ -10,18 +10,15 @@ import java.io.StringWriter;
  * User: jbogacki
  * Date: 19.02.2013
  * Time: 11:47
- *
  */
 class JsonLoggerImpl {
 
 
-    private static String tag=JsonLoggerImpl.class.getPackage().getName();
-    private static JsonLogLevel level= JsonLogLevel.WARNING;
+    private static String tag = JsonLoggerImpl.class.getPackage().getName();
+    private static JsonLogLevel level = JsonLogLevel.WARNING;
 
 
-
-    public static void log(String text)
-    {
+    public static void log(String text) {
         switch (level) {
 
             case ERROR:
@@ -39,8 +36,7 @@ class JsonLoggerImpl {
         }
     }
 
-    public static void log(Exception e)
-    {
+    public static void log(Exception e) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);

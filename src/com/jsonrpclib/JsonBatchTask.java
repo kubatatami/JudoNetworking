@@ -32,7 +32,7 @@ class JsonBatchTask implements Runnable {
     @Override
     public void run() {
         try {
-            this.response = rpc.getJsonConnector().callBatch(this.requests,progressObserver, this.timeout);
+            this.response = rpc.getJsonConnector().callBatch(this.requests, progressObserver, this.timeout);
         } catch (Exception e) {
             this.ex = e;
         }
@@ -70,19 +70,14 @@ class JsonBatchTask implements Runnable {
             parts.add(new ArrayList<JsonRequest>());
         }
 
-        Collections.sort(list,new Comparator<JsonRequest>() {
+        Collections.sort(list, new Comparator<JsonRequest>() {
             @Override
             public int compare(JsonRequest lhs, JsonRequest rhs) {
-                if(lhs.isHighPriority() && !rhs.isHighPriority())
-                {
+                if (lhs.isHighPriority() && !rhs.isHighPriority()) {
                     return -1;
-                }
-                else if(!lhs.isHighPriority() && rhs.isHighPriority())
-                {
+                } else if (!lhs.isHighPriority() && rhs.isHighPriority()) {
                     return 1;
-                }
-                else
-                {
+                } else {
                     return 0;
                 }
             }

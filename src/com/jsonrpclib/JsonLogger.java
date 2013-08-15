@@ -5,7 +5,6 @@ package com.jsonrpclib;
  * User: jbogacki
  * Date: 19.02.2013
  * Time: 12:06
- *
  */
 public class JsonLogger {
 

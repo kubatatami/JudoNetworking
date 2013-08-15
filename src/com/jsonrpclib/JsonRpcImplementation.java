@@ -3,11 +3,6 @@ package com.jsonrpclib;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Base64;
-import com.jsonrpclib.connectors.HttpURLConnectionModifier;
-import com.jsonrpclib.connectors.HttpURLCreator;
-import com.jsonrpclib.connectors.HttpURLCreatorImplementation;
-import com.jsonrpclib.connectors.JsonHttpUrlConnection;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -46,27 +41,25 @@ class JsonRpcImplementation implements JsonRpc {
     private String url;
     private ProtocolController protocolController;
 
-    public JsonRpcImplementation(Context context,ProtocolController protocolController,JsonConnection connection, String url) {
-        init(context,protocolController, connection, url, null);
+    public JsonRpcImplementation(Context context, ProtocolController protocolController, JsonConnection connection, String url) {
+        init(context, protocolController, connection, url, null);
     }
 
-    public JsonRpcImplementation(Context context,ProtocolController protocolController,JsonConnection connection, String url, String apiKey) {
-        init(context,protocolController, connection, url, apiKey);
+    public JsonRpcImplementation(Context context, ProtocolController protocolController, JsonConnection connection, String url, String apiKey) {
+        init(context, protocolController, connection, url, apiKey);
     }
 
-    private void init(Context context,ProtocolController protocolController,JsonConnection connection, String url, String apiKey) {
+    private void init(Context context, ProtocolController protocolController, JsonConnection connection, String url, String apiKey) {
         this.connection = connection;
         this.jsonConnector = new JsonConnector(url, this, connection);
         this.apiKey = apiKey;
         this.context = context;
-        this.protocolController=protocolController;
+        this.protocolController = protocolController;
         this.url = url;
         statFile = new File(context.getCacheDir(), "stats");
         memoryCache = new JsonMemoryCacheImplementation(context);
         discCache = new JsonDiscCacheImplementation(context);
     }
-
-
 
 
     @Override
@@ -93,7 +86,6 @@ class JsonRpcImplementation implements JsonRpc {
         int max = Math.max(maxMobileConnections, maxWifiConnections);
         connection.setMaxConnections(max);
     }
-
 
 
     public <T> T getService(Class<T> obj) {
@@ -219,7 +211,6 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
 
-
     @Override
     public void startTest(boolean onlyInDebugMode, String name, int revision) {
 
@@ -229,13 +220,12 @@ class JsonRpcImplementation implements JsonRpc {
 
             Field field = clazz.getDeclaredField("DEBUG");
 
-            Boolean debug = (Boolean)field.get(null);
+            Boolean debug = (Boolean) field.get(null);
 
-            if(!onlyInDebugMode || debug)
-            {
+            if (!onlyInDebugMode || debug) {
                 this.test = true;
-                this.testName=name;
-                this.testRevision=revision;
+                this.testName = name;
+                this.testRevision = revision;
             }
 
 
@@ -284,7 +274,7 @@ class JsonRpcImplementation implements JsonRpc {
 
     @Override
     public void setPercentLoss(float percentLoss) {
-        this.percentLoss=percentLoss;
+        this.percentLoss = percentLoss;
     }
 
     @Override

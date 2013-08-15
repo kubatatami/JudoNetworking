@@ -3,7 +3,6 @@ package com.jsonrpclib;
 import android.content.Context;
 import android.support.v4.util.LruCache;
 
-import java.io.*;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,8 +23,8 @@ class JsonMemoryCacheImplementation implements JsonMemoryCache {
 
     protected Context context;
 
-    public JsonMemoryCacheImplementation(Context context){
-        this.context=context;
+    public JsonMemoryCacheImplementation(Context context) {
+        this.context = context;
     }
 
     @Override

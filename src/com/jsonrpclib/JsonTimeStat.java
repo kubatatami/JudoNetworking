@@ -21,7 +21,7 @@ public class JsonTimeStat implements JsonTimeInterface {
     private long timeout = 0;
     private List<JsonProgressObserver> requests;
 
-    public final static int TICKS=5;
+    public final static int TICKS = 5;
 
     public JsonTimeStat() {
         time = System.currentTimeMillis();
@@ -42,8 +42,7 @@ public class JsonTimeStat implements JsonTimeInterface {
     }
 
     public void tickCacheTime() {
-        for(int i=0;i<TICKS;i++)
-        {
+        for (int i = 0; i < TICKS; i++) {
             progressTick();
         }
     }

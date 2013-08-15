@@ -6,6 +6,7 @@ srednie
 -nasluchiwanie na adaptery poprzez adnotacje dataobserver
 -rozdzielenie bibliotek rpc i observer
 -scheduled update on ObserverWrapper
+-skad zostalo wykonane wywolanie jak nowa funkcja debugowania (Thread.currentThread().getStackTrace())
 
 
 trudne

@@ -10,6 +10,7 @@ package com.jsonrpclib;
 public interface JsonTimeInterface {
 
     public void tickReadTime();
+
     public void tickParseTime();
 
 }

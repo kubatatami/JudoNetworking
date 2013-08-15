@@ -10,7 +10,6 @@ import java.lang.annotation.Target;
  * User: jbogacki
  * Date: 27.02.2013
  * Time: 16:39
- *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

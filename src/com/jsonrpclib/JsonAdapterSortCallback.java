@@ -1,6 +1,5 @@
 package com.jsonrpclib;
 
-import android.os.Build;
 import android.widget.ArrayAdapter;
 
 import java.util.Collections;
@@ -31,8 +30,7 @@ public class JsonAdapterSortCallback<T extends Comparable<T>> extends JsonCallba
 
         adapter.setNotifyOnChange(false);
         for (T object : result) {
-            if(filtr(object))
-            {
+            if (filtr(object)) {
                 adapter.add(object);
             }
         }

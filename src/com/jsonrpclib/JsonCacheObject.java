@@ -5,7 +5,6 @@ package com.jsonrpclib;
  * User: jbogacki
  * Date: 07.03.2013
  * Time: 07:55
- *
  */
 class JsonCacheObject {
     final long createTime;

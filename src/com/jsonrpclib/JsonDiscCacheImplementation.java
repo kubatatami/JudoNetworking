@@ -1,13 +1,9 @@
 package com.jsonrpclib;
 
 import android.content.Context;
-import android.support.v4.util.LruCache;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 
 /**
  * Created with IntelliJ IDEA.
@@ -67,7 +63,7 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
     public void clearCache(JsonCacheMethod method, Object... params) {
         Integer hash = Arrays.deepHashCode(params);
         File file = getCacheDir(method);
-        delete(new File(file,hash.toString()));
+        delete(new File(file, hash.toString()));
     }
 
 
@@ -161,24 +157,21 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
     }
 
     private File getTestDir(String name) {
-        File file = new File(context.getCacheDir() + "/cache/tests/"+name+"/");
+        File file = new File(context.getCacheDir() + "/cache/tests/" + name + "/");
         file.mkdirs();
         return file;
     }
 
     private File getCacheDir(JsonCacheMethod method) {
         String name = context.getCacheDir() + "/cache/";
-        if(method.getTest()!=null)
-        {
-            name+="tests/"+method.getTest()+"/"+method.getTestRevision()+"/";
+        if (method.getTest() != null) {
+            name += "tests/" + method.getTest() + "/" + method.getTestRevision() + "/";
+        } else {
+            name += "production/";
         }
-        else
-        {
-            name+="production/";
-        }
-        name+=method.getMethod().getDeclaringClass().getSimpleName()+"/";
-        name+=method.getUrl().hashCode()+"/";
-        name+=method.getMethod().getName()+"/";
+        name += method.getMethod().getDeclaringClass().getSimpleName() + "/";
+        name += method.getUrl().hashCode() + "/";
+        name += method.getMethod().getName() + "/";
 
         File file = new File(name);
         file.mkdirs();

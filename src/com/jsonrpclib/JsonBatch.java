@@ -8,9 +8,8 @@ import java.io.StringWriter;
  * User: jbogacki
  * Date: 11.02.2013
  * Time: 22:48
- *
  */
-public abstract class JsonBatch<T> implements JsonBatchInterface<T>{
+public abstract class JsonBatch<T> implements JsonBatchInterface<T> {
 
     public abstract void run(final T api);
 
@@ -27,7 +26,7 @@ public abstract class JsonBatch<T> implements JsonBatchInterface<T>{
     }
 
     @Override
-    public void onProgress(int progress){
+    public void onProgress(int progress) {
     }
 
 }

@@ -9,7 +9,6 @@ import android.view.ViewGroup;
  * User: jbogacki
  * Date: 08.04.2013
  * Time: 22:27
- *
  */
 class ObserverActivity extends Activity {
 

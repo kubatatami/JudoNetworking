@@ -1,7 +1,5 @@
 package com.jsonrpclib;
 
-import java.io.*;
-
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki

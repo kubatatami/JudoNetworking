@@ -93,9 +93,9 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
                 if (!requests.get(i).getReturnType().equals(Void.TYPE)) {
                     result = gson.fromJson(res.result, requests.get(i).getReturnType());
                 }
-                finalResponses.add(new JsonResult(res.id, result));
+                finalResponses.add(new JsonSuccessResult(res.id, result));
             } else {
-                finalResponses.add(new JsonResult(res.id, new JsonException(res.error.message, res.error.code)));
+                finalResponses.add(new JsonErrorResult(res.id, new JsonException(res.error.message, res.error.code)));
             }
         }
 

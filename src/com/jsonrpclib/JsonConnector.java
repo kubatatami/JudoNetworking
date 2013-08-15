@@ -4,7 +4,6 @@ package com.jsonrpclib;
 import android.util.Base64;
 
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -38,7 +37,7 @@ class JsonConnector {
             conn.close();
             return result;
         } catch (Exception e) {
-            return new JsonResult(e);
+            return new JsonErrorResult(e);
         }
 
     }
@@ -155,12 +154,12 @@ class JsonConnector {
             JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
 
 
-            ProtocolController.RequestInfo requestInfo = controller.createRequest(url, requests, rpc.getApiKey());
+            ProtocolController.RequestInfo requestInfo = controller.createRequest(url, (List)requests, rpc.getApiKey());
             timeStat.tickCreateTime();
             lossCheck();
             JsonConnection.Connection conn = connection.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags());
             InputStream stream = conn.getStream();
-            responses = controller.parseResponses(requests, stream, rpc.getDebugFlags(), timeStat);
+            responses = controller.parseResponses((List)requests, stream, rpc.getDebugFlags(), timeStat);
             conn.close();
             timeStat.tickEndTime();
             if (rpc.isTimeProfiler()) {

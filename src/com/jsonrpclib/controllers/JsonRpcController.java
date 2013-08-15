@@ -1,11 +1,13 @@
 package com.jsonrpclib.controllers;
 
 import com.google.gson22.GsonBuilder;
-import com.jsonrpclib.*;
+import com.jsonrpclib.JsonRequestInterface;
+import com.jsonrpclib.JsonRpc;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,7 +29,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
     public RequestInfo createRequest(String url, JsonRequestInterface request, String apiKey) {
         Object finalArgs;
         RequestInfo requestInfo = new RequestInfo();
-        requestInfo.url=url;
+        requestInfo.url = url;
 
 
         if (request.getParamNames().length > 0 && request.getArgs() != null) {
@@ -55,7 +57,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
             }
         }
         requestInfo.data = createRequestModel(request.getName(), finalArgs, request.getId());
-        requestInfo.mimeType="application/json";
+        requestInfo.mimeType = "application/json";
         return requestInfo;
     }
 

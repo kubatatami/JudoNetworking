@@ -5,9 +5,8 @@ package com.jsonrpclib.observers;
  * User: jbogacki
  * Date: 01.03.2013
  * Time: 13:28
- *
  */
-public class ObservableWrapperListener<T>  implements ObservableWrapperListenerInterface<T>{
+public class ObservableWrapperListener<T> implements ObservableWrapperListenerInterface<T> {
 
     @Override
     public void onGet(ObservableWrapper<T> wrapper) {

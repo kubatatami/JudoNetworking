@@ -1,5 +1,5 @@
 package com.jsonrpclib;
 
- enum JsonBatchMode {
-        NONE, MANUAL, AUTO
- }
+enum JsonBatchMode {
+    NONE, MANUAL, AUTO
+}
