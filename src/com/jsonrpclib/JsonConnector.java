@@ -4,6 +4,8 @@ package com.jsonrpclib;
 import android.util.Base64;
 
 import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -29,17 +31,44 @@ class JsonConnector {
             timeStat.tickCreateTime();
             lossCheck();
 
-            JsonConnection.Connection conn = connection.send(controller, requestInfo, request.getTimeout(), timeStat, rpc.getDebugFlags());
-
-            timeStat.tickConnectionTime();
+            JsonConnection.Connection conn = connection.send(controller, requestInfo, request.getTimeout(), timeStat, rpc.getDebugFlags(),request.getMethod());
 
             JsonResult result = controller.parseResponse(request, conn.getStream(), rpc.getDebugFlags(), timeStat);
+            verifyResultObject(result.result,request.getReturnType());
             conn.close();
             return result;
         } catch (Exception e) {
             return new JsonErrorResult(e);
         }
 
+    }
+
+    public static void verifyResultObject(Object object, Type type) throws JsonException
+    {
+        if(object!=null)
+        {
+            for(Field field : object.getClass().getFields())
+            {
+                try {
+                    field.setAccessible(true);
+                    if(field.get(object)==null)
+                    {
+                        if(field.isAnnotationPresent(JsonRequired.class))
+                        {
+                            throw new JsonException("Field required.");
+                        }
+                    }
+                    else
+                    {
+                        verifyResultObject(field.get(object), field.getType());
+                    }
+                } catch (IllegalAccessException e) {}
+            }
+        }
+        else if(type instanceof Class && ((Class) type).isAnnotationPresent(JsonRequired.class))
+        {
+            throw new JsonException("Result object required.");
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -157,7 +186,7 @@ class JsonConnector {
             ProtocolController.RequestInfo requestInfo = controller.createRequest(url, (List)requests, rpc.getApiKey());
             timeStat.tickCreateTime();
             lossCheck();
-            JsonConnection.Connection conn = connection.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags());
+            JsonConnection.Connection conn = connection.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(),null);
             InputStream stream = conn.getStream();
             responses = controller.parseResponses((List)requests, stream, rpc.getDebugFlags(), timeStat);
             conn.close();
@@ -173,7 +202,6 @@ class JsonConnector {
             if ((rpc.getDebugFlags() & JsonRpc.TIME_DEBUG) > 0) {
                 timeStat.logTime("End batch request(" + requestsName.substring(1) + "):");
             }
-
 
             return responses;
         } catch (Exception e) {

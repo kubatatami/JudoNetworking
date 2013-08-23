@@ -7,7 +7,7 @@ srednie
 -rozdzielenie bibliotek rpc i observer
 -scheduled update on ObserverWrapper
 -skad zostalo wykonane wywolanie jak nowa funkcja debugowania (Thread.currentThread().getStackTrace())
-
+-zarejestrowanie wirtualnego serwera z fake data
 
 trudne
 -obsluga rest poprzez opis umieszczenia parametrow /category/{number}/name

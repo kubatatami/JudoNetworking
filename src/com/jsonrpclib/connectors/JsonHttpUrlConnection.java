@@ -2,12 +2,14 @@ package com.jsonrpclib.connectors;
 
 import android.os.Build;
 import android.util.Base64;
-import com.jsonrpclib.JsonConnection;
-import com.jsonrpclib.JsonRpc;
-import com.jsonrpclib.JsonTimeStat;
-import com.jsonrpclib.ProtocolController;
+import com.jsonrpclib.*;
 
 import java.io.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -70,75 +72,9 @@ public class JsonHttpUrlConnection extends JsonConnection {
     }
 
     public Connection send(ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
-                           int timeout, JsonTimeStat timeStat, int debugFlags) throws Exception {
+                           int timeout, JsonTimeStat timeStat, int debugFlags, Method method) throws Exception {
 
         HttpURLConnection urlConnection = null;
-        if (requestInfo.data == null) {
-            urlConnection = get(requestInfo.url, timeout, timeStat, debugFlags);
-
-        } else {
-            urlConnection = post(protocolController, requestInfo, timeout, timeStat, debugFlags);
-        }
-
-        final HttpURLConnection finalConnection = urlConnection;
-        return new Connection() {
-            @Override
-            public InputStream getStream() throws IOException {
-                return finalConnection.getInputStream();
-            }
-
-            @Override
-            public void close() {
-                finalConnection.disconnect();
-            }
-        };
-
-    }
-
-    public HttpURLConnection get(String url, int timeout, JsonTimeStat timeStat, int debugFlags) throws Exception {
-        HttpURLConnection urlConnection = null;
-
-        if ((debugFlags & JsonRpc.REQUEST_DEBUG) > 0) {
-            longLog("REQ", url);
-        }
-
-        for (int i = 1; i <= reconnections; i++) {
-            try {
-                urlConnection = httpURLCreator.create(url);
-                break;
-            } catch (IOException e) {
-                if (i == reconnections) {
-                    throw e;
-                }
-            }
-        }
-        if (urlConnection != null) {
-            if (authKey != null) {
-                urlConnection.addRequestProperty("Authorization", authKey);
-            }
-
-            urlConnection.setConnectTimeout(connectTimeout);
-            if (timeout == 0) {
-                timeout = methodTimeout;
-            }
-            urlConnection.setReadTimeout(timeout);
-            timeStat.setTimeout(timeout);
-
-
-            if (httpURLConnectionModifier != null) {
-                httpURLConnectionModifier.modify(urlConnection);
-            }
-
-            urlConnection.getInputStream();
-            timeStat.tickConnectionTime();
-        }
-        return urlConnection;
-    }
-
-
-    public HttpURLConnection post(ProtocolController protocolController, ProtocolController.RequestInfo requestInfo, int timeout, JsonTimeStat timeStat, int debugFlags) throws Exception {
-        HttpURLConnection urlConnection = null;
-
 
         for (int i = 1; i <= reconnections; i++) {
             try {
@@ -149,6 +85,11 @@ public class JsonHttpUrlConnection extends JsonConnection {
                     throw e;
                 }
             }
+        }
+
+        if(urlConnection==null)
+        {
+            throw new JsonException("Can't create HttpURLConnection.");
         }
 
         if (requestInfo.mimeType != null) {
@@ -166,23 +107,57 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
         timeStat.setTimeout(timeout);
         urlConnection.setReadTimeout(timeout);
-        urlConnection.setDoOutput(true);
 
         if (httpURLConnectionModifier != null) {
             httpURLConnectionModifier.modify(urlConnection);
         }
 
-        OutputStream stream = urlConnection.getOutputStream();
-        timeStat.tickConnectionTime();
-        Writer writer = new BufferedWriter(new OutputStreamWriter(stream));
+        if(method!=null && method.isAnnotationPresent(JsonHttpMethod.class))
+        {
+            JsonHttpMethod httpMethod=method.getAnnotation(JsonHttpMethod.class);
+            urlConnection.setRequestMethod(httpMethod.methodType());
+        }
 
-        protocolController.writeToStream(writer, requestInfo.data, debugFlags);
+        if (requestInfo.data != null) {
+            urlConnection.setDoOutput(true);
+            OutputStream stream = urlConnection.getOutputStream();
+            timeStat.tickConnectionTime();
+            Writer writer = new BufferedWriter(new OutputStreamWriter(stream));
+            protocolController.writeToStream(writer, requestInfo.data, debugFlags);
+            writer.close();
+            timeStat.tickSendTime();
+        }
+        else
+        {
+            urlConnection.getInputStream();
+            timeStat.tickConnectionTime();
+            timeStat.tickSendTime();
+        }
 
+        final HttpURLConnection finalConnection = urlConnection;
+        return new Connection() {
+            @Override
+            public InputStream getStream() throws IOException {
+                try
+                {
+                    return finalConnection.getInputStream();
+                }
+                catch (FileNotFoundException ex)
+                {
+                    int code = finalConnection.getResponseCode();
+                    String resp = convertStreamToString(finalConnection.getErrorStream());
+                    throw new IOException("ERROR("+code+") "+resp);
+                }
+            }
 
-        writer.close();
-        timeStat.tickSendTime();
-        return urlConnection;
+            @Override
+            public void close() {
+                finalConnection.disconnect();
+            }
+        };
+
     }
+
 
     @Override
     public void setMaxConnections(int max) {
@@ -217,6 +192,13 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
         void modify(HttpURLConnection connection);
 
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    public static @interface JsonHttpMethod
+    {
+        String methodType();
     }
 
     class HttpURLCreatorImplementation implements HttpURLCreator {

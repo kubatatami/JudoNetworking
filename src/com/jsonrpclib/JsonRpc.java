@@ -10,6 +10,22 @@ package com.jsonrpclib;
 public interface JsonRpc {
 
     /**
+     *
+     * @param type
+     * @param virtualServer
+     * @param <T>
+     */
+    public <T> void registerVirtualServer(Class<T> type, T virtualServer);
+
+    /**
+     *
+     * @param type
+     * @param <T>
+     */
+    public <T> void unregisterVirtualServer(Class<T> type);
+
+
+    /**
      * Create API proxy for given interface.
      *
      * @param apiInterface API interface class
@@ -33,7 +49,7 @@ public interface JsonRpc {
      * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
-    public <T> Thread callInBatch(Class<T> apiInterface, JsonBatch<T> batch);
+    public <T> void callInBatch(Class<T> apiInterface, JsonBatch<T> batch);
 
     /**
      * @param connectionTimeout

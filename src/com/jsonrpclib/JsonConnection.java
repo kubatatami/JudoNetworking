@@ -2,6 +2,8 @@ package com.jsonrpclib;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.util.Scanner;
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,7 +14,7 @@ import java.io.InputStream;
 public abstract class JsonConnection {
 
     public abstract Connection send(ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
-                                    int timeout, JsonTimeStat timeStat, int debugFlags) throws Exception;
+                                    int timeout, JsonTimeStat timeStat, int debugFlags, Method method) throws Exception;
 
     public abstract void setMaxConnections(int max);
 
@@ -32,6 +34,11 @@ public abstract class JsonConnection {
         public InputStream getStream() throws IOException;
 
         public void close();
+    }
+
+    protected String convertStreamToString(InputStream is) {
+        Scanner s = new Scanner(is).useDelimiter("\\A");
+        return s.hasNext() ? s.next() : "";
     }
 
 }

@@ -137,6 +137,7 @@ class JsonProxy implements InvocationHandler {
         return new JsonRequest(id, rpc, m, name, ann, newArgs, returnType, timeout, callback);
     }
 
+    //TODO testowe api
     public void callBatch(final JsonBatch batch) {
         List<JsonRequest> batches;
         if (batchRequests.size() > 0) {
@@ -288,6 +289,7 @@ class JsonProxy implements InvocationHandler {
         for (JsonRequest request : requests) {
             try {
                 JsonResult response = responses.get(i);
+                JsonConnector.verifyResultObject(response.result,request.getReturnType());
                 if (response.cacheObject != null) {
                     results[i] = response.cacheObject;
                 } else {

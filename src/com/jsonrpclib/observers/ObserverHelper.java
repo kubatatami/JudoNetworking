@@ -162,7 +162,15 @@ public class ObserverHelper {
                                 method.invoke(object, data);
                             }
                         } catch (Exception e) {
-                            throw new RuntimeException(e);
+                            RuntimeException ex = null;
+                            if (e.getCause() != null) {
+                                ex = new RuntimeException(e.getCause());
+                                ex.setStackTrace(e.getCause().getStackTrace());
+                                throw ex;
+                            } else {
+                                ex = new RuntimeException(e);
+                            }
+                            throw ex;
                         }
                     }
                 };
