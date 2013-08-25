@@ -159,5 +159,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
         return ann.cachePersist();
     }
 
-
+    public JsonCallbackInterface<Object> getCallback() {
+        return callback;
+    }
 }

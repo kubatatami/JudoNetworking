@@ -41,6 +41,29 @@ public class JsonTimeStat implements JsonTimeInterface {
         startTime = time;
     }
 
+    public void tickTime(int i) {
+       switch (i)
+       {
+           case 0:
+               tickCreateTime();
+               break;
+           case 1:
+               tickConnectionTime();
+               break;
+           case 2:
+               tickSendTime();
+               break;
+           case 3:
+               tickReadTime();
+               break;
+           case 4:
+               tickParseTime();
+               tickEndTime();
+               break;
+       }
+    }
+
+
     public void tickCacheTime() {
         for (int i = 0; i < TICKS; i++) {
             progressTick();

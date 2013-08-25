@@ -13,6 +13,25 @@ public interface JsonRpc {
      *
      * @param type
      * @param virtualServer
+     * @param minDelay
+     * @param maxDelay
+     * @param <T>
+     */
+    public <T> void registerVirtualServer(Class<T> type, T virtualServer, int minDelay, int maxDelay);
+
+    /**
+     *
+     * @param type
+     * @param virtualServer
+     * @param delay
+     * @param <T>
+     */
+    public <T> void registerVirtualServer(Class<T> type, T virtualServer, int delay);
+
+    /**
+     *
+     * @param type
+     * @param virtualServer
      * @param <T>
      */
     public <T> void registerVirtualServer(Class<T> type, T virtualServer);
@@ -179,7 +198,11 @@ public interface JsonRpc {
      */
     public static final int CACHE_DEBUG = 8;
     /**
+     * Log cache behavior.
+     */
+    public static final int REQUEST_LINE_DEBUG = 16;
+    /**
      * Log everything.
      */
-    public static final int FULL_DEBUG = 15;
+    public static final int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG;
 }

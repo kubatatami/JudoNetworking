@@ -40,7 +40,7 @@ class JsonRpcImplementation implements JsonRpc {
     private int testRevision = 0;
     private String url;
     private ProtocolController protocolController;
-    private HashMap<Class, Object> virtualServers=new HashMap<Class, Object>();
+    private HashMap<Class, JsonVirtualServerInfo> virtualServers = new HashMap<Class, JsonVirtualServerInfo>();
 
 
     public JsonRpcImplementation(Context context, ProtocolController protocolController, JsonConnection connection, String url) {
@@ -63,10 +63,25 @@ class JsonRpcImplementation implements JsonRpc {
         discCache = new JsonDiscCacheImplementation(context);
     }
 
-    public <T> void registerVirtualServer(Class<T> type, T virtualServer)
-    {
-        virtualServers.put(type,virtualServer);
+    public HashMap<Class, JsonVirtualServerInfo> getVirtualServers() {
+        return virtualServers;
     }
+
+    @Override
+    public <T> void registerVirtualServer(Class<T> type, T virtualServer, int delay) {
+        virtualServers.put(type, new JsonVirtualServerInfo(virtualServer, delay, delay));
+    }
+
+    @Override
+    public <T> void registerVirtualServer(Class<T> type, T virtualServer) {
+        virtualServers.put(type, new JsonVirtualServerInfo(virtualServer, 0, 0));
+    }
+
+    @Override
+    public <T> void registerVirtualServer(Class<T> type, T virtualServer, int minDelay, int maxDelay) {
+        virtualServers.put(type, new JsonVirtualServerInfo(virtualServer, minDelay, maxDelay));
+    }
+
 
     @Override
     public <T> void unregisterVirtualServer(Class<T> type) {
@@ -105,12 +120,9 @@ class JsonRpcImplementation implements JsonRpc {
 
     @SuppressWarnings("unchecked")
     public <T> T getService(Class<T> obj, boolean autoBatch) {
-        if(virtualServers.containsKey(obj))
-        {
-            return (T) virtualServers.get(obj);
-        }
-        else
-        {
+        if (virtualServers.containsKey(obj)) {
+            return (T) virtualServers.get(obj).server;
+        } else {
             return getService(obj, new JsonProxy(context, this, autoBatch ? JsonBatchMode.AUTO : JsonBatchMode.NONE));
         }
     }
@@ -124,71 +136,25 @@ class JsonRpcImplementation implements JsonRpc {
     @SuppressWarnings("unchecked")
     public <T> void callInBatch(Class<T> obj, final JsonBatch<T> batch) {
 
-        if(virtualServers.containsKey(obj))
+        if((getDebugFlags() & JsonRpc.REQUEST_LINE_DEBUG) > 0)
         {
-            callInBatch((T)virtualServers.get(obj),obj, batch);
+            StackTraceElement stackTraceElement = Thread.currentThread().getStackTrace()[3];
+            JsonLoggerImpl.log("Batch request from " + stackTraceElement.getFileName()+":"+stackTraceElement.getLineNumber());
         }
-        else
-        {
-            final JsonProxy pr = new JsonProxy(context, this, JsonBatchMode.MANUAL);
-            T proxy = getService(obj, pr);
-            batch.run(proxy);
+
+        final JsonProxy pr = new JsonProxy(context, this, JsonBatchMode.MANUAL);
+        T proxy = getService(obj, pr);
+        batch.run(proxy);
 
 
-            Thread thread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    pr.callBatch(batch);
-                }
-            });
-            thread.start();
-        }
-    }
-
-
-    @SuppressWarnings("unchecked")
-    private <T> void callInBatch(final T testApi,Class<T> obj, JsonBatch<T> batch) {
-        final List<Object> results = new ArrayList<Object>();
-        final List<Exception> errors = new ArrayList<Exception>();
-        InvocationHandler invocationHandler = new InvocationHandler()
-        {
+        Thread thread = new Thread(new Runnable() {
             @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                final JsonCallbackInterface<Object> callback = (JsonCallbackInterface<Object>) args[args.length - 1];
-                JsonCallbackInterface<Object> newCallback = new JsonCallbackInterface<Object>() {
-                    @Override
-                    public void onFinish(Object result) {
-                        results.add(result);
-                        callback.onFinish(result);
-                    }
-
-                    @Override
-                    public void onError(Exception e) {
-                        errors.add(e);
-                        callback.onError(e);
-                    }
-
-                    @Override
-                    public void onProgress(int progress) {
-                        callback.onProgress(progress);
-                    }
-                };
-                args[args.length - 1]=newCallback;
-                method.invoke(testApi,args);
-                return null;
+            public void run() {
+                pr.callBatch(batch);
             }
-        };
+        });
+        thread.start();
 
-        batch.run((T) Proxy.newProxyInstance(obj.getClassLoader(), new Class<?>[]{obj}, invocationHandler));
-
-        if(errors.size()>0)
-        {
-            batch.onError(errors.get(0));
-        }
-        else
-        {
-            batch.onFinish(results.toArray());
-        }
     }
 
     @Override
