@@ -5,6 +5,7 @@ import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import com.jsonrpclib.JsonViewTag;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -41,7 +42,7 @@ public class ObserverHelper {
         viewObservers.clear();
         if (JsonObserver.dataObject != null) {
             observableObject = JsonObserver.dataObject;
-            if (view != null) {
+            if (view != null && object.getClass().isAnnotationPresent(JsonViewTag.class)) {
                 findViewObserver(view);
             }
             findDataObserver(object);
