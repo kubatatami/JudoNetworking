@@ -31,7 +31,7 @@ public abstract class JsonConnection {
     }
 
     public interface Connection {
-        public InputStream getStream() throws IOException;
+        public InputStream getStream() throws Exception;
 
         public void close();
     }

@@ -3,6 +3,7 @@ package com.jsonrpclib.connectors;
 import android.os.Build;
 import android.util.Base64;
 import com.jsonrpclib.*;
+import org.apache.http.HttpException;
 
 import java.io.*;
 import java.lang.annotation.ElementType;
@@ -137,7 +138,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
         final HttpURLConnection finalConnection = urlConnection;
         return new Connection() {
             @Override
-            public InputStream getStream() throws IOException {
+            public InputStream getStream() throws Exception {
                 try
                 {
                     return finalConnection.getInputStream();
@@ -146,7 +147,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
                 {
                     int code = finalConnection.getResponseCode();
                     String resp = convertStreamToString(finalConnection.getErrorStream());
-                    throw new IOException("ERROR("+code+") "+resp);
+                    throw new HttpException(resp,code);
                 }
             }
 
@@ -209,5 +210,19 @@ public class JsonHttpUrlConnection extends JsonConnection {
             return (HttpURLConnection) new URL(url).openConnection();
         }
 
+    }
+
+    public class HttpException extends Exception
+    {
+        private int code;
+
+        public HttpException(String detailMessage, int code) {
+            super(detailMessage);
+            this.code = code;
+        }
+
+        public int getCode() {
+            return code;
+        }
     }
 }

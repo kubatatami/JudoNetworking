@@ -10,7 +10,7 @@ import android.view.ViewGroup;
  * Date: 08.04.2013
  * Time: 22:27
  */
-class ObserverActivity extends Activity {
+public class ObserverActivity extends Activity {
 
     private ObserverHelper observerHelper;
 
@@ -18,7 +18,13 @@ class ObserverActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         observerHelper = new ObserverHelper(this);
-        observerHelper.start(this, ((ViewGroup) findViewById(android.R.id.content)).getChildAt(0));
+        findViewById(android.R.id.content).post(new Runnable() {
+            @Override
+            public void run() {
+                observerHelper.start(ObserverActivity.this, ((ViewGroup) findViewById(android.R.id.content)).getChildAt(0));
+            }
+        });
+
     }
 
     @Override
