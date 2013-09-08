@@ -59,10 +59,9 @@ class JsonProxy implements InvocationHandler {
                 String name = getMethodName(m);
                 int timeout = rpc.getJsonConnector().getMethodTimeout();
 
-                if((rpc.getDebugFlags() & JsonRpc.REQUEST_LINE_DEBUG) > 0)
-                {
+                if ((rpc.getDebugFlags() & JsonRpc.REQUEST_LINE_DEBUG) > 0) {
                     StackTraceElement stackTraceElement = Thread.currentThread().getStackTrace()[3];
-                    JsonLoggerImpl.log("Request "+name+ " " + stackTraceElement.getFileName()+":"+stackTraceElement.getLineNumber());
+                    JsonLoggerImpl.log("Request " + name + " " + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber());
                 }
 
                 if (ann.timeout() != 0) {
@@ -183,6 +182,7 @@ class JsonProxy implements InvocationHandler {
                         }
                     }
                 }
+
                 JsonBatchProgressObserver batchProgressObserver = new JsonBatchProgressObserver(rpc, batch);
                 List<JsonResult> responses;
                 if (batches.size() > 0) {
@@ -294,7 +294,7 @@ class JsonProxy implements InvocationHandler {
         for (JsonRequest request : requests) {
             try {
                 JsonResult response = responses.get(i);
-                JsonConnector.verifyResultObject(response.result,request.getReturnType());
+                JsonConnector.verifyResultObject(response.result, request.getReturnType());
                 if (response.cacheObject != null) {
                     results[i] = response.cacheObject;
                 } else {

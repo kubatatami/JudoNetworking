@@ -12,6 +12,9 @@ trudne
 -obsluga rest poprzez opis umieszczenia parametrow /category/{number}/name
 -connector http z obsługą Pipelining
 
+pilne
+-SYMULACJA PROGRESSU ZGODNEGO Z BATCHEM Z VIRTUAL SERVER
+
 
 
 
