@@ -27,6 +27,12 @@ class JsonConnector {
 
     private JsonResult sendRequest(JsonRequest request, JsonTimeStat timeStat) {
         try {
+
+            Object virtualObject = handleVirtualServerRequest(request, timeStat);
+            if (virtualObject != null) {
+                return new JsonSuccessResult(request.getId(),virtualObject);
+            }
+
             ProtocolController controller = rpc.getProtocolController();
             ProtocolController.RequestInfo requestInfo = controller.createRequest(url, request, rpc.getApiKey());
             timeStat.tickCreateTime();
@@ -71,18 +77,15 @@ class JsonConnector {
     }
 
 
-    @SuppressWarnings("unchecked")
-    public Object call(JsonRequest request) throws Exception {
-        JsonTimeStat timeStat = new JsonTimeStat(request);
+    private Object handleVirtualServerRequest(JsonRequest request, JsonTimeStat timeStat) throws Exception {
         JsonVirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(request.getMethod().getDeclaringClass());
-
         if (virtualServerInfo != null) {
             if (request.getCallback() == null) {
                 try {
                     Object object = request.getMethod().invoke(virtualServerInfo.server, request.getArgs());
                     int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
                     for (int i = 0; i <= JsonTimeStat.TICKS; i++) {
-                        Thread.sleep(delay);
+                        Thread.sleep(delay / JsonTimeStat.TICKS);
                         timeStat.tickTime(i);
                     }
                     return object;
@@ -97,7 +100,7 @@ class JsonConnector {
                     request.getMethod().invoke(virtualServerInfo.server, args);
                     int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
                     for (int i = 0; i <= JsonTimeStat.TICKS; i++) {
-                        Thread.sleep(delay);
+                        Thread.sleep(delay / JsonTimeStat.TICKS);
                         timeStat.tickTime(i);
                     }
                 } catch (UnsupportedOperationException ex) {
@@ -111,8 +114,16 @@ class JsonConnector {
                 }
             }
         }
+        return null;
+    }
 
+
+    @SuppressWarnings("unchecked")
+    public Object call(JsonRequest request) throws Exception {
         try {
+
+            JsonTimeStat timeStat = new JsonTimeStat(request);
+
 
             if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
                 JsonCacheResult cacheObject = rpc.getMemoryCache().get(request.getMethod(), request.getArgs(), rpc.isTest() ? 0 : request.getCacheLifeTime(), request.getCacheSize());
@@ -184,42 +195,12 @@ class JsonConnector {
     }
 
     public List<JsonResult> callBatch(List<JsonRequest> requests, JsonProgressObserver progressObserver, Integer timeout) throws Exception {
-        List<JsonRequest> copyRequest = new ArrayList<JsonRequest>(requests);
-        List<JsonResult> results = new ArrayList<JsonResult>(copyRequest.size());
-        JsonVirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(copyRequest.get(0).getMethod().getDeclaringClass());
-        if (virtualServerInfo != null) {
-
-            JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
+        List<JsonResult> results = new ArrayList<JsonResult>(requests.size());
 
 
-            int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
-
-            for (int i = copyRequest.size() - 1; i >= 0; i--) {
-                JsonRequest request = copyRequest.get(i);
-
-                VirtualJsonCallback callback = new VirtualJsonCallback(request.getId());
-                Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
-                boolean implemented = true;
-                try {
-                    request.getMethod().invoke(virtualServerInfo.server, args);
-                    for (int z = 0; z < JsonTimeStat.TICKS; z++) {
-                        Thread.sleep(delay / JsonTimeStat.TICKS);
-                        timeStat.tickTime(z);
-                    }
-                } catch (UnsupportedOperationException ex) {
-                    implemented = false;
-                }
-                if (implemented) {
-                    results.add(callback.getResult());
-                    copyRequest.remove(request);
-                }
-            }
-
-        }
-
-        if (copyRequest.size() > 0) {
+        if (requests.size() > 0) {
             String requestsName = "";
-            for (JsonRequest request : copyRequest) {
+            for (JsonRequest request : requests) {
                 requestsName += " " + request.getName();
                 if (request.getArgs() != null && rpc.isByteArrayAsBase64()) {
                     int i = 0;
@@ -233,12 +214,49 @@ class JsonConnector {
             }
 
             if (rpc.getProtocolController().isBatchSupported()) {
-                results.addAll(callRealBatch(copyRequest, progressObserver, timeout, requestsName));
+
+                List<JsonRequest> copyRequest = new ArrayList<JsonRequest>(requests);
+                JsonVirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(requests.get(0).getMethod().getDeclaringClass());
+                if (virtualServerInfo != null) {
+
+                    JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
+
+                    int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
+
+                    for (int i = copyRequest.size() - 1; i >= 0; i--) {
+                        JsonRequest request = copyRequest.get(i);
+
+                        VirtualJsonCallback callback = new VirtualJsonCallback(request.getId());
+                        Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
+                        boolean implemented = true;
+                        try {
+                            request.getMethod().invoke(virtualServerInfo.server, args);
+
+                        } catch (UnsupportedOperationException ex) {
+                            implemented = false;
+                        }
+                        if (implemented) {
+                            results.add(callback.getResult());
+                            copyRequest.remove(request);
+                        }
+                    }
+                    if(copyRequest.size()==0)
+                    {
+                        for (int z = 0; z < JsonTimeStat.TICKS; z++) {
+                            Thread.sleep(delay / JsonTimeStat.TICKS);
+                            timeStat.tickTime(z);
+                        }
+                    }
+                }
+                if(copyRequest.size()>0)
+                {
+                    results.addAll(callRealBatch(copyRequest, progressObserver, timeout, requestsName));
+                }
             } else {
                 synchronized (progressObserver) {
-                    progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (copyRequest.size() - 1) * JsonTimeStat.TICKS);
+                    progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (requests.size() - 1) * JsonTimeStat.TICKS);
                 }
-                for (JsonRequest request : copyRequest) {
+                for (JsonRequest request : requests) {
                     JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
                     results.add(sendRequest(request, timeStat));
                 }

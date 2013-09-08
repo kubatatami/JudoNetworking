@@ -281,8 +281,7 @@ class JsonProxy implements InvocationHandler {
             }
             return response;
         } else {
-            progressObserver.setMaxProgress((batches.size() + cachedRequests) * JsonTimeStat.TICKS);
-            progressObserver.progressTick(cachedRequests * JsonTimeStat.TICKS);
+            progressObserver.setMaxProgress(JsonTimeStat.TICKS);
             return rpc.getJsonConnector().callBatch(batches, progressObserver, calculateTimeout(batches));
         }
     }
