@@ -31,39 +31,19 @@ public class JsonRpc1Controller extends JsonRpcController {
 
 
     @Override
-    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream, int debugFlag, JsonTimeInterface timeStat) {
+    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream) {
         try {
-            JsonRpcResponseModel1 response = null;
-            if ((debugFlag & JsonRpc.RESPONSE_DEBUG) > 0) {
-
-                String resStr = convertStreamToString(stream);
-                longLog("RES(" + resStr.length() + ")", resStr);
-                timeStat.tickReadTime();
-                response = gson.fromJson(resStr, JsonRpcResponseModel1.class);
-                if (response == null) {
-                    throw new JsonException("Can't parse response.");
-                } else if (response.error != null) {
-                    throw new JsonException(response.error);
-                }
-
-
-            } else {
-                JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
-                response = gson.fromJson(reader, JsonRpcResponseModel1.class);
-                timeStat.tickReadTime();
-                if (response.error != null) {
-                    throw new JsonException(response.error);
-                }
-
-
-                reader.close();
-
+            JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
+            JsonRpcResponseModel1 response = gson.fromJson(reader, JsonRpcResponseModel1.class);
+            if (response.error != null) {
+                throw new JsonException(response.error);
             }
 
+
+            reader.close();
             if (!request.getReturnType().equals(Void.TYPE)) {
                 return new JsonSuccessResult(request.getId(), gson.fromJson(response.result, request.getReturnType()));
             }
-            timeStat.tickParseTime();
             return new JsonSuccessResult(request.getId(), null);
         } catch (Exception e) {
             return new JsonErrorResult(request.getId(), e);

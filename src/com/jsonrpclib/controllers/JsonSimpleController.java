@@ -2,7 +2,10 @@ package com.jsonrpclib.controllers;
 
 import com.google.gson22.GsonBuilder;
 import com.google.gson22.stream.JsonReader;
-import com.jsonrpclib.*;
+import com.jsonrpclib.JsonErrorResult;
+import com.jsonrpclib.JsonRequestInterface;
+import com.jsonrpclib.JsonResult;
+import com.jsonrpclib.JsonSuccessResult;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -25,25 +28,12 @@ public abstract class JsonSimpleController extends JsonProtocolController {
 
 
     @Override
-    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream, int debugFlag, JsonTimeInterface timeStat) {
+    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream) {
         try {
             Object res = null;
-            if ((debugFlag & JsonRpc.RESPONSE_DEBUG) > 0) {
-
-                String resStr = convertStreamToString(stream);
-                timeStat.tickReadTime();
-                longLog("RES(" + resStr.length() + ")", resStr);
-                if (!request.getReturnType().equals(Void.TYPE)) {
-                    res = gson.fromJson(resStr, request.getReturnType());
-                }
-                timeStat.tickParseTime();
-            } else {
-                JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
-                if (!request.getReturnType().equals(Void.TYPE)) {
-                    res = gson.fromJson(reader, request.getReturnType());
-                }
-                timeStat.tickReadTime();
-                timeStat.tickParseTime();
+            JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
+            if (!request.getReturnType().equals(Void.TYPE)) {
+                res = gson.fromJson(reader, request.getReturnType());
             }
             return new JsonSuccessResult(request.getId(), res);
         } catch (Exception e) {

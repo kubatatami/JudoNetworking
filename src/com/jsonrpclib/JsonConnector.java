@@ -3,13 +3,11 @@ package com.jsonrpclib;
 
 import android.util.Base64;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 class JsonConnector {
 
@@ -24,13 +22,21 @@ class JsonConnector {
         this.connection = connection;
     }
 
+    private static void longLog(String tag, String message) {
+        JsonLoggerImpl.longLog(tag, message);
+    }
+
+    private static String convertStreamToString(InputStream is) {
+        Scanner s = new Scanner(is).useDelimiter("\\A");
+        return s.hasNext() ? s.next() : "";
+    }
 
     private JsonResult sendRequest(JsonRequest request, JsonTimeStat timeStat) {
         try {
 
             Object virtualObject = handleVirtualServerRequest(request, timeStat);
             if (virtualObject != null) {
-                return new JsonSuccessResult(request.getId(),virtualObject);
+                return new JsonSuccessResult(request.getId(), virtualObject);
             }
 
             ProtocolController controller = rpc.getProtocolController();
@@ -39,8 +45,16 @@ class JsonConnector {
             lossCheck();
 
             JsonConnection.Connection conn = connection.send(controller, requestInfo, request.getTimeout(), timeStat, rpc.getDebugFlags(), request.getMethod());
+            InputStream connectionStream = conn.getStream();
+            if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
 
-            JsonResult result = controller.parseResponse(request, conn.getStream(), rpc.getDebugFlags(), timeStat);
+                String resStr = convertStreamToString(conn.getStream());
+                longLog("RES(" + resStr.length() + ")", resStr);
+                connectionStream = new ByteArrayInputStream(resStr.getBytes("UTF-8"));
+            }
+            JsonInputStream stream = new JsonInputStream(connectionStream, timeStat, conn.getContentLength());
+            JsonResult result = controller.parseResponse(request, stream);
+            timeStat.tickParseTime();
             verifyResultObject(result.result, request.getReturnType());
             conn.close();
             return result;
@@ -93,7 +107,7 @@ class JsonConnector {
                 }
 
             } else {
-                VirtualJsonCallback callback = new VirtualJsonCallback(request.getId());
+                JsonVirtualCallback callback = new JsonVirtualCallback(request.getId());
                 Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
                 boolean implemented = true;
                 try {
@@ -226,7 +240,7 @@ class JsonConnector {
                     for (int i = copyRequest.size() - 1; i >= 0; i--) {
                         JsonRequest request = copyRequest.get(i);
 
-                        VirtualJsonCallback callback = new VirtualJsonCallback(request.getId());
+                        JsonVirtualCallback callback = new JsonVirtualCallback(request.getId());
                         Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
                         boolean implemented = true;
                         try {
@@ -240,16 +254,14 @@ class JsonConnector {
                             copyRequest.remove(request);
                         }
                     }
-                    if(copyRequest.size()==0)
-                    {
+                    if (copyRequest.size() == 0) {
                         for (int z = 0; z < JsonTimeStat.TICKS; z++) {
                             Thread.sleep(delay / JsonTimeStat.TICKS);
                             timeStat.tickTime(z);
                         }
                     }
                 }
-                if(copyRequest.size()>0)
-                {
+                if (copyRequest.size() > 0) {
                     results.addAll(callRealBatch(copyRequest, progressObserver, timeout, requestsName));
                 }
             } else {
@@ -277,8 +289,17 @@ class JsonConnector {
             timeStat.tickCreateTime();
             lossCheck();
             JsonConnection.Connection conn = connection.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null);
-            InputStream stream = conn.getStream();
-            responses = controller.parseResponses((List) requests, stream, rpc.getDebugFlags(), timeStat);
+            InputStream connectionStream = conn.getStream();
+            if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
+
+                String resStr = convertStreamToString(conn.getStream());
+                longLog("RES(" + resStr.length() + ")", resStr);
+                connectionStream = new ByteArrayInputStream(resStr.getBytes("UTF-8"));
+            }
+
+            JsonInputStream stream = new JsonInputStream(connectionStream, timeStat, conn.getContentLength());
+            responses = controller.parseResponses((List) requests, stream);
+            timeStat.tickParseTime();
             conn.close();
             timeStat.tickEndTime();
             if (rpc.isTimeProfiler()) {

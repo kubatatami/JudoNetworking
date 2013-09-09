@@ -1,6 +1,5 @@
 package com.jsonrpclib;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Scanner;
@@ -26,14 +25,17 @@ public abstract class JsonConnection {
 
     public abstract int getMethodTimeout();
 
-    protected void longLog(String tag, String message) {
-        JsonLoggerImpl.longLog(tag, message);
-    }
 
     public interface Connection {
         public InputStream getStream() throws Exception;
 
+        public int getContentLength();
+
         public void close();
+    }
+
+    protected void longLog(String tag, String message) {
+        JsonLoggerImpl.longLog(tag, message);
     }
 
     protected String convertStreamToString(InputStream is) {

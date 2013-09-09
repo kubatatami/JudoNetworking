@@ -3,7 +3,6 @@ package com.jsonrpclib.connectors;
 import android.os.Build;
 import android.util.Base64;
 import com.jsonrpclib.*;
-import org.apache.http.HttpException;
 
 import java.io.*;
 import java.lang.annotation.ElementType;
@@ -88,8 +87,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
             }
         }
 
-        if(urlConnection==null)
-        {
+        if (urlConnection == null) {
             throw new JsonException("Can't create HttpURLConnection.");
         }
 
@@ -113,9 +111,8 @@ public class JsonHttpUrlConnection extends JsonConnection {
             httpURLConnectionModifier.modify(urlConnection);
         }
 
-        if(method!=null && method.isAnnotationPresent(JsonHttpMethod.class))
-        {
-            JsonHttpMethod httpMethod=method.getAnnotation(JsonHttpMethod.class);
+        if (method != null && method.isAnnotationPresent(JsonHttpMethod.class)) {
+            JsonHttpMethod httpMethod = method.getAnnotation(JsonHttpMethod.class);
             urlConnection.setRequestMethod(httpMethod.methodType());
         }
 
@@ -124,12 +121,17 @@ public class JsonHttpUrlConnection extends JsonConnection {
             OutputStream stream = urlConnection.getOutputStream();
             timeStat.tickConnectionTime();
             Writer writer = new BufferedWriter(new OutputStreamWriter(stream));
-            protocolController.writeToStream(writer, requestInfo.data, debugFlags);
+            if ((debugFlags & JsonRpc.REQUEST_DEBUG) > 0) {
+                ByteArrayOutputStream outDebugStream = new ByteArrayOutputStream();
+                OutputStreamWriter debugWriter = new OutputStreamWriter(outDebugStream);
+                protocolController.writeToStream(debugWriter, requestInfo.data);
+                debugWriter.close();
+                longLog("REQ", outDebugStream.toString());
+            }
+            protocolController.writeToStream(writer, requestInfo.data);
             writer.close();
             timeStat.tickSendTime();
-        }
-        else
-        {
+        } else {
             urlConnection.getInputStream();
             timeStat.tickConnectionTime();
             timeStat.tickSendTime();
@@ -139,16 +141,18 @@ public class JsonHttpUrlConnection extends JsonConnection {
         return new Connection() {
             @Override
             public InputStream getStream() throws Exception {
-                try
-                {
+                try {
                     return finalConnection.getInputStream();
-                }
-                catch (FileNotFoundException ex)
-                {
+                } catch (FileNotFoundException ex) {
                     int code = finalConnection.getResponseCode();
                     String resp = convertStreamToString(finalConnection.getErrorStream());
-                    throw new HttpException(resp,code);
+                    throw new HttpException(resp, code);
                 }
+
+            }
+
+            public int getContentLength() {
+                return finalConnection.getContentLength();
             }
 
             @Override
@@ -197,8 +201,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
-    public static @interface JsonHttpMethod
-    {
+    public static @interface JsonHttpMethod {
         String methodType();
     }
 
@@ -212,8 +215,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
     }
 
-    public class HttpException extends Exception
-    {
+    public class HttpException extends Exception {
         private int code;
 
         public HttpException(String detailMessage, int code) {

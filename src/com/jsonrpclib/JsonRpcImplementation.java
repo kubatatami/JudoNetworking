@@ -6,10 +6,10 @@ import android.os.Looper;
 
 import java.io.*;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 class JsonRpcImplementation implements JsonRpc {
 
@@ -136,10 +136,9 @@ class JsonRpcImplementation implements JsonRpc {
     @SuppressWarnings("unchecked")
     public <T> void callInBatch(Class<T> obj, final JsonBatch<T> batch) {
 
-        if((getDebugFlags() & JsonRpc.REQUEST_LINE_DEBUG) > 0)
-        {
+        if ((getDebugFlags() & JsonRpc.REQUEST_LINE_DEBUG) > 0) {
             StackTraceElement stackTraceElement = Thread.currentThread().getStackTrace()[3];
-            JsonLoggerImpl.log("Batch request from " + stackTraceElement.getFileName()+":"+stackTraceElement.getLineNumber());
+            JsonLoggerImpl.log("Batch request from " + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber());
         }
 
         final JsonProxy pr = new JsonProxy(context, this, JsonBatchMode.MANUAL);

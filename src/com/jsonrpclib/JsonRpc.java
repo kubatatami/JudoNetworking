@@ -10,7 +10,6 @@ package com.jsonrpclib;
 public interface JsonRpc {
 
     /**
-     *
      * @param type
      * @param virtualServer
      * @param minDelay
@@ -20,7 +19,6 @@ public interface JsonRpc {
     public <T> void registerVirtualServer(Class<T> type, T virtualServer, int minDelay, int maxDelay);
 
     /**
-     *
      * @param type
      * @param virtualServer
      * @param delay
@@ -29,7 +27,6 @@ public interface JsonRpc {
     public <T> void registerVirtualServer(Class<T> type, T virtualServer, int delay);
 
     /**
-     *
      * @param type
      * @param virtualServer
      * @param <T>
@@ -37,7 +34,6 @@ public interface JsonRpc {
     public <T> void registerVirtualServer(Class<T> type, T virtualServer);
 
     /**
-     *
      * @param type
      * @param <T>
      */

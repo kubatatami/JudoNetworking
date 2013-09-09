@@ -3,7 +3,6 @@ package com.jsonrpclib;
 import java.io.InputStream;
 import java.io.Writer;
 import java.util.List;
-import java.util.Scanner;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,20 +19,10 @@ public abstract class ProtocolController {
         public String mimeType;
     }
 
-    protected void longLog(String tag, String message) {
-        JsonLoggerImpl.longLog(tag, message);
-    }
-
-
-    protected String convertStreamToString(InputStream is) {
-        Scanner s = new Scanner(is).useDelimiter("\\A");
-        return s.hasNext() ? s.next() : "";
-    }
-
 
     public abstract RequestInfo createRequest(String url, JsonRequestInterface request, String apiKey);
 
-    public abstract JsonResult parseResponse(JsonRequestInterface request, InputStream stream, int debugFlag, JsonTimeInterface timeStat);
+    public abstract JsonResult parseResponse(JsonRequestInterface request, InputStream stream);
 
     public boolean isBatchSupported() {
         return false;
@@ -43,11 +32,11 @@ public abstract class ProtocolController {
         throw new JsonException("CreateRequest not implemented.");
     }
 
-    public List<JsonResult> parseResponses(List<JsonRequestInterface> requests, InputStream stream, int debugFlag, JsonTimeInterface timeStat) throws Exception {
+    public List<JsonResult> parseResponses(List<JsonRequestInterface> requests, InputStream stream) throws Exception {
         throw new JsonException("ParseResponses not implemented.");
     }
 
-    public void writeToStream(Writer writer, Object request, int debugFlag) throws Exception {
+    public void writeToStream(Writer writer, Object request) throws Exception {
         throw new JsonException("WriteToStream not implemented.");
     }
 }

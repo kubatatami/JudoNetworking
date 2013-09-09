@@ -2,7 +2,6 @@ package com.jsonrpclib.controllers;
 
 import com.google.gson22.GsonBuilder;
 import com.jsonrpclib.JsonRequestInterface;
-import com.jsonrpclib.JsonRpc;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -69,14 +68,8 @@ public abstract class JsonRpcController extends JsonProtocolController {
     }
 
     @Override
-    public void writeToStream(Writer writer, Object request, int debugFlag) throws IOException {
-        if ((debugFlag & JsonRpc.REQUEST_DEBUG) > 0) {
-            String req = gson.toJson(request);
-            longLog("REQ", req);
-            writer.write(req);
-        } else {
-            gson.toJson(request, writer);
-        }
+    public void writeToStream(Writer writer, Object request) throws IOException {
+        gson.toJson(request, writer);
     }
 
 

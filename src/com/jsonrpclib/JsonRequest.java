@@ -10,7 +10,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
     private final String name;
     private final int timeout;
     private JsonMethod ann;
-    private int progress = 0;
+    private float progress = 0;
     private int max = JsonTimeStat.TICKS;
     private final Object[] args;
     private Type returnType;
@@ -138,10 +138,19 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
         return ann.highPriority();
     }
 
+    @Override
     public void progressTick() {
-        progress++;
+        this.progress++;
         if (callback != null) {
-            rpc.getHandler().post(new JsonAsyncResult(callback, progress * 100 / max));
+            rpc.getHandler().post(new JsonAsyncResult(callback, ((int) this.progress * 100 / max)));
+        }
+    }
+
+    @Override
+    public void progressTick(float progress) {
+        this.progress += progress;
+        if (callback != null) {
+            rpc.getHandler().post(new JsonAsyncResult(callback, ((int) this.progress * 100 / max)));
         }
     }
 

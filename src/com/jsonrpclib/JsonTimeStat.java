@@ -20,7 +20,8 @@ public class JsonTimeStat implements JsonTimeInterface {
     private long startTime = 0;
     private long timeout = 0;
     private List<JsonProgressObserver> requests;
-
+    private boolean readTimeProgressTick = true;
+    private boolean sendTimeProgressTick = true;
     public final static int TICKS = 5;
 
     public JsonTimeStat() {
@@ -42,25 +43,24 @@ public class JsonTimeStat implements JsonTimeInterface {
     }
 
     public void tickTime(int i) {
-       switch (i)
-       {
-           case 0:
-               tickCreateTime();
-               break;
-           case 1:
-               tickConnectionTime();
-               break;
-           case 2:
-               tickSendTime();
-               break;
-           case 3:
-               tickReadTime();
-               break;
-           case 4:
-               tickParseTime();
-               tickEndTime();
-               break;
-       }
+        switch (i) {
+            case 0:
+                tickCreateTime();
+                break;
+            case 1:
+                tickConnectionTime();
+                break;
+            case 2:
+                tickSendTime();
+                break;
+            case 3:
+                tickReadTime();
+                break;
+            case 4:
+                tickParseTime();
+                tickEndTime();
+                break;
+        }
     }
 
 
@@ -85,13 +85,17 @@ public class JsonTimeStat implements JsonTimeInterface {
     public void tickSendTime() {
         sendTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();
-        progressTick();
+        if (sendTimeProgressTick) {
+            progressTick();
+        }
     }
 
     public void tickReadTime() {
         readTime = System.currentTimeMillis() - time;
         time = System.currentTimeMillis();
-        progressTick();
+        if (readTimeProgressTick) {
+            progressTick();
+        }
     }
 
     public void tickParseTime() {
@@ -155,5 +159,21 @@ public class JsonTimeStat implements JsonTimeInterface {
                 request.progressTick();
             }
         }
+    }
+
+    public void progressTick(float progress) {
+        if (requests != null) {
+            for (JsonProgressObserver request : requests) {
+                request.progressTick(progress);
+            }
+        }
+    }
+
+    public void setReadTimeProgressTick(boolean readTimeProgressTick) {
+        this.readTimeProgressTick = readTimeProgressTick;
+    }
+
+    public void setSendTimeProgressTick(boolean sendTimeProgressTick) {
+        this.sendTimeProgressTick = sendTimeProgressTick;
     }
 }

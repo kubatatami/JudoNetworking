@@ -50,26 +50,15 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
     }
 
     @Override
-    public List<JsonResult> parseResponses(List<JsonRequestInterface> requests, InputStream stream, int debugFlag, JsonTimeInterface timeStat) throws Exception {
+    public List<JsonResult> parseResponses(List<JsonRequestInterface> requests, InputStream stream) throws Exception {
         List<JsonRpcResponseModel2> responses = null;
 
-        if ((debugFlag & JsonRpc.RESPONSE_DEBUG) > 0) {
+        JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
+        responses = gson.fromJson(reader,
+                new TypeToken<List<JsonRpcResponseModel2>>() {
+                }.getType());
+        reader.close();
 
-            String resStr = convertStreamToString(stream);
-            timeStat.tickReadTime();
-            longLog("RES(" + resStr.length() + ")", resStr);
-            responses = gson.fromJson(resStr,
-                    new TypeToken<List<JsonRpcResponseModel2>>() {
-                    }.getType());
-        } else {
-            JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
-            responses = gson.fromJson(reader,
-                    new TypeToken<List<JsonRpcResponseModel2>>() {
-                    }.getType());
-            reader.close();
-            timeStat.tickReadTime();
-
-        }
 
         if (responses == null) {
             throw new JsonException("Empty response.");
@@ -98,8 +87,6 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
                 finalResponses.add(new JsonErrorResult(res.id, new JsonException(res.error.message, res.error.code)));
             }
         }
-
-        timeStat.tickParseTime();
 
         return finalResponses;
     }

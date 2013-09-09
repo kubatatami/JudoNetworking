@@ -9,7 +9,8 @@ package com.jsonrpclib;
  */
 public class JsonBatchProgressObserver implements JsonProgressObserver {
 
-    int max = JsonTimeStat.TICKS, progress = 0;
+    int max = JsonTimeStat.TICKS;
+    float progress = 0;
     JsonBatch batch;
     JsonRpcImplementation rpc;
 
@@ -23,6 +24,12 @@ public class JsonBatchProgressObserver implements JsonProgressObserver {
         progressTick(1);
     }
 
+    @Override
+    public synchronized void progressTick(float progress) {
+        progress += progress;
+        publishProgress();
+    }
+
 
     public synchronized void progressTick(int i) {
         progress += i;
@@ -32,7 +39,7 @@ public class JsonBatchProgressObserver implements JsonProgressObserver {
 
     public void publishProgress() {
         if (batch != null && progress > 0) {
-            rpc.getHandler().post(new JsonAsyncResult(batch, progress * 100 / max));
+            rpc.getHandler().post(new JsonAsyncResult(batch, (int) (progress * 100 / max)));
         }
     }
 
