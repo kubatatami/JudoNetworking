@@ -1,12 +1,13 @@
 package com.jsonrpclib.controllers;
 
 import com.google.gson22.GsonBuilder;
+import com.google.gson22.JsonSyntaxException;
 import com.google.gson22.reflect.TypeToken;
 import com.google.gson22.stream.JsonReader;
+import com.google.gson22.stream.JsonWriter;
 import com.jsonrpclib.*;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,16 +30,20 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
     }
 
     @Override
-    public RequestInfo createRequest(String url, List<JsonRequestInterface> requests, String apiKey) {
+    public RequestInfo createRequest(String url, List<JsonRequestInterface> requests) throws Exception {
         int i = 0;
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url;
         Object[] requestsJson = new Object[requests.size()];
         for (JsonRequestInterface request : requests) {
-            requestsJson[i] = createRequest(url, request, apiKey).data;
+            requestsJson[i] = createRequestObject(request);
             i++;
         }
-        requestInfo.data = requestsJson;
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        OutputStreamWriter writer = new OutputStreamWriter(stream);
+        gson.toJson(requestsJson, writer);
+        writer.close();
+        requestInfo.data = stream.toByteArray();
         requestInfo.mimeType = "application/json";
         return requestInfo;
     }
@@ -80,7 +85,14 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
             if (res.error == null) {
                 Object result = null;
                 if (!requests.get(i).getReturnType().equals(Void.TYPE)) {
-                    result = gson.fromJson(res.result, requests.get(i).getReturnType());
+                    try
+                    {
+                        result = gson.fromJson(res.result, requests.get(i).getReturnType());
+                    }
+                    catch (JsonSyntaxException ex)
+                    {
+                        finalResponses.add(new JsonErrorResult(res.id, new JsonException(requests.get(i).getName(), ex)));
+                    }
                 }
                 finalResponses.add(new JsonSuccessResult(res.id, result));
             } else {

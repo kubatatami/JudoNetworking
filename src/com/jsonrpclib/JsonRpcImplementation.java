@@ -18,7 +18,6 @@ class JsonRpcImplementation implements JsonRpc {
     private JsonConnector jsonConnector;
     private JsonConnection connection;
     private Handler handler = new Handler();
-    private String apiKey = null;
     private Context context;
     private boolean byteArrayAsBase64 = false;
     private boolean cacheEnabled = false;
@@ -54,7 +53,6 @@ class JsonRpcImplementation implements JsonRpc {
     private void init(Context context, ProtocolController protocolController, JsonConnection connection, String url, String apiKey) {
         this.connection = connection;
         this.jsonConnector = new JsonConnector(url, this, connection);
-        this.apiKey = apiKey;
         this.context = context;
         this.protocolController = protocolController;
         this.url = url;
@@ -157,11 +155,6 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     @Override
-    public void setApiKey(String apiKey) {
-        this.apiKey = apiKey;
-    }
-
-    @Override
     public void setByteArraySerializationType(boolean asBase64) {
         this.byteArrayAsBase64 = asBase64;
     }
@@ -185,10 +178,6 @@ class JsonRpcImplementation implements JsonRpc {
 
     public int getMaxWifiConnections() {
         return maxWifiConnections;
-    }
-
-    public String getApiKey() {
-        return apiKey;
     }
 
     public int getAutoBatchTime() {

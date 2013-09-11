@@ -40,7 +40,7 @@ class JsonConnector {
             }
 
             ProtocolController controller = rpc.getProtocolController();
-            ProtocolController.RequestInfo requestInfo = controller.createRequest(url, request, rpc.getApiKey());
+            ProtocolController.RequestInfo requestInfo = controller.createRequest(url, request);
             timeStat.tickCreateTime();
             lossCheck();
 
@@ -285,7 +285,7 @@ class JsonConnector {
             JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
 
 
-            ProtocolController.RequestInfo requestInfo = controller.createRequest(url, (List) requests, rpc.getApiKey());
+            ProtocolController.RequestInfo requestInfo = controller.createRequest(url, (List) requests);
             timeStat.tickCreateTime();
             lossCheck();
             JsonConnection.Connection conn = connection.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null);

@@ -27,32 +27,46 @@ public class JsonHttpUrlConnection extends JsonConnection {
     private String authKey = null;
     private HttpURLCreator httpURLCreator = null;
     private HttpURLConnectionModifier httpURLConnectionModifier = null;
-
+    private boolean forceDisableKeepAlive=false;
 
     public JsonHttpUrlConnection() {
-        init(new HttpURLCreatorImplementation(), null);
+        init(new HttpURLCreatorImplementation(), null,false);
     }
 
     public JsonHttpUrlConnection(HttpURLCreator httpURLCreator) {
-        init(httpURLCreator, null);
+        init(httpURLCreator, null,false);
     }
 
     public JsonHttpUrlConnection(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier) {
-        init(httpURLCreator, httpURLConnectionModifier);
+        init(httpURLCreator, httpURLConnectionModifier,false);
     }
 
-    private void init(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier) {
+
+    public JsonHttpUrlConnection(boolean forceDisableKeepAlive) {
+        init(new HttpURLCreatorImplementation(), null,forceDisableKeepAlive);
+    }
+
+    public JsonHttpUrlConnection(HttpURLCreator httpURLCreator,boolean forceDisableKeepAlive) {
+        init(httpURLCreator, null,forceDisableKeepAlive);
+    }
+
+    public JsonHttpUrlConnection(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier,boolean forceDisableKeepAlive) {
+        init(httpURLCreator, httpURLConnectionModifier,forceDisableKeepAlive);
+    }
+
+
+    private void init(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier,boolean forceDisableKeepAlive) {
         this.httpURLCreator = httpURLCreator;
         this.httpURLConnectionModifier = httpURLConnectionModifier;
-        disableConnectionReuseIfNecessary();
+        disableConnectionReuseIfNecessary(forceDisableKeepAlive);
+        this.forceDisableKeepAlive=forceDisableKeepAlive;
     }
 
-    private void disableConnectionReuseIfNecessary() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
+    private void disableConnectionReuseIfNecessary(boolean forceDisableKeepAlive) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO || forceDisableKeepAlive) {
             System.setProperty("http.keepAlive", "false");
         }
     }
-
 
     public void setHttpURLCreator(HttpURLCreator httpURLCreator) {
         this.httpURLCreator = httpURLCreator;
@@ -71,7 +85,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
         return "Basic " + Base64.encodeToString(source.getBytes(), Base64.NO_WRAP);
     }
 
-    public Connection send(ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
+    public Connection send(final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
                            int timeout, JsonTimeStat timeStat, int debugFlags, Method method) throws Exception {
 
         HttpURLConnection urlConnection = null;
@@ -118,19 +132,15 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
         if (requestInfo.data != null) {
             urlConnection.setDoOutput(true);
-            OutputStream stream = urlConnection.getOutputStream();
+            urlConnection.setFixedLengthStreamingMode(requestInfo.data.length);
+            OutputStream stream = new JsonOutputStream(new BufferedOutputStream(urlConnection.getOutputStream()),timeStat,requestInfo.data.length);
             timeStat.tickConnectionTime();
-            Writer writer = new BufferedWriter(new OutputStreamWriter(stream));
             if ((debugFlags & JsonRpc.REQUEST_DEBUG) > 0) {
-                ByteArrayOutputStream outDebugStream = new ByteArrayOutputStream();
-                OutputStreamWriter debugWriter = new OutputStreamWriter(outDebugStream);
-                protocolController.writeToStream(debugWriter, requestInfo.data);
-                debugWriter.close();
-                longLog("REQ", outDebugStream.toString());
+                longLog("REQ", new String(requestInfo.data));
             }
-            protocolController.writeToStream(writer, requestInfo.data);
-            writer.close();
-            timeStat.tickSendTime();
+            stream.write(requestInfo.data);
+            stream.flush();
+            stream.close();
         } else {
             urlConnection.getInputStream();
             timeStat.tickConnectionTime();
@@ -146,6 +156,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
                 } catch (FileNotFoundException ex) {
                     int code = finalConnection.getResponseCode();
                     String resp = convertStreamToString(finalConnection.getErrorStream());
+                    protocolController.parseError(code,resp);
                     throw new HttpException(resp, code);
                 }
 

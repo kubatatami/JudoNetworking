@@ -20,7 +20,7 @@ public class JsonSimpleGetController extends JsonSimpleController {
     }
 
     @Override
-    public RequestInfo createRequest(String url, JsonRequestInterface request, String apiKey) {
+    public RequestInfo createRequest(String url, JsonRequestInterface request) {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url + request.getName() + "?" + JsonController.createRequest(request, apiKey);
         return requestInfo;

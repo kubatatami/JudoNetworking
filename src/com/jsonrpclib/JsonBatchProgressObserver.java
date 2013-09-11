@@ -1,5 +1,7 @@
 package com.jsonrpclib;
 
+import android.util.Log;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -21,19 +23,18 @@ public class JsonBatchProgressObserver implements JsonProgressObserver {
 
     @Override
     public void progressTick() {
-        progressTick(1);
+        progressTick(1.0f);
     }
 
     @Override
     public synchronized void progressTick(float progress) {
-        progress += progress;
+        this.progress += progress;
         publishProgress();
     }
 
 
-    public synchronized void progressTick(int i) {
-        progress += i;
-        publishProgress();
+    public void progressTick(int i) {
+        progressTick((float) i);
     }
 
 

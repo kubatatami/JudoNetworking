@@ -28,10 +28,8 @@ public class JsonInputStream extends InputStream {
     @Override
     public int read() throws IOException {
         int result = stream.read();
-        if (result == -1) {
-            timeStat.tickReadTime();
-        } else if (contentSize != -1) {
-            timeStat.progressTick(1 / contentSize);
+        if (contentSize != -1) {
+            timeStat.progressTick(1 / (float)contentSize);
         }
         return result;
     }
@@ -44,6 +42,7 @@ public class JsonInputStream extends InputStream {
     @Override
     public void close() throws IOException {
         stream.close();
+        timeStat.tickReadTime();
     }
 
     @Override
@@ -59,10 +58,8 @@ public class JsonInputStream extends InputStream {
     @Override
     public int read(byte[] buffer, int offset, int length) throws IOException {
         int result = stream.read(buffer, offset, length);
-        if (result == -1) {
-            timeStat.tickReadTime();
-        } else if (contentSize != -1) {
-            timeStat.progressTick(result / contentSize);
+        if (contentSize != -1) {
+            timeStat.progressTick((float)result / (float)contentSize);
         }
         return result;
     }

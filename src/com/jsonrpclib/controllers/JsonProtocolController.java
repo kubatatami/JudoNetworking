@@ -14,6 +14,8 @@ import com.jsonrpclib.ProtocolController;
  */
 public abstract class JsonProtocolController extends ProtocolController {
     protected Gson gson;
+    protected String apiKey=null;
+    protected String apiKeyName=null;
 
     public JsonProtocolController() {
         init(new GsonBuilder());
@@ -39,5 +41,14 @@ public abstract class JsonProtocolController extends ProtocolController {
     protected class JsonErrorModel {
         String message;
         int code;
+    }
+
+    public void setApiKey(String name, String key) {
+        this.apiKeyName = name;
+        this.apiKey = key;
+    }
+
+    public void setApiKey(String key) {
+        this.apiKey = key;
     }
 }

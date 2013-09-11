@@ -3,7 +3,9 @@ package com.jsonrpclib.controllers;
 import com.google.gson22.GsonBuilder;
 import com.jsonrpclib.JsonRequestInterface;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,10 +27,21 @@ public abstract class JsonRpcController extends JsonProtocolController {
     }
 
     @Override
-    public RequestInfo createRequest(String url, JsonRequestInterface request, String apiKey) {
-        Object finalArgs;
+    public RequestInfo createRequest(String url, JsonRequestInterface request) throws IOException {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url;
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        OutputStreamWriter writer = new OutputStreamWriter(stream);
+        gson.toJson(createRequestObject(request), writer);
+        writer.close();
+        requestInfo.data = stream.toByteArray();
+        requestInfo.mimeType = "application/json";
+        return requestInfo;
+    }
+
+
+    public Object createRequestObject(JsonRequestInterface request) throws IOException {
+        Object finalArgs;
 
 
         if (request.getParamNames().length > 0 && request.getArgs() != null) {
@@ -40,7 +53,15 @@ public abstract class JsonRpcController extends JsonProtocolController {
             }
             finalArgs = paramObjects;
             if (apiKey != null) {
-                finalArgs = new Object[]{apiKey, finalArgs};
+                if(apiKeyName==null)
+                {
+                    finalArgs = new Object[]{apiKey, finalArgs};
+                }
+                else
+                {
+                    paramObjects.put(apiKeyName, apiKey);
+                }
+
             }
         } else {
             finalArgs = request.getArgs();
@@ -55,22 +76,10 @@ public abstract class JsonRpcController extends JsonProtocolController {
                 }
             }
         }
-        requestInfo.data = createRequestModel(request.getName(), finalArgs, request.getId());
-        requestInfo.mimeType = "application/json";
-        return requestInfo;
+        return createRequestModel(request.getName(), finalArgs, request.getId());
     }
 
     protected abstract Object createRequestModel(String name, Object params, Integer id);
-
-    @Override
-    public boolean isBatchSupported() {
-        return false;
-    }
-
-    @Override
-    public void writeToStream(Writer writer, Object request) throws IOException {
-        gson.toJson(request, writer);
-    }
 
 
     protected class JsonRpcRequestModel {

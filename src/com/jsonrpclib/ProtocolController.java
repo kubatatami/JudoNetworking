@@ -1,5 +1,8 @@
 package com.jsonrpclib;
 
+import com.jsonrpclib.connectors.JsonHttpUrlConnection;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
 import java.util.List;
@@ -15,12 +18,12 @@ public abstract class ProtocolController {
 
     public static class RequestInfo {
         public String url;
-        public Object data;
+        public byte[] data;
         public String mimeType;
     }
 
 
-    public abstract RequestInfo createRequest(String url, JsonRequestInterface request, String apiKey);
+    public abstract RequestInfo createRequest(String url, JsonRequestInterface request) throws Exception;
 
     public abstract JsonResult parseResponse(JsonRequestInterface request, InputStream stream);
 
@@ -28,7 +31,7 @@ public abstract class ProtocolController {
         return false;
     }
 
-    public RequestInfo createRequest(String url, List<JsonRequestInterface> requests, String apiKey) throws Exception {
+    public RequestInfo createRequest(String url, List<JsonRequestInterface> requests) throws Exception {
         throw new JsonException("CreateRequest not implemented.");
     }
 
@@ -36,7 +39,9 @@ public abstract class ProtocolController {
         throw new JsonException("ParseResponses not implemented.");
     }
 
-    public void writeToStream(Writer writer, Object request) throws Exception {
-        throw new JsonException("WriteToStream not implemented.");
+    public void parseError(int code, String resp) throws Exception {
+
     }
+
+
 }

@@ -261,7 +261,10 @@ class JsonProxy implements InvocationHandler {
             List<JsonBatchTask> tasks = new ArrayList<JsonBatchTask>(connections);
 
             progressObserver.setMaxProgress((requestParts.size() + cachedRequests) * JsonTimeStat.TICKS);
-            progressObserver.progressTick(cachedRequests * JsonTimeStat.TICKS);
+            if(cachedRequests>0)
+            {
+                progressObserver.progressTick(cachedRequests * JsonTimeStat.TICKS);
+            }
 
             for (List<JsonRequest> requests : requestParts) {
 
