@@ -88,13 +88,13 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
                     try
                     {
                         result = gson.fromJson(res.result, requests.get(i).getReturnType());
+                        finalResponses.add(new JsonSuccessResult(res.id, result));
                     }
                     catch (JsonSyntaxException ex)
                     {
                         finalResponses.add(new JsonErrorResult(res.id, new JsonException(requests.get(i).getName(), ex)));
                     }
                 }
-                finalResponses.add(new JsonSuccessResult(res.id, result));
             } else {
                 finalResponses.add(new JsonErrorResult(res.id, new JsonException(requests.get(i).getName()+": "+res.error.message, res.error.code)));
             }

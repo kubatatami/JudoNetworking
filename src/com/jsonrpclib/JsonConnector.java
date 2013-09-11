@@ -67,17 +67,30 @@ class JsonConnector {
 
     public static void verifyResultObject(Object object, Type type) throws JsonException {
         if (object != null) {
-            for (Field field : object.getClass().getFields()) {
-                try {
-                    field.setAccessible(true);
-                    if (field.get(object) == null) {
-                        if (field.isAnnotationPresent(JsonRequired.class)) {
-                            throw new JsonException("Field " + object.getClass().getName() + "." + field.getName() + " required.");
+            if (object instanceof Iterable) {
+                for (Object obj : ((Iterable)object)) {
+                    verifyResultObject(obj, obj.getClass());
+                }
+            } else {
+                for (Field field : object.getClass().getFields()) {
+                    try {
+                        field.setAccessible(true);
+                        if (field.get(object) == null) {
+                            if (field.isAnnotationPresent(JsonRequired.class)) {
+                                throw new JsonException("Field " + object.getClass().getName() + "." + field.getName() + " required.");
+                            }
+                        } else if (field.getType().isAnnotationPresent(JsonRequired.class)) {
+                            Object iterableObject = field.get(object);
+                            if (iterableObject instanceof Iterable) {
+                                for (Object obj : (Iterable)iterableObject) {
+                                    verifyResultObject(obj, obj.getClass());
+                                }
+                            } else {
+                                verifyResultObject(field.get(object), field.getType());
+                            }
                         }
-                    } else if (field.getType().isAnnotationPresent(JsonRequired.class)) {
-                        verifyResultObject(field.get(object), field.getType());
+                    } catch (IllegalAccessException e) {
                     }
-                } catch (IllegalAccessException e) {
                 }
             }
         } else if (type instanceof Class && ((Class) type).isAnnotationPresent(JsonRequired.class)) {
@@ -105,8 +118,7 @@ class JsonConnector {
                     }
                     return object;
                 } catch (InvocationTargetException ex) {
-                    if(ex.getCause()==null || !(ex.getCause() instanceof UnsupportedOperationException))
-                    {
+                    if (ex.getCause() == null || !(ex.getCause() instanceof UnsupportedOperationException)) {
                         throw ex;
                     }
                 }
@@ -123,12 +135,9 @@ class JsonConnector {
                         timeStat.tickTime(i);
                     }
                 } catch (InvocationTargetException ex) {
-                    if(ex.getCause()!=null && ex.getCause() instanceof UnsupportedOperationException)
-                    {
+                    if (ex.getCause() != null && ex.getCause() instanceof UnsupportedOperationException) {
                         implemented = false;
-                    }
-                    else
-                    {
+                    } else {
                         throw ex;
                     }
                 }
@@ -259,12 +268,9 @@ class JsonConnector {
                             request.getMethod().invoke(virtualServerInfo.server, args);
 
                         } catch (InvocationTargetException ex) {
-                            if(ex.getCause()!=null && ex.getCause() instanceof UnsupportedOperationException)
-                            {
+                            if (ex.getCause() != null && ex.getCause() instanceof UnsupportedOperationException) {
                                 implemented = false;
-                            }
-                            else
-                            {
+                            } else {
                                 throw ex;
                             }
                         }
