@@ -118,11 +118,7 @@ class JsonRpcImplementation implements JsonRpc {
 
     @SuppressWarnings("unchecked")
     public <T> T getService(Class<T> obj, boolean autoBatch) {
-        if (virtualServers.containsKey(obj)) {
-            return (T) virtualServers.get(obj).server;
-        } else {
-            return getService(obj, new JsonProxy(context, this, autoBatch ? JsonBatchMode.AUTO : JsonBatchMode.NONE));
-        }
+        return getService(obj, new JsonProxy(context, this, autoBatch ? JsonBatchMode.AUTO : JsonBatchMode.NONE));
     }
 
     @SuppressWarnings("unchecked")

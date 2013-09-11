@@ -44,7 +44,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
         Object finalArgs;
 
 
-        if (request.getParamNames().length > 0 && request.getArgs() != null) {
+        if (request.getParamNames().length > 0 && request.getArgs() != null || apiKeyName!=null) {
             int i = 0;
             Map<String, Object> paramObjects = new HashMap<String, Object>();
             for (String param : request.getParamNames()) {

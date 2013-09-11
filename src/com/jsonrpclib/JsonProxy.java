@@ -296,7 +296,7 @@ class JsonProxy implements InvocationHandler {
         for (JsonRequest request : requests) {
             try {
                 JsonResult response = responses.get(i);
-                JsonConnector.verifyResultObject(response.result, request.getReturnType());
+
                 if (response.cacheObject != null) {
                     results[i] = response.cacheObject;
                 } else {
@@ -305,6 +305,7 @@ class JsonProxy implements InvocationHandler {
                     }
 
                     if (request.getReturnType() != Void.class) {
+                        JsonConnector.verifyResultObject(response.result, request.getReturnType());
                         results[i] = response.result;
                         if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
                             rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), results[i], request.getCacheSize());

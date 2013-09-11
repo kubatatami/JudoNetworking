@@ -96,7 +96,7 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
                 }
                 finalResponses.add(new JsonSuccessResult(res.id, result));
             } else {
-                finalResponses.add(new JsonErrorResult(res.id, new JsonException(res.error.message, res.error.code)));
+                finalResponses.add(new JsonErrorResult(res.id, new JsonException(requests.get(i).getName()+": "+res.error.message, res.error.code)));
             }
         }
 

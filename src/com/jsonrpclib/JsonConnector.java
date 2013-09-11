@@ -6,6 +6,7 @@ import android.util.Base64;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -103,7 +104,11 @@ class JsonConnector {
                         timeStat.tickTime(i);
                     }
                     return object;
-                } catch (UnsupportedOperationException ex) {
+                } catch (InvocationTargetException ex) {
+                    if(ex.getCause()==null || !(ex.getCause() instanceof UnsupportedOperationException))
+                    {
+                        throw ex;
+                    }
                 }
 
             } else {
@@ -117,8 +122,15 @@ class JsonConnector {
                         Thread.sleep(delay / JsonTimeStat.TICKS);
                         timeStat.tickTime(i);
                     }
-                } catch (UnsupportedOperationException ex) {
-                    implemented = false;
+                } catch (InvocationTargetException ex) {
+                    if(ex.getCause()!=null && ex.getCause() instanceof UnsupportedOperationException)
+                    {
+                        implemented = false;
+                    }
+                    else
+                    {
+                        throw ex;
+                    }
                 }
                 if (implemented) {
                     if (callback.getResult().error != null) {
@@ -246,8 +258,15 @@ class JsonConnector {
                         try {
                             request.getMethod().invoke(virtualServerInfo.server, args);
 
-                        } catch (UnsupportedOperationException ex) {
-                            implemented = false;
+                        } catch (InvocationTargetException ex) {
+                            if(ex.getCause()!=null && ex.getCause() instanceof UnsupportedOperationException)
+                            {
+                                implemented = false;
+                            }
+                            else
+                            {
+                                throw ex;
+                            }
                         }
                         if (implemented) {
                             results.add(callback.getResult());
