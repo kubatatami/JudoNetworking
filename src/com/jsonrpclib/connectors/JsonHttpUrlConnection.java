@@ -132,8 +132,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
         if (requestInfo.data != null) {
             urlConnection.setDoOutput(true);
-            urlConnection.setFixedLengthStreamingMode(requestInfo.data.length);
-            OutputStream stream = new JsonOutputStream(new BufferedOutputStream(urlConnection.getOutputStream()),timeStat,requestInfo.data.length);
+            OutputStream stream = new BufferedOutputStream(new JsonOutputStream(urlConnection.getOutputStream(),timeStat,requestInfo.data.length));
             timeStat.tickConnectionTime();
             if ((debugFlags & JsonRpc.REQUEST_DEBUG) > 0) {
                 longLog("REQ", new String(requestInfo.data));

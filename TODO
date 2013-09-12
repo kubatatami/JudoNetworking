@@ -12,9 +12,6 @@ trudne
 -obsluga rest poprzez opis umieszczenia parametrow /category/{number}/name
 -connector http z obsługą Pipelining
 
-pilne:
--plynniejszy progess poprzez: analize pobierania i analize wysylania (udostepnienie mechanizmu i implementacja w transporterze HTTP)
-
 
 
 
