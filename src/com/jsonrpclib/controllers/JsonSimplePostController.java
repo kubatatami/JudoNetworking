@@ -1,8 +1,10 @@
 package com.jsonrpclib.controllers;
 
 import com.google.gson22.GsonBuilder;
+import com.jsonrpclib.JsonInputStreamEntity;
 import com.jsonrpclib.JsonRequestInterface;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -28,7 +30,8 @@ public class JsonSimplePostController extends JsonSimpleController {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url + request.getName();
         String reqStr=JsonController.createRequest(request, apiKey);
-        requestInfo.data = reqStr.getBytes();
+        byte[] bytes = reqStr.getBytes();
+        requestInfo.entity =  new JsonInputStreamEntity(new ByteArrayInputStream(bytes), bytes.length);
         return requestInfo;
     }
 

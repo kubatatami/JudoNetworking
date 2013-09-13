@@ -18,7 +18,7 @@ public abstract class ProtocolController {
 
     public static class RequestInfo {
         public String url;
-        public byte[] data;
+        public JsonInputStreamEntity entity;
         public String mimeType;
     }
 

@@ -183,7 +183,7 @@ class JsonProxy implements InvocationHandler {
                     }
                 }
 
-                JsonBatchProgressObserver batchProgressObserver = new JsonBatchProgressObserver(rpc, batch);
+                JsonBatchProgressObserver batchProgressObserver = new JsonBatchProgressObserver(rpc, batch, batches);
                 List<JsonResult> responses;
                 if (batches.size() > 0) {
 

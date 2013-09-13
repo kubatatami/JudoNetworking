@@ -1,12 +1,10 @@
 package com.jsonrpclib.controllers;
 
 import com.google.gson22.GsonBuilder;
+import com.jsonrpclib.JsonInputStreamEntity;
 import com.jsonrpclib.JsonRequestInterface;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,7 +32,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
         OutputStreamWriter writer = new OutputStreamWriter(stream);
         gson.toJson(createRequestObject(request), writer);
         writer.close();
-        requestInfo.data = stream.toByteArray();
+        requestInfo.entity = new JsonInputStreamEntity(new ByteArrayInputStream(stream.toByteArray()), stream.size());
         requestInfo.mimeType = "application/json";
         return requestInfo;
     }

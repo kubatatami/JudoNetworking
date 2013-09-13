@@ -26,7 +26,7 @@ public abstract class JsonProtocolController extends ProtocolController {
     }
 
     private void init(GsonBuilder builder) {
-        gson = builder.create();
+        gson = builder.disableHtmlEscaping().create();
     }
 
 

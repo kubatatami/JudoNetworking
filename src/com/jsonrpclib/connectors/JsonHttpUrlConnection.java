@@ -130,14 +130,15 @@ public class JsonHttpUrlConnection extends JsonConnection {
             urlConnection.setRequestMethod(httpMethod.methodType());
         }
 
-        if (requestInfo.data != null) {
+        if (requestInfo.entity != null) {
             urlConnection.setDoOutput(true);
-            OutputStream stream = new BufferedOutputStream(new JsonOutputStream(urlConnection.getOutputStream(),timeStat,requestInfo.data.length));
+            OutputStream stream = new JsonOutputStream(urlConnection.getOutputStream(),timeStat,requestInfo.entity.getContentLength());
             timeStat.tickConnectionTime();
             if ((debugFlags & JsonRpc.REQUEST_DEBUG) > 0) {
-                longLog("REQ", new String(requestInfo.data));
+                longLog("REQ", convertStreamToString(requestInfo.entity.getContent()));
+                requestInfo.entity.reset();
             }
-            stream.write(requestInfo.data);
+            requestInfo.entity.writeTo(stream);
             stream.flush();
             stream.close();
         } else {

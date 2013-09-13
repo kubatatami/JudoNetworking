@@ -31,6 +31,18 @@ public abstract class JsonSupportFragmentCallback<T> extends JsonCallback<T> {
         }
     }
 
+    @Override
+    public final void onProgress(int progress) {
+        if (fragment.getActivity() != null) {
+            onSafeProgress(progress);
+        }
+    }
+
+    public void onSafeProgress(int progress)
+    {
+
+    }
+
     public abstract void onSafeFinish(T result);
 
     public void onSafeError(Exception e) {

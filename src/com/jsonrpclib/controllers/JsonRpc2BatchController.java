@@ -43,7 +43,7 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
         OutputStreamWriter writer = new OutputStreamWriter(stream);
         gson.toJson(requestsJson, writer);
         writer.close();
-        requestInfo.data = stream.toByteArray();
+        requestInfo.entity =  new JsonInputStreamEntity(new ByteArrayInputStream(stream.toByteArray()), stream.size());
         requestInfo.mimeType = "application/json";
         return requestInfo;
     }

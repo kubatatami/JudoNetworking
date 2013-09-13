@@ -13,9 +13,9 @@ import java.io.OutputStream;
 public class JsonOutputStream extends OutputStream {
     private OutputStream stream;
     private JsonTimeStat timeStat;
-    private int contentSize;
+    private long contentSize;
 
-    public JsonOutputStream(OutputStream stream, JsonTimeStat timeStat, int contentSize) {
+    public JsonOutputStream(OutputStream stream, JsonTimeStat timeStat, long contentSize) {
         this.stream = stream;
         this.timeStat = timeStat;
         this.contentSize = contentSize;
