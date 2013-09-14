@@ -5,9 +5,6 @@ import com.jsonrpclib.JsonInputStreamEntity;
 import com.jsonrpclib.JsonRequestInterface;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 
 /**
  * Created with IntelliJ IDEA.
@@ -29,9 +26,9 @@ public class JsonSimplePostController extends JsonSimpleController {
     public RequestInfo createRequest(String url, JsonRequestInterface request) throws Exception {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url + request.getName();
-        String reqStr=JsonController.createRequest(request, apiKey);
+        String reqStr = JsonController.createRequest(request, apiKey);
         byte[] bytes = reqStr.getBytes();
-        requestInfo.entity =  new JsonInputStreamEntity(new ByteArrayInputStream(bytes), bytes.length);
+        requestInfo.entity = new JsonInputStreamEntity(new ByteArrayInputStream(bytes), bytes.length);
         return requestInfo;
     }
 

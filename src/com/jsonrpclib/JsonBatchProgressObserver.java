@@ -1,7 +1,5 @@
 package com.jsonrpclib;
 
-import android.util.Log;
-
 import java.util.List;
 
 /**
@@ -22,7 +20,7 @@ public class JsonBatchProgressObserver implements JsonProgressObserver {
     public JsonBatchProgressObserver(JsonRpcImplementation rpc, JsonBatch batch, List<JsonRequest> requestList) {
         this.rpc = rpc;
         this.batch = batch;
-        this.requestList=requestList;
+        this.requestList = requestList;
     }
 
     @Override
@@ -46,10 +44,8 @@ public class JsonBatchProgressObserver implements JsonProgressObserver {
         if (batch != null && progress > 0) {
             rpc.getHandler().post(new JsonAsyncResult(batch, (int) (progress * 100 / max)));
         }
-        for(JsonRequest request : requestList)
-        {
-            if(request.getCallback()!=null)
-            {
+        for (JsonRequest request : requestList) {
+            if (request.getCallback() != null) {
                 rpc.getHandler().post(new JsonAsyncResult(request.getCallback(), (int) (progress * 100 / max)));
             }
         }

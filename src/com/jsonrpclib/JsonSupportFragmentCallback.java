@@ -38,8 +38,7 @@ public abstract class JsonSupportFragmentCallback<T> extends JsonCallback<T> {
         }
     }
 
-    public void onSafeProgress(int progress)
-    {
+    public void onSafeProgress(int progress) {
 
     }
 

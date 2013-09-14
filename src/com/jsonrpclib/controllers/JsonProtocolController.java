@@ -14,8 +14,8 @@ import com.jsonrpclib.ProtocolController;
  */
 public abstract class JsonProtocolController extends ProtocolController {
     protected Gson gson;
-    protected String apiKey=null;
-    protected String apiKeyName=null;
+    protected String apiKey = null;
+    protected String apiKeyName = null;
 
     public JsonProtocolController() {
         init(new GsonBuilder());

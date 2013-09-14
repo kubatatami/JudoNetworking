@@ -30,11 +30,10 @@ package com.jsonrpclib;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
- 
+
 /**
- * A streamed, non-repeatable entity that obtains its content from 
+ * A streamed, non-repeatable entity that obtains its content from
  * an {@link InputStream}.
- *
  */
 public class JsonInputStreamEntity {
 
@@ -44,7 +43,7 @@ public class JsonInputStreamEntity {
     private final long length;
 
     public JsonInputStreamEntity(final InputStream instream, long length) {
-        super();        
+        super();
         if (instream == null) {
             throw new IllegalArgumentException("Source input stream may not be null");
         }
@@ -55,7 +54,7 @@ public class JsonInputStreamEntity {
     public long getContentLength() {
         return this.length;
     }
-        
+
     public void writeTo(final OutputStream outstream) throws IOException {
         if (outstream == null) {
             throw new IllegalArgumentException("Output stream may not be null");
@@ -72,7 +71,7 @@ public class JsonInputStreamEntity {
             // consume no more than length
             long remaining = this.length;
             while (remaining > 0) {
-                l = instream.read(buffer, 0, (int)Math.min(BUFFER_SIZE, remaining));
+                l = instream.read(buffer, 0, (int) Math.min(BUFFER_SIZE, remaining));
                 if (l == -1) {
                     break;
                 }

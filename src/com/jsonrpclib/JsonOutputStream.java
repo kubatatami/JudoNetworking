@@ -25,7 +25,7 @@ public class JsonOutputStream extends OutputStream {
     @Override
     public void write(int oneByte) throws IOException {
         stream.write(oneByte);
-        timeStat.progressTick(1 / (float)contentSize);
+        timeStat.progressTick(1 / (float) contentSize);
     }
 
     @Override
@@ -42,6 +42,6 @@ public class JsonOutputStream extends OutputStream {
     @Override
     public void write(byte[] buffer, int offset, int count) throws IOException {
         stream.write(buffer, offset, count);
-        timeStat.progressTick((float) count / (float)contentSize);
+        timeStat.progressTick((float) count / (float) contentSize);
     }
 }

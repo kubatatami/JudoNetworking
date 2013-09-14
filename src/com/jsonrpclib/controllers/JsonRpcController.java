@@ -4,7 +4,10 @@ import com.google.gson22.GsonBuilder;
 import com.jsonrpclib.JsonInputStreamEntity;
 import com.jsonrpclib.JsonRequestInterface;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,7 +45,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
         Object finalArgs;
 
 
-        if (request.getParamNames().length > 0 && request.getArgs() != null || apiKeyName!=null) {
+        if (request.getParamNames().length > 0 && request.getArgs() != null || apiKeyName != null) {
             int i = 0;
             Map<String, Object> paramObjects = new HashMap<String, Object>();
             for (String param : request.getParamNames()) {
@@ -51,12 +54,9 @@ public abstract class JsonRpcController extends JsonProtocolController {
             }
             finalArgs = paramObjects;
             if (apiKey != null) {
-                if(apiKeyName==null)
-                {
+                if (apiKeyName == null) {
                     finalArgs = new Object[]{apiKey, finalArgs};
-                }
-                else
-                {
+                } else {
                     paramObjects.put(apiKeyName, apiKey);
                 }
 

@@ -4,7 +4,6 @@ import com.google.gson22.GsonBuilder;
 import com.google.gson22.JsonSyntaxException;
 import com.google.gson22.reflect.TypeToken;
 import com.google.gson22.stream.JsonReader;
-import com.google.gson22.stream.JsonWriter;
 import com.jsonrpclib.*;
 
 import java.io.*;
@@ -43,7 +42,7 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
         OutputStreamWriter writer = new OutputStreamWriter(stream);
         gson.toJson(requestsJson, writer);
         writer.close();
-        requestInfo.entity =  new JsonInputStreamEntity(new ByteArrayInputStream(stream.toByteArray()), stream.size());
+        requestInfo.entity = new JsonInputStreamEntity(new ByteArrayInputStream(stream.toByteArray()), stream.size());
         requestInfo.mimeType = "application/json";
         return requestInfo;
     }
@@ -85,18 +84,15 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
             if (res.error == null) {
                 Object result = null;
                 if (!requests.get(i).getReturnType().equals(Void.TYPE)) {
-                    try
-                    {
+                    try {
                         result = gson.fromJson(res.result, requests.get(i).getReturnType());
                         finalResponses.add(new JsonSuccessResult(res.id, result));
-                    }
-                    catch (JsonSyntaxException ex)
-                    {
+                    } catch (JsonSyntaxException ex) {
                         finalResponses.add(new JsonErrorResult(res.id, new JsonException(requests.get(i).getName(), ex)));
                     }
                 }
             } else {
-                finalResponses.add(new JsonErrorResult(res.id, new JsonException(requests.get(i).getName()+": "+res.error.message, res.error.code)));
+                finalResponses.add(new JsonErrorResult(res.id, new JsonException(requests.get(i).getName() + ": " + res.error.message, res.error.code)));
             }
         }
 

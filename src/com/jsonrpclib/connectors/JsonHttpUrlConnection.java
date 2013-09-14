@@ -4,7 +4,10 @@ import android.os.Build;
 import android.util.Base64;
 import com.jsonrpclib.*;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -27,39 +30,37 @@ public class JsonHttpUrlConnection extends JsonConnection {
     private String authKey = null;
     private HttpURLCreator httpURLCreator = null;
     private HttpURLConnectionModifier httpURLConnectionModifier = null;
-    private boolean forceDisableKeepAlive=false;
 
     public JsonHttpUrlConnection() {
-        init(new HttpURLCreatorImplementation(), null,false);
+        init(new HttpURLCreatorImplementation(), null, false);
     }
 
     public JsonHttpUrlConnection(HttpURLCreator httpURLCreator) {
-        init(httpURLCreator, null,false);
+        init(httpURLCreator, null, false);
     }
 
     public JsonHttpUrlConnection(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier) {
-        init(httpURLCreator, httpURLConnectionModifier,false);
+        init(httpURLCreator, httpURLConnectionModifier, false);
     }
 
 
     public JsonHttpUrlConnection(boolean forceDisableKeepAlive) {
-        init(new HttpURLCreatorImplementation(), null,forceDisableKeepAlive);
+        init(new HttpURLCreatorImplementation(), null, forceDisableKeepAlive);
     }
 
-    public JsonHttpUrlConnection(HttpURLCreator httpURLCreator,boolean forceDisableKeepAlive) {
-        init(httpURLCreator, null,forceDisableKeepAlive);
+    public JsonHttpUrlConnection(HttpURLCreator httpURLCreator, boolean forceDisableKeepAlive) {
+        init(httpURLCreator, null, forceDisableKeepAlive);
     }
 
-    public JsonHttpUrlConnection(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier,boolean forceDisableKeepAlive) {
-        init(httpURLCreator, httpURLConnectionModifier,forceDisableKeepAlive);
+    public JsonHttpUrlConnection(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier, boolean forceDisableKeepAlive) {
+        init(httpURLCreator, httpURLConnectionModifier, forceDisableKeepAlive);
     }
 
 
-    private void init(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier,boolean forceDisableKeepAlive) {
+    private void init(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier, boolean forceDisableKeepAlive) {
         this.httpURLCreator = httpURLCreator;
         this.httpURLConnectionModifier = httpURLConnectionModifier;
         disableConnectionReuseIfNecessary(forceDisableKeepAlive);
-        this.forceDisableKeepAlive=forceDisableKeepAlive;
     }
 
     private void disableConnectionReuseIfNecessary(boolean forceDisableKeepAlive) {
@@ -132,7 +133,8 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
         if (requestInfo.entity != null) {
             urlConnection.setDoOutput(true);
-            OutputStream stream = new JsonOutputStream(urlConnection.getOutputStream(),timeStat,requestInfo.entity.getContentLength());
+            OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
+                    new JsonOutputStream(urlConnection.getOutputStream(), timeStat, requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
             timeStat.tickConnectionTime();
             if ((debugFlags & JsonRpc.REQUEST_DEBUG) > 0) {
                 longLog("REQ", convertStreamToString(requestInfo.entity.getContent()));
@@ -156,7 +158,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
                 } catch (FileNotFoundException ex) {
                     int code = finalConnection.getResponseCode();
                     String resp = convertStreamToString(finalConnection.getErrorStream());
-                    protocolController.parseError(code,resp);
+                    protocolController.parseError(code, resp);
                     throw new HttpException(resp, code);
                 }
 

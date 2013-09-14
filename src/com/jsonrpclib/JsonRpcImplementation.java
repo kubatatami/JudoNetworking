@@ -131,8 +131,10 @@ class JsonRpcImplementation implements JsonRpc {
     public <T> void callInBatch(Class<T> obj, final JsonBatch<T> batch) {
 
         if ((getDebugFlags() & JsonRpc.REQUEST_LINE_DEBUG) > 0) {
-            StackTraceElement stackTraceElement = Thread.currentThread().getStackTrace()[3];
-            JsonLoggerImpl.log("Batch request from " + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber());
+            StackTraceElement stackTraceElement = JsonProxy.getExternalStacktrace(Thread.currentThread().getStackTrace());
+            JsonLoggerImpl.log("Batch request from " +
+                    stackTraceElement.getClassName() +
+                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
         }
 
         final JsonProxy pr = new JsonProxy(context, this, JsonBatchMode.MANUAL);

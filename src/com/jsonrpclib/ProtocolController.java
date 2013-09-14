@@ -1,10 +1,6 @@
 package com.jsonrpclib;
 
-import com.jsonrpclib.connectors.JsonHttpUrlConnection;
-
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.Writer;
 import java.util.List;
 
 /**

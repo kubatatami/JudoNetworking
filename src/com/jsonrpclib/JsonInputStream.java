@@ -29,7 +29,7 @@ public class JsonInputStream extends InputStream {
     public int read() throws IOException {
         int result = stream.read();
         if (contentSize != -1) {
-            timeStat.progressTick(1 / (float)contentSize);
+            timeStat.progressTick(1 / (float) contentSize);
         }
         return result;
     }
@@ -59,7 +59,7 @@ public class JsonInputStream extends InputStream {
     public int read(byte[] buffer, int offset, int length) throws IOException {
         int result = stream.read(buffer, offset, length);
         if (contentSize != -1) {
-            timeStat.progressTick((float)result / (float)contentSize);
+            timeStat.progressTick((float) result / (float) contentSize);
         }
         return result;
     }

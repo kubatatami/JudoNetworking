@@ -49,6 +49,19 @@ class JsonProxy implements InvocationHandler {
         return name;
     }
 
+    public static StackTraceElement getExternalStacktrace(StackTraceElement[] stackTrace) {
+        String packageName = JsonProxy.class.getPackage().getName();
+        boolean current = false;
+        for (StackTraceElement element : stackTrace) {
+            if (!current && element.getClassName().contains(packageName)) {
+                current = true;
+            } else if (current && !element.getClassName().contains(packageName) && !element.getClassName().contains("$Proxy0")) {
+                return element;
+            }
+        }
+        return stackTrace[0];
+    }
+
     public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
         try {
             Method method = getMethod(this, m.getName());
@@ -60,8 +73,10 @@ class JsonProxy implements InvocationHandler {
                 int timeout = rpc.getJsonConnector().getMethodTimeout();
 
                 if ((rpc.getDebugFlags() & JsonRpc.REQUEST_LINE_DEBUG) > 0) {
-                    StackTraceElement stackTraceElement = Thread.currentThread().getStackTrace()[3];
-                    JsonLoggerImpl.log("Request " + name + " " + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber());
+                    StackTraceElement stackTraceElement = getExternalStacktrace(Thread.currentThread().getStackTrace());
+                    JsonLoggerImpl.log("Request from " + name + " " +
+                            stackTraceElement.getClassName() +
+                            "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
                 }
 
                 if (ann.timeout() != 0) {
@@ -261,8 +276,7 @@ class JsonProxy implements InvocationHandler {
             List<JsonBatchTask> tasks = new ArrayList<JsonBatchTask>(connections);
 
             progressObserver.setMaxProgress((requestParts.size() + cachedRequests) * JsonTimeStat.TICKS);
-            if(cachedRequests>0)
-            {
+            if (cachedRequests > 0) {
                 progressObserver.progressTick(cachedRequests * JsonTimeStat.TICKS);
             }
 

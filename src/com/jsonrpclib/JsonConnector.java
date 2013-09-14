@@ -68,7 +68,7 @@ class JsonConnector {
     public static void verifyResultObject(Object object, Type type) throws JsonException {
         if (object != null) {
             if (object instanceof Iterable) {
-                for (Object obj : ((Iterable)object)) {
+                for (Object obj : ((Iterable) object)) {
                     verifyResultObject(obj, obj.getClass());
                 }
             } else {
@@ -82,7 +82,7 @@ class JsonConnector {
                         } else if (field.getType().isAnnotationPresent(JsonRequired.class)) {
                             Object iterableObject = field.get(object);
                             if (iterableObject instanceof Iterable) {
-                                for (Object obj : (Iterable)iterableObject) {
+                                for (Object obj : (Iterable) iterableObject) {
                                     verifyResultObject(obj, obj.getClass());
                                 }
                             } else {
