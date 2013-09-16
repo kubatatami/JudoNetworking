@@ -74,7 +74,7 @@ class JsonProxy implements InvocationHandler {
 
                 if ((rpc.getDebugFlags() & JsonRpc.REQUEST_LINE_DEBUG) > 0) {
                     StackTraceElement stackTraceElement = getExternalStacktrace(Thread.currentThread().getStackTrace());
-                    JsonLoggerImpl.log("Request from " + name + " " +
+                    JsonLoggerImpl.log("Request " + name + " from " +
                             stackTraceElement.getClassName() +
                             "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
                 }
