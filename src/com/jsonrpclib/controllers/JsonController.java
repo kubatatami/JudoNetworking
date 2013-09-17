@@ -18,12 +18,11 @@ import java.util.List;
  */
 abstract class JsonController {
 
-    public static String createRequest(JsonRequestInterface request, String apiKey) {
+    public static String createRequest(JsonRequestInterface request, String apiKey, String apiKeyName) {
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
         int i = 0;
-        if (apiKey != null && request.getParamNames().length - 1 == request.getArgs().length) {
-            nameValuePairs.add(new BasicNameValuePair(request.getParamNames()[0], apiKey));
-            i++;
+        if (apiKeyName != null) {
+            nameValuePairs.add(new BasicNameValuePair(apiKeyName, apiKey));
         }
 
         for (Object arg : request.getArgs()) {

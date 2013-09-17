@@ -144,6 +144,9 @@ public class JsonHttpUrlConnection extends JsonConnection {
             stream.flush();
             stream.close();
         } else {
+            if ((debugFlags & JsonRpc.REQUEST_DEBUG) > 0) {
+                longLog("REQ", requestInfo.url);
+            }
             urlConnection.getInputStream();
             timeStat.tickConnectionTime();
             timeStat.tickSendTime();
