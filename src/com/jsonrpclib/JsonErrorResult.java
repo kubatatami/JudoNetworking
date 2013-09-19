@@ -9,9 +9,6 @@ package com.jsonrpclib;
  */
 public class JsonErrorResult extends JsonResult {
 
-    public JsonErrorResult(Exception error) {
-        this.error = error;
-    }
 
     public JsonErrorResult(Integer id, Exception error) {
         this.id = id;

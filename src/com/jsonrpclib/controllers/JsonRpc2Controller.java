@@ -44,7 +44,7 @@ public class JsonRpc2Controller extends JsonRpcController {
             }
             return new JsonSuccessResult(request.getId(), null);
         } catch (Exception e) {
-            return new JsonErrorResult(e);
+            return new JsonErrorResult(request.getId(),e);
         }
     }
 

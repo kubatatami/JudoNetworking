@@ -167,6 +167,9 @@ public interface JsonRpc {
      */
     public void startTest(boolean onlyInDebugMode, String name, int revision);
 
+
+    public void setVerifyResultModel(boolean enabled) ;
+
     /**
      *
      */

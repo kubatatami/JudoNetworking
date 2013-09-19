@@ -40,7 +40,7 @@ class JsonRpcImplementation implements JsonRpc {
     private String url;
     private ProtocolController protocolController;
     private HashMap<Class, JsonVirtualServerInfo> virtualServers = new HashMap<Class, JsonVirtualServerInfo>();
-
+    private boolean verifyResultModel=true;
 
     public JsonRpcImplementation(Context context, ProtocolController protocolController, JsonConnection connection, String url) {
         init(context, protocolController, connection, url, null);
@@ -258,6 +258,15 @@ class JsonRpcImplementation implements JsonRpc {
         }
 
 
+    }
+
+    @Override
+    public void setVerifyResultModel(boolean enabled) {
+        verifyResultModel=enabled;
+    }
+
+    boolean isVerifyResultModel() {
+        return verifyResultModel;
     }
 
     String getTestName() {

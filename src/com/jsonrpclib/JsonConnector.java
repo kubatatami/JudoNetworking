@@ -56,11 +56,14 @@ class JsonConnector {
             JsonInputStream stream = new JsonInputStream(connectionStream, timeStat, conn.getContentLength());
             JsonResult result = controller.parseResponse(request, stream);
             timeStat.tickParseTime();
-            verifyResultObject(result.result, request.getReturnType());
+            if(rpc.isVerifyResultModel())
+            {
+                verifyResultObject(result.result, request.getReturnType());
+            }
             conn.close();
             return result;
         } catch (Exception e) {
-            return new JsonErrorResult(e);
+            return new JsonErrorResult(request.getId(),e);
         }
 
     }
@@ -75,21 +78,30 @@ class JsonConnector {
                 for (Field field : object.getClass().getFields()) {
                     try {
                         field.setAccessible(true);
+
                         if (field.get(object) == null) {
                             if (field.isAnnotationPresent(JsonRequired.class)) {
                                 throw new JsonException("Field " + object.getClass().getName() + "." + field.getName() + " required.");
                             }
-                        } else if (field.getType().isAnnotationPresent(JsonRequired.class)) {
+                        } else {
+                            JsonRequired ann = field.getAnnotation(JsonRequired.class);
                             Object iterableObject = field.get(object);
                             if (iterableObject instanceof Iterable) {
+                                int i=0;
                                 for (Object obj : (Iterable) iterableObject) {
                                     verifyResultObject(obj, obj.getClass());
+                                    i++;
                                 }
-                            } else {
+                                if(ann!=null && !ann.allowEmpty() && i==0)
+                                {
+                                    throw new JsonException("List " + object.getClass().getName() + "." + field.getName() + " is empty.");
+                                }
+                            } else if (ann!=null) {
                                 verifyResultObject(field.get(object), field.getType());
                             }
                         }
                     } catch (IllegalAccessException e) {
+                        e.printStackTrace();
                     }
                 }
             }
