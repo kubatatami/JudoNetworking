@@ -111,7 +111,8 @@ class JsonConnector {
     }
 
     public static Object[] addElement(Object[] org, Object added) {
-        Object[] result = Arrays.copyOf(org, org.length + 1);
+        Object[] result = new Object[org.length + 1];
+        System.arraycopy(org, 0, result, 0, org.length);
         result[org.length] = added;
         return result;
     }
