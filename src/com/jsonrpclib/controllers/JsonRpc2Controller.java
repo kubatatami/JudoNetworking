@@ -39,7 +39,7 @@ public class JsonRpc2Controller extends JsonRpcController {
                 throw new JsonException(response.error.message, response.error.code);
             }
             reader.close();
-            if (!request.getReturnType().equals(Void.TYPE)) {
+            if (!request.getReturnType().equals(Void.class)) {
                 return new JsonSuccessResult(request.getId(), gson.fromJson(response.result, request.getReturnType()));
             }
             return new JsonSuccessResult(request.getId(), null);

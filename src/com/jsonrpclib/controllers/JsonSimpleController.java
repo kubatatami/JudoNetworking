@@ -32,7 +32,7 @@ public abstract class JsonSimpleController extends JsonProtocolController {
         try {
             Object res = null;
             JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
-            if (!request.getReturnType().equals(Void.TYPE)) {
+            if (!request.getReturnType().equals(Void.class)) {
                 res = gson.fromJson(reader, request.getReturnType());
             }
             return new JsonSuccessResult(request.getId(), res);

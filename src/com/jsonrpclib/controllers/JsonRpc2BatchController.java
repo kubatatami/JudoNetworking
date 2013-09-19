@@ -7,6 +7,7 @@ import com.google.gson22.stream.JsonReader;
 import com.jsonrpclib.*;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -83,14 +84,16 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
             JsonRpcResponseModel2 res = responses.get(i);
             if (res.error == null) {
                 Object result = null;
-                if (!requests.get(i).getReturnType().equals(Void.TYPE)) {
-                    try {
+                try {
+                    Type type = requests.get(i).getReturnType();
+                    if (!type.equals(Void.class)) {
                         result = gson.fromJson(res.result, requests.get(i).getReturnType());
-                        finalResponses.add(new JsonSuccessResult(res.id, result));
-                    } catch (JsonSyntaxException ex) {
-                        finalResponses.add(new JsonErrorResult(res.id, new JsonException(requests.get(i).getName(), ex)));
                     }
+                    finalResponses.add(new JsonSuccessResult(res.id, result));
+                } catch (JsonSyntaxException ex) {
+                    finalResponses.add(new JsonErrorResult(res.id, new JsonException(requests.get(i).getName(), ex)));
                 }
+
             } else {
                 finalResponses.add(new JsonErrorResult(res.id, new JsonException(requests.get(i).getName() + ": " + res.error.message, res.error.code)));
             }
