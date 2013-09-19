@@ -55,7 +55,7 @@ class JsonProxy implements InvocationHandler {
         for (StackTraceElement element : stackTrace) {
             if (!current && element.getClassName().contains(packageName)) {
                 current = true;
-            } else if (current && !element.getClassName().contains(packageName) && !element.getClassName().contains("$Proxy0")) {
+            } else if (current && !element.getClassName().contains(packageName) && !element.getClassName().contains("$Proxy")) {
                 return element;
             }
         }
