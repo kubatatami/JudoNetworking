@@ -8,7 +8,10 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.Scanner;
 
 class JsonConnector {
 
@@ -56,14 +59,19 @@ class JsonConnector {
             JsonInputStream stream = new JsonInputStream(connectionStream, timeStat, conn.getContentLength());
             JsonResult result = controller.parseResponse(request, stream);
             timeStat.tickParseTime();
-            if(rpc.isVerifyResultModel())
-            {
-                verifyResultObject(result.result, request.getReturnType());
+            if (result instanceof JsonSuccessResult && !request.getReturnType().equals(Void.class)) {
+                if(result.result==null)
+                {
+                    throw new JsonException("Result object required.");
+                }
+                if (rpc.isVerifyResultModel()) {
+                    verifyResultObject(result.result, request.getReturnType());
+                }
             }
             conn.close();
             return result;
         } catch (Exception e) {
-            return new JsonErrorResult(request.getId(),e);
+            return new JsonErrorResult(request.getId(), e);
         }
 
     }
@@ -87,16 +95,15 @@ class JsonConnector {
                             JsonRequired ann = field.getAnnotation(JsonRequired.class);
                             Object iterableObject = field.get(object);
                             if (iterableObject instanceof Iterable) {
-                                int i=0;
+                                int i = 0;
                                 for (Object obj : (Iterable) iterableObject) {
                                     verifyResultObject(obj, obj.getClass());
                                     i++;
                                 }
-                                if(ann!=null && !ann.allowEmpty() && i==0)
-                                {
+                                if (ann != null && !ann.allowEmpty() && i == 0) {
                                     throw new JsonException("List " + object.getClass().getName() + "." + field.getName() + " is empty.");
                                 }
-                            } else if (ann!=null) {
+                            } else if (ann != null) {
                                 verifyResultObject(field.get(object), field.getType());
                             }
                         }
@@ -105,8 +112,6 @@ class JsonConnector {
                     }
                 }
             }
-        } else if (type instanceof Class && ((Class) type).isAnnotationPresent(JsonRequired.class)) {
-            throw new JsonException("Result object required.");
         }
     }
 
