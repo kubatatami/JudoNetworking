@@ -24,7 +24,5 @@ public @interface JsonMethod {
 
     public int cacheSize() default 100;
 
-    public int cachePersistSize() default 100;
-
     public boolean highPriority() default false;
 }

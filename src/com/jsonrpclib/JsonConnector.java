@@ -7,7 +7,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -59,14 +58,8 @@ class JsonConnector {
             JsonInputStream stream = new JsonInputStream(connectionStream, timeStat, conn.getContentLength());
             JsonResult result = controller.parseResponse(request, stream);
             timeStat.tickParseTime();
-            if (result instanceof JsonSuccessResult && !request.getReturnType().equals(Void.class)) {
-                if(result.result==null)
-                {
-                    throw new JsonException("Result object required.");
-                }
-                if (rpc.isVerifyResultModel()) {
-                    verifyResultObject(result.result, request.getReturnType());
-                }
+            if (rpc.isVerifyResultModel()) {
+                verifyResult(request,  result);
             }
             conn.close();
             return result;
@@ -76,40 +69,80 @@ class JsonConnector {
 
     }
 
-    public static void verifyResultObject(Object object, Type type) throws JsonException {
-        if (object != null) {
-            if (object instanceof Iterable) {
-                for (Object obj : ((Iterable) object)) {
-                    verifyResultObject(obj, obj.getClass());
+    public static void verifyResult(JsonRequest request, JsonResult result) throws JsonException {
+        if (result instanceof JsonSuccessResult && !request.getReturnType().equals(Void.class)) {
+
+
+            if (result.result == null) {
+                JsonRequired ann = request.getMethod().getAnnotation(JsonRequired.class);
+                if (ann != null) {
+                    throw new JsonException("Result object required.");
+                }
+                JsonRequiredList ann2 = request.getMethod().getAnnotation(JsonRequiredList.class);
+                if (ann2 != null) {
+                    throw new JsonException("Result object required.");
                 }
             } else {
-                for (Field field : object.getClass().getFields()) {
-                    try {
-                        field.setAccessible(true);
+                JsonRequiredList ann = request.getMethod().getAnnotation(JsonRequiredList.class);
+                if (ann != null) {
+                    if (result.result instanceof Iterable) {
+                        int i = 0;
+                        for (Object obj : (Iterable) result.result) {
+                            verifyResultObject(obj);
+                            i++;
+                        }
+                        if (ann.minSize() > 0 && i < ann.minSize()) {
+                            throw new JsonException("Result list from method " + request.getName() + "(size " + i + ") is smaller then limit: "+ann.minSize()+".");
+                        }
+                        if (ann.maxSize() >0  && i > ann.maxSize()) {
+                            throw new JsonException("Result list from method " + request.getName() + "(size " + i + ") is larger then limit: "+ann.maxSize()+".");
+                        }
+                    }
+                }
+                verifyResultObject(result.result);
+            }
+        }
+    }
 
-                        if (field.get(object) == null) {
-                            if (field.isAnnotationPresent(JsonRequired.class)) {
-                                throw new JsonException("Field " + object.getClass().getName() + "." + field.getName() + " required.");
-                            }
-                        } else {
-                            JsonRequired ann = field.getAnnotation(JsonRequired.class);
-                            Object iterableObject = field.get(object);
-                            if (iterableObject instanceof Iterable) {
+    public static void verifyResultObject(Object object) throws JsonException {
+        if (object instanceof Iterable) {
+            for (Object obj : ((Iterable) object)) {
+                verifyResultObject(obj);
+            }
+        } else {
+            for (Field field : object.getClass().getFields()) {
+                try {
+                    field.setAccessible(true);
+
+                    if (field.get(object) == null) {
+                        if (field.isAnnotationPresent(JsonRequired.class) || field.isAnnotationPresent(JsonRequiredList.class)) {
+                            throw new JsonException("Field " + object.getClass().getName() + "." + field.getName() + " required.");
+                        }
+                    } else {
+
+                        Object iterableObject = field.get(object);
+                        if (iterableObject instanceof Iterable) {
+                            JsonRequiredList ann = field.getAnnotation(JsonRequiredList.class);
+                            if (ann != null) {
                                 int i = 0;
                                 for (Object obj : (Iterable) iterableObject) {
-                                    verifyResultObject(obj, obj.getClass());
+                                    verifyResultObject(obj);
                                     i++;
                                 }
-                                if (ann != null && !ann.allowEmpty() && i == 0) {
-                                    throw new JsonException("List " + object.getClass().getName() + "." + field.getName() + " is empty.");
+
+                                if (ann.minSize() > 0 && i < ann.minSize()) {
+                                    throw new JsonException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is smaller then limit: "+ann.minSize()+".");
                                 }
-                            } else if (ann != null) {
-                                verifyResultObject(field.get(object), field.getType());
+                                if (ann.maxSize() >0  && i > ann.maxSize()) {
+                                    throw new JsonException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is larger then limit: "+ann.maxSize()+".");
+                                }
                             }
+                        } else if (field.getAnnotation(JsonRequired.class) != null) {
+                            verifyResultObject(field.get(object));
                         }
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
                     }
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
                 }
             }
         }

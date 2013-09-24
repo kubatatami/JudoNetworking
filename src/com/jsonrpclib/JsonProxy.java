@@ -319,13 +319,8 @@ class JsonProxy implements InvocationHandler {
                     }
 
                     if (request.getReturnType() != Void.class) {
-                        if(response.result==null)
-                        {
-                            throw new JsonException("Result object required.");
-                        }
-                        if(rpc.isVerifyResultModel())
-                        {
-                            JsonConnector.verifyResultObject(response.result, request.getReturnType());
+                        if (rpc.isVerifyResultModel()) {
+                            JsonConnector.verifyResult(request,  response);
                         }
                         results[i] = response.result;
                         if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {

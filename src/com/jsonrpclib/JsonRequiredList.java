@@ -11,5 +11,7 @@ import java.lang.annotation.RetentionPolicy;
  * To change this template use File | Settings | File Templates.
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface JsonRequired {
+public @interface JsonRequiredList {
+    int minSize() default -1;
+    int maxSize() default -1;
 }
