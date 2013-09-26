@@ -102,17 +102,26 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
         return timeout;
     }
 
-    public int getCacheLifeTime() {
-        return ann.cacheLifeTime();
+    public int getLocalCacheLifeTime() {
+        return method.getAnnotation(JsonLocalCache.class).lifeTime();
     }
 
-    public boolean isCachable() {
-        return ann.cacheable();
+    public boolean isLocalCachable() {
+        return method.isAnnotationPresent(JsonLocalCache.class);
     }
 
-    public int getCacheSize() {
-        return ann.cacheSize();
+    public int getLocalCacheSize() {
+        return method.getAnnotation(JsonLocalCache.class).size();
     }
+
+    public boolean isLocalCachePersist() {
+        return method.getAnnotation(JsonLocalCache.class).discPersist();
+    }
+
+    public boolean isServerCachable() {
+        return method.isAnnotationPresent(JsonServerCache.class);
+    }
+
 
     public long getWeight() {
         if (rpc.getStats().containsKey(name)) {
@@ -162,10 +171,6 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
     @Override
     public int getMaxProgress() {
         return max;
-    }
-
-    public boolean isCachePersist() {
-        return ann.cachePersist();
     }
 
     public JsonCallbackInterface<Object> getCallback() {

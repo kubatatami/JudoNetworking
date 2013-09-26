@@ -9,9 +9,9 @@ package com.jsonrpclib;
  */
 public interface JsonDiscCache {
 
-    public JsonCacheResult get(JsonCacheMethod method, Object params[], int cacheLifeTime, int cacheSize);
+    public JsonCacheResult get(JsonCacheMethod method, String hash, int cacheLifeTime);
 
-    public void put(JsonCacheMethod method, Object params[], Object object, int cacheSize);
+    public void put(JsonCacheMethod method, String hash, Object object);
 
     public void clearCache();
 

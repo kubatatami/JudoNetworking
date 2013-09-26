@@ -16,13 +16,5 @@ public @interface JsonMethod {
 
     public boolean async() default false;
 
-    public boolean cacheable() default false;
-
-    public boolean cachePersist() default false;
-
-    public int cacheLifeTime() default 0;
-
-    public int cacheSize() default 100;
-
     public boolean highPriority() default false;
 }

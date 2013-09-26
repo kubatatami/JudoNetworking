@@ -22,15 +22,12 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
 
 
     @Override
-    public JsonCacheResult get(JsonCacheMethod method, Object params[], int cacheLifeTime, int cacheSize) {
-        Integer hash = Arrays.deepHashCode(params);
+    public JsonCacheResult get(JsonCacheMethod method, String hash, int cacheLifeTime) {
         return loadObject(method, hash, cacheLifeTime);
     }
 
     @Override
-    public void put(JsonCacheMethod method, Object params[], Object object, int cacheSize) {
-
-        Integer hash = Arrays.deepHashCode(params);
+    public void put(JsonCacheMethod method, String hash, Object object) {
         saveObject(method, hash, object);
 
     }
@@ -49,7 +46,9 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
 
     @Override
     public void clearCache() {
-        File file = getCacheDir();
+        File file = getLocalCacheDir();
+        delete(file);
+        file = getDynamicCacheDir();
         delete(file);
     }
 
@@ -87,10 +86,10 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
     }
 
 
-    private JsonCacheResult loadObject(JsonCacheMethod method, int hash, int cacheLifeTime) {
-        JsonCacheResult result = new JsonCacheResult();
+    private JsonCacheResult loadObject(JsonCacheMethod method, String hash, int cacheLifeTime) {
+        JsonCacheResult result;
         ObjectInputStream os = null;
-        FileInputStream fileStream = null;
+        FileInputStream fileStream ;
         File file = new File(getCacheDir(method), hash + "");
 
         if ((debugFlags & JsonRpc.CACHE_DEBUG) > 0) {
@@ -102,8 +101,7 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
                 try {
                     fileStream = new FileInputStream(file);
                     os = new ObjectInputStream(fileStream);
-                    result.object = os.readObject();
-                    result.result = true;
+                    result = (JsonCacheResult) os.readObject();
                     if ((debugFlags & JsonRpc.CACHE_DEBUG) > 0) {
                         JsonLoggerImpl.log("Cache(" + method + "): Get from disc cache " + file.getAbsolutePath() + ".");
                     }
@@ -123,16 +121,17 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
                 file.delete();
             }
         }
+        result = new JsonCacheResult();
         result.result = false;
         return result;
     }
 
 
-    private void saveObject(JsonCacheMethod method, int hash, Object object) {
+    private void saveObject(JsonCacheMethod method, String hash, Object object) {
         try {
             File file = new File(getCacheDir(method), hash + "");
             ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file));
-            os.writeObject(object);
+            os.writeObject(new JsonCacheResult(object,true,method.getTime(),method.getHash()));
             os.flush();
             os.close();
             if ((debugFlags & JsonRpc.CACHE_DEBUG) > 0) {
@@ -144,8 +143,14 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
 
     }
 
-    private File getCacheDir() {
-        File file = new File(context.getCacheDir() + "/cache/production/");
+    private File getLocalCacheDir() {
+        File file = new File(context.getCacheDir() + "/cache/local/");
+        file.mkdirs();
+        return file;
+    }
+
+    private File getDynamicCacheDir() {
+        File file = new File(context.getCacheDir() + "/cache/dynamic/");
         file.mkdirs();
         return file;
     }
@@ -164,10 +169,17 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
 
     private File getCacheDir(JsonCacheMethod method) {
         String name = context.getCacheDir() + "/cache/";
-        if (method.getTest() != null) {
-            name += "tests/" + method.getTest() + "/" + method.getTestRevision() + "/";
-        } else {
-            name += "production/";
+        if(method.isDynamic())
+        {
+            name += "dynamic/";
+        }
+        else
+        {
+            if (method.getTest() != null) {
+                name += "tests/" + method.getTest() + "/" + method.getTestRevision() + "/";
+            } else{
+                name += "local/";
+            }
         }
         name += method.getMethod().getDeclaringClass().getSimpleName() + "/";
         name += method.getUrl().hashCode() + "/";

@@ -174,20 +174,20 @@ class JsonProxy implements InvocationHandler {
                     for (int i = batches.size() - 1; i >= 0; i--) {
                         JsonRequest req = batches.get(i);
 
-                        if (req.isCachable() || rpc.isTest()) {
-                            JsonCacheResult result = rpc.getMemoryCache().get(req.getMethod(), req.getArgs(), rpc.isTest() ? 0 : req.getCacheLifeTime(), req.getCacheSize());
+                        if (req.isLocalCachable() || rpc.isTest()) {
+                            JsonCacheResult result = rpc.getMemoryCache().get(req.getMethod(), req.getArgs(), rpc.isTest() ? 0 : req.getLocalCacheLifeTime(), req.getLocalCacheSize());
                             if (result.result) {
                                 if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
                                     result.object = rpc.getJsonClonner().clone(result.object);
                                 }
                                 cacheObjects.put(i, new Pair<JsonRequest, Object>(req, result.object));
                                 batches.remove(i);
-                            } else if (req.isCachePersist() || rpc.isTest()) {
+                            } else if (req.isLocalCachePersist() || rpc.isTest()) {
                                 JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), req.getMethod());
-                                result = rpc.getDiscCache().get(cacheMethod, req.getArgs(), req.getCacheLifeTime(), req.getCacheSize());
+                                result = rpc.getDiscCache().get(cacheMethod, Arrays.deepToString(req.getArgs()), req.getLocalCacheLifeTime());
                                 if (result.result) {
                                     if (!rpc.isTest()) {
-                                        rpc.getMemoryCache().put(req.getMethod(), req.getArgs(), result.object, req.getCacheSize());
+                                        rpc.getMemoryCache().put(req.getMethod(), req.getArgs(), result.object, req.getLocalCacheSize());
                                     }
                                     cacheObjects.put(i, new Pair<JsonRequest, Object>(req, result.object));
                                     batches.remove(i);
@@ -320,21 +320,22 @@ class JsonProxy implements InvocationHandler {
 
                     if (request.getReturnType() != Void.class) {
                         if (rpc.isVerifyResultModel()) {
-                            JsonConnector.verifyResult(request,  response);
+                            JsonConnector.verifyResult(request, response);
                         }
                         results[i] = response.result;
-                        if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
-                            rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), results[i], request.getCacheSize());
+                        if ((rpc.isCacheEnabled() && request.isLocalCachable()) || rpc.isTest()) {
+                            rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), results[i], request.getLocalCacheSize());
                             if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
                                 results[i] = rpc.getJsonClonner().clone(results[i]);
                             }
 
-                            if (request.isCachePersist() || rpc.isTest()) {
+                            if (request.isLocalCachePersist() || rpc.isTest()) {
                                 JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), request.getMethod());
-                                rpc.getDiscCache().put(cacheMethod, request.getArgs(), results[i], request.getCacheSize());
+                                rpc.getDiscCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i]);
                             }
-
-
+                        } else if (rpc.isCacheEnabled() && request.isServerCachable() && (response.hash!=null || response.time!=null)) {
+                            JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getUrl(), request.getMethod(),response.hash,response.time);
+                            rpc.getDiscCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i]);
                         }
                     }
                 }

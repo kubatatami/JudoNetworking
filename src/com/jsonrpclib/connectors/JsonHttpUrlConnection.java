@@ -15,6 +15,9 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,6 +33,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
     private String authKey = null;
     private HttpURLCreator httpURLCreator = null;
     private HttpURLConnectionModifier httpURLConnectionModifier = null;
+    private static SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
 
     public JsonHttpUrlConnection() {
         init(new HttpURLCreatorImplementation(), null, false);
@@ -87,7 +91,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
     }
 
     public Connection send(final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
-                           int timeout, JsonTimeStat timeStat, int debugFlags, Method method) throws Exception {
+                           int timeout, JsonTimeStat timeStat, int debugFlags, Method method,CacheInfo cacheInfo) throws Exception {
 
         HttpURLConnection urlConnection = null;
 
@@ -104,6 +108,18 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
         if (urlConnection == null) {
             throw new JsonException("Can't create HttpURLConnection.");
+        }
+
+        if(cacheInfo!=null)
+        {
+            if(cacheInfo.hash!=null)
+            {
+                urlConnection.addRequestProperty("If-None-Match", cacheInfo.hash);
+            }
+            else if(cacheInfo.time!=null)
+            {
+                urlConnection.addRequestProperty("If-Modified-Since", format.format(new Date(cacheInfo.time)));
+            }
         }
 
         if (requestInfo.mimeType != null) {
@@ -162,13 +178,45 @@ public class JsonHttpUrlConnection extends JsonConnection {
                     int code = finalConnection.getResponseCode();
                     String resp = convertStreamToString(finalConnection.getErrorStream());
                     protocolController.parseError(code, resp);
-                    throw new HttpException(resp, code);
+                    throw new HttpException(resp + "(" + code +")", code);
                 }
 
             }
 
+            public boolean isNewestAvailable() throws Exception
+            {
+                int code = finalConnection.getResponseCode();
+                return code!=304;
+            }
+
             public int getContentLength() {
                 return finalConnection.getContentLength();
+            }
+
+            @Override
+            public String getHash() {
+                String etag =finalConnection.getHeaderField("ETag");
+                return etag;
+            }
+
+            @Override
+            public Long getDate() {
+                String lastModified=finalConnection.getHeaderField("Last-Modified");
+                if(lastModified!=null)
+                {
+
+                    try {
+                        Date date = format.parse(lastModified);
+                        return date.getTime();
+                    } catch (ParseException e) {
+                        return null;
+                    }
+
+                }
+                else
+                {
+                    return null;
+                }
             }
 
             @Override
@@ -231,16 +279,4 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
     }
 
-    public class HttpException extends Exception {
-        private int code;
-
-        public HttpException(String detailMessage, int code) {
-            super(detailMessage);
-            this.code = code;
-        }
-
-        public int getCode() {
-            return code;
-        }
-    }
 }

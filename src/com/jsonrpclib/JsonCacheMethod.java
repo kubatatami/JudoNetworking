@@ -7,10 +7,22 @@ public class JsonCacheMethod {
     private int testRevision;
     private String url;
     private Method method;
+    private boolean dynamic=false;
+    private String hash;
+    private Long time;
 
     public JsonCacheMethod(String url, Method method) {
         this.url = url;
         this.method = method;
+        this.dynamic=true;
+    }
+
+    public JsonCacheMethod(String url, Method method, String hash,Long time) {
+        this.url = url;
+        this.method = method;
+        this.hash = hash;
+        this.time = time;
+        this.dynamic=true;
     }
 
     public JsonCacheMethod(String test, int testRevision, String url, Method method) {
@@ -20,6 +32,9 @@ public class JsonCacheMethod {
         this.method = method;
     }
 
+    public boolean isDynamic() {
+        return dynamic;
+    }
 
     public String getTest() {
         return test;
@@ -35,5 +50,18 @@ public class JsonCacheMethod {
 
     public Method getMethod() {
         return method;
+    }
+
+    @Override
+    public String toString() {
+        return method.getName();
+    }
+
+    public String getHash() {
+        return hash;
+    }
+
+    public Long getTime() {
+        return time;
     }
 }

@@ -14,6 +14,9 @@ public abstract class JsonResult implements Comparable<JsonResult> {
     public Exception error;
     public Object cacheObject;
 
+    public String hash;
+    public Long time;
+
     @Override
     public int compareTo(JsonResult model) {
         return this.id.compareTo(model.id);

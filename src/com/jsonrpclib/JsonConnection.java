@@ -13,7 +13,7 @@ import java.util.Scanner;
 public abstract class JsonConnection {
 
     public abstract Connection send(ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
-                                    int timeout, JsonTimeStat timeStat, int debugFlags, Method method) throws Exception;
+                                    int timeout, JsonTimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws Exception;
 
     public abstract void setMaxConnections(int max);
 
@@ -31,7 +31,24 @@ public abstract class JsonConnection {
 
         public int getContentLength();
 
+        public String getHash();
+
+        public Long getDate();
+
         public void close();
+
+        public boolean isNewestAvailable() throws Exception;
+    }
+
+    public static class CacheInfo
+    {
+        public String hash;
+        public Long time;
+
+        public CacheInfo(String hash, Long time) {
+            this.hash = hash;
+            this.time = time;
+        }
     }
 
     protected void longLog(String tag, String message) {

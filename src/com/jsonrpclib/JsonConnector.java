@@ -7,10 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 class JsonConnector {
 
@@ -35,6 +32,10 @@ class JsonConnector {
     }
 
     private JsonResult sendRequest(JsonRequest request, JsonTimeStat timeStat) {
+        return sendRequest(request, timeStat,null,null);
+    }
+
+    private JsonResult sendRequest(JsonRequest request, JsonTimeStat timeStat,String hash, Long time) {
         try {
 
             Object virtualObject = handleVirtualServerRequest(request, timeStat);
@@ -47,7 +48,14 @@ class JsonConnector {
             timeStat.tickCreateTime();
             lossCheck();
 
-            JsonConnection.Connection conn = connection.send(controller, requestInfo, request.getTimeout(), timeStat, rpc.getDebugFlags(), request.getMethod());
+            JsonConnection.Connection conn = connection.send(controller, requestInfo, request.getTimeout(), timeStat,
+                    rpc.getDebugFlags(), request.getMethod(), new JsonConnection.CacheInfo(hash,time));
+
+            if(!conn.isNewestAvailable())
+            {
+                return new JsonNoNewResult();
+            }
+
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
 
@@ -57,9 +65,13 @@ class JsonConnector {
             }
             JsonInputStream stream = new JsonInputStream(connectionStream, timeStat, conn.getContentLength());
             JsonResult result = controller.parseResponse(request, stream);
+
+            result.hash=conn.getHash();
+            result.time=conn.getDate();
+
             timeStat.tickParseTime();
             if (rpc.isVerifyResultModel()) {
-                verifyResult(request,  result);
+                verifyResult(request, result);
             }
             conn.close();
             return result;
@@ -92,10 +104,10 @@ class JsonConnector {
                             i++;
                         }
                         if (ann.minSize() > 0 && i < ann.minSize()) {
-                            throw new JsonException("Result list from method " + request.getName() + "(size " + i + ") is smaller then limit: "+ann.minSize()+".");
+                            throw new JsonException("Result list from method " + request.getName() + "(size " + i + ") is smaller then limit: " + ann.minSize() + ".");
                         }
-                        if (ann.maxSize() >0  && i > ann.maxSize()) {
-                            throw new JsonException("Result list from method " + request.getName() + "(size " + i + ") is larger then limit: "+ann.maxSize()+".");
+                        if (ann.maxSize() > 0 && i > ann.maxSize()) {
+                            throw new JsonException("Result list from method " + request.getName() + "(size " + i + ") is larger then limit: " + ann.maxSize() + ".");
                         }
                     }
                 }
@@ -131,10 +143,10 @@ class JsonConnector {
                                 }
 
                                 if (ann.minSize() > 0 && i < ann.minSize()) {
-                                    throw new JsonException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is smaller then limit: "+ann.minSize()+".");
+                                    throw new JsonException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is smaller then limit: " + ann.minSize() + ".");
                                 }
-                                if (ann.maxSize() >0  && i > ann.maxSize()) {
-                                    throw new JsonException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is larger then limit: "+ann.maxSize()+".");
+                                if (ann.maxSize() > 0 && i > ann.maxSize()) {
+                                    throw new JsonException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is larger then limit: " + ann.maxSize() + ".");
                                 }
                             }
                         } else if (field.getAnnotation(JsonRequired.class) != null) {
@@ -207,21 +219,21 @@ class JsonConnector {
     @SuppressWarnings("unchecked")
     public Object call(JsonRequest request) throws Exception {
         try {
-
+            JsonCacheResult cacheObject=null;
             JsonTimeStat timeStat = new JsonTimeStat(request);
 
 
-            if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
-                JsonCacheResult cacheObject = rpc.getMemoryCache().get(request.getMethod(), request.getArgs(), rpc.isTest() ? 0 : request.getCacheLifeTime(), request.getCacheSize());
+            if ((rpc.isCacheEnabled() && request.isLocalCachable()) || rpc.isTest()) {
+                cacheObject = rpc.getMemoryCache().get(request.getMethod(), request.getArgs(), rpc.isTest() ? 0 : request.getLocalCacheLifeTime(), request.getLocalCacheSize());
                 if (cacheObject.result) {
                     timeStat.tickCacheTime();
                     return cacheObject.object;
-                } else if (request.isCachePersist() || rpc.isTest()) {
+                } else if (request.isLocalCachePersist() || rpc.isTest()) {
                     JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), url, request.getMethod());
-                    cacheObject = rpc.getDiscCache().get(cacheMethod, request.getArgs(), request.getCacheLifeTime(), request.getCacheSize());
+                    cacheObject = rpc.getDiscCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getLocalCacheLifeTime());
                     if (cacheObject.result) {
-                        if (!rpc.isTest()) {
-                            rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), cacheObject.object, request.getCacheSize());
+                        if (!rpc.isTest()) {  //we don't know when test will be stop
+                            rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), cacheObject.object, request.getLocalCacheSize());
                         }
                         timeStat.tickCacheTime();
                         return cacheObject.object;
@@ -230,6 +242,11 @@ class JsonConnector {
                 }
             }
 
+            if (rpc.isCacheEnabled() && request.isServerCachable()) {
+                JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod());
+                cacheObject = rpc.getDiscCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
+
+            }
 
             if (request.getArgs() != null && rpc.isByteArrayAsBase64()) {
                 int i = 0;
@@ -241,7 +258,20 @@ class JsonConnector {
                 }
             }
 
-            JsonResult result = sendRequest(request, timeStat);
+            JsonResult result;
+            if(cacheObject!=null)
+            {
+                result= sendRequest(request, timeStat,cacheObject.hash,cacheObject.time);
+                if(result instanceof JsonNoNewResult)
+                {
+                    return cacheObject.object;
+                }
+            }
+            else
+            {
+                result= sendRequest(request, timeStat,null,null);
+            }
+
             if (result.error != null) {
                 throw result.error;
             }
@@ -258,19 +288,23 @@ class JsonConnector {
                 timeStat.logTime("End single request(" + request.getName() + "):");
             }
 
-            if ((rpc.isCacheEnabled() && request.isCachable()) || rpc.isTest()) {
-                rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), result.result, request.getCacheSize());
+            if ((rpc.isCacheEnabled() && request.isLocalCachable()) || rpc.isTest()) {
+                rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), result.result, request.getLocalCacheSize());
                 if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
                     result.result = rpc.getJsonClonner().clone(result.result);
                 }
 
-                if (request.isCachePersist() || rpc.isTest()) {
+                if (request.isLocalCachePersist() || rpc.isTest()) {
                     JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), url, request.getMethod());
-                    rpc.getDiscCache().put(cacheMethod, request.getArgs(), result.result, request.getCacheSize());
+                    rpc.getDiscCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result);
                 }
 
 
+            } else if (rpc.isCacheEnabled() && request.isServerCachable() && (result.hash!=null || result.time!=null)) {
+                JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod());
+                rpc.getDiscCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result);
             }
+
 
             return result.result;
         } catch (Exception e) {
@@ -345,8 +379,31 @@ class JsonConnector {
                     progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (requests.size() - 1) * JsonTimeStat.TICKS);
                 }
                 for (JsonRequest request : requests) {
+                    JsonCacheResult cacheObject=null;
+                    if (rpc.isCacheEnabled() && request.isServerCachable()) {
+                        JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod());
+                        cacheObject = rpc.getDiscCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
+
+                    }
                     JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
-                    results.add(sendRequest(request, timeStat));
+
+                    if(cacheObject!=null)
+                    {
+                        JsonResult result= sendRequest(request, timeStat,cacheObject.hash,cacheObject.time);
+                        if(result instanceof JsonNoNewResult)
+                        {
+                            results.add(new JsonSuccessResult(request.getId(),cacheObject.object));
+                        }
+                        else
+                        {
+                            results.add(result);
+                        }
+                    }
+                    else
+                    {
+                        results.add(sendRequest(request, timeStat));
+                    }
+
                 }
             }
         }
@@ -357,14 +414,14 @@ class JsonConnector {
 
         try {
             ProtocolController controller = rpc.getProtocolController();
-            List<JsonResult> responses = null;
+            List<JsonResult> responses;
             JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
 
 
             ProtocolController.RequestInfo requestInfo = controller.createRequest(url, (List) requests);
             timeStat.tickCreateTime();
             lossCheck();
-            JsonConnection.Connection conn = connection.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null);
+            JsonConnection.Connection conn = connection.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null,null);
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
 
