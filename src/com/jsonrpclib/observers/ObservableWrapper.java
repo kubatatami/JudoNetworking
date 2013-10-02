@@ -49,15 +49,18 @@ public class ObservableWrapper<T> {
         this.allowNull = allowNull;
     }
 
-
     public void addObserver(WrapObserver<T> observer) {
+        addObserver(observer,true);
+    }
+
+    public void addObserver(WrapObserver<T> observer, boolean notify) {
         boolean add = true;
         if (listener != null) {
             add = listener.onAddObserver(this, observer);
         }
         if (add) {
             observers.add(observer);
-            if (object != null) {
+            if (notify && (object != null || allowNull)) {
                 observer.update(get());
             }
         }

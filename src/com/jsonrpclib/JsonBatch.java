@@ -11,7 +11,12 @@ import java.io.StringWriter;
  */
 public abstract class JsonBatch<T> implements JsonBatchInterface<T> {
 
+    @Override
     public abstract void run(final T api);
+
+    @Override
+    public void runNonFatal(final T api) {
+    }
 
     @Override
     public void onFinish(Object[] results) {

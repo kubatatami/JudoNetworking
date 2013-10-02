@@ -151,7 +151,8 @@ public class ObserverHelper {
     @SuppressWarnings("unchecked")
     private void findDataObserver(final Object object) {
         for (final Method method : object.getClass().getMethods()) {
-            if (method.isAnnotationPresent(DataObserver.class)) {
+            DataObserver ann = method.getAnnotation(DataObserver.class);
+            if (ann!=null) {
 
                 final ObservableWrapper wrapper = getObservable(method);
                 WrapObserver observer = new WrapObserver() {
@@ -175,7 +176,7 @@ public class ObserverHelper {
                     }
                 };
 
-                wrapper.addObserver(observer);
+                wrapper.addObserver(observer,ann.onStartup());
                 dataObservers.add(new Pair<ObservableWrapper, WrapObserver>(wrapper, observer));
             }
         }

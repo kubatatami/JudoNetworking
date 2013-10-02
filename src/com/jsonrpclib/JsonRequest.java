@@ -15,6 +15,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
     private final Object[] args;
     private Type returnType;
     private Method method;
+    private boolean batchFatal = true;
 
     public JsonRequest(Integer id, JsonRpcImplementation rpc, Method method, String name, JsonMethod ann,
                        Object[] args, Type returnType, int timeout, JsonCallbackInterface<Object> callback) {
@@ -175,5 +176,13 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
 
     public JsonCallbackInterface<Object> getCallback() {
         return callback;
+    }
+
+    boolean isBatchFatal() {
+        return batchFatal;
+    }
+
+    void setBatchFatal(boolean batchFatal) {
+        this.batchFatal = batchFatal;
     }
 }

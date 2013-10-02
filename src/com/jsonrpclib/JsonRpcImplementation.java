@@ -139,8 +139,10 @@ class JsonRpcImplementation implements JsonRpc {
 
         final JsonProxy pr = new JsonProxy(context, this, JsonBatchMode.MANUAL);
         T proxy = getService(obj, pr);
+        pr.setBatchFatal(true);
         batch.run(proxy);
-
+        pr.setBatchFatal(false);
+        batch.runNonFatal(proxy);
 
         Thread thread = new Thread(new Runnable() {
             @Override

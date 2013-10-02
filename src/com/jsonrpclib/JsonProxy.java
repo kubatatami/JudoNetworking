@@ -17,6 +17,7 @@ class JsonProxy implements InvocationHandler {
     private final JsonRpcImplementation rpc;
     private int id = 0;
     private boolean batch = false;
+    private boolean batchFatal = true;
     private final List<JsonRequest> batchRequests = new ArrayList<JsonRequest>();
     private JsonBatchMode mode = JsonBatchMode.NONE;
 
@@ -27,6 +28,11 @@ class JsonProxy implements InvocationHandler {
         if (mode == JsonBatchMode.MANUAL) {
             batch = true;
         }
+    }
+
+
+    public void setBatchFatal(boolean batchFatal) {
+        this.batchFatal = batchFatal;
     }
 
     private Method getMethod(Object obj, String name) {
@@ -90,6 +96,7 @@ class JsonProxy implements InvocationHandler {
 
                     if (batch) {
                         synchronized (batchRequests) {
+                            request.setBatchFatal(batchFatal);
                             batchRequests.add(request);
                             batch = true;
                         }
@@ -341,7 +348,10 @@ class JsonProxy implements InvocationHandler {
                 }
                 request.invokeCallback(results[i]);
             } catch (Exception e) {
-                ex = e;
+                if(request.isBatchFatal())
+                {
+                    ex = e;
+                }
                 request.invokeCallback(new JsonException(request.getName(), e));
             }
             i++;

@@ -10,6 +10,8 @@ public interface JsonBatchInterface<T> {
 
     public void run(final T api);
 
+    public void runNonFatal(final T api);
+
     public void onFinish(Object[] results);
 
     public void onError(Exception e);
