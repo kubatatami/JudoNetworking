@@ -1,17 +1,7 @@
-latwe
--zamiana przedrostka json na judo
--wymyslenie nowej nazwy biblioteki
-
-srednie
--nasluchiwanie na adaptery poprzez adnotacje dataobserver
 -rozdzielenie bibliotek rpc i observer
--scheduled update on ObserverWrapper
--mechanizm do ustalania optymalnej liczby polaczen
-
-trudne
--obsluga rest poprzez opis umieszczenia parametrow /category/{number}/name
--connector http z obsługą Pipelining
-
+-zamiana przedrostka json na judo
+-wymyslenie nowej nazwy biblioteki(judo callbacks)
+-nasluchiwanie na adaptery poprzez adnotacje dataobserver
 
 
 
