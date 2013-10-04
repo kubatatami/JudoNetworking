@@ -51,11 +51,6 @@ public class JsonRestController extends ProtocolController {
         JsonRest ann = request.getMethod().getAnnotation(JsonRest.class);
         if (ann != null) {
             String result = ann.value();
-            for(Map.Entry<String,Object> entry : customKey.entrySet())
-            {
-                result = result.replaceAll("\\{"+entry.getKey()+"\\}", entry.getValue()+"");
-            }
-
             if (request.getName() != null) {
                 result = result.replaceAll("\\{name\\}", request.getName());
             }
@@ -65,6 +60,10 @@ public class JsonRestController extends ProtocolController {
                     result = result.replaceAll("\\{" + i + "\\}", arg + "");
                     i++;
                 }
+            }
+            for(Map.Entry<String,Object> entry : customKey.entrySet())
+            {
+                result = result.replaceAll("\\{"+entry.getKey()+"\\}", entry.getValue()+"");
             }
             requestInfo.url = url + "/" + result;
         } else {
