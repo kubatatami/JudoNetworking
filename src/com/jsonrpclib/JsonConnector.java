@@ -32,10 +32,10 @@ class JsonConnector {
     }
 
     private JsonResult sendRequest(JsonRequest request, JsonTimeStat timeStat) {
-        return sendRequest(request, timeStat,null,null);
+        return sendRequest(request, timeStat, null, null);
     }
 
-    private JsonResult sendRequest(JsonRequest request, JsonTimeStat timeStat,String hash, Long time) {
+    private JsonResult sendRequest(JsonRequest request, JsonTimeStat timeStat, String hash, Long time) {
         try {
 
             Object virtualObject = handleVirtualServerRequest(request, timeStat);
@@ -49,10 +49,9 @@ class JsonConnector {
             lossCheck();
 
             JsonConnection.Connection conn = connection.send(controller, requestInfo, request.getTimeout(), timeStat,
-                    rpc.getDebugFlags(), request.getMethod(), new JsonConnection.CacheInfo(hash,time));
+                    rpc.getDebugFlags(), request.getMethod(), new JsonConnection.CacheInfo(hash, time));
 
-            if(!conn.isNewestAvailable())
-            {
+            if (!conn.isNewestAvailable()) {
                 return new JsonNoNewResult();
             }
 
@@ -66,8 +65,8 @@ class JsonConnector {
             JsonInputStream stream = new JsonInputStream(connectionStream, timeStat, conn.getContentLength());
             JsonResult result = controller.parseResponse(request, stream);
 
-            result.hash=conn.getHash();
-            result.time=conn.getDate();
+            result.hash = conn.getHash();
+            result.time = conn.getDate();
 
             timeStat.tickParseTime();
             if (rpc.isVerifyResultModel()) {
@@ -219,7 +218,7 @@ class JsonConnector {
     @SuppressWarnings("unchecked")
     public Object call(JsonRequest request) throws Exception {
         try {
-            JsonCacheResult cacheObject=null;
+            JsonCacheResult cacheObject = null;
             JsonTimeStat timeStat = new JsonTimeStat(request);
 
 
@@ -259,17 +258,15 @@ class JsonConnector {
             }
 
             JsonResult result;
-            if(cacheObject!=null)
-            {
-                result= sendRequest(request, timeStat,cacheObject.hash,cacheObject.time);
-                if(result instanceof JsonNoNewResult)
-                {
+            if (cacheObject != null) {
+                result = sendRequest(request, timeStat, cacheObject.hash, cacheObject.time);
+                if (result instanceof JsonNoNewResult) {
+                    return cacheObject.object;
+                } else if (result instanceof JsonErrorResult && request.getMethod().getAnnotation(JsonServerCache.class).useOldOnError()) {
                     return cacheObject.object;
                 }
-            }
-            else
-            {
-                result= sendRequest(request, timeStat,null,null);
+            } else {
+                result = sendRequest(request, timeStat, null, null);
             }
 
             if (result.error != null) {
@@ -300,7 +297,7 @@ class JsonConnector {
                 }
 
 
-            } else if (rpc.isCacheEnabled() && request.isServerCachable() && (result.hash!=null || result.time!=null)) {
+            } else if (rpc.isCacheEnabled() && request.isServerCachable() && (result.hash != null || result.time != null)) {
                 JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod());
                 rpc.getDiscCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result);
             }
@@ -379,7 +376,7 @@ class JsonConnector {
                     progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (requests.size() - 1) * JsonTimeStat.TICKS);
                 }
                 for (JsonRequest request : requests) {
-                    JsonCacheResult cacheObject=null;
+                    JsonCacheResult cacheObject = null;
                     if (rpc.isCacheEnabled() && request.isServerCachable()) {
                         JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod());
                         cacheObject = rpc.getDiscCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
@@ -387,20 +384,16 @@ class JsonConnector {
                     }
                     JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
 
-                    if(cacheObject!=null)
-                    {
-                        JsonResult result= sendRequest(request, timeStat,cacheObject.hash,cacheObject.time);
-                        if(result instanceof JsonNoNewResult)
-                        {
-                            results.add(new JsonSuccessResult(request.getId(),cacheObject.object));
-                        }
-                        else
-                        {
+                    if (cacheObject != null) {
+                        JsonResult result = sendRequest(request, timeStat, cacheObject.hash, cacheObject.time);
+                        if (result instanceof JsonNoNewResult) {
+                            results.add(new JsonSuccessResult(request.getId(), cacheObject.object));
+                        } else if (result instanceof JsonErrorResult && request.getMethod().getAnnotation(JsonServerCache.class).useOldOnError()) {
+                            results.add(new JsonSuccessResult(request.getId(), cacheObject.object));
+                        } else {
                             results.add(result);
                         }
-                    }
-                    else
-                    {
+                    } else {
                         results.add(sendRequest(request, timeStat));
                     }
 
@@ -421,7 +414,7 @@ class JsonConnector {
             ProtocolController.RequestInfo requestInfo = controller.createRequest(url, (List) requests);
             timeStat.tickCreateTime();
             lossCheck();
-            JsonConnection.Connection conn = connection.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null,null);
+            JsonConnection.Connection conn = connection.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null, null);
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
 
