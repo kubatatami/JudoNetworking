@@ -85,6 +85,11 @@ public class JsonHttpUrlConnection extends JsonConnection {
         authKey = auth(username, password);
     }
 
+    public void setBasicAuthentication(final String hash) {
+        authKey =  "Basic " + hash;
+    }
+
+
     private String auth(String login, String pass) {
         String source = login + ":" + pass;
         return "Basic " + Base64.encodeToString(source.getBytes(), Base64.NO_WRAP);
