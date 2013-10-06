@@ -258,7 +258,7 @@ class JsonConnector {
             }
 
             JsonResult result;
-            if (cacheObject != null) {
+            if (cacheObject!=null && cacheObject.result) {
                 result = sendRequest(request, timeStat, cacheObject.hash, cacheObject.time);
                 if (result instanceof JsonNoNewResult) {
                     return cacheObject.object;
@@ -384,7 +384,7 @@ class JsonConnector {
                     }
                     JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
 
-                    if (cacheObject != null) {
+                    if (cacheObject!=null && cacheObject.result) {
                         JsonResult result = sendRequest(request, timeStat, cacheObject.hash, cacheObject.time);
                         if (result instanceof JsonNoNewResult) {
                             results.add(new JsonSuccessResult(request.getId(), cacheObject.object));
