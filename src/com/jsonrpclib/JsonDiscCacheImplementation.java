@@ -89,7 +89,7 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
     private JsonCacheResult loadObject(JsonCacheMethod method, String hash, int cacheLifeTime) {
         JsonCacheResult result;
         ObjectInputStream os = null;
-        FileInputStream fileStream ;
+        FileInputStream fileStream;
         File file = new File(getCacheDir(method), hash + "");
 
         if ((debugFlags & JsonRpc.CACHE_DEBUG) > 0) {
@@ -131,7 +131,7 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
         try {
             File file = new File(getCacheDir(method), hash + "");
             ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file));
-            os.writeObject(new JsonCacheResult(object,true,method.getTime(),method.getHash()));
+            os.writeObject(new JsonCacheResult(object, true, method.getTime(), method.getHash()));
             os.flush();
             os.close();
             if ((debugFlags & JsonRpc.CACHE_DEBUG) > 0) {
@@ -169,15 +169,12 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
 
     private File getCacheDir(JsonCacheMethod method) {
         String name = context.getCacheDir() + "/cache/";
-        if(method.isDynamic())
-        {
+        if (method.isDynamic()) {
             name += "dynamic/";
-        }
-        else
-        {
+        } else {
             if (method.getTest() != null) {
                 name += "tests/" + method.getTest() + "/" + method.getTestRevision() + "/";
-            } else{
+            } else {
                 name += "local/";
             }
         }

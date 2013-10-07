@@ -13,5 +13,6 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface JsonRequiredList {
     int minSize() default -1;
+
     int maxSize() default -1;
 }

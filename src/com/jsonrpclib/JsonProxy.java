@@ -1,8 +1,6 @@
 package com.jsonrpclib;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.util.Pair;
 
 import java.lang.reflect.InvocationHandler;
@@ -274,7 +272,7 @@ class JsonProxy implements InvocationHandler {
     }
 
     private List<JsonResult> sendBatchRequest(List<JsonRequest> batches, JsonBatchProgressObserver progressObserver, int cachedRequests) throws Exception {
-        int conn = isWifi() ? rpc.getMaxWifiConnections() : rpc.getMaxMobileConnections();
+        int conn = rpc.getMaxConnections();
 
         if (batches.size() > 1 && conn > 1) {
             int connections = Math.min(batches.size(), conn);
@@ -340,16 +338,15 @@ class JsonProxy implements InvocationHandler {
                                 JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), request.getMethod());
                                 rpc.getDiscCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i]);
                             }
-                        } else if (rpc.isCacheEnabled() && request.isServerCachable() && (response.hash!=null || response.time!=null)) {
-                            JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getUrl(), request.getMethod(),response.hash,response.time);
+                        } else if (rpc.isCacheEnabled() && request.isServerCachable() && (response.hash != null || response.time != null)) {
+                            JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getUrl(), request.getMethod(), response.hash, response.time);
                             rpc.getDiscCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i]);
                         }
                     }
                 }
                 request.invokeCallback(results[i]);
             } catch (Exception e) {
-                if(request.isBatchFatal())
-                {
+                if (request.isBatchFatal()) {
                     ex = e;
                 }
                 request.invokeCallback(new JsonException(request.getName(), e));
@@ -363,12 +360,6 @@ class JsonProxy implements InvocationHandler {
                 JsonRequest.invokeBatchCallback(rpc, batch, ex);
             }
         }
-    }
-
-    private boolean isWifi() {
-        final ConnectivityManager connectManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        final NetworkInfo wifi = connectManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        return wifi != null && wifi.getState() == NetworkInfo.State.CONNECTED;
     }
 
 

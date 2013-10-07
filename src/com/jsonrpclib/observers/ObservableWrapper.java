@@ -50,7 +50,7 @@ public class ObservableWrapper<T> {
     }
 
     public void addObserver(WrapObserver<T> observer) {
-        addObserver(observer,true);
+        addObserver(observer, true);
     }
 
     public void addObserver(WrapObserver<T> observer, boolean notify) {

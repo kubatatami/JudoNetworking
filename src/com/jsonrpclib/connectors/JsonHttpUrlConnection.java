@@ -86,7 +86,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
     }
 
     public void setBasicAuthentication(final String hash) {
-        authKey =  "Basic " + hash;
+        authKey = "Basic " + hash;
     }
 
 
@@ -96,7 +96,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
     }
 
     public Connection send(final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
-                           int timeout, JsonTimeStat timeStat, int debugFlags, Method method,CacheInfo cacheInfo) throws Exception {
+                           int timeout, JsonTimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws Exception {
 
         HttpURLConnection urlConnection = null;
 
@@ -115,14 +115,10 @@ public class JsonHttpUrlConnection extends JsonConnection {
             throw new JsonException("Can't create HttpURLConnection.");
         }
 
-        if(cacheInfo!=null)
-        {
-            if(cacheInfo.hash!=null)
-            {
+        if (cacheInfo != null) {
+            if (cacheInfo.hash != null) {
                 urlConnection.addRequestProperty("If-None-Match", cacheInfo.hash);
-            }
-            else if(cacheInfo.time!=null)
-            {
+            } else if (cacheInfo.time != null) {
                 urlConnection.addRequestProperty("If-Modified-Since", format.format(new Date(cacheInfo.time)));
             }
         }
@@ -183,15 +179,14 @@ public class JsonHttpUrlConnection extends JsonConnection {
                     int code = finalConnection.getResponseCode();
                     String resp = convertStreamToString(finalConnection.getErrorStream());
                     protocolController.parseError(code, resp);
-                    throw new HttpException(resp + "(" + code +")", code);
+                    throw new HttpException(resp + "(" + code + ")", code);
                 }
 
             }
 
-            public boolean isNewestAvailable() throws Exception
-            {
+            public boolean isNewestAvailable() throws Exception {
                 int code = finalConnection.getResponseCode();
-                return code!=304;
+                return code != 304;
             }
 
             public int getContentLength() {
@@ -200,15 +195,14 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
             @Override
             public String getHash() {
-                String etag =finalConnection.getHeaderField("ETag");
+                String etag = finalConnection.getHeaderField("ETag");
                 return etag;
             }
 
             @Override
             public Long getDate() {
-                String lastModified=finalConnection.getHeaderField("Last-Modified");
-                if(lastModified!=null)
-                {
+                String lastModified = finalConnection.getHeaderField("Last-Modified");
+                if (lastModified != null) {
 
                     try {
                         Date date = format.parse(lastModified);
@@ -217,9 +211,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
                         return null;
                     }
 
-                }
-                else
-                {
+                } else {
                     return null;
                 }
             }

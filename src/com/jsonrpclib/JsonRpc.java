@@ -84,6 +84,11 @@ public interface JsonRpc {
     public void setDebugFlags(int flags);
 
     /**
+     * @param delay
+     */
+    public void setDelay(int delay);
+
+    /**
      * @param maxMobileConnections
      * @param maxWifiConnections
      */
@@ -168,7 +173,7 @@ public interface JsonRpc {
     public void startTest(boolean onlyInDebugMode, String name, int revision);
 
 
-    public void setVerifyResultModel(boolean enabled) ;
+    public void setVerifyResultModel(boolean enabled);
 
     /**
      *

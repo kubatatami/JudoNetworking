@@ -8,6 +8,9 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 class JsonConnector {
 
@@ -47,7 +50,7 @@ class JsonConnector {
             ProtocolController.RequestInfo requestInfo = controller.createRequest(url, request);
             timeStat.tickCreateTime();
             lossCheck();
-
+            delay();
             JsonConnection.Connection conn = connection.send(controller, requestInfo, request.getTimeout(), timeStat,
                     rpc.getDebugFlags(), request.getMethod(), new JsonConnection.CacheInfo(hash, time));
 
@@ -218,6 +221,7 @@ class JsonConnector {
     @SuppressWarnings("unchecked")
     public Object call(JsonRequest request) throws Exception {
         try {
+
             JsonCacheResult cacheObject = null;
             JsonTimeStat timeStat = new JsonTimeStat(request);
 
@@ -258,7 +262,7 @@ class JsonConnector {
             }
 
             JsonResult result;
-            if (cacheObject!=null && cacheObject.result) {
+            if (cacheObject != null && cacheObject.result) {
                 result = sendRequest(request, timeStat, cacheObject.hash, cacheObject.time);
                 if (result instanceof JsonNoNewResult) {
                     return cacheObject.object;
@@ -312,7 +316,7 @@ class JsonConnector {
     }
 
     public List<JsonResult> callBatch(List<JsonRequest> requests, JsonProgressObserver progressObserver, Integer timeout) throws Exception {
-        List<JsonResult> results = new ArrayList<JsonResult>(requests.size());
+        final List<JsonResult> results = new ArrayList<JsonResult>(requests.size());
 
 
         if (requests.size() > 0) {
@@ -375,32 +379,60 @@ class JsonConnector {
                 synchronized (progressObserver) {
                     progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (requests.size() - 1) * JsonTimeStat.TICKS);
                 }
-                for (JsonRequest request : requests) {
-                    JsonCacheResult cacheObject = null;
-                    if (rpc.isCacheEnabled() && request.isServerCachable()) {
-                        JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod());
-                        cacheObject = rpc.getDiscCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
+                ExecutorService executors = Executors.newFixedThreadPool(rpc.getMaxConnections());
+                List<Callable<Object>> todo = new ArrayList<Callable<Object>>();
 
-                    }
-                    JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
+                for (final JsonRequest request : requests) {
 
-                    if (cacheObject!=null && cacheObject.result) {
-                        JsonResult result = sendRequest(request, timeStat, cacheObject.hash, cacheObject.time);
-                        if (result instanceof JsonNoNewResult) {
-                            results.add(new JsonSuccessResult(request.getId(), cacheObject.object));
-                        } else if (result instanceof JsonErrorResult && request.getMethod().getAnnotation(JsonServerCache.class).useOldOnError()) {
-                            results.add(new JsonSuccessResult(request.getId(), cacheObject.object));
-                        } else {
-                            results.add(result);
+                    final JsonTimeStat timeStat = new JsonTimeStat(progressObserver);
+
+                    todo.add(Executors.callable(new Runnable() {
+                        @Override
+                        public void run() {
+                            JsonCacheResult cacheObject = null;
+                            if (rpc.isCacheEnabled() && request.isServerCachable()) {
+                                JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod());
+                                cacheObject = rpc.getDiscCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
+
+                            }
+
+                            if (cacheObject != null && cacheObject.result) {
+                                JsonResult result = sendRequest(request, timeStat, cacheObject.hash, cacheObject.time);
+                                synchronized (results) {
+                                    if (result instanceof JsonNoNewResult) {
+                                        results.add(new JsonSuccessResult(request.getId(), cacheObject.object));
+                                    } else if (result instanceof JsonErrorResult && request.getMethod().getAnnotation(JsonServerCache.class).useOldOnError()) {
+                                        results.add(new JsonSuccessResult(request.getId(), cacheObject.object));
+                                    } else {
+                                        results.add(result);
+                                    }
+                                }
+                            } else {
+                                synchronized (results) {
+                                    results.add(sendRequest(request, timeStat));
+                                }
+                            }
                         }
-                    } else {
-                        results.add(sendRequest(request, timeStat));
-                    }
+                    }));
 
                 }
+                executors.invokeAll(todo);
+                executors.shutdown();
             }
         }
         return results;
+    }
+
+
+    private void delay() {
+        int delay = rpc.getDelay();
+        if (delay > 0) {
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public List<JsonResult> callRealBatch(List<JsonRequest> requests, JsonProgressObserver progressObserver, Integer timeout, String requestsName) throws Exception {
@@ -414,6 +446,7 @@ class JsonConnector {
             ProtocolController.RequestInfo requestInfo = controller.createRequest(url, (List) requests);
             timeStat.tickCreateTime();
             lossCheck();
+            delay();
             JsonConnection.Connection conn = connection.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null, null);
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
@@ -503,6 +536,10 @@ class JsonConnector {
             return 0;
         }
         Random random = new Random();
-        return minDelay + random.nextInt(maxDelay - minDelay);
+        if (maxDelay != minDelay) {
+            return minDelay + random.nextInt(maxDelay - minDelay);
+        } else {
+            return minDelay;
+        }
     }
 }

@@ -40,8 +40,7 @@ public abstract class JsonConnection {
         public boolean isNewestAvailable() throws Exception;
     }
 
-    public static class CacheInfo
-    {
+    public static class CacheInfo {
         public String hash;
         public Long time;
 

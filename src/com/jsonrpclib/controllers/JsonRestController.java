@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class JsonRestController extends ProtocolController {
 
-    Map<String,Object> customKey = new HashMap<String, Object>();
+    Map<String, Object> customKey = new HashMap<String, Object>();
     Gson gson;
 
     public JsonRestController() {
@@ -37,8 +37,8 @@ public class JsonRestController extends ProtocolController {
         this.gson = gsonBuilder.create();
     }
 
-    public void addCustomKey(String name,Object value) {
-        customKey.put(name,value);
+    public void addCustomKey(String name, Object value) {
+        customKey.put(name, value);
     }
 
     public void removeCustomKey(String name) {
@@ -61,9 +61,8 @@ public class JsonRestController extends ProtocolController {
                     i++;
                 }
             }
-            for(Map.Entry<String,Object> entry : customKey.entrySet())
-            {
-                result = result.replaceAll("\\{"+entry.getKey()+"\\}", entry.getValue()+"");
+            for (Map.Entry<String, Object> entry : customKey.entrySet()) {
+                result = result.replaceAll("\\{" + entry.getKey() + "\\}", entry.getValue() + "");
             }
             requestInfo.url = url + "/" + result;
         } else {

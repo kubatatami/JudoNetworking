@@ -7,5 +7,5 @@ package com.jsonrpclib;
  * Time: 11:37
  * To change this template use File | Settings | File Templates.
  */
-public class JsonNoNewResult extends JsonResult{
+public class JsonNoNewResult extends JsonResult {
 }

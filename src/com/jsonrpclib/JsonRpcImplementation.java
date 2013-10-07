@@ -1,6 +1,8 @@
 package com.jsonrpclib;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -14,7 +16,7 @@ import java.util.Map;
 class JsonRpcImplementation implements JsonRpc {
 
     private int maxMobileConnections = 1;
-    private int maxWifiConnections = 1;
+    private int maxWifiConnections = 2;
     private JsonConnector jsonConnector;
     private JsonConnection connection;
     private Handler handler = new Handler();
@@ -37,10 +39,11 @@ class JsonRpcImplementation implements JsonRpc {
     private boolean test = false;
     private String testName = null;
     private int testRevision = 0;
+    private int delay = 0;
     private String url;
     private ProtocolController protocolController;
     private HashMap<Class, JsonVirtualServerInfo> virtualServers = new HashMap<Class, JsonVirtualServerInfo>();
-    private boolean verifyResultModel=true;
+    private boolean verifyResultModel = true;
 
     public JsonRpcImplementation(Context context, ProtocolController protocolController, JsonConnection connection, String url) {
         init(context, protocolController, connection, url, null);
@@ -180,6 +183,10 @@ class JsonRpcImplementation implements JsonRpc {
         return maxWifiConnections;
     }
 
+    public int getMaxConnections() {
+        return isWifi() ? getMaxWifiConnections() : getMaxMobileConnections();
+    }
+
     public int getAutoBatchTime() {
         return autoBatchTime;
     }
@@ -264,7 +271,7 @@ class JsonRpcImplementation implements JsonRpc {
 
     @Override
     public void setVerifyResultModel(boolean enabled) {
-        verifyResultModel=enabled;
+        verifyResultModel = enabled;
     }
 
     boolean isVerifyResultModel() {
@@ -324,12 +331,27 @@ class JsonRpcImplementation implements JsonRpc {
         }
     }
 
+    @Override
+    public void setDelay(int delay) {
+        this.delay = delay;
+    }
+
+    public int getDelay() {
+        return delay;
+    }
+
     public int getDebugFlags() {
         return debugFlags;
     }
 
     public boolean isTimeProfiler() {
         return timeProfiler;
+    }
+
+    public boolean isWifi() {
+        final ConnectivityManager connectManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        final NetworkInfo wifi = connectManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        return wifi != null && wifi.getState() == NetworkInfo.State.CONNECTED;
     }
 
     @SuppressWarnings("unchecked")

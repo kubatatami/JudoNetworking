@@ -2,7 +2,7 @@ package com.jsonrpclib;
 
 import java.io.Serializable;
 
-public class JsonCacheResult implements Serializable{
+public class JsonCacheResult implements Serializable {
     public Object object;
     public boolean result;
     public Long time;
