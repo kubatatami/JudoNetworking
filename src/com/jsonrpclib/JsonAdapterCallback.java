@@ -13,9 +13,15 @@ import java.util.List;
 public class JsonAdapterCallback<T> extends JsonCallback<List<T>> {
 
     private final ArrayAdapter<T> adapter;
+    private boolean clear=true;
 
     public JsonAdapterCallback(ArrayAdapter<T> adapter) {
         this.adapter = adapter;
+    }
+
+    public JsonAdapterCallback(ArrayAdapter<T> adapter,boolean clear) {
+        this.adapter = adapter;
+        this.clear = clear;
     }
 
     public boolean filtr(T result) {
@@ -24,7 +30,10 @@ public class JsonAdapterCallback<T> extends JsonCallback<List<T>> {
 
     @Override
     public void onFinish(List<T> result) {
-        adapter.clear();
+        if(clear)
+        {
+            adapter.clear();
+        }
 
         adapter.setNotifyOnChange(false);
         for (T object : result) {

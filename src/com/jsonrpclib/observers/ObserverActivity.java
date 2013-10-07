@@ -18,18 +18,19 @@ public class ObserverActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         observerHelper = new ObserverHelper(this);
-        findViewById(android.R.id.content).post(new Runnable() {
-            @Override
-            public void run() {
-                observerHelper.start(ObserverActivity.this, ((ViewGroup) findViewById(android.R.id.content)).getChildAt(0));
-            }
-        });
+    }
 
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        observerHelper.stop();
     }
 
     @Override
-    protected void onDestroy() {
-        observerHelper.stop();
-        super.onDestroy();
+    protected void onStart() {
+        super.onStart();
+        observerHelper.start(this, ((ViewGroup) findViewById(android.R.id.content)).getChildAt(0));
     }
+
 }
