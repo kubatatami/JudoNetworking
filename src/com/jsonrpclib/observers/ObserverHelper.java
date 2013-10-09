@@ -1,9 +1,12 @@
 package com.jsonrpclib.observers;
 
 import android.content.Context;
+import android.database.DataSetObserver;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Adapter;
+import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.lang.reflect.Field;
@@ -23,6 +26,7 @@ import java.util.regex.Pattern;
  */
 public class ObserverHelper {
     private List<Pair<ObservableWrapper, WrapObserver>> dataObservers = new ArrayList<Pair<ObservableWrapper, WrapObserver>>();
+    private List<Pair<Adapter, DataSetObserver>> dataAdapters = new ArrayList<Pair<Adapter, DataSetObserver>>();
     private Map<View, Pair<ObservableWrapper, WrapObserver>> viewObservers = new HashMap<View, Pair<ObservableWrapper, WrapObserver>>();
     private Object observableObject;
     private static final String splitter = "\\.";
@@ -39,6 +43,7 @@ public class ObserverHelper {
     public void start(final Object object, View view) {
         dataObservers.clear();
         viewObservers.clear();
+        dataAdapters.clear();
         if (JsonObserver.dataObject != null) {
             observableObject = JsonObserver.dataObject;
             findDataObserver(object);
@@ -154,30 +159,77 @@ public class ObserverHelper {
             DataObserver ann = method.getAnnotation(DataObserver.class);
             if (ann != null) {
 
-                final ObservableWrapper wrapper = getObservable(method);
-                WrapObserver observer = new WrapObserver() {
-                    @Override
-                    public void update(Object data) {
-                        try {
-                            if (data != null || wrapper.isAllowNull()) {
-                                method.invoke(object, data);
-                            }
-                        } catch (Exception e) {
-                            RuntimeException ex = null;
-                            if (e.getCause() != null) {
-                                ex = new RuntimeException(e.getCause());
-                                ex.setStackTrace(e.getCause().getStackTrace());
-                                throw ex;
-                            } else {
-                                ex = new RuntimeException(e);
-                            }
-                            throw ex;
-                        }
-                    }
-                };
+                final Object wrapperOrAdapter = getObservableOrAdapter(method);
+                if (wrapperOrAdapter != null) {
 
-                wrapper.addObserver(observer, ann.onStartup());
-                dataObservers.add(new Pair<ObservableWrapper, WrapObserver>(wrapper, observer));
+                    if (wrapperOrAdapter instanceof ObservableWrapper) {
+                        final ObservableWrapper wrapper = (ObservableWrapper) wrapperOrAdapter;
+                        WrapObserver observer = new WrapObserver() {
+                            @Override
+                            public void update(Object data) {
+                                try {
+                                    if (data != null || wrapper.isAllowNull()) {
+                                        method.invoke(object, data);
+                                    }
+                                } catch (Exception e) {
+                                    RuntimeException ex = null;
+                                    if (e.getCause() != null) {
+                                        ex = new RuntimeException(e.getCause());
+                                        ex.setStackTrace(e.getCause().getStackTrace());
+                                        throw ex;
+                                    } else {
+                                        ex = new RuntimeException(e);
+                                    }
+                                    throw ex;
+                                }
+                            }
+                        };
+
+                        wrapper.addObserver(observer, ann.onStartup());
+                        dataObservers.add(new Pair<ObservableWrapper, WrapObserver>(wrapper, observer));
+                    } else if (wrapperOrAdapter instanceof Adapter) {
+                        final Adapter adapter = (Adapter) wrapperOrAdapter;
+                        DataSetObserver dataSetObserver = new DataSetObserver() {
+                            @Override
+                            public void onChanged() {
+                                Object param=null;
+                                if(method.getParameterTypes()[0].isAssignableFrom(List.class))
+                                {
+                                    List<Object> list = new ArrayList<Object>();
+                                    for (int i = 0; i < adapter.getCount(); i++) {
+                                        list.add(adapter.getItem(i));
+                                    }
+                                    param=list;
+                                }
+                                else
+                                {
+                                    param=adapter;
+                                }
+                                try {
+                                    method.invoke(object, param);
+                                } catch (Exception e) {
+                                    RuntimeException ex = null;
+                                    if (e.getCause() != null) {
+                                        ex = new RuntimeException(e.getCause());
+                                        ex.setStackTrace(e.getCause().getStackTrace());
+                                        throw ex;
+                                    } else {
+                                        ex = new RuntimeException(e);
+                                    }
+                                    throw ex;
+                                }
+                            }
+                        };
+                        adapter.registerDataSetObserver(dataSetObserver);
+                        if(ann.onStartup())
+                        {
+                            dataSetObserver.onChanged();
+                        }
+                        dataAdapters.add(new Pair<Adapter, DataSetObserver>(adapter,dataSetObserver));
+                    }
+                }
+
+
             }
         }
     }
@@ -224,18 +276,20 @@ public class ObserverHelper {
         return field;
     }
 
-    private ObservableWrapper getObservable(Method method) {
+    private Object getObservableOrAdapter(Method method) {
         try {
             DataObserver ann = method.getAnnotation(DataObserver.class);
 
             if (!ann.fieldName().equals("")) {
-                return (ObservableWrapper) getField(ann.fieldName()).get(observableObject);
+                return getField(ann.fieldName()).get(observableObject);
             }
 
             String methodName = method.getName();
             if (methodName.length() > convention.length() + 1) {
                 String fieldName = methodName.substring(0, methodName.length() - convention.length());
-                return (ObservableWrapper) getField(fieldName).get(observableObject);
+
+                return getField(fieldName).get(observableObject);
+
             }
 
             return null;
@@ -244,16 +298,21 @@ public class ObserverHelper {
         }
     }
 
+
     @SuppressWarnings("unchecked")
     public void stop() {
         for (Pair<ObservableWrapper, WrapObserver> pair : dataObservers) {
             pair.first.deleteObserver(pair.second);
+        }
+        for (Pair<Adapter, DataSetObserver> pair : dataAdapters) {
+            pair.first.unregisterDataSetObserver(pair.second);
         }
         for (Pair<ObservableWrapper, WrapObserver> pair : viewObservers.values()) {
             pair.first.deleteObserver(pair.second);
         }
 
         dataObservers.clear();
+        dataAdapters.clear();
         viewObservers.clear();
     }
 

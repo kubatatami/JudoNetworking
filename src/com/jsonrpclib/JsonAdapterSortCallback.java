@@ -3,6 +3,7 @@ package com.jsonrpclib;
 import android.widget.ArrayAdapter;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -14,23 +15,37 @@ import java.util.List;
 public class JsonAdapterSortCallback<T extends Comparable<T>> extends JsonCallback<List<T>> {
 
     private final ArrayAdapter<T> adapter;
+    private final Comparator<T> comparator;
 
     public JsonAdapterSortCallback(ArrayAdapter<T> adapter) {
         this.adapter = adapter;
+        comparator=null;
     }
 
-    public boolean filtr(T result) {
+    public JsonAdapterSortCallback(ArrayAdapter<T> adapter, Comparator<T> comparator) {
+        this.adapter = adapter;
+        this.comparator = comparator;
+    }
+
+    public boolean filter(T result) {
         return true;
     }
 
     @Override
     public void onFinish(List<T> result) {
         adapter.clear();
-        Collections.sort(result);
+        if(comparator!=null)
+        {
+            Collections.sort(result,comparator);
+        }
+        else
+        {
+            Collections.sort(result);
+        }
 
         adapter.setNotifyOnChange(false);
         for (T object : result) {
-            if (filtr(object)) {
+            if (filter(object)) {
                 adapter.add(object);
             }
         }
