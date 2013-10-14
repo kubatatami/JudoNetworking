@@ -3,6 +3,8 @@ package com.jsonrpclib.controllers;
 import com.google.gson22.Gson;
 import com.google.gson22.GsonBuilder;
 import com.google.gson22.JsonElement;
+import com.jsonrpclib.HttpException;
+import com.jsonrpclib.JsonException;
 import com.jsonrpclib.ProtocolController;
 
 /**
@@ -50,5 +52,13 @@ public abstract class JsonProtocolController extends ProtocolController {
 
     public void setApiKey(String key) {
         this.apiKey = key;
+    }
+
+    @Override
+    public void parseError(int code, String resp) throws Exception {
+        if(code==405)
+        {
+            throw new JsonException("Server response: Method Not Allowed. Did you select the correct protocol controller?",new HttpException(resp,code));
+        }
     }
 }

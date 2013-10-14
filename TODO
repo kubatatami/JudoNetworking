@@ -1,15 +1,13 @@
+-lepsza obsluga bledow uzytkownika, brak adnotacji, zle parametry w metodach od obserwatorow itp.
+-call in batch niezalezne od obiektu rpc, mozliwe wywolania z kilku serwerow
+-poprawa delay dla zwyklych requestow z virtual server  ???
+
+
+Dalsze zmiany:
 -rozdzielenie bibliotek rpc i observer
 -zamiana przedrostka json na judo
--wymyslenie nowej nazwy biblioteki(judo callbacks)
--nasluchiwanie na adaptery poprzez adnotacje dataobserver
-
-
--poprawa delay dla zwyklych requestow z virtual server
-
-
-
-
-
+-wymyslenie nowej nazwy biblioteki(judo callbacks?)
+-przepisanie biblioteki zachowując interfejsy
 
 
 

@@ -320,19 +320,7 @@ class JsonConnector {
 
 
         if (requests.size() > 0) {
-            String requestsName = "";
-            for (JsonRequest request : requests) {
-                requestsName += " " + request.getName();
-                if (request.getArgs() != null && rpc.isByteArrayAsBase64()) {
-                    int i = 0;
-                    for (Object object : request.getArgs()) {
-                        if (object instanceof byte[]) {
-                            request.getArgs()[i] = Base64.encodeToString((byte[]) object, Base64.NO_WRAP);
-                        }
-                        i++;
-                    }
-                }
-            }
+
 
             if (rpc.getProtocolController().isBatchSupported()) {
 
@@ -372,10 +360,40 @@ class JsonConnector {
                         }
                     }
                 }
+
+
+                String requestsName = "";
+                for (JsonRequest request : requests) {
+                    requestsName += " " + request.getName();
+                    if (request.getArgs() != null && rpc.isByteArrayAsBase64()) {
+                        int i = 0;
+                        for (Object object : request.getArgs()) {
+                            if (object instanceof byte[]) {
+                                request.getArgs()[i] = Base64.encodeToString((byte[]) object, Base64.NO_WRAP);
+                            }
+                            i++;
+                        }
+                    }
+                }
+
+
                 if (copyRequest.size() > 0) {
                     results.addAll(callRealBatch(copyRequest, progressObserver, timeout, requestsName));
                 }
             } else {
+
+                for (JsonRequest request : requests) {
+                    if (request.getArgs() != null && rpc.isByteArrayAsBase64()) {
+                        int i = 0;
+                        for (Object object : request.getArgs()) {
+                            if (object instanceof byte[]) {
+                                request.getArgs()[i] = Base64.encodeToString((byte[]) object, Base64.NO_WRAP);
+                            }
+                            i++;
+                        }
+                    }
+                }
+
                 synchronized (progressObserver) {
                     progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (requests.size() - 1) * JsonTimeStat.TICKS);
                 }

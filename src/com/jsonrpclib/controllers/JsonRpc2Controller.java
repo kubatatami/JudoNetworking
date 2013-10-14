@@ -1,6 +1,7 @@
 package com.jsonrpclib.controllers;
 
 import com.google.gson22.GsonBuilder;
+import com.google.gson22.JsonSyntaxException;
 import com.google.gson22.stream.JsonReader;
 import com.jsonrpclib.*;
 
@@ -34,7 +35,17 @@ public class JsonRpc2Controller extends JsonRpcController {
     public JsonResult parseResponse(JsonRequestInterface request, InputStream stream) {
         try {
             JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
-            JsonRpcResponseModel2 response = gson.fromJson(reader, JsonRpcResponseModel2.class);
+            JsonRpcResponseModel2 response;
+            try {
+                response = gson.fromJson(reader, JsonRpcResponseModel2.class);
+            } catch (JsonSyntaxException ex) {
+                throw new JsonException("Wrong server response. Did you select the correct protocol controller?",ex);
+            }
+
+            if (response.jsonrpc == null) {
+                throw new JsonException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support json-rpc 2.0? Try JsonRpc1Controller.");
+            }
+
             if (response.error != null) {
                 throw new JsonException(response.error.message, response.error.code);
             }
@@ -59,6 +70,7 @@ public class JsonRpc2Controller extends JsonRpcController {
 
     protected class JsonRpcResponseModel2 extends JsonRpcResponseModel {
         JsonErrorModel error;
+        String jsonrpc;
     }
 
 

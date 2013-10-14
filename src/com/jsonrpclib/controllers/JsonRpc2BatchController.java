@@ -59,14 +59,20 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
         List<JsonRpcResponseModel2> responses = null;
 
         JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
-        responses = gson.fromJson(reader,
-                new TypeToken<List<JsonRpcResponseModel2>>() {
-                }.getType());
+
+        try {
+            responses = gson.fromJson(reader,
+                    new TypeToken<List<JsonRpcResponseModel2>>() {
+                    }.getType());
+        } catch (JsonSyntaxException ex) {
+            throw new JsonException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support batch? Try JsonRpc2Controller.",ex);
+        }
+
         reader.close();
 
 
         if (responses == null) {
-            throw new JsonException("Empty response.");
+            throw new JsonException("Empty server response.");
         }
 
         Collections.sort(responses);
@@ -82,7 +88,10 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
 
         for (int i = 0; i < responses.size(); i++) {
             JsonRpcResponseModel2 res = responses.get(i);
-            if (res.error == null) {
+            if (res.jsonrpc == null) {
+                throw new JsonException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support json-rpc 2.0? Try JsonRpc1Controller.");
+            }
+            else if (res.error == null) {
                 Object result = null;
                 try {
                     Type type = requests.get(i).getReturnType();
