@@ -28,7 +28,7 @@ class JsonRpcImplementation implements JsonRpc {
     private int autoBatchTime = 20; //milliseconds
     private JsonBatchTimeoutMode timeoutMode = JsonBatchTimeoutMode.TIMEOUTS_SUM;
     private JsonMemoryCache memoryCache;
-    private JsonDiscCache discCache;
+    private JsonDiskCache diskCache;
     private int debugFlags = 0;
     private Map<String, JsonStat> stats;
     private File statFile;
@@ -61,7 +61,7 @@ class JsonRpcImplementation implements JsonRpc {
         this.url = url;
         statFile = new File(context.getCacheDir(), "stats");
         memoryCache = new JsonMemoryCacheImplementation(context);
-        discCache = new JsonDiscCacheImplementation(context);
+        diskCache = new JsonDiskCacheImplementation(context);
     }
 
     public HashMap<Class, JsonVirtualServerInfo> getVirtualServers() {
@@ -305,8 +305,8 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
 
-    public JsonDiscCache getDiscCache() {
-        return discCache;
+    public JsonDiskCache getDiskCache() {
+        return diskCache;
     }
 
 
@@ -326,8 +326,8 @@ class JsonRpcImplementation implements JsonRpc {
             memoryCache.setDebugFlags(flags);
         }
 
-        if (discCache != null) {
-            discCache.setDebugFlags(flags);
+        if (diskCache != null) {
+            diskCache.setDebugFlags(flags);
         }
     }
 

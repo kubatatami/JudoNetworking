@@ -16,4 +16,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface JsonServerCache {
     boolean useOldOnError() default false;
+
+    public JsonServerCacheLevel cacheLevel() default JsonServerCacheLevel.DISK_CACHE;
 }

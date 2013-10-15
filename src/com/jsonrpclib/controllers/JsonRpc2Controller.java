@@ -39,7 +39,7 @@ public class JsonRpc2Controller extends JsonRpcController {
             try {
                 response = gson.fromJson(reader, JsonRpcResponseModel2.class);
             } catch (JsonSyntaxException ex) {
-                throw new JsonException("Wrong server response. Did you select the correct protocol controller?",ex);
+                throw new JsonException("Wrong server response. Did you select the correct protocol controller?", ex);
             }
 
             if (response.jsonrpc == null) {

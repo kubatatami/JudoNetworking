@@ -11,12 +11,12 @@ import java.util.Arrays;
  * Date: 07.03.2013
  * Time: 08:05
  */
-class JsonDiscCacheImplementation implements JsonDiscCache {
+class JsonDiskCacheImplementation implements JsonDiskCache {
     private int debugFlags;
 
     protected Context context;
 
-    public JsonDiscCacheImplementation(Context context) {
+    public JsonDiskCacheImplementation(Context context) {
         this.context = context;
     }
 
@@ -46,9 +46,13 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
 
     @Override
     public void clearCache() {
-        File file = getLocalCacheDir();
+        File file = getLocalCacheDir(JsonLocalCacheLevel.DISK_CACHE);
         delete(file);
-        file = getDynamicCacheDir();
+        file = getDynamicCacheDir(JsonLocalCacheLevel.DISK_CACHE);
+        delete(file);
+        file = getLocalCacheDir(JsonLocalCacheLevel.DISK_DATA);
+        delete(file);
+        file = getDynamicCacheDir(JsonLocalCacheLevel.DISK_DATA);
         delete(file);
     }
 
@@ -93,7 +97,7 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
         File file = new File(getCacheDir(method), hash + "");
 
         if ((debugFlags & JsonRpc.CACHE_DEBUG) > 0) {
-            JsonLoggerImpl.log("Cache(" + method + "): Search in disc cache " + file.getAbsolutePath() + ".");
+            JsonLoggerImpl.log("Cache(" + method + "): Search in disk cache " + file.getAbsolutePath() + ".");
         }
 
         if (file.exists()) {
@@ -103,7 +107,7 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
                     os = new ObjectInputStream(fileStream);
                     result = (JsonCacheResult) os.readObject();
                     if ((debugFlags & JsonRpc.CACHE_DEBUG) > 0) {
-                        JsonLoggerImpl.log("Cache(" + method + "): Get from disc cache " + file.getAbsolutePath() + ".");
+                        JsonLoggerImpl.log("Cache(" + method + "): Get from disk cache " + file.getAbsolutePath() + ".");
                     }
                     return result;
                 } catch (Exception e) {
@@ -135,7 +139,7 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
             os.flush();
             os.close();
             if ((debugFlags & JsonRpc.CACHE_DEBUG) > 0) {
-                JsonLoggerImpl.log("Cache(" + method + "): Saved in disc cache " + file.getAbsolutePath() + ".");
+                JsonLoggerImpl.log("Cache(" + method + "): Saved in disk cache " + file.getAbsolutePath() + ".");
             }
         } catch (IOException e) {
             JsonLoggerImpl.log(e);
@@ -143,14 +147,14 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
 
     }
 
-    private File getLocalCacheDir() {
-        File file = new File(context.getCacheDir() + "/cache/local/");
+    private File getLocalCacheDir(JsonLocalCacheLevel cacheLevel) {
+        File file = new File(getRootDir(cacheLevel) + "/cache/local/");
         file.mkdirs();
         return file;
     }
 
-    private File getDynamicCacheDir() {
-        File file = new File(context.getCacheDir() + "/cache/dynamic/");
+    private File getDynamicCacheDir(JsonLocalCacheLevel cacheLevel) {
+        File file = new File(getRootDir(cacheLevel) + "/cache/dynamic/");
         file.mkdirs();
         return file;
     }
@@ -167,8 +171,13 @@ class JsonDiscCacheImplementation implements JsonDiscCache {
         return file;
     }
 
+
+    private String getRootDir(JsonLocalCacheLevel cacheLevel) {
+        return ((cacheLevel == JsonLocalCacheLevel.DISK_CACHE) ? context.getCacheDir() : context.getFilesDir()) + "";
+    }
+
     private File getCacheDir(JsonCacheMethod method) {
-        String name = context.getCacheDir() + "/cache/";
+        String name = getRootDir(method.getCacheLevel()) + "/cache/";
         if (method.isDynamic()) {
             name += "dynamic/";
         } else {

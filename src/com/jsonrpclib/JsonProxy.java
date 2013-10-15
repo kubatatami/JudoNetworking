@@ -173,74 +173,89 @@ class JsonProxy implements InvocationHandler {
                 batchRequests.clear();
                 this.batch = false;
             }
-            try {
-                Map<Integer, Pair<JsonRequest, Object>> cacheObjects = new HashMap<Integer, Pair<JsonRequest, Object>>();
-                if (rpc.isCacheEnabled()) {
-                    for (int i = batches.size() - 1; i >= 0; i--) {
-                        JsonRequest req = batches.get(i);
 
-                        if (req.isLocalCachable() || rpc.isTest()) {
-                            JsonCacheResult result = rpc.getMemoryCache().get(req.getMethod(), req.getArgs(), rpc.isTest() ? 0 : req.getLocalCacheLifeTime(), req.getLocalCacheSize());
-                            if (result.result) {
-                                if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
+            Map<Integer, Pair<JsonRequest, Object>> cacheObjects = new HashMap<Integer, Pair<JsonRequest, Object>>();
+            if (rpc.isCacheEnabled()) {
+                for (int i = batches.size() - 1; i >= 0; i--) {
+                    JsonRequest req = batches.get(i);
+
+                    if (req.isLocalCachable() || rpc.isTest()) {
+                        JsonCacheResult result = rpc.getMemoryCache().get(req.getMethod(), req.getArgs(), rpc.isTest() ? 0 : req.getLocalCacheLifeTime(), req.getLocalCacheSize());
+                        JsonLocalCacheLevel cacheLevel = rpc.isTest() ? JsonLocalCacheLevel.DISK_CACHE : req.getLocalCacheLevel();
+                        if (result.result) {
+                            if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
+                                try {
                                     result.object = rpc.getJsonClonner().clone(result.object);
+                                    cacheObjects.put(i, new Pair<JsonRequest, Object>(req, result.object));
+                                    if (req.isLocalCacheOnlyOnError()) {
+                                        batches.remove(i);
+                                    }
+                                } catch (Exception e) {
+                                    JsonLoggerImpl.log(e);
+                                }
+                            }
+
+
+
+                        } else if (cacheLevel != JsonLocalCacheLevel.MEMORY_ONLY) {
+                            JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), req.getMethod(), cacheLevel);
+                            result = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(req.getArgs()), req.getLocalCacheLifeTime());
+                            if (result.result) {
+                                if (!rpc.isTest()) {
+                                    rpc.getMemoryCache().put(req.getMethod(), req.getArgs(), result.object, req.getLocalCacheSize());
                                 }
                                 cacheObjects.put(i, new Pair<JsonRequest, Object>(req, result.object));
-                                batches.remove(i);
-                            } else if (req.isLocalCachePersist() || rpc.isTest()) {
-                                JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), req.getMethod());
-                                result = rpc.getDiscCache().get(cacheMethod, Arrays.deepToString(req.getArgs()), req.getLocalCacheLifeTime());
-                                if (result.result) {
-                                    if (!rpc.isTest()) {
-                                        rpc.getMemoryCache().put(req.getMethod(), req.getArgs(), result.object, req.getLocalCacheSize());
-                                    }
-                                    cacheObjects.put(i, new Pair<JsonRequest, Object>(req, result.object));
+                                if (req.isLocalCacheOnlyOnError()) {
                                     batches.remove(i);
                                 }
-
                             }
+
                         }
                     }
                 }
+            }
 
-                JsonBatchProgressObserver batchProgressObserver = new JsonBatchProgressObserver(rpc, batch, batches);
-                List<JsonResult> responses;
-                if (batches.size() > 0) {
-
+            JsonBatchProgressObserver batchProgressObserver = new JsonBatchProgressObserver(rpc, batch, batches);
+            List<JsonResult> responses;
+            if (batches.size() > 0) {
+                try {
                     responses = sendBatchRequest(batches, batchProgressObserver, cacheObjects.size());
-                    Collections.sort(responses);
-                } else {
-                    responses = new ArrayList<JsonResult>();
-                    batchProgressObserver.setMaxProgress(1);
-                    batchProgressObserver.progressTick(1);
+                } catch (final Exception e) {
+                    responses = new ArrayList<JsonResult>(batches.size());
+                    for(JsonRequest request : batches)
+                    {
+                        responses.add(new JsonErrorResult(request.getId(),e));
+                    }
+                }
+                Collections.sort(responses);
+            } else {
+                responses = new ArrayList<JsonResult>();
+                batchProgressObserver.setMaxProgress(1);
+                batchProgressObserver.progressTick(1);
+            }
+
+            if (rpc.isCacheEnabled()) {
+                for (int i = responses.size() - 1; i >= 0; i--) {
+                    JsonResult result = responses.get(i);
+                    if (cacheObjects.containsKey(result.id) && result instanceof JsonErrorResult) {
+                        responses.remove(result);
+                        responses.add(new JsonSuccessResult(cacheObjects.get(result.id)));
+                        cacheObjects.remove(result.id);
+                    }
                 }
 
                 for (Map.Entry<Integer, Pair<JsonRequest, Object>> pairs : cacheObjects.entrySet()) {
                     responses.add(pairs.getKey(), new JsonSuccessResult(pairs.getValue().second));
                     batches.add(pairs.getKey(), pairs.getValue().first);
                 }
-                Collections.sort(batches, new Comparator<JsonRequest>() {
-                    @Override
-                    public int compare(JsonRequest lhs, JsonRequest rhs) {
-                        return lhs.getId().compareTo(rhs.getId());
-                    }
-                });
-                handleBatchResponse(batches, batch, responses);
-            } catch (final Exception e) {
-                if (mode == JsonBatchMode.AUTO) {
-                    for (JsonRequest req : batches) {
-                        req.invokeCallback(e);
-                    }
-                }
-                if (batch != null) {
-                    rpc.getHandler().post(new Runnable() {
-                        @Override
-                        public void run() {
-                            batch.onError(e);
-                        }
-                    });
-                }
             }
+            Collections.sort(batches, new Comparator<JsonRequest>() {
+                @Override
+                public int compare(JsonRequest lhs, JsonRequest rhs) {
+                    return lhs.getId().compareTo(rhs.getId());
+                }
+            });
+            handleBatchResponse(batches, batch, responses);
 
 
         } else {
@@ -319,6 +334,8 @@ class JsonProxy implements InvocationHandler {
                 if (response.cacheObject != null) {
                     results[i] = response.cacheObject;
                 } else {
+
+
                     if (response.error != null) {
                         throw response.error;
                     }
@@ -333,14 +350,15 @@ class JsonProxy implements InvocationHandler {
                             if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
                                 results[i] = rpc.getJsonClonner().clone(results[i]);
                             }
+                            JsonLocalCacheLevel cacheLevel = rpc.isTest() ? JsonLocalCacheLevel.DISK_CACHE : request.getLocalCacheLevel();
 
-                            if (request.isLocalCachePersist() || rpc.isTest()) {
-                                JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), request.getMethod());
-                                rpc.getDiscCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i]);
+                            if (cacheLevel != JsonLocalCacheLevel.MEMORY_ONLY) {
+                                JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), request.getMethod(), cacheLevel);
+                                rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i]);
                             }
                         } else if (rpc.isCacheEnabled() && request.isServerCachable() && (response.hash != null || response.time != null)) {
-                            JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getUrl(), request.getMethod(), response.hash, response.time);
-                            rpc.getDiscCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i]);
+                            JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getUrl(), request.getMethod(), response.hash, response.time, request.getServerCacheLevel());
+                            rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i]);
                         }
                     }
                 }

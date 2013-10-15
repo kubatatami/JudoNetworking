@@ -10,26 +10,34 @@ public class JsonCacheMethod {
     private boolean dynamic = false;
     private String hash;
     private Long time;
+    private JsonLocalCacheLevel cacheLevel;
 
-    public JsonCacheMethod(String url, Method method) {
+    public JsonCacheMethod(String url, Method method, JsonServerCacheLevel level) {
         this.url = url;
         this.method = method;
         this.dynamic = true;
+        cacheLevel = (level == JsonServerCacheLevel.DISK_CACHE) ? JsonLocalCacheLevel.DISK_CACHE : JsonLocalCacheLevel.DISK_DATA;
     }
 
-    public JsonCacheMethod(String url, Method method, String hash, Long time) {
+    public JsonCacheMethod(String url, Method method, String hash, Long time, JsonServerCacheLevel level) {
         this.url = url;
         this.method = method;
         this.hash = hash;
         this.time = time;
         this.dynamic = true;
+        cacheLevel = (level == JsonServerCacheLevel.DISK_CACHE) ? JsonLocalCacheLevel.DISK_CACHE : JsonLocalCacheLevel.DISK_DATA;
     }
 
-    public JsonCacheMethod(String test, int testRevision, String url, Method method) {
+    public JsonCacheMethod(String test, int testRevision, String url, Method method, JsonLocalCacheLevel level) {
         this.test = test;
         this.testRevision = testRevision;
         this.url = url;
         this.method = method;
+        this.cacheLevel = level;
+    }
+
+    public JsonLocalCacheLevel getCacheLevel() {
+        return cacheLevel;
     }
 
     public boolean isDynamic() {

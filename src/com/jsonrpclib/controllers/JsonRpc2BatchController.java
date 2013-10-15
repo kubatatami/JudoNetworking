@@ -65,7 +65,7 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
                     new TypeToken<List<JsonRpcResponseModel2>>() {
                     }.getType());
         } catch (JsonSyntaxException ex) {
-            throw new JsonException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support batch? Try JsonRpc2Controller.",ex);
+            throw new JsonException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support batch? Try JsonRpc2Controller.", ex);
         }
 
         reader.close();
@@ -90,8 +90,7 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
             JsonRpcResponseModel2 res = responses.get(i);
             if (res.jsonrpc == null) {
                 throw new JsonException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support json-rpc 2.0? Try JsonRpc1Controller.");
-            }
-            else if (res.error == null) {
+            } else if (res.error == null) {
                 Object result = null;
                 try {
                     Type type = requests.get(i).getReturnType();

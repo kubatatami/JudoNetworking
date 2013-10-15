@@ -160,7 +160,7 @@ public interface JsonRpc {
     public void setJsonClonner(JsonClonner clonner);
 
 
-    public JsonDiscCache getDiscCache();
+    public JsonDiskCache getDiskCache();
 
 
     public JsonMemoryCache getMemoryCache();

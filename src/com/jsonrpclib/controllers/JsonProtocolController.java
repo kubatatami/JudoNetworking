@@ -56,9 +56,8 @@ public abstract class JsonProtocolController extends ProtocolController {
 
     @Override
     public void parseError(int code, String resp) throws Exception {
-        if(code==405)
-        {
-            throw new JsonException("Server response: Method Not Allowed. Did you select the correct protocol controller?",new HttpException(resp,code));
+        if (code == 405) {
+            throw new JsonException("Server response: Method Not Allowed. Did you select the correct protocol controller?", new HttpException(resp, code));
         }
     }
 }

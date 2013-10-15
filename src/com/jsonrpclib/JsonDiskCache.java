@@ -7,7 +7,7 @@ package com.jsonrpclib;
  * Time: 15:09
  * To change this template use File | Settings | File Templates.
  */
-public interface JsonDiscCache {
+public interface JsonDiskCache {
 
     public JsonCacheResult get(JsonCacheMethod method, String hash, int cacheLifeTime);
 

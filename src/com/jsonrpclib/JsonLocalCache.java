@@ -16,10 +16,11 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface JsonLocalCache {
 
-    public boolean discPersist() default false;
+    public JsonLocalCacheLevel cacheLevel() default JsonLocalCacheLevel.MEMORY_ONLY;
 
     public int lifeTime() default 0;
 
     public int size() default 100;
 
+    public boolean onlyOnError() default false;
 }

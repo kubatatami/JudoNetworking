@@ -6,7 +6,6 @@ import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Adapter;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.lang.reflect.Field;
@@ -192,18 +191,15 @@ public class ObserverHelper {
                         DataSetObserver dataSetObserver = new DataSetObserver() {
                             @Override
                             public void onChanged() {
-                                Object param=null;
-                                if(method.getParameterTypes()[0].isAssignableFrom(List.class))
-                                {
+                                Object param = null;
+                                if (method.getParameterTypes()[0].isAssignableFrom(List.class)) {
                                     List<Object> list = new ArrayList<Object>();
                                     for (int i = 0; i < adapter.getCount(); i++) {
                                         list.add(adapter.getItem(i));
                                     }
-                                    param=list;
-                                }
-                                else
-                                {
-                                    param=adapter;
+                                    param = list;
+                                } else {
+                                    param = adapter;
                                 }
                                 try {
                                     method.invoke(object, param);
@@ -221,11 +217,10 @@ public class ObserverHelper {
                             }
                         };
                         adapter.registerDataSetObserver(dataSetObserver);
-                        if(ann.onStartup())
-                        {
+                        if (ann.onStartup()) {
                             dataSetObserver.onChanged();
                         }
-                        dataAdapters.add(new Pair<Adapter, DataSetObserver>(adapter,dataSetObserver));
+                        dataAdapters.add(new Pair<Adapter, DataSetObserver>(adapter, dataSetObserver));
                     }
                 }
 

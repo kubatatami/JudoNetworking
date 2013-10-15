@@ -29,7 +29,7 @@ public class JsonPostController extends JsonSimplePostController {
             try {
                 response = gson.fromJson(reader, JsonGetOrPostResponseModel.class);
             } catch (JsonSyntaxException ex) {
-                throw new JsonException("Wrong server response. Did you select the correct protocol controller?",ex);
+                throw new JsonException("Wrong server response. Did you select the correct protocol controller?", ex);
             }
             if (response.error != null) {
                 throw new JsonException(response.error.message, response.error.code);

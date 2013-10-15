@@ -19,7 +19,7 @@ public class JsonAdapterSortCallback<T extends Comparable<T>> extends JsonCallba
 
     public JsonAdapterSortCallback(ArrayAdapter<T> adapter) {
         this.adapter = adapter;
-        comparator=null;
+        comparator = null;
     }
 
     public JsonAdapterSortCallback(ArrayAdapter<T> adapter, Comparator<T> comparator) {
@@ -34,12 +34,9 @@ public class JsonAdapterSortCallback<T extends Comparable<T>> extends JsonCallba
     @Override
     public void onFinish(List<T> result) {
         adapter.clear();
-        if(comparator!=null)
-        {
-            Collections.sort(result,comparator);
-        }
-        else
-        {
+        if (comparator != null) {
+            Collections.sort(result, comparator);
+        } else {
             Collections.sort(result);
         }
 

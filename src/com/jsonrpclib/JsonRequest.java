@@ -115,12 +115,21 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
         return method.getAnnotation(JsonLocalCache.class).size();
     }
 
-    public boolean isLocalCachePersist() {
-        return method.getAnnotation(JsonLocalCache.class).discPersist();
+    public JsonLocalCacheLevel getLocalCacheLevel() {
+        return method.getAnnotation(JsonLocalCache.class).cacheLevel();
+    }
+
+    public boolean isLocalCacheOnlyOnError() {
+        JsonLocalCache jsonLocalCache =  method.getAnnotation(JsonLocalCache.class);
+        return jsonLocalCache!=null && jsonLocalCache.onlyOnError();
     }
 
     public boolean isServerCachable() {
         return method.isAnnotationPresent(JsonServerCache.class);
+    }
+
+    public JsonServerCacheLevel getServerCacheLevel() {
+        return method.getAnnotation(JsonServerCache.class).cacheLevel();
     }
 
 

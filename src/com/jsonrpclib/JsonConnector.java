@@ -222,32 +222,38 @@ class JsonConnector {
     public Object call(JsonRequest request) throws Exception {
         try {
 
-            JsonCacheResult cacheObject = null;
+            JsonCacheResult localCacheObject = null;
+            JsonCacheResult serverCacheObject = null;
             JsonTimeStat timeStat = new JsonTimeStat(request);
 
 
             if ((rpc.isCacheEnabled() && request.isLocalCachable()) || rpc.isTest()) {
-                cacheObject = rpc.getMemoryCache().get(request.getMethod(), request.getArgs(), rpc.isTest() ? 0 : request.getLocalCacheLifeTime(), request.getLocalCacheSize());
-                if (cacheObject.result) {
-                    timeStat.tickCacheTime();
-                    return cacheObject.object;
-                } else if (request.isLocalCachePersist() || rpc.isTest()) {
-                    JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), url, request.getMethod());
-                    cacheObject = rpc.getDiscCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getLocalCacheLifeTime());
-                    if (cacheObject.result) {
-                        if (!rpc.isTest()) {  //we don't know when test will be stop
-                            rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), cacheObject.object, request.getLocalCacheSize());
-                        }
+                JsonLocalCacheLevel cacheLevel = rpc.isTest() ? JsonLocalCacheLevel.DISK_CACHE : request.getLocalCacheLevel();
+                localCacheObject = rpc.getMemoryCache().get(request.getMethod(), request.getArgs(), rpc.isTest() ? 0 : request.getLocalCacheLifeTime(), request.getLocalCacheSize());
+                if (localCacheObject.result) {
+                    if (!request.isLocalCacheOnlyOnError()) {
                         timeStat.tickCacheTime();
-                        return cacheObject.object;
+                        return localCacheObject.object;
+                    }
+                } else if (cacheLevel != JsonLocalCacheLevel.MEMORY_ONLY) {
+                    JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), url, request.getMethod(), cacheLevel);
+                    localCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getLocalCacheLifeTime());
+                    if (localCacheObject.result) {
+                        if (!rpc.isTest()) {  //we don't know when test will be stop
+                            rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), localCacheObject.object, request.getLocalCacheSize());
+                        }
+                        if (!request.isLocalCacheOnlyOnError()) {
+                            timeStat.tickCacheTime();
+                            return localCacheObject.object;
+                        }
                     }
 
                 }
             }
 
             if (rpc.isCacheEnabled() && request.isServerCachable()) {
-                JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod());
-                cacheObject = rpc.getDiscCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
+                JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod(), request.getServerCacheLevel());
+                serverCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
 
             }
 
@@ -262,15 +268,22 @@ class JsonConnector {
             }
 
             JsonResult result;
-            if (cacheObject != null && cacheObject.result) {
-                result = sendRequest(request, timeStat, cacheObject.hash, cacheObject.time);
+            if (serverCacheObject != null && serverCacheObject.result) {
+                result = sendRequest(request, timeStat, serverCacheObject.hash, serverCacheObject.time);
                 if (result instanceof JsonNoNewResult) {
-                    return cacheObject.object;
+                    return serverCacheObject.object;
                 } else if (result instanceof JsonErrorResult && request.getMethod().getAnnotation(JsonServerCache.class).useOldOnError()) {
-                    return cacheObject.object;
+                    return serverCacheObject.object;
                 }
             } else {
                 result = sendRequest(request, timeStat, null, null);
+            }
+
+            if (result instanceof JsonErrorResult) {
+                if (request.isLocalCacheOnlyOnError() && localCacheObject!=null && localCacheObject.result) {
+                    timeStat.tickCacheTime();
+                    return localCacheObject.object;
+                }
             }
 
             if (result.error != null) {
@@ -294,16 +307,17 @@ class JsonConnector {
                 if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
                     result.result = rpc.getJsonClonner().clone(result.result);
                 }
+                JsonLocalCacheLevel cacheLevel = rpc.isTest() ? JsonLocalCacheLevel.DISK_CACHE : request.getLocalCacheLevel();
+                if (cacheLevel != JsonLocalCacheLevel.MEMORY_ONLY) {
 
-                if (request.isLocalCachePersist() || rpc.isTest()) {
-                    JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), url, request.getMethod());
-                    rpc.getDiscCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result);
+                    JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), url, request.getMethod(), cacheLevel);
+                    rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result);
                 }
 
 
             } else if (rpc.isCacheEnabled() && request.isServerCachable() && (result.hash != null || result.time != null)) {
-                JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod());
-                rpc.getDiscCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result);
+                JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod(), request.getServerCacheLevel());
+                rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result);
             }
 
 
@@ -409,8 +423,8 @@ class JsonConnector {
                         public void run() {
                             JsonCacheResult cacheObject = null;
                             if (rpc.isCacheEnabled() && request.isServerCachable()) {
-                                JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod());
-                                cacheObject = rpc.getDiscCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
+                                JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod(), request.getServerCacheLevel());
+                                cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
 
                             }
 
