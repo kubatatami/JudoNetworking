@@ -4,6 +4,7 @@ import android.content.Context;
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * Created with IntelliJ IDEA.
@@ -27,9 +28,40 @@ class JsonDiskCacheImplementation implements JsonDiskCache {
     }
 
     @Override
-    public void put(JsonCacheMethod method, String hash, Object object) {
-        saveObject(method, hash, object);
+    public void put(JsonCacheMethod method, String hash, Object object, int cacheSize) {
 
+
+        try {
+            File dir = getCacheDir(method);
+            File file = new File(getCacheDir(method), hash + "");
+            if (cacheSize > 0) {
+                trimToSize(dir, cacheSize);
+            }
+            ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file));
+            os.writeObject(new JsonCacheResult(object, true, method.getTime(), method.getHash()));
+            os.flush();
+            os.close();
+            if ((debugFlags & JsonRpc.CACHE_DEBUG) > 0) {
+                JsonLoggerImpl.log("Cache(" + method + "): Saved in disk cache " + file.getAbsolutePath() + ".");
+            }
+        } catch (IOException e) {
+            JsonLoggerImpl.log(e);
+        }
+
+    }
+
+    private void trimToSize(File dir, int cacheSize) {
+        File[] files = dir.listFiles();
+        if (files != null && files.length > cacheSize) {
+            Arrays.sort(files, new Comparator<File>() {
+                public int compare(File f1, File f2) {
+                    return Long.valueOf(f1.lastModified()).compareTo(f2.lastModified());
+                }
+            });
+            for (int i = 0; i < files.length - cacheSize; i++) {
+                files[i].delete();
+            }
+        }
     }
 
     @Override
@@ -130,22 +162,6 @@ class JsonDiskCacheImplementation implements JsonDiskCache {
         return result;
     }
 
-
-    private void saveObject(JsonCacheMethod method, String hash, Object object) {
-        try {
-            File file = new File(getCacheDir(method), hash + "");
-            ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file));
-            os.writeObject(new JsonCacheResult(object, true, method.getTime(), method.getHash()));
-            os.flush();
-            os.close();
-            if ((debugFlags & JsonRpc.CACHE_DEBUG) > 0) {
-                JsonLoggerImpl.log("Cache(" + method + "): Saved in disk cache " + file.getAbsolutePath() + ".");
-            }
-        } catch (IOException e) {
-            JsonLoggerImpl.log(e);
-        }
-
-    }
 
     private File getLocalCacheDir(JsonLocalCacheLevel cacheLevel) {
         File file = new File(getRootDir(cacheLevel) + "/cache/local/");

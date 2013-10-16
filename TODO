@@ -1,4 +1,4 @@
--limit wielkosci w dyskowym cache-u
+-DOKUMENTACJA!!!
 -lepsza obsluga bledow uzytkownika, brak adnotacji, zle parametry w metodach od obserwatorow itp.
 -call in batch niezalezne od obiektu rpc, mozliwe wywolania z kilku serwerow
 -poprawa delay dla zwyklych requestow z virtual server  ???

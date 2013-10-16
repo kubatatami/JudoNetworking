@@ -11,7 +11,6 @@ import java.util.*;
 
 class JsonProxy implements InvocationHandler {
 
-    private final Context context;
     private final JsonRpcImplementation rpc;
     private int id = 0;
     private boolean batch = false;
@@ -19,9 +18,8 @@ class JsonProxy implements InvocationHandler {
     private final List<JsonRequest> batchRequests = new ArrayList<JsonRequest>();
     private JsonBatchMode mode = JsonBatchMode.NONE;
 
-    public JsonProxy(Context context, JsonRpcImplementation rpc, JsonBatchMode mode) {
+    public JsonProxy(JsonRpcImplementation rpc, JsonBatchMode mode) {
         this.rpc = rpc;
-        this.context = context;
         this.mode = mode;
         if (mode == JsonBatchMode.MANUAL) {
             batch = true;
@@ -78,9 +76,15 @@ class JsonProxy implements InvocationHandler {
 
                 if ((rpc.getDebugFlags() & JsonRpc.REQUEST_LINE_DEBUG) > 0) {
                     StackTraceElement stackTraceElement = getExternalStacktrace(Thread.currentThread().getStackTrace());
-                    JsonLoggerImpl.log("Request " + name + " from " +
-                            stackTraceElement.getClassName() +
-                            "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+                    if (batch && mode == JsonBatchMode.MANUAL) {
+                        JsonLoggerImpl.log("Batch request " + name + " from " +
+                                stackTraceElement.getClassName() +
+                                "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+                    } else {
+                        JsonLoggerImpl.log("Request " + name + " from " +
+                                stackTraceElement.getClassName() +
+                                "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+                    }
                 }
 
                 if (ann.timeout() != 0) {
@@ -196,7 +200,6 @@ class JsonProxy implements InvocationHandler {
                             }
 
 
-
                         } else if (cacheLevel != JsonLocalCacheLevel.MEMORY_ONLY) {
                             JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), req.getMethod(), cacheLevel);
                             result = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(req.getArgs()), req.getLocalCacheLifeTime());
@@ -222,9 +225,8 @@ class JsonProxy implements InvocationHandler {
                     responses = sendBatchRequest(batches, batchProgressObserver, cacheObjects.size());
                 } catch (final Exception e) {
                     responses = new ArrayList<JsonResult>(batches.size());
-                    for(JsonRequest request : batches)
-                    {
-                        responses.add(new JsonErrorResult(request.getId(),e));
+                    for (JsonRequest request : batches) {
+                        responses.add(new JsonErrorResult(request.getId(), e));
                     }
                 }
                 Collections.sort(responses);
@@ -354,11 +356,11 @@ class JsonProxy implements InvocationHandler {
 
                             if (cacheLevel != JsonLocalCacheLevel.MEMORY_ONLY) {
                                 JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), request.getMethod(), cacheLevel);
-                                rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i]);
+                                rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getLocalCacheSize());
                             }
                         } else if (rpc.isCacheEnabled() && request.isServerCachable() && (response.hash != null || response.time != null)) {
                             JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getUrl(), request.getMethod(), response.hash, response.time, request.getServerCacheLevel());
-                            rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i]);
+                            rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getServerCacheSize());
                         }
                     }
                 }

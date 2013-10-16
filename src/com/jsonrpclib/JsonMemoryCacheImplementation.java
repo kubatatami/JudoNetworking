@@ -51,7 +51,7 @@ class JsonMemoryCacheImplementation implements JsonMemoryCache {
     @Override
     public void put(Method method, Object params[], Object object, int cacheSize) {
         if (!cache.containsKey(method)) {
-            cache.put(method, new LruCache<Integer, JsonCacheObject>(cacheSize));
+            cache.put(method, new LruCache<Integer, JsonCacheObject>(cacheSize != 0 ? cacheSize : Integer.MAX_VALUE));
         }
         Integer hash = Arrays.deepHashCode(params);
         cache.get(method).put(hash, new JsonCacheObject(System.currentTimeMillis(), object));

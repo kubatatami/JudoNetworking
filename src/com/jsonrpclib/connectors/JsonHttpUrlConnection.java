@@ -154,7 +154,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
                     new JsonOutputStream(urlConnection.getOutputStream(), timeStat, requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
             timeStat.tickConnectionTime();
             if ((debugFlags & JsonRpc.REQUEST_DEBUG) > 0) {
-                longLog("REQ", convertStreamToString(requestInfo.entity.getContent()));
+                longLog("Request", convertStreamToString(requestInfo.entity.getContent()));
                 requestInfo.entity.reset();
             }
             requestInfo.entity.writeTo(stream);
@@ -162,7 +162,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
             stream.close();
         } else {
             if ((debugFlags & JsonRpc.REQUEST_DEBUG) > 0) {
-                longLog("REQ", requestInfo.url);
+                longLog("Request", requestInfo.url);
             }
             urlConnection.getInputStream();
             timeStat.tickConnectionTime();

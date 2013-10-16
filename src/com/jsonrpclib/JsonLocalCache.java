@@ -20,7 +20,7 @@ public @interface JsonLocalCache {
 
     public int lifeTime() default 0;
 
-    public int size() default 100;
+    public int size() default 0;
 
     public boolean onlyOnError() default false;
 }

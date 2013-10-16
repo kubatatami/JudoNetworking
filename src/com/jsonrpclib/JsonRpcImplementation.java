@@ -121,7 +121,7 @@ class JsonRpcImplementation implements JsonRpc {
 
     @SuppressWarnings("unchecked")
     public <T> T getService(Class<T> obj, boolean autoBatch) {
-        return getService(obj, new JsonProxy(context, this, autoBatch ? JsonBatchMode.AUTO : JsonBatchMode.NONE));
+        return getService(obj, new JsonProxy(this, autoBatch ? JsonBatchMode.AUTO : JsonBatchMode.NONE));
     }
 
     @SuppressWarnings("unchecked")
@@ -135,12 +135,12 @@ class JsonRpcImplementation implements JsonRpc {
 
         if ((getDebugFlags() & JsonRpc.REQUEST_LINE_DEBUG) > 0) {
             StackTraceElement stackTraceElement = JsonProxy.getExternalStacktrace(Thread.currentThread().getStackTrace());
-            JsonLoggerImpl.log("Batch request from " +
+            JsonLoggerImpl.log("Batch starts from " +
                     stackTraceElement.getClassName() +
                     "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
         }
 
-        final JsonProxy pr = new JsonProxy(context, this, JsonBatchMode.MANUAL);
+        final JsonProxy pr = new JsonProxy(this, JsonBatchMode.MANUAL);
         T proxy = getService(obj, pr);
         pr.setBatchFatal(true);
         batch.run(proxy);

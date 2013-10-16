@@ -55,6 +55,10 @@ class JsonConnector {
                     rpc.getDebugFlags(), request.getMethod(), new JsonConnection.CacheInfo(hash, time));
 
             if (!conn.isNewestAvailable()) {
+                if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
+                    JsonLoggerImpl.log("No new data for method " + request.getName());
+                }
+
                 return new JsonNoNewResult();
             }
 
@@ -62,7 +66,7 @@ class JsonConnector {
             if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
 
                 String resStr = convertStreamToString(conn.getStream());
-                longLog("RES(" + resStr.length() + ")", resStr);
+                longLog("Response(" + resStr.length() + "B)", resStr);
                 connectionStream = new ByteArrayInputStream(resStr.getBytes("UTF-8"));
             }
             JsonInputStream stream = new JsonInputStream(connectionStream, timeStat, conn.getContentLength());
@@ -272,7 +276,7 @@ class JsonConnector {
                 result = sendRequest(request, timeStat, serverCacheObject.hash, serverCacheObject.time);
                 if (result instanceof JsonNoNewResult) {
                     return serverCacheObject.object;
-                } else if (result instanceof JsonErrorResult && request.getMethod().getAnnotation(JsonServerCache.class).useOldOnError()) {
+                } else if (result instanceof JsonErrorResult && request.useServerCacheOldOnError()) {
                     return serverCacheObject.object;
                 }
             } else {
@@ -280,7 +284,7 @@ class JsonConnector {
             }
 
             if (result instanceof JsonErrorResult) {
-                if (request.isLocalCacheOnlyOnError() && localCacheObject!=null && localCacheObject.result) {
+                if (request.isLocalCacheOnlyOnError() && localCacheObject != null && localCacheObject.result) {
                     timeStat.tickCacheTime();
                     return localCacheObject.object;
                 }
@@ -311,13 +315,13 @@ class JsonConnector {
                 if (cacheLevel != JsonLocalCacheLevel.MEMORY_ONLY) {
 
                     JsonCacheMethod cacheMethod = new JsonCacheMethod(rpc.getTestName(), rpc.getTestRevision(), url, request.getMethod(), cacheLevel);
-                    rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result);
+                    rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getLocalCacheSize());
                 }
 
 
             } else if (rpc.isCacheEnabled() && request.isServerCachable() && (result.hash != null || result.time != null)) {
                 JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod(), request.getServerCacheLevel());
-                rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result);
+                rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getServerCacheSize());
             }
 
 
@@ -424,7 +428,7 @@ class JsonConnector {
                             JsonCacheResult cacheObject = null;
                             if (rpc.isCacheEnabled() && request.isServerCachable()) {
                                 JsonCacheMethod cacheMethod = new JsonCacheMethod(url, request.getMethod(), request.getServerCacheLevel());
-                                cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
+                                cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getServerCacheSize());
 
                             }
 
@@ -433,7 +437,7 @@ class JsonConnector {
                                 synchronized (results) {
                                     if (result instanceof JsonNoNewResult) {
                                         results.add(new JsonSuccessResult(request.getId(), cacheObject.object));
-                                    } else if (result instanceof JsonErrorResult && request.getMethod().getAnnotation(JsonServerCache.class).useOldOnError()) {
+                                    } else if (result instanceof JsonErrorResult && request.useServerCacheOldOnError()) {
                                         results.add(new JsonSuccessResult(request.getId(), cacheObject.object));
                                     } else {
                                         results.add(result);
@@ -484,7 +488,7 @@ class JsonConnector {
             if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
 
                 String resStr = convertStreamToString(conn.getStream());
-                longLog("RES(" + resStr.length() + ")", resStr);
+                longLog("Response(" + resStr.length() + "B)", resStr);
                 connectionStream = new ByteArrayInputStream(resStr.getBytes("UTF-8"));
             }
 

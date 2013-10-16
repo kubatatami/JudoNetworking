@@ -103,35 +103,58 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
         return timeout;
     }
 
+    JsonLocalCache getLocalCache() {
+        JsonLocalCache ann = method.getAnnotation(JsonLocalCache.class);
+        if (ann == null) {
+            ann = method.getDeclaringClass().getAnnotation(JsonLocalCache.class);
+        }
+        return ann;
+    }
+
+    JsonServerCache getServerCache() {
+        JsonServerCache ann = method.getAnnotation(JsonServerCache.class);
+        if (ann == null) {
+            ann = method.getDeclaringClass().getAnnotation(JsonServerCache.class);
+        }
+        return ann;
+    }
+
     public int getLocalCacheLifeTime() {
-        return method.getAnnotation(JsonLocalCache.class).lifeTime();
+        return getLocalCache().lifeTime();
     }
 
     public boolean isLocalCachable() {
-        return method.isAnnotationPresent(JsonLocalCache.class);
+        return getLocalCache() != null;
     }
 
     public int getLocalCacheSize() {
-        return method.getAnnotation(JsonLocalCache.class).size();
+        return getLocalCache().size();
     }
 
     public JsonLocalCacheLevel getLocalCacheLevel() {
-        return method.getAnnotation(JsonLocalCache.class).cacheLevel();
+        return getLocalCache().cacheLevel();
     }
 
     public boolean isLocalCacheOnlyOnError() {
-        JsonLocalCache jsonLocalCache =  method.getAnnotation(JsonLocalCache.class);
-        return jsonLocalCache!=null && jsonLocalCache.onlyOnError();
+        JsonLocalCache jsonLocalCache = getLocalCache();
+        return jsonLocalCache != null && jsonLocalCache.onlyOnError();
     }
 
     public boolean isServerCachable() {
-        return method.isAnnotationPresent(JsonServerCache.class);
+        return getServerCache() != null;
+    }
+
+    public int getServerCacheSize() {
+        return getServerCache().size();
     }
 
     public JsonServerCacheLevel getServerCacheLevel() {
-        return method.getAnnotation(JsonServerCache.class).cacheLevel();
+        return getServerCache().cacheLevel();
     }
 
+    public boolean useServerCacheOldOnError() {
+        return getServerCache().useOldOnError();
+    }
 
     public long getWeight() {
         if (rpc.getStats().containsKey(name)) {

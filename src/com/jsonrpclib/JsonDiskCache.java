@@ -11,7 +11,7 @@ public interface JsonDiskCache {
 
     public JsonCacheResult get(JsonCacheMethod method, String hash, int cacheLifeTime);
 
-    public void put(JsonCacheMethod method, String hash, Object object);
+    public void put(JsonCacheMethod method, String hash, Object object, int maxSize);
 
     public void clearCache();
 
