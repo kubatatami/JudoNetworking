@@ -1,6 +1,5 @@
 package com.jsonrpclib;
 
-import android.content.Context;
 import android.util.Pair;
 
 import java.lang.reflect.InvocationHandler;
@@ -378,6 +377,18 @@ class JsonProxy implements InvocationHandler {
                 JsonRequest.invokeBatchCallback(rpc, batch, results);
             } else {
                 JsonRequest.invokeBatchCallback(rpc, batch, ex);
+            }
+        }
+        if (ex != null) {
+            final Exception finalEx=ex;
+            if (rpc.getErrorLogger() != null) {
+                rpc.getHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        rpc.getErrorLogger().onError(finalEx);
+                    }
+                });
+
             }
         }
     }

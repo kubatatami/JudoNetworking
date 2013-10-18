@@ -35,8 +35,16 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
         try {
             Object result = rpc.getJsonConnector().call(this);
             invokeCallback(result);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             invokeCallback(e);
+            if (rpc.getErrorLogger() != null) {
+                rpc.getHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        rpc.getErrorLogger().onError(e);
+                    }
+                });
+            }
         }
     }
 
@@ -53,15 +61,6 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
     }
 
     public static void invokeBatchCallback(final JsonRpcImplementation rpc, JsonBatch<?> batch, final Exception e) {
-        if (rpc.getErrorLogger() != null) {
-            rpc.getHandler().post(new Runnable() {
-                @Override
-                public void run() {
-                    rpc.getErrorLogger().onError(e);
-                }
-            });
-
-        }
         rpc.getHandler().post(new JsonAsyncResult(batch, e));
     }
 
