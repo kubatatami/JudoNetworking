@@ -2,6 +2,7 @@ package com.jsonrpclib;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -21,7 +22,7 @@ public abstract class ProtocolController {
 
     public abstract RequestInfo createRequest(String url, JsonRequestInterface request) throws Exception;
 
-    public abstract JsonResult parseResponse(JsonRequestInterface request, InputStream stream);
+    public abstract JsonResult parseResponse(JsonRequestInterface request, InputStream stream, Map<String,List<String>> headers);
 
     public boolean isBatchSupported() {
         return false;
@@ -31,7 +32,7 @@ public abstract class ProtocolController {
         throw new JsonException("CreateRequest not implemented.");
     }
 
-    public List<JsonResult> parseResponses(List<JsonRequestInterface> requests, InputStream stream) throws Exception {
+    public List<JsonResult> parseResponses(List<JsonRequestInterface> requests, InputStream stream, Map<String,List<String>> headers) throws Exception {
         throw new JsonException("ParseResponses not implemented.");
     }
 

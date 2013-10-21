@@ -15,6 +15,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface DataObserver {
     String fieldName() default "";
-
     boolean onStartup() default true;
+    Class<?> observerClass() default Void.class;
 }

@@ -8,10 +8,7 @@ import com.jsonrpclib.*;
 
 import java.io.*;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -55,7 +52,7 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
     }
 
     @Override
-    public List<JsonResult> parseResponses(List<JsonRequestInterface> requests, InputStream stream) throws Exception {
+    public List<JsonResult> parseResponses(List<JsonRequestInterface> requests, InputStream stream, Map<String,List<String>> headers) throws Exception {
         List<JsonRpcResponseModel2> responses = null;
 
         JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));

@@ -2,6 +2,8 @@ package com.jsonrpclib;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -36,6 +38,8 @@ public abstract class JsonConnection {
         public Long getDate();
 
         public void close();
+
+        public Map<String,List<String>> getHeaders();
 
         public boolean isNewestAvailable() throws Exception;
     }

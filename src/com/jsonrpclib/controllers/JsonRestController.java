@@ -15,6 +15,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -72,7 +73,7 @@ public class JsonRestController extends ProtocolController {
     }
 
     @Override
-    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream) {
+    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream, Map<String,List<String>> headers) {
         return new JsonSuccessResult(request.getId(), gson.fromJson(new JsonReader(new InputStreamReader(stream)), request.getReturnType()));
     }
 

@@ -7,6 +7,8 @@ import com.jsonrpclib.*;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,7 +24,7 @@ public class JsonPostController extends JsonSimplePostController {
     }
 
     @Override
-    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream) {
+    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream, Map<String,List<String>> headers) {
         try {
             JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
             JsonGetOrPostResponseModel response;

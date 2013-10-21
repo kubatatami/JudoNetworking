@@ -70,7 +70,7 @@ class JsonConnector {
                 connectionStream = new ByteArrayInputStream(resStr.getBytes("UTF-8"));
             }
             JsonInputStream stream = new JsonInputStream(connectionStream, timeStat, conn.getContentLength());
-            JsonResult result = controller.parseResponse(request, stream);
+            JsonResult result = controller.parseResponse(request, stream, conn.getHeaders());
 
             result.hash = conn.getHash();
             result.time = conn.getDate();
@@ -493,7 +493,7 @@ class JsonConnector {
             }
 
             JsonInputStream stream = new JsonInputStream(connectionStream, timeStat, conn.getContentLength());
-            responses = controller.parseResponses((List) requests, stream);
+            responses = controller.parseResponses((List) requests, stream, conn.getHeaders());
             timeStat.tickParseTime();
             conn.close();
             timeStat.tickEndTime();

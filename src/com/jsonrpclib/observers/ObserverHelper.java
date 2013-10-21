@@ -27,7 +27,7 @@ public class ObserverHelper {
     private List<Pair<ObservableWrapper, WrapObserver>> dataObservers = new ArrayList<Pair<ObservableWrapper, WrapObserver>>();
     private List<Pair<Adapter, DataSetObserver>> dataAdapters = new ArrayList<Pair<Adapter, DataSetObserver>>();
     private Map<View, Pair<ObservableWrapper, WrapObserver>> viewObservers = new HashMap<View, Pair<ObservableWrapper, WrapObserver>>();
-    private Object observableObject;
+
     private static final String splitter = "\\.";
     private static final Pattern pattern = Pattern.compile("\\[[^\\]]*\\]");
     private static final String convention = "Changed";
@@ -43,8 +43,7 @@ public class ObserverHelper {
         dataObservers.clear();
         viewObservers.clear();
         dataAdapters.clear();
-        if (JsonObserver.dataObject != null) {
-            observableObject = JsonObserver.dataObject;
+        if (JsonObserver.dataClass != null) {
             findDataObserver(object);
         }
         if (view != null) {
@@ -117,7 +116,7 @@ public class ObserverHelper {
             String res = matcher.group(0);
             String key = res.substring(1, res.length() - 1);
             if (key.substring(0, 1).equals(".")) {
-                Object field = getFieldFromObserver(key, observableObject);
+                Object field = getFieldFromObserver(key, JsonObserver.dataObject);
                 tag = tag.replace(res, field != null ? field.toString() : "");
             } else if (key.substring(0, 8).equals("@string/")) {
                 tag = tag.replace(res, getStringResource(key.substring(8)));
@@ -144,7 +143,7 @@ public class ObserverHelper {
                 res = res.substring(1, res.length() - 1);
                 if (res.substring(0, 1).equals(".")) {
                     String fields[] = res.split(splitter);
-                    list.add((ObservableWrapper) getField(fields[1]).get(observableObject));
+                    list.add((ObservableWrapper) getField(fields[1]).get(JsonObserver.dataObject));
                 }
             }
 
@@ -251,7 +250,7 @@ public class ObserverHelper {
     }
 
     private Field getField(String fieldName) {
-        return getField(fieldName, observableObject.getClass());
+        return getField(fieldName, JsonObserver.dataClass);
     }
 
     private Field getField(String fieldName, Class<?> objectClass) {
@@ -276,14 +275,14 @@ public class ObserverHelper {
             DataObserver ann = method.getAnnotation(DataObserver.class);
 
             if (!ann.fieldName().equals("")) {
-                return getField(ann.fieldName()).get(observableObject);
+                return getField(ann.fieldName()).get(JsonObserver.dataObject);
             }
 
             String methodName = method.getName();
             if (methodName.length() > convention.length() + 1) {
                 String fieldName = methodName.substring(0, methodName.length() - convention.length());
 
-                return getField(fieldName).get(observableObject);
+                return getField(fieldName).get(JsonObserver.dataObject);
 
             }
 

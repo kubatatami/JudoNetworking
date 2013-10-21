@@ -13,11 +13,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -30,6 +31,9 @@ public class JsonHttpUrlConnection extends JsonConnection {
     private int reconnections = 3;
     private int connectTimeout = 15000;
     private int methodTimeout = 10000;
+
+    private boolean followRedirection = true;
+    CookieManager cookieManager;
     private String authKey = null;
     private HttpURLCreator httpURLCreator = null;
     private HttpURLConnectionModifier httpURLConnectionModifier = null;
@@ -64,7 +68,13 @@ public class JsonHttpUrlConnection extends JsonConnection {
     private void init(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier, boolean forceDisableKeepAlive) {
         this.httpURLCreator = httpURLCreator;
         this.httpURLConnectionModifier = httpURLConnectionModifier;
+        cookieManager = new CookieManager();
+        CookieHandler.setDefault(cookieManager);
         disableConnectionReuseIfNecessary(forceDisableKeepAlive);
+    }
+
+    public CookieManager getCookieManager() {
+        return cookieManager;
     }
 
     private void disableConnectionReuseIfNecessary(boolean forceDisableKeepAlive) {
@@ -89,6 +99,9 @@ public class JsonHttpUrlConnection extends JsonConnection {
         authKey = "Basic " + hash;
     }
 
+    public void setFollowRedirection(boolean followRedirection) {
+        this.followRedirection = followRedirection;
+    }
 
     private String auth(String login, String pass) {
         String source = login + ":" + pass;
@@ -114,6 +127,8 @@ public class JsonHttpUrlConnection extends JsonConnection {
         if (urlConnection == null) {
             throw new JsonException("Can't create HttpURLConnection.");
         }
+
+        urlConnection.setInstanceFollowRedirects(followRedirection);
 
         if (cacheInfo != null) {
             if (cacheInfo.hash != null) {
@@ -148,13 +163,20 @@ public class JsonHttpUrlConnection extends JsonConnection {
             urlConnection.setRequestMethod(httpMethod.methodType());
         }
 
+        if ((debugFlags & JsonRpc.HEADERS_DEBUG) > 0) {
+            String headers="";
+            for (String key : urlConnection.getRequestProperties().keySet()) {
+                headers+=key+":"+urlConnection.getRequestProperty(key)+" ";
+            }
+            longLog("Request headers", headers);
+        }
         if (requestInfo.entity != null) {
             urlConnection.setDoOutput(true);
             OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
                     new JsonOutputStream(urlConnection.getOutputStream(), timeStat, requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
             timeStat.tickConnectionTime();
             if ((debugFlags & JsonRpc.REQUEST_DEBUG) > 0) {
-                longLog("Request", convertStreamToString(requestInfo.entity.getContent()));
+                longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
                 requestInfo.entity.reset();
             }
             requestInfo.entity.writeTo(stream);
@@ -167,6 +189,14 @@ public class JsonHttpUrlConnection extends JsonConnection {
             urlConnection.getInputStream();
             timeStat.tickConnectionTime();
             timeStat.tickSendTime();
+        }
+
+        if ((debugFlags & JsonRpc.HEADERS_DEBUG) > 0) {
+            String headers="";
+            for (String key : urlConnection.getHeaderFields().keySet()) {
+                headers+=key+":"+urlConnection.getHeaderField(key)+" ";
+            }
+            longLog("Response headers", headers);
         }
 
         final HttpURLConnection finalConnection = urlConnection;
@@ -191,6 +221,10 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
             public int getContentLength() {
                 return finalConnection.getContentLength();
+            }
+
+            public Map<String,List<String>> getHeaders() {
+                return finalConnection.getHeaderFields();
             }
 
             @Override

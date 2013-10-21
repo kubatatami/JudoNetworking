@@ -200,8 +200,14 @@ public interface JsonRpc {
      * Log cache behavior.
      */
     public static final int REQUEST_LINE_DEBUG = 16;
+
+    /**
+     * Log cache behavior.
+     */
+    public static final int HEADERS_DEBUG = 32;
+
     /**
      * Log everything.
      */
-    public static final int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG;
+    public static final int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG;
 }
