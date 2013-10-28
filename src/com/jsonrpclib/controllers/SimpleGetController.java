@@ -1,15 +1,6 @@
 package com.jsonrpclib.controllers;
 
-import com.jsonrpclib.JsonInputStreamEntity;
 import com.jsonrpclib.JsonRequestInterface;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
-
-import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.

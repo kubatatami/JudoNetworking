@@ -43,17 +43,15 @@ class JsonRpcImplementation implements JsonRpc {
     private String url;
     private ProtocolController protocolController;
     private HashMap<Class, JsonVirtualServerInfo> virtualServers = new HashMap<Class, JsonVirtualServerInfo>();
-    private boolean verifyResultModel = true;
+    private boolean verifyResultModel = false;
+    private boolean processingMethod = false;
 
     public JsonRpcImplementation(Context context, ProtocolController protocolController, JsonConnection connection, String url) {
-        init(context, protocolController, connection, url, null);
+        init(context, protocolController, connection, url);
     }
 
-    public JsonRpcImplementation(Context context, ProtocolController protocolController, JsonConnection connection, String url, String apiKey) {
-        init(context, protocolController, connection, url, apiKey);
-    }
 
-    private void init(Context context, ProtocolController protocolController, JsonConnection connection, String url, String apiKey) {
+    private void init(Context context, ProtocolController protocolController, JsonConnection connection, String url) {
         this.connection = connection;
         this.jsonConnector = new JsonConnector(url, this, connection);
         this.context = context;
@@ -114,6 +112,15 @@ class JsonRpcImplementation implements JsonRpc {
         connection.setMaxConnections(max);
     }
 
+    @Override
+    public boolean isProcessingMethod() {
+        return processingMethod;
+    }
+
+    @Override
+    public void setProcessingMethod(boolean enabled) {
+        this.processingMethod = enabled;
+    }
 
     public <T> T getService(Class<T> obj) {
         return getService(obj, false);

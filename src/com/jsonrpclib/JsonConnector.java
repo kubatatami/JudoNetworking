@@ -7,6 +7,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -40,50 +41,93 @@ class JsonConnector {
 
     private JsonResult sendRequest(JsonRequest request, JsonTimeStat timeStat, String hash, Long time) {
         try {
+            JsonResult result;
 
             Object virtualObject = handleVirtualServerRequest(request, timeStat);
             if (virtualObject != null) {
-                return new JsonSuccessResult(request.getId(), virtualObject);
-            }
+                result = new JsonSuccessResult(request.getId(), virtualObject);
+            } else {
+                ProtocolController controller = rpc.getProtocolController();
+                ProtocolController.RequestInfo requestInfo = controller.createRequest(url, request);
+                timeStat.tickCreateTime();
+                lossCheck();
+                delay();
+                JsonConnection.Connection conn = connection.send(controller, requestInfo, request.getTimeout(), timeStat,
+                        rpc.getDebugFlags(), request.getMethod(), new JsonConnection.CacheInfo(hash, time));
 
-            ProtocolController controller = rpc.getProtocolController();
-            ProtocolController.RequestInfo requestInfo = controller.createRequest(url, request);
-            timeStat.tickCreateTime();
-            lossCheck();
-            delay();
-            JsonConnection.Connection conn = connection.send(controller, requestInfo, request.getTimeout(), timeStat,
-                    rpc.getDebugFlags(), request.getMethod(), new JsonConnection.CacheInfo(hash, time));
+                if (!conn.isNewestAvailable()) {
+                    if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
+                        JsonLoggerImpl.log("No new data for method " + request.getName());
+                    }
 
-            if (!conn.isNewestAvailable()) {
-                if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
-                    JsonLoggerImpl.log("No new data for method " + request.getName());
+                    return new JsonNoNewResult();
                 }
 
-                return new JsonNoNewResult();
+                InputStream connectionStream = conn.getStream();
+                if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
+
+                    String resStr = convertStreamToString(conn.getStream());
+                    longLog("Response(" + resStr.length() + "B)", resStr);
+                    connectionStream = new ByteArrayInputStream(resStr.getBytes("UTF-8"));
+                }
+                JsonInputStream stream = new JsonInputStream(connectionStream, timeStat, conn.getContentLength());
+                result = controller.parseResponse(request, stream, conn.getHeaders());
+
+                result.hash = conn.getHash();
+                result.time = conn.getDate();
+
+                timeStat.tickParseTime();
+                conn.close();
             }
 
-            InputStream connectionStream = conn.getStream();
-            if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
-
-                String resStr = convertStreamToString(conn.getStream());
-                longLog("Response(" + resStr.length() + "B)", resStr);
-                connectionStream = new ByteArrayInputStream(resStr.getBytes("UTF-8"));
-            }
-            JsonInputStream stream = new JsonInputStream(connectionStream, timeStat, conn.getContentLength());
-            JsonResult result = controller.parseResponse(request, stream, conn.getHeaders());
-
-            result.hash = conn.getHash();
-            result.time = conn.getDate();
-
-            timeStat.tickParseTime();
             if (rpc.isVerifyResultModel()) {
                 verifyResult(request, result);
             }
-            conn.close();
+            if (rpc.isProcessingMethod()) {
+                processingMethod(result.result);
+            }
             return result;
         } catch (Exception e) {
             return new JsonErrorResult(request.getId(), e);
         }
+
+    }
+
+    public static void processingMethod(Object object) {
+        if (object instanceof Iterable) {
+            for (Object obj : ((Iterable) object)) {
+                processingMethod(obj);
+            }
+        } else {
+            for (Field field : object.getClass().getFields()) {
+                field.setAccessible(true);
+                try {
+                    if (!field.getDeclaringClass().equals(object.getClass())) {
+                        processingMethod(field.get(object));
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            invokeProcessingMethod(object);
+        }
+    }
+
+    public static void invokeProcessingMethod(Object result) {
+        Class<?> clazz = result.getClass();
+        do {
+            for (Method method : clazz.getDeclaredMethods()) {
+                if (method.isAnnotationPresent(JsonProcessingMethod.class)) {
+                    method.setAccessible(true);
+                    try {
+                        method.invoke(result);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+            clazz = clazz.getSuperclass();
+        } while (!clazz.equals(Object.class));
 
     }
 
@@ -324,6 +368,7 @@ class JsonConnector {
                 rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getServerCacheSize());
             }
 
+            //TODO VERIFIY
 
             return result.result;
         } catch (Exception e) {

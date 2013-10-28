@@ -27,7 +27,7 @@ public class JsonGetController extends JsonSimpleGetController {
     }
 
     @Override
-    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream, Map<String,List<String>> headers) {
+    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream, Map<String, List<String>> headers) {
         try {
             JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));
             JsonGetOrPostResponseModel response;

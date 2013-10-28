@@ -172,13 +172,18 @@ public interface JsonRpc {
      */
     public void startTest(boolean onlyInDebugMode, String name, int revision);
 
-
-    public void setVerifyResultModel(boolean enabled);
-
     /**
      *
      */
     public void stopTest();
+
+
+    public void setVerifyResultModel(boolean enabled);
+
+    public boolean isProcessingMethod();
+
+    public void setProcessingMethod(boolean enabled);
+
 
     /**
      * Log time of requests.

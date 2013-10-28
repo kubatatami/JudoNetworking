@@ -8,15 +8,12 @@ import java.lang.annotation.Target;
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
- * Date: 27.02.2013
- * Time: 16:39
+ * Date: 28.10.2013
+ * Time: 15:45
+ * To change this template use File | Settings | File Templates.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface DataObserver {
-    String fieldName() default "";
-
-    boolean onStartup() default true;
-
-    Class<?> observerClass() default Void.class;
+@Target(ElementType.FIELD)
+public @interface ViewById {
+    int value();
 }

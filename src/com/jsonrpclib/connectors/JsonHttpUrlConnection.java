@@ -13,7 +13,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
-import java.net.*;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -164,9 +167,9 @@ public class JsonHttpUrlConnection extends JsonConnection {
         }
 
         if ((debugFlags & JsonRpc.HEADERS_DEBUG) > 0) {
-            String headers="";
+            String headers = "";
             for (String key : urlConnection.getRequestProperties().keySet()) {
-                headers+=key+":"+urlConnection.getRequestProperty(key)+" ";
+                headers += key + ":" + urlConnection.getRequestProperty(key) + " ";
             }
             longLog("Request headers", headers);
         }
@@ -192,9 +195,9 @@ public class JsonHttpUrlConnection extends JsonConnection {
         }
 
         if ((debugFlags & JsonRpc.HEADERS_DEBUG) > 0) {
-            String headers="";
+            String headers = "";
             for (String key : urlConnection.getHeaderFields().keySet()) {
-                headers+=key+":"+urlConnection.getHeaderField(key)+" ";
+                headers += key + ":" + urlConnection.getHeaderField(key) + " ";
             }
             longLog("Response headers", headers);
         }
@@ -223,7 +226,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
                 return finalConnection.getContentLength();
             }
 
-            public Map<String,List<String>> getHeaders() {
+            public Map<String, List<String>> getHeaders() {
                 return finalConnection.getHeaderFields();
             }
 

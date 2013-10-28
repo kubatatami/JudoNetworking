@@ -30,7 +30,7 @@ public abstract class JsonSimpleController extends JsonProtocolController {
 
 
     @Override
-    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream, Map<String,List<String>> headers) {
+    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream, Map<String, List<String>> headers) {
         try {
             Object res = null;
             JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));

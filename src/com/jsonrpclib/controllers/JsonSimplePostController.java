@@ -26,13 +26,12 @@ public class JsonSimplePostController extends JsonSimpleController {
     public RequestInfo createRequest(String url, JsonRequestInterface request) throws Exception {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url + request.getName();
-        requestInfo.mimeType="application/x-www-form-urlencoded";
+        requestInfo.mimeType = "application/x-www-form-urlencoded";
         String reqStr = JsonController.createRequest(request, apiKey, apiKeyName);
         byte[] bytes = reqStr.getBytes();
         requestInfo.entity = new JsonInputStreamEntity(new ByteArrayInputStream(bytes), bytes.length);
         return requestInfo;
     }
-
 
 
 }

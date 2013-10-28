@@ -51,12 +51,10 @@ public abstract class SimpleController extends ProtocolController {
                 buffer.flush();
                 return new JsonSuccessResult(request.getId(), buffer.toByteArray());
             } catch (Exception e) {
-               return new JsonErrorResult(request.getId(),e);
+                return new JsonErrorResult(request.getId(), e);
             }
-        }
-        else
-        {
-            return new JsonErrorResult(request.getId(),new JsonException("SimpleController handle string, byte array or input stream response only."));
+        } else {
+            return new JsonErrorResult(request.getId(), new JsonException("SimpleController handle string, byte array or input stream response only."));
         }
     }
 

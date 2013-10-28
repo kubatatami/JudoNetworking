@@ -52,7 +52,7 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
     }
 
     @Override
-    public List<JsonResult> parseResponses(List<JsonRequestInterface> requests, InputStream stream, Map<String,List<String>> headers) throws Exception {
+    public List<JsonResult> parseResponses(List<JsonRequestInterface> requests, InputStream stream, Map<String, List<String>> headers) throws Exception {
         List<JsonRpcResponseModel2> responses = null;
 
         JsonReader reader = new JsonReader(new InputStreamReader(stream, "UTF-8"));

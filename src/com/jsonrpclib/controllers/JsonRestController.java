@@ -73,7 +73,7 @@ public class JsonRestController extends ProtocolController {
     }
 
     @Override
-    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream, Map<String,List<String>> headers) {
+    public JsonResult parseResponse(JsonRequestInterface request, InputStream stream, Map<String, List<String>> headers) {
         return new JsonSuccessResult(request.getId(), gson.fromJson(new JsonReader(new InputStreamReader(stream)), request.getReturnType()));
     }
 

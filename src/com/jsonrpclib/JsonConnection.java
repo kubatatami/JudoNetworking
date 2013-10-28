@@ -39,7 +39,7 @@ public abstract class JsonConnection {
 
         public void close();
 
-        public Map<String,List<String>> getHeaders();
+        public Map<String, List<String>> getHeaders();
 
         public boolean isNewestAvailable() throws Exception;
     }

@@ -261,6 +261,9 @@ class JsonProxy implements InvocationHandler {
 
         } else {
             this.batch = false;
+            if (batch != null) {
+                batch.onFinish(new Object[]{});
+            }
         }
     }
 
@@ -345,6 +348,9 @@ class JsonProxy implements InvocationHandler {
                         if (rpc.isVerifyResultModel()) {
                             JsonConnector.verifyResult(request, response);
                         }
+                        if (rpc.isProcessingMethod()) {
+                            JsonConnector.processingMethod(response.result);
+                        }
                         results[i] = response.result;
                         if ((rpc.isCacheEnabled() && request.isLocalCachable()) || rpc.isTest()) {
                             rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), results[i], request.getLocalCacheSize());
@@ -380,7 +386,7 @@ class JsonProxy implements InvocationHandler {
             }
         }
         if (ex != null) {
-            final Exception finalEx=ex;
+            final Exception finalEx = ex;
             if (rpc.getErrorLogger() != null) {
                 rpc.getHandler().post(new Runnable() {
                     @Override

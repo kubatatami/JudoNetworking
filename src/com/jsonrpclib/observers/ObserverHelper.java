@@ -34,6 +34,19 @@ public class ObserverHelper {
     private Context context;
 
 
+    private static Object dataObject;
+    private static Class<?> dataClass;
+
+    public static void setDataObject(Object data) {
+        dataObject = data;
+        dataClass = data.getClass();
+    }
+
+    public static void setDataClass(Class<?> dataClass) {
+        dataObject = null;
+        ObserverHelper.dataClass = dataClass;
+    }
+
     public ObserverHelper(Context context) {
         this.context = context;
     }
@@ -43,28 +56,26 @@ public class ObserverHelper {
         dataObservers.clear();
         viewObservers.clear();
         dataAdapters.clear();
-        if (JsonObserver.dataClass != null) {
+        if (ObserverHelper.dataClass != null) {
             findDataObserver(object);
         }
         if (view != null) {
+//            if (view instanceof ViewGroup) {
+//                ((ViewGroup) view).setOnHierarchyChangeListener(onHierarchyChangeListener);         //need test
+//            }
             findViewObserver(view);
         }
     }
 
     private void findViewObserver(View view) {
-        try {
-            if (view instanceof ViewGroup) {
-                ViewGroup group = (ViewGroup) view;
-                //group.setOnHierarchyChangeListener(onHierarchyChangeListener);         //need test
-                for (int i = 0; i < group.getChildCount(); i++) {
-                    View viewElem = group.getChildAt(i);
-                    findViewObserver(viewElem);
-                }
-            } else {
-                linkViewObserver(view);
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View viewElem = group.getChildAt(i);
+                findViewObserver(viewElem);
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } else {
+            linkViewObserver(view);
         }
     }
 
@@ -116,7 +127,7 @@ public class ObserverHelper {
             String res = matcher.group(0);
             String key = res.substring(1, res.length() - 1);
             if (key.substring(0, 1).equals(".")) {
-                Object field = getFieldFromObserver(key, JsonObserver.dataObject);
+                Object field = getFieldFromObserver(key, ObserverHelper.dataObject);
                 tag = tag.replace(res, field != null ? field.toString() : "");
             } else if (key.substring(0, 8).equals("@string/")) {
                 tag = tag.replace(res, getStringResource(key.substring(8)));
@@ -135,6 +146,11 @@ public class ObserverHelper {
     private List<ObservableWrapper> findObservablesByTag(String tag) throws Exception {
         List<ObservableWrapper> list = new ArrayList<ObservableWrapper>();
         if (tag.matches("\\[.*\\]")) {
+
+            if (ObserverHelper.dataClass == null) {
+                throw new RuntimeException("No data object set. Use JsonObserver.setDataObject() method.");
+            }
+
             tag = tag.substring(1, tag.length() - 1);
             Matcher matcher = pattern.matcher(tag);
 
@@ -143,7 +159,7 @@ public class ObserverHelper {
                 res = res.substring(1, res.length() - 1);
                 if (res.substring(0, 1).equals(".")) {
                     String fields[] = res.split(splitter);
-                    list.add((ObservableWrapper) getField(fields[1]).get(JsonObserver.dataObject));
+                    list.add((ObservableWrapper) getField(fields[1]).get(ObserverHelper.dataObject));
                 }
             }
 
@@ -228,7 +244,7 @@ public class ObserverHelper {
         }
     }
 
-    private Object getFieldFromObserver(String fieldName, Object object) throws IllegalAccessException {
+    private static Object getFieldFromObserver(String fieldName, Object object) throws IllegalAccessException {
         String fields[] = fieldName.split(splitter);
         ObservableWrapper observableWrapper = (ObservableWrapper) getField(fields[1]).get(object);
         Object data = observableWrapper.get();
@@ -239,7 +255,7 @@ public class ObserverHelper {
         }
     }
 
-    private Object getFieldValue(String fieldName, Object object) throws IllegalAccessException {
+    private static Object getFieldValue(String fieldName, Object object) throws IllegalAccessException {
         String parts[] = fieldName.split(splitter);
         Class<?> clazz;
         for (String part : parts) {
@@ -249,11 +265,11 @@ public class ObserverHelper {
         return object;
     }
 
-    private Field getField(String fieldName) {
-        return getField(fieldName, JsonObserver.dataClass);
+    private static Field getField(String fieldName) {
+        return getField(fieldName, ObserverHelper.dataClass);
     }
 
-    private Field getField(String fieldName, Class<?> objectClass) {
+    private static Field getField(String fieldName, Class<?> objectClass) {
         Field field = null;
         while (objectClass != null && field == null) {
             try {
@@ -270,19 +286,19 @@ public class ObserverHelper {
         return field;
     }
 
-    private Object getObservableOrAdapter(Method method) {
+    private static Object getObservableOrAdapter(Method method) {
         try {
             DataObserver ann = method.getAnnotation(DataObserver.class);
 
             if (!ann.fieldName().equals("")) {
-                return getField(ann.fieldName()).get(JsonObserver.dataObject);
+                return getField(ann.fieldName()).get(ObserverHelper.dataObject);
             }
 
             String methodName = method.getName();
             if (methodName.length() > convention.length() + 1) {
                 String fieldName = methodName.substring(0, methodName.length() - convention.length());
 
-                return getField(fieldName).get(JsonObserver.dataObject);
+                return getField(fieldName).get(ObserverHelper.dataObject);
 
             }
 
