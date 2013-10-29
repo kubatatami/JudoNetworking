@@ -40,14 +40,8 @@ class JsonProxy implements InvocationHandler {
     }
 
     public static String getMethodName(Method method) {
-        String name = method.getName();
         JsonMethod ann = method.getAnnotation(JsonMethod.class);
-        if (ann != null) {
-            if (!ann.name().equals("")) {
-                name = ann.name();
-            }
-        }
-        return name;
+        return (ann != null && !ann.name().equals("")) ? ann.name() : method.getName();
     }
 
     public static StackTraceElement getExternalStacktrace(StackTraceElement[] stackTrace) {
