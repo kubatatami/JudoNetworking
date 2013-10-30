@@ -71,8 +71,11 @@ public class JsonHttpUrlConnection extends JsonConnection {
     private void init(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier, boolean forceDisableKeepAlive) {
         this.httpURLCreator = httpURLCreator;
         this.httpURLConnectionModifier = httpURLConnectionModifier;
-        cookieManager = new CookieManager();
-        CookieHandler.setDefault(cookieManager);
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.GINGERBREAD)
+        {
+            cookieManager = new CookieManager();
+            CookieHandler.setDefault(cookieManager);
+        }
         disableConnectionReuseIfNecessary(forceDisableKeepAlive);
     }
 
@@ -81,7 +84,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
     }
 
     private void disableConnectionReuseIfNecessary(boolean forceDisableKeepAlive) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO || forceDisableKeepAlive) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.FROYO || forceDisableKeepAlive) {
             System.setProperty("http.keepAlive", "false");
         }
     }
@@ -196,10 +199,20 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
         if ((debugFlags & JsonRpc.HEADERS_DEBUG) > 0) {
             String headers = "";
-            for (String key : urlConnection.getHeaderFields().keySet()) {
-                headers += key + ":" + urlConnection.getHeaderField(key) + " ";
+            if(urlConnection.getHeaderFields()!=null)
+            {
+                for (String key : urlConnection.getHeaderFields().keySet()) {
+                    if(key!=null)
+                    {
+                        headers += key + ":" + urlConnection.getHeaderField(key) + " ";
+                    }
+                }
             }
             longLog("Response headers", headers);
+        }
+
+        if ((debugFlags & JsonRpc.RESPONSE_DEBUG) > 0) {
+            longLog("Response code", urlConnection.getResponseCode()+"");
         }
 
         final HttpURLConnection finalConnection = urlConnection;

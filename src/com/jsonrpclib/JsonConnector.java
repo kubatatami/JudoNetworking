@@ -533,7 +533,7 @@ class JsonConnector {
             if ((rpc.getDebugFlags() & JsonRpc.RESPONSE_DEBUG) > 0) {
 
                 String resStr = convertStreamToString(conn.getStream());
-                longLog("Response(" + resStr.length() + "B)", resStr);
+                longLog("Response body(" + resStr.length() + " Bytes)", resStr);
                 connectionStream = new ByteArrayInputStream(resStr.getBytes("UTF-8"));
             }
 

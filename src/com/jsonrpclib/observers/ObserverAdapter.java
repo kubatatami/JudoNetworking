@@ -5,7 +5,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -33,6 +35,12 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
 
     public ObserverAdapter(Context context, int resource, List<T> objects) {
         super(context, resource, objects);
+        this.resource = resource;
+        adapterHelper = new ObserverAdapterHelper(context);
+    }
+
+    public ObserverAdapter(Context context, int resource, Map<?,T> objects) {
+        super(context, resource, new ArrayList<T>(objects.values()));
         this.resource = resource;
         adapterHelper = new ObserverAdapterHelper(context);
     }

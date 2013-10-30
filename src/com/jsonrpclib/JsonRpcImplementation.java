@@ -157,6 +157,7 @@ class JsonRpcImplementation implements JsonRpc {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
                 pr.callBatch(batch);
             }
         });

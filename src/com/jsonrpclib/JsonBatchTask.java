@@ -32,6 +32,7 @@ class JsonBatchTask implements Runnable {
     @Override
     public void run() {
         try {
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
             this.response = rpc.getJsonConnector().callBatch(this.requests, progressObserver, this.timeout);
         } catch (Exception e) {
             this.ex = e;

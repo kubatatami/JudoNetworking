@@ -51,7 +51,7 @@ public class ObserverAdapterHelper {
                 String result;
                 if (field != null) {
                     result = field.get(item).toString();
-                } else if (method.getParameterTypes().length > 0) {
+                } else if (method.getParameterTypes().length == 1) {
                     result = method.invoke(item, context).toString();
                 } else {
                     result = method.invoke(item).toString();
@@ -83,7 +83,7 @@ public class ObserverAdapterHelper {
                     constructor.setAccessible(true);
                     Object holder = constructor.newInstance();
                     for (Field field : holderClass.getDeclaredFields()) {
-                        ViewById viewById = field.getAnnotation(ViewById.class);
+                        HolderView viewById = field.getAnnotation(HolderView.class);
                         if (viewById != null) {
                             field.setAccessible(true);
                             field.set(holder, convertView.findViewById(viewById.value()));
