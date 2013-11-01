@@ -50,4 +50,8 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
         return adapterHelper.getView(resource,getItem(position),convertView,parent);
     }
 
+    public View getView(int position, View convertView, ViewGroup parent, Class<?> holderClass) {
+        return adapterHelper.getView(resource,getItem(position),convertView,parent,holderClass);
+    }
+
 }

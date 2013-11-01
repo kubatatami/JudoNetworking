@@ -6,10 +6,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import com.jsonrpclib.JsonException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,19 +33,23 @@ public class ObserverAdapterHelper {
         this.layoutInflater = LayoutInflater.from(context);
     }
 
-    protected static class DataSource {
+    protected static class DataSourceOrTarget {
         protected Context context;
         protected Field field;
         protected Method method;
 
-        public DataSource(Context context, Field field) {
+        public DataSourceOrTarget(Context context, Field field) {
             this.context = context;
             this.field = field;
         }
 
-        public DataSource(Context context, Method method) {
+        public DataSourceOrTarget(Context context, Method method) {
             this.context = context;
             this.method = method;
+        }
+
+        public boolean isSource() {
+            return field != null || !method.getReturnType().equals(Void.TYPE);
         }
 
         public String getValue(Object item) {
@@ -63,22 +69,39 @@ public class ObserverAdapterHelper {
                 throw new RuntimeException(e);
             }
         }
+
+        public void setValue(Object item, View view) {
+            try {
+                method.invoke(item, view);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
     }
 
     public View getView(int layout, Object item, View convertView, ViewGroup parent) {
         return getView(layout, item, convertView, parent, null);
     }
 
+    public static boolean isInnerClass(Class<?> clazz) {
+        return clazz.isMemberClass() && !Modifier.isStatic(clazz.getModifiers());
+    }
+
     @SuppressWarnings("unchecked")
     public View getView(int layout, Object item, View convertView, ViewGroup parent, Class<?> holderClass) {
-        List<Pair<TextView, DataSource>> data;
-        if (convertView == null) {
-            convertView = layoutInflater.inflate(layout, parent, false);
-            data = new ArrayList<Pair<TextView, DataSource>>();
-            findViewTag(convertView, data, item.getClass());
-            convertView.setTag(layout, data);
-            if (holderClass != null) {
-                try {
+        try {
+            List<Pair<View, DataSourceOrTarget>> dataSources;
+
+            if (convertView == null) {
+                convertView = layoutInflater.inflate(layout, parent, false);
+                dataSources = new ArrayList<Pair<View, DataSourceOrTarget>>();
+                findViewTag(convertView, dataSources, item.getClass());
+                convertView.setTag(layout, dataSources);
+                if (holderClass != null) {
+                    if (isInnerClass(holderClass)) {
+                        throw new JsonException("Inner holder class must be static!");
+                    }
                     Constructor<?> constructor = holderClass.getDeclaredConstructors()[0];
                     constructor.setAccessible(true);
                     Object holder = constructor.newInstance();
@@ -90,50 +113,55 @@ public class ObserverAdapterHelper {
                         }
                     }
                     convertView.setTag(holder);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
                 }
 
+            } else {
+                dataSources = (List<Pair<View, DataSourceOrTarget>>) convertView.getTag(layout);
             }
-
-        } else {
-            data = (List<Pair<TextView, DataSource>>) convertView.getTag(layout);
+            for (Pair<View, DataSourceOrTarget> pair : dataSources) {
+                if (pair.second.isSource()) {
+                    ((TextView) pair.first).setText(pair.second.getValue(item));
+                } else {
+                    pair.second.setValue(item, pair.first);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        for (Pair<TextView, DataSource> pair : data) {
-            pair.first.setText(pair.second.getValue(item));
-        }
-
         return convertView;
     }
 
 
-    private void findViewTag(View view, List<Pair<TextView, DataSource>> data, Class<?> itemClass) {
+    private void findViewTag(View view, List<Pair<View, DataSourceOrTarget>> data, Class<?> itemClass) throws JsonException {
         if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
             for (int i = 0; i < group.getChildCount(); i++) {
                 View viewElem = group.getChildAt(i);
                 findViewTag(viewElem, data, itemClass);
             }
-        } else if (view instanceof TextView) {
-            linkViewTag((TextView) view, data, itemClass);
+        } else {
+            linkViewTag(view, data, itemClass);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void linkViewTag(final TextView view, List<Pair<TextView, DataSource>> data, Class<?> itemClass) {
+    private void linkViewTag(final View view, List<Pair<View, DataSourceOrTarget>> data, Class<?> itemClass) throws JsonException {
 
         if (view.getTag() != null && view.getTag() instanceof String) {
             String tag = (String) view.getTag();
             if (tag.matches("\\[.*\\]")) {
                 tag = tag.substring(2, tag.length() - 1);
-                DataSource dataSource = getDataSource(tag, itemClass);
-                data.add(new Pair<TextView, DataSource>(view, dataSource));
+                DataSourceOrTarget dataSourceOrTarget = getDataSource(tag, itemClass);
+                if (dataSourceOrTarget.isSource() && !(view instanceof TextView)) {
+                    throw new JsonException("Method which returns value must be link with TextView");
+                }
+                data.add(new Pair<View, DataSourceOrTarget>(view, dataSourceOrTarget));
             }
         }
 
     }
 
-    private DataSource getDataSource(String fieldName, Class<?> clazz) {
+    private DataSourceOrTarget getDataSource(String fieldName, Class<?> clazz) {
         int i = 0;
         Field field;
         String parts[] = fieldName.split(splitter);
@@ -149,11 +177,11 @@ public class ObserverAdapterHelper {
             } else {
                 try {
                     field = getField(part, clazz);
-                    return new DataSource(context, field);
+                    return new DataSourceOrTarget(context, field);
                 } catch (NoSuchFieldException e) {
                     try {
                         Method method = getMethod(part, clazz);
-                        return new DataSource(context, method);
+                        return new DataSourceOrTarget(context, method);
                     } catch (NoSuchFieldException e1) {
                         throw new RuntimeException(e1);
                     }
@@ -185,21 +213,30 @@ public class ObserverAdapterHelper {
 
 
     private static Method getMethod(String fieldName, Class<?> objectClass) throws NoSuchFieldException {
-        Method method = null;
-        while (objectClass != null && method == null) {
-            try {
-                method = objectClass.getDeclaredMethod(fieldName);
-            } catch (NoSuchMethodException e) {
-                try {
-                    method = objectClass.getDeclaredMethod(fieldName, Context.class);
-                } catch (NoSuchMethodException e1) {
-                    objectClass = objectClass.getSuperclass();
+        Method finalMethod = null;
+        while (objectClass != null && finalMethod == null) {
+            for (Method method : objectClass.getDeclaredMethods()) {
+                if (method.getName().equals(fieldName)) {
+                    Class<?>[] paramsType = method.getParameterTypes();
+                    if (paramsType.length == 0) {
+                        finalMethod = method;
+                        break;
+                    } else if (paramsType.length == 1) {
+                        if (paramsType[0].equals(Context.class) || View.class.isAssignableFrom(paramsType[0])) {
+                            finalMethod = method;
+                            break;
+                        }
+                    }
+
                 }
             }
+            if (finalMethod == null) {
+                objectClass = objectClass.getSuperclass();
+            }
         }
-        if (method == null) {
+        if (finalMethod == null) {
             throw new NoSuchFieldException(fieldName);
         }
-        return method;
+        return finalMethod;
     }
 }
