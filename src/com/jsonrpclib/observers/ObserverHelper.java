@@ -60,27 +60,24 @@ public class ObserverHelper {
             findDataObserver(object);
         }
         if (view != null) {
-//            if (view instanceof ViewGroup) {
-//                ((ViewGroup) view).setOnHierarchyChangeListener(onHierarchyChangeListener);         //need test
-//            }
-            findViewObserver(view);
+            findViewObserver(view,object);
         }
     }
 
-    private void findViewObserver(View view) {
+    private void findViewObserver(View view,Object object) {
         if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
             for (int i = 0; i < group.getChildCount(); i++) {
                 View viewElem = group.getChildAt(i);
-                findViewObserver(viewElem);
+                findViewObserver(viewElem, object);
             }
         } else {
-            linkViewObserver(view);
+            linkViewObserver(view,object);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void linkViewObserver(final View view) {
+    private void linkViewObserver(final View view,final Object object) {
         try {
             if (view.getTag() != null && view.getTag() instanceof String) {
                 final String tag = (String) view.getTag();
@@ -94,7 +91,7 @@ public class ObserverHelper {
                             if (view instanceof TextView) {
                                 TextView textView = (TextView) view;
 
-                                String result = buildResult(tag.substring(1, tag.length() - 1));
+                                String result = buildResult(tag.substring(1, tag.length() - 1),object);
                                 textView.setText(result);
 
                             }
@@ -111,7 +108,7 @@ public class ObserverHelper {
                     }
                 } else if (view instanceof TextView && tag.matches("\\[.*\\]")) {
                     TextView textView = (TextView) view;
-                    String result = buildResult(tag.substring(1, tag.length() - 1));
+                    String result = buildResult(tag.substring(1, tag.length() - 1),object);
                     textView.setText(result);
                 }
             }
@@ -120,7 +117,7 @@ public class ObserverHelper {
         }
     }
 
-    private String buildResult(String tag) throws IllegalAccessException, NoSuchFieldException {
+    private String buildResult(String tag,Object object) throws IllegalAccessException, NoSuchFieldException {
         Matcher matcher = pattern.matcher(tag);
 
         while (matcher.find()) {
@@ -132,6 +129,9 @@ public class ObserverHelper {
             } else if (key.substring(0, 8).equals("@string/")) {
                 tag = tag.replace(res, getStringResource(key.substring(8)));
 
+            } else {
+                Object field = getFieldValue(key, object);
+                tag = tag.replace(res, field != null ? field.toString() : "");
             }
         }
 
@@ -327,29 +327,4 @@ public class ObserverHelper {
     }
 
 
-    private ViewGroup.OnHierarchyChangeListener onHierarchyChangeListener = new ViewGroup.OnHierarchyChangeListener() {
-
-        @Override
-        public void onChildViewAdded(View parent, View child) {
-            findViewObserver(child);
-        }
-
-        @Override
-        public void onChildViewRemoved(View parent, View child) {
-            removeViewObserver(parent);
-        }
-
-        private void removeViewObserver(View view) {
-            if (view instanceof ViewGroup) {
-                ViewGroup group = (ViewGroup) view;
-                for (int i = 0; i < group.getChildCount(); i++) {
-                    View viewElem = group.getChildAt(i);
-                    removeViewObserver(viewElem);
-                }
-            } else if (viewObservers.containsKey(view)) {
-                viewObservers.remove(view);
-            }
-        }
-
-    };
 }
