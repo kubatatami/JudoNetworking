@@ -1,11 +1,15 @@
 package com.jsonrpclib.observers;
 
+import android.app.Activity;
 import android.content.Context;
 import android.database.DataSetObserver;
+import android.os.Build;
+import android.support.v4.app.FragmentActivity;
 import android.util.Pair;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Adapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import java.lang.reflect.Field;
@@ -65,7 +69,7 @@ public class ObserverHelper {
     }
 
     private void findViewObserver(View view,Object object) {
-        if (view instanceof ViewGroup) {
+        if (view instanceof ViewGroup && !(view instanceof ListView) && !isFromFragment(view,object)) {
             ViewGroup group = (ViewGroup) view;
             for (int i = 0; i < group.getChildCount(); i++) {
                 View viewElem = group.getChildAt(i);
@@ -73,6 +77,27 @@ public class ObserverHelper {
             }
         } else {
             linkViewObserver(view,object);
+        }
+    }
+
+
+    private boolean isFromFragment(View view,Object object)
+    {
+        if(view.getId()==-1)
+        {
+            return false;
+        }
+        if(object instanceof FragmentActivity)
+        {
+            return ((FragmentActivity)object).getSupportFragmentManager().findFragmentById(view.getId())!=null;
+        }
+        else if (Build.VERSION.SDK_INT>Build.VERSION_CODES.HONEYCOMB && object instanceof Activity)
+        {
+            return ((Activity)object).getFragmentManager().findFragmentById(view.getId())!=null;
+        }
+        else
+        {
+            return false;
         }
     }
 
