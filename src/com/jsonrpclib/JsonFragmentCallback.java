@@ -12,7 +12,7 @@ import java.io.StringWriter;
  * Date: 23.04.2013
  * Time: 11:40
  */
-public abstract class JsonFragmentCallback<T> extends JsonCallback<T> {
+public class JsonFragmentCallback<T> extends JsonCallback<T> {
 
     private final Fragment fragment;
 
@@ -33,9 +33,12 @@ public abstract class JsonFragmentCallback<T> extends JsonCallback<T> {
     }
 
 
-    public abstract void onSafeFinish(T result);
+    public void onSafeFinish(T result)
+    {
 
-    void onSafeError(Exception e) {
+    }
+
+    public void onSafeError(Exception e) {
         if (e != null) {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);

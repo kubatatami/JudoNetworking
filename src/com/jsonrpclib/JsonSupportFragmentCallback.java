@@ -11,7 +11,7 @@ import java.io.StringWriter;
  * Date: 23.04.2013
  * Time: 11:40
  */
-public abstract class JsonSupportFragmentCallback<T> extends JsonCallback<T> {
+public class JsonSupportFragmentCallback<T> extends JsonCallback<T> {
 
     private final Fragment fragment;
 
@@ -42,7 +42,10 @@ public abstract class JsonSupportFragmentCallback<T> extends JsonCallback<T> {
 
     }
 
-    public abstract void onSafeFinish(T result);
+    public void onSafeFinish(T result)
+    {
+
+    }
 
     public void onSafeError(Exception e) {
         if (e != null) {

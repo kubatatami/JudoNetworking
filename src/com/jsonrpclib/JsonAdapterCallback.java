@@ -24,7 +24,7 @@ public class JsonAdapterCallback<T> extends JsonCallback<List<T>> {
         this.clear = clear;
     }
 
-    public boolean filtr(T result) {
+    public boolean filter(T result) {
         return true;
     }
 
@@ -36,7 +36,7 @@ public class JsonAdapterCallback<T> extends JsonCallback<List<T>> {
 
         adapter.setNotifyOnChange(false);
         for (T object : result) {
-            if (filtr(object)) {
+            if (filter(object)) {
                 adapter.add(object);
             }
         }

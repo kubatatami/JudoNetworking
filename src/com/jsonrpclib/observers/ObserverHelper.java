@@ -55,8 +55,24 @@ public class ObserverHelper {
         this.context = context;
     }
 
+    public void start(final android.support.v4.app.Fragment fragment, View view) {
+        startInternal(fragment, view);
+    }
+
+    public void start(final android.app.Fragment fragment, View view) {
+        startInternal(fragment, view);
+    }
+
+    public void start(final Activity activity, View view) {
+        startInternal(activity, view);
+    }
+
+    public void start(final FragmentActivity activity, View view) {
+        startInternal(activity, view);
+    }
+
     @SuppressWarnings("unchecked")
-    public void start(final Object object, View view) {
+    protected void startInternal(final Object object, View view) {
         dataObservers.clear();
         viewObservers.clear();
         dataAdapters.clear();
