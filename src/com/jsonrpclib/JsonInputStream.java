@@ -58,7 +58,7 @@ public class JsonInputStream extends InputStream {
     @Override
     public int read(byte[] buffer, int offset, int length) throws IOException {
         int result = stream.read(buffer, offset, length);
-        if (contentSize != -1) {
+        if (contentSize != -1 && result != -1) {
             timeStat.progressTick((float) result / (float) contentSize);
         }
         return result;

@@ -1,5 +1,7 @@
 package com.jsonrpclib;
 
+import android.util.Log;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
@@ -34,9 +36,10 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
     public void run() {
         try {
             Object result = rpc.getJsonConnector().call(this);
+
             invokeCallback(result);
         } catch (final Exception e) {
-            invokeCallback(e);
+            invokeCallbackException(e);
             if (rpc.getErrorLogger() != null) {
                 rpc.getHandler().post(new Runnable() {
                     @Override
@@ -48,7 +51,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
         }
     }
 
-    public void invokeCallback(Exception e) {
+    public void invokeCallbackException(Exception e) {
         if (callback != null) {
             rpc.getHandler().post(new JsonAsyncResult(callback, e));
         }

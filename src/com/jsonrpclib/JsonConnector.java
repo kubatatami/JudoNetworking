@@ -2,6 +2,7 @@ package com.jsonrpclib;
 
 
 import android.util.Base64;
+import android.util.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -72,19 +73,20 @@ class JsonConnector {
                 }
                 JsonInputStream stream = new JsonInputStream(connectionStream, timeStat, conn.getContentLength());
                 result = controller.parseResponse(request, stream, conn.getHeaders());
-
-                result.hash = conn.getHash();
-                result.time = conn.getDate();
-
+                if (result instanceof JsonSuccessResult) {
+                    result.hash = conn.getHash();
+                    result.time = conn.getDate();
+                }
                 timeStat.tickParseTime();
                 conn.close();
             }
-
-            if (rpc.isVerifyResultModel()) {
-                verifyResult(request, result);
-            }
-            if (rpc.isProcessingMethod()) {
-                processingMethod(result.result);
+            if (result instanceof JsonSuccessResult) {
+                if (rpc.isVerifyResultModel()) {
+                    verifyResult(request, result);
+                }
+                if (rpc.isProcessingMethod()) {
+                    processingMethod(result.result);
+                }
             }
             return result;
         } catch (Exception e) {
@@ -368,7 +370,7 @@ class JsonConnector {
                 rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getServerCacheSize());
             }
 
-            //TODO VERIFIY
+
 
             return result.result;
         } catch (Exception e) {

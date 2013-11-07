@@ -44,6 +44,11 @@ public class JsonRpc2Controller extends JsonRpcController {
                 throw new JsonException("Wrong server response. Did you select the correct protocol controller?", ex);
             }
 
+            if(response==null)
+            {
+                throw new JsonException("Empty response.");
+            }
+
             if (response.jsonrpc == null) {
                 throw new JsonException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support json-rpc 2.0? Try JsonRpc1Controller.");
             }
@@ -52,10 +57,15 @@ public class JsonRpc2Controller extends JsonRpcController {
                 throw new JsonException(response.error.message, response.error.code);
             }
             reader.close();
+            Object result=null;
             if (!request.getReturnType().equals(Void.class)) {
-                return new JsonSuccessResult(request.getId(), gson.fromJson(response.result, request.getReturnType()));
+                result=gson.fromJson(response.result, request.getReturnType());
+                if(result==null)
+                {
+                    throw new JsonException("Empty response.");
+                }
             }
-            return new JsonSuccessResult(request.getId(), null);
+            return new JsonSuccessResult(request.getId(), result);
         } catch (Exception e) {
             return new JsonErrorResult(request.getId(), e);
         }

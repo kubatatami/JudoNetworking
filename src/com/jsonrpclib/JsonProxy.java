@@ -369,7 +369,7 @@ class JsonProxy implements InvocationHandler {
                 if (request.isBatchFatal()) {
                     ex = e;
                 }
-                request.invokeCallback(new JsonException(request.getName(), e));
+                request.invokeCallbackException(new JsonException(request.getName(), e));
             }
             i++;
         }
