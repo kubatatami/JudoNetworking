@@ -88,6 +88,14 @@ public class ObserverAdapterHelper {
         return clazz.isMemberClass() && !Modifier.isStatic(clazz.getModifiers());
     }
 
+    public View getView(int layout, View convertView, ViewGroup parent, Class<?> holderClass) {
+        return getView(layout, null, convertView, parent, holderClass);
+    }
+
+    public View getView(int layout, View convertView, ViewGroup parent) {
+        return getView(layout, null, convertView, parent, null);
+    }
+
     @SuppressWarnings("unchecked")
     public View getView(int layout, Object item, View convertView, ViewGroup parent, Class<?> holderClass) {
         try {
@@ -96,7 +104,9 @@ public class ObserverAdapterHelper {
             if (convertView == null) {
                 convertView = layoutInflater.inflate(layout, parent, false);
                 dataSources = new ArrayList<Pair<View, DataSourceOrTarget>>();
-                findViewTag(convertView, dataSources, item.getClass());
+                if (item != null) {
+                    findViewTag(convertView, dataSources, item.getClass());
+                }
                 convertView.setTag(layout, dataSources);
                 if (holderClass != null) {
                     if (isInnerClass(holderClass)) {
