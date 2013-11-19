@@ -17,4 +17,6 @@ public @interface JsonMethod {
     public boolean async() default false;
 
     public boolean highPriority() default false;
+
+    public boolean allowEmptyResult() default false;
 }

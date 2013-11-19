@@ -23,4 +23,6 @@ public interface JsonRequestInterface {
     public String[] getParamNames();
 
     public Method getMethod();
+
+    public boolean isAllowEmptyResult();
 }

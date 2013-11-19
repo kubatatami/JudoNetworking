@@ -93,7 +93,7 @@ public class JsonRpc2BatchController extends JsonRpc2Controller {
                     Type type = requests.get(i).getReturnType();
                     if (!type.equals(Void.class)) {
                         result = gson.fromJson(res.result, requests.get(i).getReturnType());
-                        if (result == null) {
+                        if (!requests.get(i).isAllowEmptyResult() && result == null) {
                             finalResponses.add(new JsonErrorResult(requests.get(i).getId(), new JsonException("Empty response.")));
                         } else {
                             finalResponses.add(new JsonSuccessResult(res.id, result));

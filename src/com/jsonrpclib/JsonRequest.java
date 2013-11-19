@@ -101,6 +101,11 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
         return method;
     }
 
+    @Override
+    public boolean isAllowEmptyResult() {
+        return ann.allowEmptyResult();
+    }
+
     public Integer getTimeout() {
         return timeout;
     }

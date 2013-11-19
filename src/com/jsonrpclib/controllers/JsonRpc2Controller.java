@@ -60,9 +60,9 @@ public class JsonRpc2Controller extends JsonRpcController {
             Object result=null;
             if (!request.getReturnType().equals(Void.class)) {
                 result=gson.fromJson(response.result, request.getReturnType());
-                if(result==null)
+                if(!request.isAllowEmptyResult() && result==null)
                 {
-                    throw new JsonException("Empty response.");
+                    throw new JsonException("Empty result.");
                 }
             }
             return new JsonSuccessResult(request.getId(), result);
