@@ -104,8 +104,12 @@ class JsonConnector {
             for (Field field : object.getClass().getFields()) {
                 field.setAccessible(true);
                 try {
-                    if (!field.getDeclaringClass().equals(object.getClass())) {
-                        processingMethod(field.get(object));
+                    if (!field.getDeclaringClass().equals(Object.class) && !field.getType().isPrimitive()) {
+                        Object fieldObject =field.get(object);
+                        if(fieldObject!=null)
+                        {
+                            processingMethod(fieldObject);
+                        }
                     }
                 } catch (Exception e) {
                     throw new RuntimeException(e);
