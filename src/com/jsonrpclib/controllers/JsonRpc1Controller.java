@@ -50,7 +50,7 @@ public class JsonRpc1Controller extends JsonRpcController {
                 throw new JsonException(response.error);
             }
             reader.close();
-            if (!request.getReturnType().equals(Void.class)) {
+            if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
                 Object result=gson.fromJson(response.result, request.getReturnType());
                 if(!request.isAllowEmptyResult() && result==null)
                 {

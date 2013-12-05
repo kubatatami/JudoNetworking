@@ -58,7 +58,7 @@ public class JsonRpc2Controller extends JsonRpcController {
             }
             reader.close();
             Object result=null;
-            if (!request.getReturnType().equals(Void.class)) {
+            if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
                 result=gson.fromJson(response.result, request.getReturnType());
                 if(!request.isAllowEmptyResult() && result==null)
                 {
