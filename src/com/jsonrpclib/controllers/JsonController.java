@@ -25,9 +25,11 @@ abstract class JsonController {
             nameValuePairs.add(new BasicNameValuePair(apiKeyName, apiKey));
         }
 
-        for (Object arg : request.getArgs()) {
-            nameValuePairs.add(new BasicNameValuePair(request.getParamNames()[i], arg == null ? "" : arg.toString()));
-            i++;
+        if (request.getArgs() != null) {
+            for (Object arg : request.getArgs()) {
+                nameValuePairs.add(new BasicNameValuePair(request.getParamNames()[i], arg == null ? "" : arg.toString()));
+                i++;
+            }
         }
 
 

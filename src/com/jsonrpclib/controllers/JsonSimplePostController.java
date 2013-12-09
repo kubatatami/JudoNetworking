@@ -29,7 +29,9 @@ public class JsonSimplePostController extends JsonSimpleController {
         requestInfo.mimeType = "application/x-www-form-urlencoded";
         String reqStr = JsonController.createRequest(request, apiKey, apiKeyName);
         byte[] bytes = reqStr.getBytes();
-        requestInfo.entity = new JsonInputStreamEntity(new ByteArrayInputStream(bytes), bytes.length);
+        if(bytes.length>0){
+            requestInfo.entity = new JsonInputStreamEntity(new ByteArrayInputStream(bytes), bytes.length);
+        }
         return requestInfo;
     }
 
