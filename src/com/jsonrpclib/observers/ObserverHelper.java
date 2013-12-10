@@ -1,5 +1,6 @@
 package com.jsonrpclib.observers;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.database.DataSetObserver;
@@ -96,7 +97,7 @@ public class ObserverHelper {
         }
     }
 
-
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private boolean isFromFragment(View view,Object object)
     {
         if(view.getId()==-1)
