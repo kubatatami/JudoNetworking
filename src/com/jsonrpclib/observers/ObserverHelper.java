@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.Adapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import com.jsonrpclib.JsonErrorLogger;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -38,6 +39,7 @@ public class ObserverHelper {
     private static final String convention = "Changed";
     private Context context;
 
+    private static JsonErrorLogger errorLogger;
 
     private static Object dataObject;
     private static Class<?> dataClass;
@@ -54,6 +56,10 @@ public class ObserverHelper {
 
     public ObserverHelper(Context context) {
         this.context = context;
+    }
+
+    public static void setErrorLogger(JsonErrorLogger errorLogger) {
+        ObserverHelper.errorLogger = errorLogger;
     }
 
     public void start(final android.support.v4.app.Fragment fragment, View view) {
@@ -81,45 +87,38 @@ public class ObserverHelper {
             findDataObserver(object);
         }
         if (view != null) {
-            findViewObserver(view,object);
+            findViewObserver(view, object);
         }
     }
 
-    private void findViewObserver(View view,Object object) {
-        if (view instanceof ViewGroup && !(view instanceof ListView) && !isFromFragment(view,object)) {
+    private void findViewObserver(View view, Object object) {
+        if (view instanceof ViewGroup && !(view instanceof ListView) && !isFromFragment(view, object)) {
             ViewGroup group = (ViewGroup) view;
             for (int i = 0; i < group.getChildCount(); i++) {
                 View viewElem = group.getChildAt(i);
                 findViewObserver(viewElem, object);
             }
         } else {
-            linkViewObserver(view,object);
+            linkViewObserver(view, object);
         }
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    private boolean isFromFragment(View view,Object object)
-    {
-        if(view.getId()==-1)
-        {
+    private boolean isFromFragment(View view, Object object) {
+        if (view.getId() == -1) {
             return false;
         }
-        if(object instanceof FragmentActivity)
-        {
-            return ((FragmentActivity)object).getSupportFragmentManager().findFragmentById(view.getId())!=null;
-        }
-        else if (Build.VERSION.SDK_INT>Build.VERSION_CODES.HONEYCOMB && object instanceof Activity)
-        {
-            return ((Activity)object).getFragmentManager().findFragmentById(view.getId())!=null;
-        }
-        else
-        {
+        if (object instanceof FragmentActivity) {
+            return ((FragmentActivity) object).getSupportFragmentManager().findFragmentById(view.getId()) != null;
+        } else if (Build.VERSION.SDK_INT > Build.VERSION_CODES.HONEYCOMB && object instanceof Activity) {
+            return ((Activity) object).getFragmentManager().findFragmentById(view.getId()) != null;
+        } else {
             return false;
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void linkViewObserver(final View view,final Object object) {
+    private void linkViewObserver(final View view, final Object object) {
         try {
             if (view.getTag() != null && view.getTag() instanceof String) {
                 final String tag = (String) view.getTag();
@@ -133,7 +132,7 @@ public class ObserverHelper {
                             if (view instanceof TextView) {
                                 TextView textView = (TextView) view;
 
-                                String result = buildResult(tag.substring(1, tag.length() - 1),object);
+                                String result = buildResult(tag.substring(1, tag.length() - 1), object);
                                 textView.setText(result);
 
                             }
@@ -150,7 +149,7 @@ public class ObserverHelper {
                     }
                 } else if (view instanceof TextView && tag.matches("\\[.*\\]")) {
                     TextView textView = (TextView) view;
-                    String result = buildResult(tag.substring(1, tag.length() - 1),object);
+                    String result = buildResult(tag.substring(1, tag.length() - 1), object);
                     textView.setText(result);
                 }
             }
@@ -159,7 +158,7 @@ public class ObserverHelper {
         }
     }
 
-    private String buildResult(String tag,Object object) throws IllegalAccessException, NoSuchFieldException {
+    private String buildResult(String tag, Object object) throws IllegalAccessException, NoSuchFieldException {
         Matcher matcher = pattern.matcher(tag);
 
         while (matcher.find()) {
@@ -212,7 +211,7 @@ public class ObserverHelper {
     @SuppressWarnings("unchecked")
     private void findDataObserver(final Object object) {
         for (final Method method : object.getClass().getMethods()) {
-            DataObserver ann = method.getAnnotation(DataObserver.class);
+            final DataObserver ann = method.getAnnotation(DataObserver.class);
             if (ann != null) {
 
                 final Object wrapperOrAdapter = getObservableOrAdapter(method);
@@ -228,15 +227,18 @@ public class ObserverHelper {
                                         method.invoke(object, data);
                                     }
                                 } catch (Exception e) {
-                                    RuntimeException ex = null;
+                                    RuntimeException ex;
                                     if (e.getCause() != null) {
                                         ex = new RuntimeException(e.getCause());
                                         ex.setStackTrace(e.getCause().getStackTrace());
-                                        throw ex;
                                     } else {
                                         ex = new RuntimeException(e);
                                     }
-                                    throw ex;
+                                    if (ann.crashable()) {
+                                        throw ex;
+                                    } else if(errorLogger!=null){
+                                        errorLogger.onError(ex);
+                                    }
                                 }
                             }
                         };
@@ -248,7 +250,7 @@ public class ObserverHelper {
                         DataSetObserver dataSetObserver = new DataSetObserver() {
                             @Override
                             public void onChanged() {
-                                Object param = null;
+                                Object param;
                                 if (method.getParameterTypes()[0].isAssignableFrom(List.class)) {
                                     List<Object> list = new ArrayList<Object>();
                                     for (int i = 0; i < adapter.getCount(); i++) {
@@ -261,15 +263,18 @@ public class ObserverHelper {
                                 try {
                                     method.invoke(object, param);
                                 } catch (Exception e) {
-                                    RuntimeException ex = null;
+                                    RuntimeException ex;
                                     if (e.getCause() != null) {
                                         ex = new RuntimeException(e.getCause());
                                         ex.setStackTrace(e.getCause().getStackTrace());
-                                        throw ex;
                                     } else {
                                         ex = new RuntimeException(e);
                                     }
-                                    throw ex;
+                                    if (ann.crashable()) {
+                                        throw ex;
+                                    } else if(errorLogger!=null){
+                                        errorLogger.onError(ex);
+                                    }
                                 }
                             }
                         };

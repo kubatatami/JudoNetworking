@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface JsonLocalCache {
 
+    public boolean enabled() default true;
+
     public JsonLocalCacheLevel cacheLevel() default JsonLocalCacheLevel.MEMORY_ONLY;
 
     public int lifeTime() default 0;

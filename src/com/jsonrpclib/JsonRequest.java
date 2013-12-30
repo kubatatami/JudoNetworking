@@ -115,6 +115,9 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
         if (ann == null) {
             ann = method.getDeclaringClass().getAnnotation(JsonLocalCache.class);
         }
+        if(ann !=null && !ann.enabled()){
+            ann=null;
+        }
         return ann;
     }
 
@@ -122,6 +125,9 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
         JsonServerCache ann = method.getAnnotation(JsonServerCache.class);
         if (ann == null) {
             ann = method.getDeclaringClass().getAnnotation(JsonServerCache.class);
+        }
+        if(ann !=null && !ann.enabled()){
+            ann=null;
         }
         return ann;
     }

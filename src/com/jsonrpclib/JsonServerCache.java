@@ -15,9 +15,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface JsonServerCache {
+
+    public boolean enabled() default true;
     boolean useOldOnError() default false;
-
     public int size() default 0;
-
     public JsonServerCacheLevel cacheLevel() default JsonServerCacheLevel.DISK_CACHE;
+
 }

@@ -14,9 +14,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface DataObserver {
+
     String fieldName() default "";
-
     boolean onStartup() default true;
-
+    boolean crashable() default true;
     Class<?> observerClass() default Void.class;
+
 }

@@ -184,8 +184,8 @@ class JsonProxy implements InvocationHandler {
                             if (rpc.getCacheMode() == JsonCacheMode.CLONE) {
                                 try {
                                     result.object = rpc.getJsonClonner().clone(result.object);
-                                    cacheObjects.put(i, new Pair<JsonRequest, Object>(req, result.object));
-                                    if (req.isLocalCacheOnlyOnError()) {
+                                    cacheObjects.put(req.getId(), new Pair<JsonRequest, Object>(req, result.object));
+                                    if (!req.isLocalCacheOnlyOnError()) {
                                         batches.remove(i);
                                     }
                                 } catch (Exception e) {
@@ -201,8 +201,8 @@ class JsonProxy implements InvocationHandler {
                                 if (!rpc.isTest()) {
                                     rpc.getMemoryCache().put(req.getMethod(), req.getArgs(), result.object, req.getLocalCacheSize());
                                 }
-                                cacheObjects.put(i, new Pair<JsonRequest, Object>(req, result.object));
-                                if (req.isLocalCacheOnlyOnError()) {
+                                cacheObjects.put(req.getId(), new Pair<JsonRequest, Object>(req, result.object));
+                                if (!req.isLocalCacheOnlyOnError()) {
                                     batches.remove(i);
                                 }
                             }
@@ -235,13 +235,20 @@ class JsonProxy implements InvocationHandler {
                     JsonResult result = responses.get(i);
                     if (cacheObjects.containsKey(result.id) && result instanceof JsonErrorResult) {
                         responses.remove(result);
-                        responses.add(new JsonSuccessResult(cacheObjects.get(result.id)));
+                        JsonSuccessResult res = new JsonSuccessResult(cacheObjects.get(result.id).second);
+                        res.id=result.id;
+                        responses.add(res);
+                        cacheObjects.remove(result.id);
+                    }
+                    else{
                         cacheObjects.remove(result.id);
                     }
                 }
 
                 for (Map.Entry<Integer, Pair<JsonRequest, Object>> pairs : cacheObjects.entrySet()) {
-                    responses.add(pairs.getKey(), new JsonSuccessResult(pairs.getValue().second));
+                    JsonSuccessResult res = new JsonSuccessResult(cacheObjects.get(pairs.getKey()).second);
+                    res.id=pairs.getKey();
+                    responses.add(res);
                     batches.add(pairs.getKey(), pairs.getValue().first);
                 }
             }
@@ -249,6 +256,12 @@ class JsonProxy implements InvocationHandler {
                 @Override
                 public int compare(JsonRequest lhs, JsonRequest rhs) {
                     return lhs.getId().compareTo(rhs.getId());
+                }
+            });
+            Collections.sort(responses, new Comparator<JsonResult>() {
+                @Override
+                public int compare(JsonResult lhs, JsonResult rhs) {
+                    return lhs.id.compareTo(rhs.id);
                 }
             });
             handleBatchResponse(batches, batch, responses);
