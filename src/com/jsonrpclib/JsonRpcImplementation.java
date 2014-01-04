@@ -192,7 +192,7 @@ class JsonRpcImplementation implements JsonRpc {
     }
 
     public int getMaxConnections() {
-        return isWifi() ? getMaxWifiConnections() : getMaxMobileConnections();
+        return JsonNetworkUtils.isWifi(context) ? getMaxWifiConnections() : getMaxMobileConnections();
     }
 
     public int getAutoBatchTime() {
@@ -356,11 +356,7 @@ class JsonRpcImplementation implements JsonRpc {
         return timeProfiler;
     }
 
-    public boolean isWifi() {
-        final ConnectivityManager connectManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        final NetworkInfo wifi = connectManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-        return wifi != null && wifi.getState() == NetworkInfo.State.CONNECTED;
-    }
+
 
     @SuppressWarnings("unchecked")
     public Map<String, JsonStat> getStats() {

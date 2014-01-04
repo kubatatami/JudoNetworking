@@ -1,20 +1,43 @@
 package com.jsonrpclib.observers;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import com.jsonrpclib.JsonNetworkUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ObservableWrapper<T> {
-    private T object = null;
-    private final Handler handler = new Handler(Looper.getMainLooper());
-    private final List<WrapObserver<T>> observers = new ArrayList<WrapObserver<T>>();
-    private ObservableWrapperListener<T> listener = null;
-    private boolean notifyInUiThread = true;
-    private long dataSetTime = 0;
-    private long updateTime = 0;
-    private boolean allowNull = false;
+    protected T object = null;
+    protected final Handler handler = new Handler(Looper.getMainLooper());
+    protected final List<WrapObserver<T>> observers = new ArrayList<WrapObserver<T>>();
+    protected ObservableWrapperListener<T> listener = null;
+    protected boolean notifyInUiThread = true;
+    protected long dataSetTime = 0;
+    protected long updateTime = 0;
+    protected boolean allowNull = false;
+    protected boolean forceUpdateOnNetworkStateChange = false;
+
+    protected boolean checkNetworkState = false;
+    protected boolean checkUpdateOnGet = false;
+
+    Timer timer = new Timer();
+
+    protected JsonNetworkUtils.NetworkStateListener networkStateListener = new JsonNetworkUtils.NetworkStateListener() {
+        @Override
+        public void onNetworkStateChange(boolean networkAvailable) {
+            if (networkAvailable) {
+                if (forceUpdateOnNetworkStateChange) {
+                    forceUpdate();
+                } else {
+                    checkUpdate();
+                }
+            }
+        }
+    };
 
     public ObservableWrapper() {
 
@@ -76,15 +99,56 @@ public class ObservableWrapper<T> {
         }
     }
 
-    public T get() {
-        if (listener != null) {
-            if (updateTime != 0 && System.currentTimeMillis() - getDataSetTime() > updateTime) {
-                listener.onUpdate(this);
-            }
+    public void startCheckUpdateOnChangeNetworkState(Context context) {
+        startCheckUpdateOnChangeNetworkState(context, false);
+    }
 
+    public void startCheckUpdateOnChangeNetworkState(Context context, boolean forceUpdate) {
+        if (!checkNetworkState) {
+            forceUpdateOnNetworkStateChange = forceUpdate;
+            JsonNetworkUtils.addNetworkStateListener(context, networkStateListener);
+        }
+    }
+
+    public void stopCheckUpdateOnChangeNetworkState(Context context) {
+        if (checkNetworkState) {
+            JsonNetworkUtils.removeNetworkStateListener(context, networkStateListener);
+        }
+    }
+
+    public boolean isCheckUpdateOnGet() {
+        return checkUpdateOnGet;
+    }
+
+    public void setCheckUpdateOnGet(boolean checkUpdateOnGet) {
+        this.checkUpdateOnGet = checkUpdateOnGet;
+    }
+
+
+    public T get() {
+        if (checkUpdateOnGet) {
+            checkUpdate();
+        }
+        if (listener != null) {
             listener.onGet(this);
         }
         return object;
+    }
+
+    public void checkUpdate() {
+        if (listener != null && !isDataActual()) {
+            listener.onUpdate(this);
+        }
+    }
+
+    public void forceUpdate() {
+        if (listener != null) {
+            listener.onUpdate(this);
+        }
+    }
+
+    public boolean isDataActual() {
+        return updateTime == 0 || System.currentTimeMillis() - getDataSetTime() <= updateTime;
     }
 
     public void set(T object) {
@@ -94,6 +158,28 @@ public class ObservableWrapper<T> {
         if (listener != null) {
             listener.onSet(this, object);
         }
+    }
+
+    public void startCheckUpdatePeriodicaly(long period){
+        startCheckUpdatePeriodicaly(period,false);
+    }
+
+    public void startCheckUpdatePeriodicaly(long period, final boolean forceUpdate) {
+        timer.cancel();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (forceUpdate) {
+                    forceUpdate();
+                } else {
+                    checkUpdate();
+                }
+            }
+        }, period, period);
+    }
+
+    public void stopCheckUpdatePeriodicaly() {
+        timer.cancel();
     }
 
     public long getDataSetTime() {
@@ -142,4 +228,5 @@ public class ObservableWrapper<T> {
     public void setAllowNull(boolean allowNull) {
         this.allowNull = allowNull;
     }
+
 }
