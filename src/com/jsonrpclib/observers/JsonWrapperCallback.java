@@ -10,7 +10,7 @@ import com.jsonrpclib.JsonCallback;
  */
 public class JsonWrapperCallback<T> extends JsonCallback<T> {
 
-    private final ObservableWrapper<T> wrapper;
+    protected final ObservableWrapper<T> wrapper;
 
     public JsonWrapperCallback(ObservableWrapper<T> wrapper) {
         this.wrapper = wrapper;

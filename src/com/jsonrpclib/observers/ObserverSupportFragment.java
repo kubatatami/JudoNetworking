@@ -2,6 +2,8 @@ package com.jsonrpclib.observers;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.app.Fragment;
 import android.view.View;
 
@@ -22,14 +24,15 @@ public class ObserverSupportFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        observerHelper.start(this, view);
+    public void onStart() {
+        super.onStart();
+        observerHelper.start(this, getView());
     }
 
     @Override
-    public void onDestroyView() {
+    public void onStop() {
+        super.onStop();
         observerHelper.stop();
-        super.onDestroyView();
     }
+
 }

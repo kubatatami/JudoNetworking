@@ -23,8 +23,8 @@ public class ObservableWrapper<T> {
 
     protected boolean checkNetworkState = false;
     protected boolean checkUpdateOnGet = false;
-
-    Timer timer = new Timer();
+    protected long period=0;
+    protected Timer timer;
 
     protected JsonNetworkUtils.NetworkStateListener networkStateListener = new JsonNetworkUtils.NetworkStateListener() {
         @Override
@@ -165,7 +165,13 @@ public class ObservableWrapper<T> {
     }
 
     public void startCheckUpdatePeriodicaly(long period, final boolean forceUpdate) {
-        timer.cancel();
+
+        if(timer!=null && this.period==period){
+            return;
+        }
+        stopCheckUpdatePeriodicaly();
+        timer = new Timer(true);
+        this.period=period;
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -179,7 +185,11 @@ public class ObservableWrapper<T> {
     }
 
     public void stopCheckUpdatePeriodicaly() {
-        timer.cancel();
+        if(timer!=null){
+            timer.cancel();
+            timer.purge();
+            timer=null;
+        }
     }
 
     public long getDataSetTime() {

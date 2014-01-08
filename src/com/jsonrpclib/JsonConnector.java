@@ -2,7 +2,6 @@ package com.jsonrpclib;
 
 
 import android.util.Base64;
-import android.util.Log;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -105,9 +104,8 @@ class JsonConnector {
                 field.setAccessible(true);
                 try {
                     if (!field.getDeclaringClass().equals(Object.class) && !field.getType().isPrimitive()) {
-                        Object fieldObject =field.get(object);
-                        if(fieldObject!=null)
-                        {
+                        Object fieldObject = field.get(object);
+                        if (fieldObject != null) {
                             processingMethod(fieldObject);
                         }
                     }
@@ -375,7 +373,6 @@ class JsonConnector {
             }
 
 
-
             return result.result;
         } catch (Exception e) {
             refreshErrorStat(request.getName(), request.getTimeout());
@@ -571,7 +568,9 @@ class JsonConnector {
 
 
     private void lossCheck() throws JsonException {
-        if (rpc.getPercentLoss() != 0 && randomGenerator.nextFloat() < rpc.getPercentLoss()) {
+        float precentLoss = rpc.getPercentLoss();
+        float random = randomGenerator.nextFloat();
+        if (precentLoss != 0 && random < precentLoss) {
             throw new JsonException("Random package lost.");
         }
     }
