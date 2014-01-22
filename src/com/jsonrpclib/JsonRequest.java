@@ -18,9 +18,10 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
     private Type returnType;
     private Method method;
     private boolean batchFatal = true;
+    private Object additionalControllerData = null;
 
     public JsonRequest(Integer id, JsonRpcImplementation rpc, Method method, String name, JsonMethod ann,
-                       Object[] args, Type returnType, int timeout, JsonCallbackInterface<Object> callback) {
+                       Object[] args, Type returnType, int timeout, JsonCallbackInterface<Object> callback, Object additionalControllerData) {
         this.id = id;
         this.name = name;
         this.timeout = timeout;
@@ -30,6 +31,7 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
         this.args = args;
         this.returnType = returnType;
         this.callback = callback;
+        this.additionalControllerData = additionalControllerData;
     }
 
     @Override
@@ -104,6 +106,11 @@ class JsonRequest implements Runnable, Comparable<JsonRequest>, JsonProgressObse
     @Override
     public boolean isAllowEmptyResult() {
         return ann.allowEmptyResult();
+    }
+
+    @Override
+    public Object getAdditionalData() {
+        return additionalControllerData;
     }
 
     public Integer getTimeout() {

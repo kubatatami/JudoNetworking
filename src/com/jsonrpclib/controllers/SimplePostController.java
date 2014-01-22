@@ -17,10 +17,11 @@ public class SimplePostController extends SimpleController {
 
     @Override
     public RequestInfo createRequest(String url, JsonRequestInterface request) throws Exception {
+        ApiKey apiKeyModel = (ApiKey) request.getAdditionalData();
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url + request.getName();
         requestInfo.mimeType = "application/x-www-form-urlencoded";
-        String reqStr = JsonController.createRequest(request, apiKey, apiKeyName);
+        String reqStr = JsonController.createRequest(request, apiKeyModel.apiKey, apiKeyModel.apiKeyName);
         byte[] bytes = reqStr.getBytes();
         requestInfo.entity = new JsonInputStreamEntity(new ByteArrayInputStream(bytes), bytes.length);
         return requestInfo;

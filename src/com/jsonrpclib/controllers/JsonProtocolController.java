@@ -16,8 +16,8 @@ import com.jsonrpclib.ProtocolController;
  */
 public abstract class JsonProtocolController extends ProtocolController {
     protected Gson gson;
-    protected String apiKey = null;
-    protected String apiKeyName = null;
+    private String apiKey = null;
+    private String apiKeyName = null;
 
     public JsonProtocolController() {
         init(new GsonBuilder());
@@ -60,4 +60,24 @@ public abstract class JsonProtocolController extends ProtocolController {
             throw new JsonException("Server response: Method Not Allowed. Did you select the correct protocol controller?", new HttpException(resp, code));
         }
     }
+
+
+    @Override
+    public Object getAdditionalRequestData() {
+        return new ApiKey(apiKeyName,apiKey);
+    }
+
+
+    protected static class ApiKey
+    {
+        public String apiKeyName = null;
+        public String apiKey = null;
+
+
+        public ApiKey(String apiKeyName, String apiKey) {
+            this.apiKeyName = apiKeyName;
+            this.apiKey = apiKey;
+        }
+    }
+
 }

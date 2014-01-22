@@ -65,6 +65,7 @@ public class JsonRpc1Controller extends JsonRpcController {
     }
 
 
+
     protected class JsonRpcResponseModel1 extends JsonRpcResponseModel {
         String error;
     }

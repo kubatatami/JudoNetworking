@@ -17,8 +17,8 @@ import java.util.Scanner;
  */
 public abstract class SimpleController extends ProtocolController {
 
-    protected String apiKey = null;
-    protected String apiKeyName = null;
+    private String apiKey = null;
+    private String apiKeyName = null;
 
     public void setApiKey(String name, String key) {
         this.apiKeyName = name;
@@ -69,4 +69,22 @@ public abstract class SimpleController extends ProtocolController {
             throw new JsonException("Server response: Method Not Allowed. Did you select the correct protocol controller?", new HttpException(resp, code));
         }
     }
+
+    @Override
+    public Object getAdditionalRequestData() {
+        return new ApiKey(apiKeyName,apiKey);
+    }
+
+    protected static class ApiKey
+    {
+        public String apiKeyName = null;
+        public String apiKey = null;
+
+
+        public ApiKey(String apiKeyName, String apiKey) {
+            this.apiKeyName = apiKeyName;
+            this.apiKey = apiKey;
+        }
+    }
+
 }

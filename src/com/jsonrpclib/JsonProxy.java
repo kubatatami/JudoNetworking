@@ -85,7 +85,7 @@ class JsonProxy implements InvocationHandler {
                 }
 
                 if (!ann.async()) {
-                    return rpc.getJsonConnector().call(new JsonRequest(++id, rpc, m, name, ann, args, m.getReturnType(), timeout, null));
+                    return rpc.getJsonConnector().call(new JsonRequest(++id, rpc, m, name, ann, args, m.getReturnType(), timeout, null,rpc.getProtocolController().getAdditionalRequestData()));
                 } else {
                     final JsonRequest request = callAsync(++id, m, name, args, m.getGenericParameterTypes(), timeout, ann);
 
@@ -149,14 +149,20 @@ class JsonProxy implements InvocationHandler {
 
     @SuppressWarnings("unchecked")
     JsonRequest callAsync(int id, Method m, String name, Object[] args, Type[] types, int timeout, JsonMethod ann) throws Exception {
-        Object[] newArgs = null;
-        JsonCallbackInterface<Object> callback = (JsonCallbackInterface<Object>) args[args.length - 1];
-        if (args.length > 1) {
-            newArgs = new Object[args.length - 1];
-            System.arraycopy(args, 0, newArgs, 0, args.length - 1);
+        Object[] newArgs = args;
+        JsonCallbackInterface<Object> callback = null;
+        Type returnType = null;
+        if(args[args.length - 1] instanceof JsonCallbackInterface){
+            callback=(JsonCallbackInterface<Object>) args[args.length - 1];
+            returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
+            if (args.length > 1) {
+                newArgs = new Object[args.length - 1];
+                System.arraycopy(args, 0, newArgs, 0, args.length - 1);
+            }
         }
-        Type returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
-        return new JsonRequest(id, rpc, m, name, ann, newArgs, returnType, timeout, callback);
+
+
+        return new JsonRequest(id, rpc, m, name, ann, newArgs, returnType, timeout, callback,rpc.getProtocolController().getAdditionalRequestData());
     }
 
 

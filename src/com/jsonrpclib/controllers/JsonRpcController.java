@@ -43,9 +43,9 @@ public abstract class JsonRpcController extends JsonProtocolController {
 
     public Object createRequestObject(JsonRequestInterface request) throws IOException {
         Object finalArgs;
+        JsonProtocolController.ApiKey apiKeyModel = (JsonProtocolController.ApiKey) request.getAdditionalData();
 
-
-        if (request.getParamNames().length > 0 && request.getArgs() != null || apiKeyName != null) {
+        if (request.getParamNames().length > 0 && request.getArgs() != null || apiKeyModel.apiKeyName != null) {
             int i = 0;
             Map<String, Object> paramObjects = new HashMap<String, Object>();
             for (String param : request.getParamNames()) {
@@ -53,24 +53,24 @@ public abstract class JsonRpcController extends JsonProtocolController {
                 i++;
             }
             finalArgs = paramObjects;
-            if (apiKey != null) {
-                if (apiKeyName == null) {
-                    finalArgs = new Object[]{apiKey, finalArgs};
+            if (apiKeyModel.apiKey != null) {
+                if (apiKeyModel.apiKeyName == null) {
+                    finalArgs = new Object[]{apiKeyModel.apiKey, finalArgs};
                 } else {
-                    paramObjects.put(apiKeyName, apiKey);
+                    paramObjects.put(apiKeyModel.apiKeyName, apiKeyModel.apiKey);
                 }
 
             }
         } else {
             finalArgs = request.getArgs();
-            if (apiKey != null) {
+            if (apiKeyModel.apiKey != null) {
                 if (request.getArgs() != null) {
                     Object[] finalArray = new Object[request.getArgs().length + 1];
-                    finalArray[0] = apiKey;
+                    finalArray[0] = apiKeyModel.apiKey;
                     System.arraycopy(request.getArgs(), 0, finalArray, 1, request.getArgs().length);
                     finalArgs = finalArray;
                 } else {
-                    finalArgs = new Object[]{apiKey};
+                    finalArgs = new Object[]{apiKeyModel.apiKey};
                 }
             }
         }

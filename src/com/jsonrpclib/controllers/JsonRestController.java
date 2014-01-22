@@ -62,7 +62,7 @@ public class JsonRestController extends ProtocolController {
                     i++;
                 }
             }
-            for (Map.Entry<String, Object> entry : customKey.entrySet()) {
+            for (Map.Entry<String, Object> entry : ((Map<String, Object>)request.getAdditionalData()).entrySet()) {
                 result = result.replaceAll("\\{" + entry.getKey() + "\\}", entry.getValue() + "");
             }
             requestInfo.url = url + "/" + result;
@@ -75,6 +75,11 @@ public class JsonRestController extends ProtocolController {
     @Override
     public JsonResult parseResponse(JsonRequestInterface request, InputStream stream, Map<String, List<String>> headers) {
         return new JsonSuccessResult(request.getId(), gson.fromJson(new JsonReader(new InputStreamReader(stream)), request.getReturnType()));
+    }
+
+    @Override
+    public Object getAdditionalRequestData() {
+        return customKey;
     }
 
     @Retention(RetentionPolicy.RUNTIME)

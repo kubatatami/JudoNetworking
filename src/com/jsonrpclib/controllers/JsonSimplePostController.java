@@ -24,10 +24,11 @@ public class JsonSimplePostController extends JsonSimpleController {
 
     @Override
     public RequestInfo createRequest(String url, JsonRequestInterface request) throws Exception {
+        SimpleController.ApiKey apiKeyModel = (SimpleController.ApiKey) request.getAdditionalData();
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url + request.getName();
         requestInfo.mimeType = "application/x-www-form-urlencoded";
-        String reqStr = JsonController.createRequest(request, apiKey, apiKeyName);
+        String reqStr = JsonController.createRequest(request, apiKeyModel.apiKey, apiKeyModel.apiKeyName);
         byte[] bytes = reqStr.getBytes();
         if(bytes.length>0){
             requestInfo.entity = new JsonInputStreamEntity(new ByteArrayInputStream(bytes), bytes.length);

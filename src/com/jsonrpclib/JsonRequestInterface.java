@@ -25,4 +25,6 @@ public interface JsonRequestInterface {
     public Method getMethod();
 
     public boolean isAllowEmptyResult();
+
+    public Object getAdditionalData();
 }

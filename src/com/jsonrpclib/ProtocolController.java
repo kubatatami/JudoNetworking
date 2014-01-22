@@ -40,5 +40,7 @@ public abstract class ProtocolController {
 
     }
 
+    public abstract Object getAdditionalRequestData();
+
 
 }
