@@ -151,13 +151,15 @@ class JsonProxy implements InvocationHandler {
     JsonRequest callAsync(int id, Method m, String name, Object[] args, Type[] types, int timeout, JsonMethod ann) throws Exception {
         Object[] newArgs = args;
         JsonCallbackInterface<Object> callback = null;
-        Type returnType = null;
+        Type returnType = Void.class;
         if(args[args.length - 1] instanceof JsonCallbackInterface){
             callback=(JsonCallbackInterface<Object>) args[args.length - 1];
             returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
             if (args.length > 1) {
                 newArgs = new Object[args.length - 1];
                 System.arraycopy(args, 0, newArgs, 0, args.length - 1);
+            }else{
+                newArgs = null;
             }
         }
 
