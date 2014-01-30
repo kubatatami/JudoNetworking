@@ -94,12 +94,6 @@ public interface JsonRpc {
      */
     public void setMultiBatchConnections(int maxMobileConnections, int maxWifiConnections);
 
-    /**
-     * Set byte array serialization type.
-     *
-     * @param asBase64 If true byte array will be serialize to base64 otherwise it will be normal array
-     */
-    public void setByteArraySerializationType(boolean asBase64);
 
     /**
      * @param autoBatchTime

@@ -36,7 +36,6 @@ public class JsonHttpUrlConnection extends JsonConnection {
     private int reconnections = 3;
     private int connectTimeout = 15000;
     private int methodTimeout = 10000;
-
     private boolean followRedirection = true;
     CookieManager cookieManager;
     private String authKey = null;
@@ -69,7 +68,6 @@ public class JsonHttpUrlConnection extends JsonConnection {
         init(httpURLCreator, httpURLConnectionModifier, forceDisableKeepAlive);
     }
 
-
     private void init(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier, boolean forceDisableKeepAlive) {
         try {
             Field field = Class.forName("org.apache.harmony.luni.internal.net.www.protocol.jar.JarURLConnectionImpl").getDeclaredField("jarCache");
@@ -82,8 +80,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
         this.httpURLCreator = httpURLCreator;
         this.httpURLConnectionModifier = httpURLConnectionModifier;
-        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.GINGERBREAD)
-        {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
             cookieManager = new CookieManager();
             CookieHandler.setDefault(cookieManager);
         }
@@ -210,11 +207,9 @@ public class JsonHttpUrlConnection extends JsonConnection {
 
         if ((debugFlags & JsonRpc.HEADERS_DEBUG) > 0) {
             String headers = "";
-            if(urlConnection.getHeaderFields()!=null)
-            {
+            if (urlConnection.getHeaderFields() != null) {
                 for (String key : urlConnection.getHeaderFields().keySet()) {
-                    if(key!=null)
-                    {
+                    if (key != null) {
                         headers += key + ":" + urlConnection.getHeaderField(key) + " ";
                     }
                 }
@@ -223,7 +218,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
         }
 
         if ((debugFlags & JsonRpc.RESPONSE_DEBUG) > 0) {
-            longLog("Response code", urlConnection.getResponseCode()+"");
+            longLog("Response code", urlConnection.getResponseCode() + "");
         }
 
         final HttpURLConnection finalConnection = urlConnection;

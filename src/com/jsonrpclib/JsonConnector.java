@@ -5,6 +5,7 @@ import android.util.Base64;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -269,6 +270,31 @@ class JsonConnector {
         return null;
     }
 
+    protected Base64Param findBase64Annotation(Annotation[] annotations){
+        for(Annotation annotation : annotations){
+            if(annotation instanceof Base64Param){
+                return (Base64Param) annotation;
+            }
+        }
+        return null;
+    }
+
+    protected void findAndCreateBase64(JsonRequest request){
+        if (request.getArgs() != null) {
+            int i = 0;
+            Annotation[][] annotations = request.getMethod().getParameterAnnotations();
+            for (Object object : request.getArgs()) {
+
+                if (object instanceof byte[]) {
+                    Base64Param ann = findBase64Annotation(annotations[i]);
+                    if(ann!=null){
+                        request.getArgs()[i] = ann.prefix()+Base64.encodeToString((byte[]) object, ann.type())+ann.suffix();
+                    }
+                }
+                i++;
+            }
+        }
+    }
 
     @SuppressWarnings("unchecked")
     public Object call(JsonRequest request) throws Exception {
@@ -309,15 +335,7 @@ class JsonConnector {
 
             }
 
-            if (request.getArgs() != null && rpc.isByteArrayAsBase64()) {
-                int i = 0;
-                for (Object object : request.getArgs()) {
-                    if (object instanceof byte[]) {
-                        request.getArgs()[i] = Base64.encodeToString((byte[]) object, Base64.NO_WRAP);
-                    }
-                    i++;
-                }
-            }
+            findAndCreateBase64(request);
 
             JsonResult result;
             if (serverCacheObject != null && serverCacheObject.result) {
@@ -431,15 +449,7 @@ class JsonConnector {
                 String requestsName = "";
                 for (JsonRequest request : requests) {
                     requestsName += " " + request.getName();
-                    if (request.getArgs() != null && rpc.isByteArrayAsBase64()) {
-                        int i = 0;
-                        for (Object object : request.getArgs()) {
-                            if (object instanceof byte[]) {
-                                request.getArgs()[i] = Base64.encodeToString((byte[]) object, Base64.NO_WRAP);
-                            }
-                            i++;
-                        }
-                    }
+                    findAndCreateBase64(request);
                 }
 
 
@@ -449,15 +459,7 @@ class JsonConnector {
             } else {
 
                 for (JsonRequest request : requests) {
-                    if (request.getArgs() != null && rpc.isByteArrayAsBase64()) {
-                        int i = 0;
-                        for (Object object : request.getArgs()) {
-                            if (object instanceof byte[]) {
-                                request.getArgs()[i] = Base64.encodeToString((byte[]) object, Base64.NO_WRAP);
-                            }
-                            i++;
-                        }
-                    }
+                    findAndCreateBase64(request);
                 }
 
                 synchronized (progressObserver) {

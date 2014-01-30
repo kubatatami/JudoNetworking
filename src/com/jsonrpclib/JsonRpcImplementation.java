@@ -21,7 +21,6 @@ class JsonRpcImplementation implements JsonRpc {
     private JsonConnection connection;
     private Handler handler = new Handler();
     private Context context;
-    private boolean byteArrayAsBase64 = false;
     private boolean cacheEnabled = false;
     private JsonCacheMode cacheMode = JsonCacheMode.NORMAL;
     private boolean timeProfiler = false;
@@ -165,14 +164,6 @@ class JsonRpcImplementation implements JsonRpc {
 
     }
 
-    @Override
-    public void setByteArraySerializationType(boolean asBase64) {
-        this.byteArrayAsBase64 = asBase64;
-    }
-
-    public boolean isByteArrayAsBase64() {
-        return byteArrayAsBase64;
-    }
 
     public Handler getHandler() {
         return handler;
