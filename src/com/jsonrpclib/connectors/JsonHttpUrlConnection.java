@@ -4,6 +4,7 @@ import android.os.Build;
 import android.util.Base64;
 import com.jsonrpclib.*;
 
+import javax.net.ssl.HttpsURLConnection;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,7 +38,7 @@ public class JsonHttpUrlConnection extends JsonConnection {
     private int connectTimeout = 15000;
     private int methodTimeout = 10000;
     private boolean followRedirection = true;
-    CookieManager cookieManager;
+    private CookieManager cookieManager;
     private String authKey = null;
     private HttpURLCreator httpURLCreator = null;
     private HttpURLConnectionModifier httpURLConnectionModifier = null;
@@ -186,6 +187,9 @@ public class JsonHttpUrlConnection extends JsonConnection {
         }
         if (requestInfo.entity != null) {
             urlConnection.setDoOutput(true);
+            if(!(urlConnection instanceof HttpsURLConnection)){   //prevent andoid bug
+                urlConnection.setFixedLengthStreamingMode((int) requestInfo.entity.getContentLength());
+            }
             OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
                     new JsonOutputStream(urlConnection.getOutputStream(), timeStat, requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
             timeStat.tickConnectionTime();
