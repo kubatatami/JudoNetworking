@@ -6,7 +6,7 @@ package com.judocallbacks;
  * Date: 19.02.2013
  * Time: 12:06
  */
-public class Logger {
+public class JudoLogger {
 
 
     public static void setTag(String tag) {
