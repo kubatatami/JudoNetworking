@@ -18,7 +18,7 @@ public class JsonSimplePostController extends JsonSimpleController {
 
     @Override
     public RequestInfo createRequest(String url, RequestInterface request) throws Exception {
-        RawController.ApiKey apiKeyModel = (RawController.ApiKey) request.getAdditionalData();
+        ApiKey apiKeyModel = (ApiKey) request.getAdditionalData();
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url + request.getName();
         requestInfo.mimeType = "application/x-www-form-urlencoded";
