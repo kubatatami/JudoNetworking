@@ -41,3 +41,14 @@ dependencies {
     compile 'com.android.support:support-v4:19+'
     compile project(':base')
 }
+
+task sourcesJar(type: Jar) {
+    baseName = 'judonetworking'
+    appendix = 'observers'
+    version = VERSION_NAME
+    from android.sourceSets.main.java.srcDirs
+}
+
+artifacts {
+    archives sourcesJar
+}

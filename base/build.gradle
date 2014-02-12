@@ -39,3 +39,14 @@ dependencies {
 }
 
 apply from: 'https://raw.github.com/chrisbanes/gradle-mvn-push/master/gradle-mvn-push.gradle'
+
+task sourcesJar(type: Jar) {
+    baseName = 'judonetworking'
+    appendix = 'base'
+    version = VERSION_NAME
+    from android.sourceSets.main.java.srcDirs
+}
+
+artifacts {
+    archives sourcesJar
+}
