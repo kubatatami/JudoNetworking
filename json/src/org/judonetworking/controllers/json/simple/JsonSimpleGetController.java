@@ -16,7 +16,7 @@ public class JsonSimpleGetController extends JsonSimpleController {
 
     @Override
     public ProtocolController.RequestInfo createRequest(String url, RequestInterface request) {
-        RawController.ApiKey apiKeyModel = (RawController.ApiKey) request.getAdditionalData();
+        ApiKey apiKeyModel = (ApiKey) request.getAdditionalData();
         ProtocolController.RequestInfo requestInfo = new ProtocolController.RequestInfo();
         requestInfo.url = url + request.getName() + "?" + GetOrPostTools.createRequest(request, apiKeyModel.apiKey, apiKeyModel.apiKeyName);
         return requestInfo;
