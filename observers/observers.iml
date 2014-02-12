@@ -16,7 +16,7 @@
     <orderEntry type="jdk" jdkName="Android SDK" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="libs" level="project" />
-    <orderEntry type="module" module-name="JudoCallbacks" />
+    <orderEntry type="module" module-name="JudoNetworking" />
   </component>
 </module>
 
