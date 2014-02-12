@@ -3,6 +3,7 @@
   <component name="FacetManager">
     <facet type="android" name="Android">
       <configuration>
+        <option name="LIBS_FOLDER_RELATIVE_PATH" value="" />
         <option name="LIBRARY_PROJECT" value="true" />
       </configuration>
     </facet>
@@ -16,7 +17,6 @@
     <orderEntry type="jdk" jdkName="Android SDK" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="libs" level="project" />
-    <orderEntry type="module" module-name="JudoNetworking" />
   </component>
 </module>
 
