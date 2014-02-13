@@ -167,6 +167,13 @@ public class HttpUrlConnector extends Connector {
             urlConnection.setRequestMethod(httpMethod.methodType());
         }
 
+        if(requestInfo.customHeaders!=null){
+            for(Map.Entry<String,String> entry : requestInfo.customHeaders.entrySet()){
+                urlConnection.addRequestProperty(entry.getKey(),entry.getValue());
+            }
+        }
+
+
         if ((debugFlags & Endpoint.HEADERS_DEBUG) > 0) {
             String headers = "";
             for (String key : urlConnection.getRequestProperties().keySet()) {
@@ -174,6 +181,7 @@ public class HttpUrlConnector extends Connector {
             }
             longLog("Request headers", headers);
         }
+
         if (requestInfo.entity != null) {
             urlConnection.setDoOutput(true);
             if (!(urlConnection instanceof HttpsURLConnection)) {   //prevent andoid bug

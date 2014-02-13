@@ -32,6 +32,7 @@ public abstract class JsonProtocolController extends ProtocolController {
         mapper.configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.registerModule(new EnumAnnotationModule());
+        mapper.registerModule(new BooleanModule());
         return mapper;
     }
 

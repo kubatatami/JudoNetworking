@@ -17,6 +17,7 @@ public abstract class ProtocolController {
         public String url;
         public RequestInputStreamEntity entity;
         public String mimeType;
+        public Map<String,String> customHeaders;
     }
 
 
