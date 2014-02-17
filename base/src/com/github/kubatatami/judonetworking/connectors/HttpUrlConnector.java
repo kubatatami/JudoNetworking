@@ -3,7 +3,6 @@ package com.github.kubatatami.judonetworking.connectors;
 import android.os.Build;
 import android.util.Base64;
 import com.github.kubatatami.judonetworking.*;
-import org.judonetworking.*;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.FileNotFoundException;

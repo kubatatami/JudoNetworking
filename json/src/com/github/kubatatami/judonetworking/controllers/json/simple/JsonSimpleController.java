@@ -1,11 +1,11 @@
 package com.github.kubatatami.judonetworking.controllers.json.simple;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.ErrorResult;
 import com.github.kubatatami.judonetworking.RequestInterface;
 import com.github.kubatatami.judonetworking.RequestResult;
 import com.github.kubatatami.judonetworking.RequestSuccessResult;
+import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;

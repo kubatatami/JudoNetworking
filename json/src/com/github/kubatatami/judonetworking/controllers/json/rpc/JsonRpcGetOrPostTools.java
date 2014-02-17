@@ -3,7 +3,6 @@ package com.github.kubatatami.judonetworking.controllers.json.rpc;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.*;
-import org.judonetworking.*;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 
 import java.io.InputStream;
