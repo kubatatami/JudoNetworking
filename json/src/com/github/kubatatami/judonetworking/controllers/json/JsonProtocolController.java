@@ -9,6 +9,8 @@ import com.github.kubatatami.judonetworking.HttpException;
 import com.github.kubatatami.judonetworking.ProtocolController;
 import com.github.kubatatami.judonetworking.RequestException;
 
+import java.io.Serializable;
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -36,11 +38,11 @@ public abstract class JsonProtocolController extends ProtocolController {
         return mapper;
     }
 
-    public static class JsonResponseModel {
+    public static class JsonResponseModel implements Serializable {
         public JsonNode result;
     }
 
-    public static class JsonErrorModel {
+    public static class JsonErrorModel implements Serializable{
         public String message;
         public int code;
     }

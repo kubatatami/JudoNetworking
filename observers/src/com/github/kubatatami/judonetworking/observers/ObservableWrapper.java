@@ -39,6 +39,13 @@ public class ObservableWrapper<T> {
         }
     };
 
+    protected final Runnable updateRunnable=new Runnable() {
+        @Override
+        public void run() {
+            listener.onUpdate(ObservableWrapper.this);
+        }
+    };
+
     public ObservableWrapper() {
 
     }
@@ -137,13 +144,13 @@ public class ObservableWrapper<T> {
 
     public void checkUpdate() {
         if (listener != null && !isDataActual()) {
-            listener.onUpdate(this);
+            handler.post(updateRunnable);
         }
     }
 
     public void forceUpdate() {
         if (listener != null) {
-            listener.onUpdate(this);
+            handler.post(updateRunnable);
         }
     }
 

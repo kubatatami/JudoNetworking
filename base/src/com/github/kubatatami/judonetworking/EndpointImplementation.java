@@ -138,10 +138,14 @@ class EndpointImplementation implements Endpoint {
     public <T> void callInBatch(Class<T> obj, final Batch<T> batch) {
 
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
-            StackTraceElement stackTraceElement = RequestProxy.getExternalStacktrace(Thread.currentThread().getStackTrace());
-            LoggerImpl.log("Batch starts from " +
-                    stackTraceElement.getClassName() +
-                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+            try {
+                StackTraceElement stackTraceElement = RequestProxy.getExternalStacktrace(Thread.currentThread().getStackTrace());
+                LoggerImpl.log("Batch starts from " +
+                        stackTraceElement.getClassName() +
+                        "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+            } catch (Exception ex) {
+                LoggerImpl.log("Can't log stacktrace");
+            }
         }
 
         final RequestProxy pr = new RequestProxy(this, BatchMode.MANUAL);
