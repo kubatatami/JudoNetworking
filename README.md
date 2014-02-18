@@ -10,14 +10,14 @@ Download
 --------------
 Gradle
 ```
-compile 'com.github.kubatatami:judonetworking-base:1.0.1'
+compile 'com.github.kubatatami:judonetworking-base:(insert latest version)'
 ```
 
 Maven
 ```xml
 <dependency>
-    <groupId>com.squareup.okhttp</groupId>
-    <artifactId>okhttp</artifactId>
+    <groupId>com.github.kubatatami</groupId>
+    <artifactId>judonetworking-base</artifactId>
     <version>(insert latest version)</version>
 </dependency>
 ```
