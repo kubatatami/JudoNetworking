@@ -1,13 +1,17 @@
 package com.github.kubatatami.judonetworking.controllers.json;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.github.kubatatami.judonetworking.HttpException;
 import com.github.kubatatami.judonetworking.ProtocolController;
 import com.github.kubatatami.judonetworking.RequestException;
+
+import java.io.Serializable;
 
 
 /**
@@ -26,21 +30,26 @@ public abstract class JsonProtocolController extends ProtocolController {
         mapper = getMapperInstance();
     }
 
-    public static ObjectMapper getMapperInstance(){
+    public static ObjectMapper getMapperInstance() {
         ObjectMapper mapper = new ObjectMapper();
-        mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+        mapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE);
+        mapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+
         mapper.configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_AS_NULL, true);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
         mapper.registerModule(new EnumAnnotationModule());
         mapper.registerModule(new BooleanModule());
         return mapper;
     }
 
-    public static class JsonResponseModel {
+    public static class JsonResponseModel implements Serializable {
         public JsonNode result;
     }
 
-    public static class JsonErrorModel {
+    public static class JsonErrorModel implements Serializable {
         public String message;
         public int code;
     }

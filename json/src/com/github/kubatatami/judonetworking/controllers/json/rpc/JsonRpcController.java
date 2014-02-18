@@ -4,10 +4,7 @@ import com.github.kubatatami.judonetworking.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.RequestInterface;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -74,7 +71,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
     protected abstract Object createRequestModel(String name, Object params, Integer id);
 
 
-    protected static class JsonRpcRequestModel {
+    protected static class JsonRpcRequestModel implements Serializable{
         private final String method;
         private final Object params;
         private final Integer id;
@@ -86,7 +83,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
         }
     }
 
-    protected static class JsonRpcResponseModel extends JsonResponseModel implements Comparable<JsonRpcResponseModel> {
+    protected static class JsonRpcResponseModel extends JsonResponseModel implements Serializable,Comparable<JsonRpcResponseModel> {
         Integer id;
 
         @Override

@@ -68,15 +68,19 @@ class RequestProxy implements InvocationHandler {
                 int timeout = rpc.getRequestConnector().getMethodTimeout();
 
                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                    StackTraceElement stackTraceElement = getExternalStacktrace(Thread.currentThread().getStackTrace());
-                    if (batch && mode == BatchMode.MANUAL) {
-                        LoggerImpl.log("Batch request " + name + " from " +
-                                stackTraceElement.getClassName() +
-                                "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
-                    } else {
-                        LoggerImpl.log("Request " + name + " from " +
-                                stackTraceElement.getClassName() +
-                                "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+                    try {
+                        StackTraceElement stackTraceElement = getExternalStacktrace(Thread.currentThread().getStackTrace());
+                        if (batch && mode == BatchMode.MANUAL) {
+                            LoggerImpl.log("Batch request " + name + " from " +
+                                    stackTraceElement.getClassName() +
+                                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+                        } else {
+                            LoggerImpl.log("Request " + name + " from " +
+                                    stackTraceElement.getClassName() +
+                                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+                        }
+                    } catch (Exception ex) {
+                        LoggerImpl.log("Can't log stacktrace");
                     }
                 }
 
@@ -88,50 +92,50 @@ class RequestProxy implements InvocationHandler {
                     return rpc.getRequestConnector().call(new Request(++id, rpc, m, name, ann, args, m.getReturnType(), timeout, null, rpc.getProtocolController().getAdditionalRequestData()));
                 } else {
                     final Request request = callAsync(++id, m, name, args, m.getGenericParameterTypes(), timeout, ann);
-
-                    if (batch) {
-                        synchronized (batchRequests) {
-                            request.setBatchFatal(batchFatal);
-                            batchRequests.add(request);
-                            batch = true;
-                        }
-                        return null;
-                    } else {
-
-                        if (mode == BatchMode.AUTO) {
-
+                    synchronized (batchRequests) {
+                        if (batch) {
                             synchronized (batchRequests) {
+                                request.setBatchFatal(batchFatal);
                                 batchRequests.add(request);
                                 batch = true;
                             }
-                            new Thread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-                                    try {
-                                        Thread.sleep(rpc.getAutoBatchTime());
-                                    } catch (InterruptedException e) {
-                                        e.printStackTrace();
-                                    }
-                                    RequestProxy.this.callBatch(null);
-                                }
-                            }).start();
-
                             return null;
                         } else {
 
+                            if (mode == BatchMode.AUTO) {
 
-                            Thread thread = new Thread(request);
-                            thread.start();
 
-                            if (m.getReturnType().equals(Thread.class)) {
-                                return thread;
-                            } else {
+                                batchRequests.add(request);
+                                batch = true;
+
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                                        try {
+                                            Thread.sleep(rpc.getAutoBatchTime());
+                                        } catch (InterruptedException e) {
+                                            e.printStackTrace();
+                                        }
+                                        RequestProxy.this.callBatch(null);
+                                    }
+                                }).start();
+
                                 return null;
+                            } else {
+
+
+                                Thread thread = new Thread(request);
+                                thread.start();
+
+                                if (m.getReturnType().equals(Thread.class)) {
+                                    return thread;
+                                } else {
+                                    return null;
+                                }
+
                             }
-
                         }
-
 
                     }
 
