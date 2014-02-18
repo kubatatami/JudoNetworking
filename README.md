@@ -8,6 +8,16 @@ This abstraction is similar to Microsoft WCF solution.
 
 Download
 --------------
+Gradle
 ```
 compile 'com.github.kubatatami:judonetworking-base:1.0.1'
+```
+
+Maven
+```xml
+<dependency>
+    <groupId>com.squareup.okhttp</groupId>
+    <artifactId>okhttp</artifactId>
+    <version>(insert latest version)</version>
+</dependency>
 ```
