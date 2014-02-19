@@ -2,45 +2,52 @@ package com.github.kubatatami.judonetworking;
 
 import android.util.Pair;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.*;
 
 class RequestProxy implements InvocationHandler {
 
-    private final EndpointImplementation rpc;
-    private int id = 0;
-    private boolean batch = false;
-    private boolean batchFatal = true;
-    private final List<Request> batchRequests = new ArrayList<Request>();
-    private BatchMode mode = BatchMode.NONE;
+    protected final EndpointImplementation rpc;
+    protected int id = 0;
+    protected boolean batch = false;
+    protected boolean batchFatal = true;
+    protected final List<Request> batchRequests = new ArrayList<Request>();
+    protected BatchMode mode = BatchMode.NONE;
+    protected Map<Method, RequestMethod> annotations;
 
-    public RequestProxy(EndpointImplementation rpc, BatchMode mode) {
+
+    public RequestProxy(EndpointImplementation rpc, Class<?> apiInterface, BatchMode mode) {
         this.rpc = rpc;
         this.mode = mode;
-        if (mode == BatchMode.MANUAL) {
-            batch = true;
+        batch = (mode == BatchMode.MANUAL);
+
+        Method[] methods = apiInterface.getMethods();
+        annotations = new HashMap<Method, RequestMethod>(methods.length);
+        for(Method method : methods){
+            annotations.put(method,method.getAnnotation(RequestMethod.class));
         }
     }
 
+    protected Runnable batchRunnable = new Runnable() {
+        @Override
+        public void run() {
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+            try {
+                Thread.sleep(rpc.getAutoBatchTime());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            RequestProxy.this.callBatch(null);
+        }
+    };
 
     public void setBatchFatal(boolean batchFatal) {
         this.batchFatal = batchFatal;
     }
 
-    private Method getMethod(Object obj, String name) {
-        for (Method m : obj.getClass().getMethods()) {
-            if (m.getName().equals(name)) {
-                return m;
-            }
-        }
-        return null;
-    }
 
-    public static String getMethodName(Method method) {
-        RequestMethod ann = method.getAnnotation(RequestMethod.class);
+
+    public String getMethodName(Method method, RequestMethod ann) {
         return (ann != null && !ann.name().equals("")) ? ann.name() : method.getName();
     }
 
@@ -57,14 +64,47 @@ class RequestProxy implements InvocationHandler {
         return stackTrace[0];
     }
 
+    protected Object performAsyncRequest(Method m, Object[] args,String name,int timeout, RequestMethod ann) throws Exception {
+        final Request request = callAsync(++id, m, name, args, m.getGenericParameterTypes(), timeout, ann);
+        synchronized (batchRequests) {
+            if (batch) {
+                synchronized (batchRequests) {
+                    request.setBatchFatal(batchFatal);
+                    batchRequests.add(request);
+                    batch = true;
+                }
+                return null;
+            } else {
+                if (mode == BatchMode.AUTO) {
+                    batchRequests.add(request);
+                    batch = true;
+                    new Thread(batchRunnable).start();
+
+                    return null;
+                } else {
+
+
+                    Thread thread = new Thread(request);
+                    thread.start();
+
+                    if (m.getReturnType().equals(Thread.class)) {
+                        return thread;
+                    } else {
+                        return null;
+                    }
+
+                }
+            }
+
+        }
+    }
+
     public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
         try {
-            Method method = getMethod(this, m.getName());
-            RequestMethod ann = m.getAnnotation(RequestMethod.class);
-            if (method != null) {
-                return method.invoke(this, args);
-            } else if (ann != null) {
-                String name = getMethodName(m);
+
+            RequestMethod ann = annotations.get(m);
+            if (ann != null) {
+                String name = getMethodName(m,ann);
                 int timeout = rpc.getRequestConnector().getMethodTimeout();
 
                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
@@ -89,59 +129,18 @@ class RequestProxy implements InvocationHandler {
                 }
 
                 if (!ann.async()) {
-                    return rpc.getRequestConnector().call(new Request(++id, rpc, m, name, ann, args, m.getReturnType(), timeout, null, rpc.getProtocolController().getAdditionalRequestData()));
+                    Object additionalData=rpc.getProtocolController().getAdditionalRequestData();
+                    Request request = new Request(++id, rpc, m, name, ann, args, m.getReturnType(), timeout, null, additionalData);
+                    return rpc.getRequestConnector().call(request);
                 } else {
-                    final Request request = callAsync(++id, m, name, args, m.getGenericParameterTypes(), timeout, ann);
-                    synchronized (batchRequests) {
-                        if (batch) {
-                            synchronized (batchRequests) {
-                                request.setBatchFatal(batchFatal);
-                                batchRequests.add(request);
-                                batch = true;
-                            }
-                            return null;
-                        } else {
-
-                            if (mode == BatchMode.AUTO) {
-
-
-                                batchRequests.add(request);
-                                batch = true;
-
-                                new Thread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-                                        try {
-                                            Thread.sleep(rpc.getAutoBatchTime());
-                                        } catch (InterruptedException e) {
-                                            e.printStackTrace();
-                                        }
-                                        RequestProxy.this.callBatch(null);
-                                    }
-                                }).start();
-
-                                return null;
-                            } else {
-
-
-                                Thread thread = new Thread(request);
-                                thread.start();
-
-                                if (m.getReturnType().equals(Thread.class)) {
-                                    return thread;
-                                } else {
-                                    return null;
-                                }
-
-                            }
-                        }
-
-                    }
-
+                    return performAsyncRequest(m,args,name,timeout,ann);
                 }
             } else {
-                throw new RequestException("No @RequestMethod on " + m.getName());
+                try{
+                    return m.invoke(this, args);
+                }catch(ReflectiveOperationException e){
+                    throw new RequestException("No @RequestMethod on " + m.getName());
+                }
             }
         } catch (Exception e) {
             if (rpc.getErrorLogger() != null) {
@@ -152,7 +151,7 @@ class RequestProxy implements InvocationHandler {
     }
 
     @SuppressWarnings("unchecked")
-    Request callAsync(int id, Method m, String name, Object[] args, Type[] types, int timeout, RequestMethod ann) throws Exception {
+    protected Request callAsync(int id, Method m, String name, Object[] args, Type[] types, int timeout, RequestMethod ann) throws Exception {
         Object[] newArgs = args;
         CallbackInterface<Object> callback = null;
         Type returnType = Void.class;
@@ -286,7 +285,7 @@ class RequestProxy implements InvocationHandler {
         }
     }
 
-    private List<List<Request>> assignRequestsToConnections(List<Request> list, final int partsNo) {
+    protected List<List<Request>> assignRequestsToConnections(List<Request> list, final int partsNo) {
         if (rpc.isTimeProfiler()) {
             return BatchTask.timeAssignRequests(list, partsNo);
         } else {
@@ -295,7 +294,7 @@ class RequestProxy implements InvocationHandler {
     }
 
 
-    private int calculateTimeout(List<Request> batches) {
+    protected int calculateTimeout(List<Request> batches) {
         int timeout = 0;
         if (rpc.getTimeoutMode() == BatchTimeoutMode.TIMEOUTS_SUM) {
             for (Request req : batches) {
@@ -309,7 +308,7 @@ class RequestProxy implements InvocationHandler {
         return timeout;
     }
 
-    private List<RequestResult> sendBatchRequest(List<Request> batches, BatchProgressObserver progressObserver, int cachedRequests) throws Exception {
+    protected List<RequestResult> sendBatchRequest(List<Request> batches, BatchProgressObserver progressObserver, int cachedRequests) throws Exception {
         int conn = rpc.getMaxConnections();
 
         if (batches.size() > 1 && conn > 1) {
@@ -346,7 +345,7 @@ class RequestProxy implements InvocationHandler {
         }
     }
 
-    private void handleBatchResponse(List<Request> requests, Batch batch, List<RequestResult> responses) {
+    protected void handleBatchResponse(List<Request> requests, Batch batch, List<RequestResult> responses) {
         Object[] results = new Object[requests.size()];
         Exception ex = null;
         int i = 0;
