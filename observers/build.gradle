@@ -30,17 +30,4 @@ dependencies {
     compile project(':base')
 }
 
-android.libraryVariants.all { variant ->
-    def name = variant.buildType.name
-    if (!name.equals(com.android.builder.BuilderConstants.DEBUG)) {
-        def task = project.tasks.create "jar${name.capitalize()}", Jar
-        task.dependsOn variant.javaCompile
-        task.from variant.javaCompile.destinationDir
-        task.baseName = 'judonetworking'
-        task.appendix = APPENDIX
-        task.version = VERSION_NAME
-        artifacts.add('archives', task);
-    }
-}
-
 apply from: '../uploading_archives.gradle'
