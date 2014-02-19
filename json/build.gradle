@@ -1,16 +1,4 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:0.7.+'
-    }
-}
 apply plugin: 'android-library'
-
-repositories {
-    mavenCentral()
-}
 
 android {
     compileSdkVersion 19
@@ -42,13 +30,17 @@ dependencies {
     compile project(':base')
 }
 
-task sourcesJar(type: Jar) {
-    baseName = 'judonetworking'
-    appendix = 'protocols-json'
-    version = VERSION_NAME
-    from android.sourceSets.main.java.srcDirs
+android.libraryVariants.all { variant ->
+    def name = variant.buildType.name
+    if (!name.equals(com.android.builder.BuilderConstants.DEBUG)) {
+        def task = project.tasks.create "jar${name.capitalize()}", Jar
+        task.dependsOn variant.javaCompile
+        task.from variant.javaCompile.destinationDir
+        task.baseName = 'judonetworking'
+        task.appendix = APPENDIX
+        task.version = VERSION_NAME
+        artifacts.add('archives', task);
+    }
 }
 
-artifacts {
-    archives sourcesJar
-}
+apply from: '../uploading_archives.gradle'

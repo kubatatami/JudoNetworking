@@ -3,7 +3,6 @@ package com.github.kubatatami.judonetworking.controllers.json.simple;
 import com.github.kubatatami.judonetworking.ProtocolController;
 import com.github.kubatatami.judonetworking.RequestInterface;
 import com.github.kubatatami.judonetworking.controllers.GetOrPostTools;
-import com.github.kubatatami.judonetworking.controllers.raw.RawController;
 
 /**
  * Created with IntelliJ IDEA.

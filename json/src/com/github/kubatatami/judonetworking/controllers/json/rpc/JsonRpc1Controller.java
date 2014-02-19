@@ -2,7 +2,6 @@ package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.kubatatami.judonetworking.*;
-import org.judonetworking.*;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;

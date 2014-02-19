@@ -1,7 +1,6 @@
 package com.github.kubatatami.judonetworking.controllers.raw;
 
 import com.github.kubatatami.judonetworking.*;
-import org.judonetworking.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;

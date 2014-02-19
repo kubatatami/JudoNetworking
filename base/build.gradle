@@ -1,13 +1,3 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        mavenLocal()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:0.8.+'
-    }
-}
-
 apply plugin: 'android-library'
 
 android {
@@ -38,15 +28,17 @@ dependencies {
     compile 'com.android.support:support-v4:19+'
 }
 
-apply from: 'https://raw.github.com/chrisbanes/gradle-mvn-push/master/gradle-mvn-push.gradle'
-
-task sourcesJar(type: Jar) {
-    baseName = 'judonetworking'
-    appendix = 'base'
-    version = VERSION_NAME
-    from android.sourceSets.main.java.srcDirs
+android.libraryVariants.all { variant ->
+    def name = variant.buildType.name
+    if (!name.equals(com.android.builder.BuilderConstants.DEBUG)) {
+        def task = project.tasks.create "jar${name.capitalize()}", Jar
+        task.dependsOn variant.javaCompile
+        task.from variant.javaCompile.destinationDir
+        task.baseName = 'judonetworking'
+        task.appendix = APPENDIX
+        task.version = VERSION_NAME
+        artifacts.add('archives', task);
+    }
 }
 
-artifacts {
-    archives sourcesJar
-}
+apply from: '../uploading_archives.gradle'
