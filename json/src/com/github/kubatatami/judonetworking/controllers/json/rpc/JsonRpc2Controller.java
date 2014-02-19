@@ -18,8 +18,8 @@ import java.util.*;
  */
 public class JsonRpc2Controller extends JsonRpcController {
 
-    boolean batchEnabled = false;
-
+    protected boolean batchEnabled = false;
+    protected Comparator<RequestInterface> requestComparator = new RequestComparator();
     public JsonRpc2Controller() {
     }
 
@@ -112,12 +112,7 @@ public class JsonRpc2Controller extends JsonRpcController {
         }
 
         Collections.sort(responses);
-        Collections.sort(requests, new Comparator<RequestInterface>() {
-            @Override
-            public int compare(RequestInterface lhs, RequestInterface rhs) {
-                return lhs.getId().compareTo(rhs.getId());
-            }
-        });
+        Collections.sort(requests, requestComparator);
 
         List<RequestResult> finalResponses = new ArrayList<RequestResult>(responses.size());
 

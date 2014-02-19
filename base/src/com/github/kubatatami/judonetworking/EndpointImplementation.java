@@ -125,7 +125,7 @@ class EndpointImplementation implements Endpoint {
 
     @SuppressWarnings("unchecked")
     public <T> T getService(Class<T> obj, boolean autoBatch) {
-        return getService(obj, new RequestProxy(this, autoBatch ? BatchMode.AUTO : BatchMode.NONE));
+        return getService(obj, new RequestProxy(this, obj, autoBatch ? BatchMode.AUTO : BatchMode.NONE));
     }
 
     @SuppressWarnings("unchecked")
@@ -148,7 +148,7 @@ class EndpointImplementation implements Endpoint {
             }
         }
 
-        final RequestProxy pr = new RequestProxy(this, BatchMode.MANUAL);
+        final RequestProxy pr = new RequestProxy(this,obj, BatchMode.MANUAL);
         T proxy = getService(obj, pr);
         pr.setBatchFatal(true);
         batch.run(proxy);

@@ -30,7 +30,7 @@ public class ObservableCache {
         @Override
         public void run() {
             try {
-
+                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
                 DexFile df = new DexFile(context.getPackageCodePath());
                 for (Enumeration<String> iter = df.entries(); iter.hasMoreElements(); ) {
                     String className = iter.nextElement();
@@ -91,7 +91,6 @@ public class ObservableCache {
 
     public static void preLoad(Context context, String packageName) {
         Thread thread = new Thread(new PreloadRunnable(context, packageName));
-        thread.setPriority(Thread.MIN_PRIORITY);
         thread.start();
     }
 
