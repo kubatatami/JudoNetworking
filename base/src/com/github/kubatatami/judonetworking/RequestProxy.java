@@ -28,7 +28,7 @@ class RequestProxy implements InvocationHandler {
         }
     }
 
-    protected Runnable batchRunnable = new Runnable() {
+    protected final Runnable batchRunnable = new Runnable() {
         @Override
         public void run() {
             android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
@@ -37,7 +37,7 @@ class RequestProxy implements InvocationHandler {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            RequestProxy.this.callBatch(null);
+            callBatch(null);
         }
     };
 
@@ -47,7 +47,7 @@ class RequestProxy implements InvocationHandler {
 
 
 
-    public String getMethodName(Method method, RequestMethod ann) {
+    public static String getMethodName(Method method, RequestMethod ann) {
         return (ann != null && !ann.name().equals("")) ? ann.name() : method.getName();
     }
 
@@ -64,15 +64,13 @@ class RequestProxy implements InvocationHandler {
         return stackTrace[0];
     }
 
-    protected Object performAsyncRequest(Method m, Object[] args,String name,int timeout, RequestMethod ann) throws Exception {
+    protected  Object performAsyncRequest(Method m, Object[] args,String name,int timeout, RequestMethod ann) throws Exception {
         final Request request = callAsync(++id, m, name, args, m.getGenericParameterTypes(), timeout, ann);
         synchronized (batchRequests) {
             if (batch) {
-                synchronized (batchRequests) {
                     request.setBatchFatal(batchFatal);
                     batchRequests.add(request);
                     batch = true;
-                }
                 return null;
             } else {
                 if (mode == BatchMode.AUTO) {
@@ -138,7 +136,7 @@ class RequestProxy implements InvocationHandler {
             } else {
                 try{
                     return m.invoke(this, args);
-                }catch(ReflectiveOperationException e){
+                }catch(InvocationTargetException e){
                     throw new RequestException("No @RequestMethod on " + m.getName());
                 }
             }
