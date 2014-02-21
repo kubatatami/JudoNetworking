@@ -196,14 +196,19 @@ public interface Endpoint {
      */
     public static final int CACHE_DEBUG = 8;
     /**
-     * Log cache behavior.
+     * Log request code line.
      */
     public static final int REQUEST_LINE_DEBUG = 16;
 
     /**
-     * Log cache behavior.
+     * Log request and response headers.
      */
     public static final int HEADERS_DEBUG = 32;
+
+    /**
+     * Log token behavior
+     */
+    public static final int TOKEN_DEBUG = 64;
 
     /**
      * Log everything.

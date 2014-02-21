@@ -80,7 +80,9 @@ class RequestConnector {
                 timeStat.tickParseTime();
                 conn.close();
             }
-            if (result instanceof RequestSuccessResult) {
+            if (result.error !=null && result.error instanceof TokenExpiredException) {
+                    
+            } else if (result instanceof RequestSuccessResult) {
                 if (rpc.isVerifyResultModel()) {
                     verifyResult(request, result);
                 }
