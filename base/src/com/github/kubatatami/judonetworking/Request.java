@@ -107,6 +107,15 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     }
 
     @Override
+    public boolean isApiKeyRequired() {
+        ApiKeyRequired ann = method.getAnnotation(ApiKeyRequired.class);
+        if (ann == null) {
+            ann = method.getDeclaringClass().getAnnotation(ApiKeyRequired.class);
+        }
+        return ann != null && ann.enabled();
+    }
+
+    @Override
     public Object getAdditionalData() {
         return additionalControllerData;
     }
@@ -136,6 +145,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         }
         return ann;
     }
+
 
     public int getLocalCacheLifeTime() {
         return getLocalCache().lifeTime();
@@ -199,16 +209,24 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     }
 
     @Override
+    public void clearProgress() {
+        this.progress = 0;
+        tick();
+    }
+
+    @Override
     public void progressTick() {
         this.progress++;
-        if (callback != null) {
-            rpc.getHandler().post(new AsyncResult(callback, ((int) this.progress * 100 / max)));
-        }
+        tick();
     }
 
     @Override
     public void progressTick(float progress) {
         this.progress += progress;
+        tick();
+    }
+
+    private void tick() {
         if (callback != null) {
             rpc.getHandler().post(new AsyncResult(callback, ((int) this.progress * 100 / max)));
         }
@@ -234,5 +252,9 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     void setBatchFatal(boolean batchFatal) {
         this.batchFatal = batchFatal;
+    }
+
+    public void setAdditionalControllerData(Object additionalControllerData) {
+        this.additionalControllerData = additionalControllerData;
     }
 }

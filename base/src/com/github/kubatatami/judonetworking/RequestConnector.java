@@ -37,22 +37,36 @@ class RequestConnector {
     }
 
     private RequestResult sendRequest(Request request, TimeStat timeStat) {
-        return sendRequest(request, timeStat, null, null);
+        return sendRequest(request, timeStat, null, null, false);
     }
 
     private RequestResult sendRequest(Request request, TimeStat timeStat, String hash, Long time) {
+        return sendRequest(request, timeStat, hash, time, false);
+    }
+
+    private RequestResult sendRequest(Request request, TimeStat timeStat, String hash, Long time, boolean ignoreTokenError) {
         try {
             RequestResult result;
-
+            long currentTokenExpireTimestamp;
+            ProtocolController controller = rpc.getProtocolController();
             Object virtualObject = handleVirtualServerRequest(request, timeStat);
             if (virtualObject != null) {
+                currentTokenExpireTimestamp = 0;
                 result = new RequestSuccessResult(request.getId(), virtualObject);
             } else {
-                ProtocolController controller = rpc.getProtocolController();
                 ProtocolController.RequestInfo requestInfo = controller.createRequest(url, request);
                 timeStat.tickCreateTime();
                 lossCheck();
                 delay();
+
+                currentTokenExpireTimestamp = rpc.getTokenExpireTimestamp();
+                if (rpc.getTokenCaller() != null && request.isApiKeyRequired() && !ignoreTokenError && !checkTokenExpireTimestamp(currentTokenExpireTimestamp)) {
+                    try {
+                        doTokenRequest(currentTokenExpireTimestamp);
+                    } catch (Exception ex) {
+                        return new ErrorResult(request.getId(), new RequestException("Can't obtain api token", ex));
+                    }
+                }
                 Connector.Connection conn = connector.send(controller, requestInfo, request.getTimeout(), timeStat,
                         rpc.getDebugFlags(), request.getMethod(), new Connector.CacheInfo(hash, time));
 
@@ -80,7 +94,18 @@ class RequestConnector {
                 timeStat.tickParseTime();
                 conn.close();
             }
-            if (result instanceof RequestSuccessResult) {
+            if (request.isApiKeyRequired() && result.error != null &&
+                    rpc.getTokenCaller() != null && !ignoreTokenError &&
+                    rpc.getTokenCaller().checkIsTokenException(result.error)) {
+                try {
+                    doTokenRequest(currentTokenExpireTimestamp);
+                    request.clearProgress();
+                    request.setAdditionalControllerData(rpc.getProtocolController().getAdditionalRequestData());
+                    return sendRequest(request, timeStat, hash, time, true);
+                } catch (Exception ex) {
+                    return new ErrorResult(request.getId(), new RequestException("Can't obtain api token", ex));
+                }
+            } else if (result instanceof RequestSuccessResult) {
                 if (rpc.isVerifyResultModel()) {
                     verifyResult(request, result);
                 }
@@ -93,6 +118,19 @@ class RequestConnector {
             return new ErrorResult(request.getId(), e);
         }
 
+    }
+
+    protected boolean checkTokenExpireTimestamp(long tokenExpireTimestamp) {
+        return (tokenExpireTimestamp == 0 || (tokenExpireTimestamp != -1 && tokenExpireTimestamp > System.currentTimeMillis()));
+    }
+
+    protected void doTokenRequest(long oldTokenExpireTimestamp) throws Exception {
+        synchronized (rpc.getTokenCaller()) {
+            if (oldTokenExpireTimestamp == rpc.getTokenExpireTimestamp()) {
+                long tokenExpireTimestamp = rpc.getTokenCaller().doTokenRequest(rpc);
+                rpc.setTokenExpireTimestamp(tokenExpireTimestamp);
+            }
+        }
     }
 
     public static void processingMethod(Object object) {
@@ -524,6 +562,7 @@ class RequestConnector {
     public List<RequestResult> callRealBatch(List<Request> requests, ProgressObserver progressObserver, Integer timeout, String requestsName) throws Exception {
 
         try {
+
             ProtocolController controller = rpc.getProtocolController();
             List<RequestResult> responses;
             TimeStat timeStat = new TimeStat(progressObserver);
@@ -533,6 +572,20 @@ class RequestConnector {
             timeStat.tickCreateTime();
             lossCheck();
             delay();
+            boolean isApiRequired = false;
+            for (Request request : requests) {
+                if (request.isApiKeyRequired()) {
+                    isApiRequired = true;
+                }
+            }
+            long currentTokenExpireTimestamp = rpc.getTokenExpireTimestamp();
+            if (rpc.getTokenCaller() != null && isApiRequired && !checkTokenExpireTimestamp(currentTokenExpireTimestamp)) {
+                try {
+                    doTokenRequest(currentTokenExpireTimestamp);
+                } catch (Exception ex) {
+                    throw new RequestException("Can't obtain api token", ex);
+                }
+            }
             Connector.Connection conn = connector.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null, null);
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {

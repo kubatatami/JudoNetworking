@@ -35,7 +35,10 @@ public abstract class JsonRpcController extends JsonProtocolController {
     public Object createRequestObject(RequestInterface request) throws IOException {
         Object finalArgs;
         ApiKey apiKeyModel = (ApiKey) request.getAdditionalData();
-
+        if(!request.isApiKeyRequired()){
+            apiKeyModel.apiKey=null;
+            apiKeyModel.apiKeyName=null;
+        }
         if (request.getParamNames().length > 0 && request.getArgs() != null || apiKeyModel.apiKeyName != null) {
             int i = 0;
             Map<String, Object> paramObjects = new HashMap<String, Object>();

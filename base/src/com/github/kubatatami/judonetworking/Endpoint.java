@@ -49,15 +49,6 @@ public interface Endpoint {
     public <T> T getService(Class<T> apiInterface);
 
     /**
-     * Create API proxy for given interface.
-     *
-     * @param apiInterface API interface class
-     * @param autoBatch    Enable auto batch mode.
-     * @return API proxy object.
-     */
-    public <T> T getService(Class<T> apiInterface, boolean autoBatch);
-
-    /**
      * Create batch request.
      *
      * @param apiInterface API interface class
@@ -93,12 +84,6 @@ public interface Endpoint {
      * @param maxWifiConnections
      */
     public void setMultiBatchConnections(int maxMobileConnections, int maxWifiConnections);
-
-
-    /**
-     * @param autoBatchTime
-     */
-    public void setAutoBatchTime(int autoBatchTime);
 
     /**
      * @param mode
@@ -171,6 +156,7 @@ public interface Endpoint {
      */
     public void stopTest();
 
+    public ProtocolController getProtocolController();
 
     public void setVerifyResultModel(boolean enabled);
 
@@ -196,14 +182,19 @@ public interface Endpoint {
      */
     public static final int CACHE_DEBUG = 8;
     /**
-     * Log cache behavior.
+     * Log request code line.
      */
     public static final int REQUEST_LINE_DEBUG = 16;
 
     /**
-     * Log cache behavior.
+     * Log request and response headers.
      */
     public static final int HEADERS_DEBUG = 32;
+
+    /**
+     * Log token behavior
+     */
+    public static final int TOKEN_DEBUG = 64;
 
     /**
      * Log everything.

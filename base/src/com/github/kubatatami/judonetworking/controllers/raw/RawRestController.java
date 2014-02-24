@@ -68,4 +68,13 @@ public class RawRestController extends RawController {
         String value() default "";
     }
 
+    @Override
+    public void setApiKey(String name, String key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setApiKey(String key) {
+        throw new UnsupportedOperationException();
+    }
 }

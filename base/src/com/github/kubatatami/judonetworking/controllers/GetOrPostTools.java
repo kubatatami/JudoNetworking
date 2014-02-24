@@ -24,7 +24,7 @@ public class GetOrPostTools {
     public static String createRequest(RequestInterface request, String apiKey, String apiKeyName) {
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
         int i = 0;
-        if (apiKeyName != null) {
+        if (apiKeyName != null && request.isApiKeyRequired()) {
             nameValuePairs.add(new BasicNameValuePair(apiKeyName, apiKey));
         }
 

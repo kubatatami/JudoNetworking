@@ -7,54 +7,73 @@ class AsyncResult implements Runnable {
     private Object[] results = null;
     private Exception e = null;
     private int progress = 0;
+    private final Type type;
+
+    enum Type {
+        RESULT, ERROR, PROGRESS
+    }
 
     AsyncResult(BatchInterface<?> callback, Object results[]) {
         this.results = results;
         this.transaction = callback;
+        type = Type.RESULT;
     }
 
     AsyncResult(BatchInterface<?> callback, int progress) {
         this.progress = progress;
         this.transaction = callback;
+        type = Type.PROGRESS;
     }
 
     AsyncResult(BatchInterface<?> callback, Exception e) {
         this.e = e;
         this.transaction = callback;
+        type = Type.ERROR;
     }
 
     AsyncResult(CallbackInterface<Object> callback, Object result) {
         this.result = result;
         this.callback = callback;
+        type = Type.RESULT;
     }
 
     AsyncResult(CallbackInterface<Object> callback, int progress) {
         this.progress = progress;
         this.callback = callback;
+        type = Type.PROGRESS;
     }
 
     AsyncResult(CallbackInterface<Object> callback, Exception e) {
         this.e = e;
         this.callback = callback;
+        type = Type.ERROR;
     }
 
     @Override
     public void run() {
         if (callback != null) {
-            if (e != null) {
-                callback.onError(e);
-            } else if (progress != 0) {
-                callback.onProgress(progress);
-            } else {
-                callback.onFinish(result);
+            switch (type) {
+                case RESULT:
+                    callback.onFinish(result);
+                    break;
+                case ERROR:
+                    callback.onError(e);
+                    break;
+                case PROGRESS:
+                    callback.onProgress(progress);
+                    break;
             }
         } else {
-            if (e != null) {
-                transaction.onError(e);
-            } else if (progress != 0) {
-                transaction.onProgress(progress);
-            } else {
-                transaction.onFinish(results);
+            switch (type) {
+                case RESULT:
+                    transaction.onFinish(results);
+                    break;
+                case ERROR:
+                    transaction.onError(e);
+                    break;
+                case PROGRESS:
+                    transaction.onProgress(progress);
+                    break;
             }
         }
     }

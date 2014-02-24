@@ -10,6 +10,7 @@ import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.*;
 
 class EndpointImplementation implements Endpoint {
 
@@ -22,7 +23,6 @@ class EndpointImplementation implements Endpoint {
     private boolean cacheEnabled = false;
     private CacheMode cacheMode = CacheMode.NORMAL;
     private boolean timeProfiler = false;
-    private int autoBatchTime = 20; //milliseconds
     private BatchTimeoutMode timeoutMode = BatchTimeoutMode.TIMEOUTS_SUM;
     private MemoryCache memoryCache;
     private DiskCache diskCache;
@@ -42,6 +42,18 @@ class EndpointImplementation implements Endpoint {
     private HashMap<Class, VirtualServerInfo> virtualServers = new HashMap<Class, VirtualServerInfo>();
     private boolean verifyResultModel = false;
     private boolean processingMethod = false;
+    private long tokenExpireTimestamp = -1;
+
+    private ExecutorService executorService =
+            new ThreadPoolExecutor(2, 30, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(10), new ThreadFactory() {
+                @Override
+                public Thread newThread(Runnable r) {
+                    Thread thread = new Thread(r);
+                    thread.setPriority(Thread.MIN_PRIORITY);
+                    return thread;
+                }
+            });
+
 
     public EndpointImplementation(Context context, ProtocolController protocolController, Connector connector, String url) {
         init(context, protocolController, connector, url);
@@ -54,13 +66,17 @@ class EndpointImplementation implements Endpoint {
         this.context = context;
         this.protocolController = protocolController;
         this.url = url;
-        statFile = new File(context.getCacheDir(), "stats");
-        memoryCache = new MemoryCacheImplementation(context);
-        diskCache = new DiskCacheImplementation(context);
+        this.statFile = new File(context.getCacheDir(), "stats");
+        this.memoryCache = new MemoryCacheImplementation(context);
+        this.diskCache = new DiskCacheImplementation(context);
     }
 
     public HashMap<Class, VirtualServerInfo> getVirtualServers() {
         return virtualServers;
+    }
+
+    public ExecutorService getExecutorService() {
+        return executorService;
     }
 
     @Override
@@ -119,13 +135,9 @@ class EndpointImplementation implements Endpoint {
         this.processingMethod = enabled;
     }
 
-    public <T> T getService(Class<T> obj) {
-        return getService(obj, false);
-    }
-
     @SuppressWarnings("unchecked")
-    public <T> T getService(Class<T> obj, boolean autoBatch) {
-        return getService(obj, new RequestProxy(this, obj, autoBatch ? BatchMode.AUTO : BatchMode.NONE));
+    public <T> T getService(Class<T> obj) {
+        return getService(obj, new RequestProxy(this, obj, protocolController.getAutoBatchTime() > 0 ? BatchMode.AUTO : BatchMode.NONE));
     }
 
     @SuppressWarnings("unchecked")
@@ -148,7 +160,7 @@ class EndpointImplementation implements Endpoint {
             }
         }
 
-        final RequestProxy pr = new RequestProxy(this,obj, BatchMode.MANUAL);
+        final RequestProxy pr = new RequestProxy(this, obj, BatchMode.MANUAL);
         T proxy = getService(obj, pr);
         pr.setBatchFatal(true);
         batch.run(proxy);
@@ -158,7 +170,6 @@ class EndpointImplementation implements Endpoint {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
                 pr.callBatch(batch);
             }
         });
@@ -166,6 +177,9 @@ class EndpointImplementation implements Endpoint {
 
     }
 
+    public TokenCaller getTokenCaller() {
+        return protocolController.getTokenCaller();
+    }
 
     public Handler getHandler() {
         return handler;
@@ -186,14 +200,6 @@ class EndpointImplementation implements Endpoint {
 
     public int getMaxConnections() {
         return NetworkUtils.isWifi(context) ? getMaxWifiConnections() : getMaxMobileConnections();
-    }
-
-    public int getAutoBatchTime() {
-        return autoBatchTime;
-    }
-
-    public void setAutoBatchTime(int autoBatchTime) {
-        this.autoBatchTime = autoBatchTime;
     }
 
     @Override
@@ -381,6 +387,14 @@ class EndpointImplementation implements Endpoint {
             LoggerImpl.log(e);
         }
 
+    }
+
+    public long getTokenExpireTimestamp() {
+        return tokenExpireTimestamp;
+    }
+
+    public void setTokenExpireTimestamp(long tokenExpireTimestamp) {
+        this.tokenExpireTimestamp = tokenExpireTimestamp;
     }
 
     CacheMode getCacheMode() {
