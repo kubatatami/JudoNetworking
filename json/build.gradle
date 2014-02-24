@@ -1,16 +1,4 @@
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:0.7.+'
-    }
-}
 apply plugin: 'android-library'
-
-repositories {
-    mavenCentral()
-}
 
 android {
     compileSdkVersion 19
@@ -39,4 +27,7 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: '*.jar')
     compile 'com.android.support:support-v4:19+'
+    compile project(':base')
 }
+
+apply from: '../uploading_archives.gradle'

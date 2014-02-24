@@ -1,13 +1,3 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        mavenLocal()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:0.8.+'
-    }
-}
-
 apply plugin: 'android-library'
 
 android {
@@ -38,4 +28,4 @@ dependencies {
     compile 'com.android.support:support-v4:19+'
 }
 
-apply from: 'https://raw.github.com/chrisbanes/gradle-mvn-push/master/gradle-mvn-push.gradle'
+apply from: '../uploading_archives.gradle'
