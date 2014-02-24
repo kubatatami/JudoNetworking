@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +26,7 @@ public class TokenDecoratorController<T, Z> extends ProtocolController {
     protected Method authMethod;
     protected Class<T> authInterface;
     protected Field keyField;
-    protected ProtocolController protocolController;
+    protected ProtocolController baseController;
     protected TokenCaller tokenCaller = new SimpleTokenCaller();
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -39,10 +40,15 @@ public class TokenDecoratorController<T, Z> extends ProtocolController {
     }
 
 
-    public TokenDecoratorController(ProtocolController protocolController, String keyName, int tokenLifetime) {
-        this.protocolController = protocolController;
+    public TokenDecoratorController(ProtocolController baseController, String keyName, int tokenLifetime) {
+        this.baseController = baseController;
         this.keyName = keyName;
         this.tokenLifetime = tokenLifetime;
+        Type[] genericTypes=((ParameterizedType) getClass()
+                .getGenericSuperclass()).getActualTypeArguments();
+        if(genericTypes.length!=2){
+            throw new RuntimeException("JsonCustomModelController must have two generic types!");
+        }
         authMethod = findAuthMethod((Class<T>) ((ParameterizedType) getClass()
                 .getGenericSuperclass()).getActualTypeArguments()[0]);
         keyField = findKeyField((Class<Z>) ((ParameterizedType) getClass()
@@ -115,53 +121,55 @@ public class TokenDecoratorController<T, Z> extends ProtocolController {
 
     @Override
     public void setApiKey(String name, String key) {
-        protocolController.setApiKey(name, key);
+        baseController.setApiKey(name, key);
     }
 
     @Override
     public void setApiKey(String key) {
-        protocolController.setApiKey(key);
+        baseController.setApiKey(key);
     }
 
     @Override
     public int getAutoBatchTime() {
-        return protocolController.getAutoBatchTime();
+        return baseController.getAutoBatchTime();
     }
 
     @Override
     public RequestInfo createRequest(String url, RequestInterface request) throws Exception {
-        return protocolController.createRequest(url, request);
+        return baseController.createRequest(url, request);
     }
 
     @Override
     public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
-        return protocolController.parseResponse(request, stream, headers);
+        return baseController.parseResponse(request, stream, headers);
     }
 
     @Override
     public boolean isBatchSupported() {
-        return protocolController.isBatchSupported();
+        return baseController.isBatchSupported();
     }
 
     @Override
     public RequestInfo createRequest(String url, List<RequestInterface> requests) throws Exception {
-        return protocolController.createRequest(url, requests);
+        return baseController.createRequest(url, requests);
     }
 
     @Override
     public List<RequestResult> parseResponses(List<RequestInterface> requests, InputStream stream, Map<String, List<String>> headers) throws Exception {
-        return protocolController.parseResponses(requests, stream, headers);
+        return baseController.parseResponses(requests, stream, headers);
     }
 
     @Override
     public void parseError(int code, String resp) throws Exception {
-        protocolController.parseError(code, resp);
+        baseController.parseError(code, resp);
     }
 
     @Override
     public Object getAdditionalRequestData() {
-        return protocolController.getAdditionalRequestData();
+        return baseController.getAdditionalRequestData();
     }
 
-
+    public ProtocolController getBaseController() {
+        return baseController;
+    }
 }
