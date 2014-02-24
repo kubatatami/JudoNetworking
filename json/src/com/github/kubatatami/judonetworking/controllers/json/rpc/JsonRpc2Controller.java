@@ -17,13 +17,25 @@ import java.util.*;
  */
 public class JsonRpc2Controller extends JsonRpcController {
 
+    protected int autoBatchTime = 0;
     protected boolean batchEnabled = false;
     protected Comparator<RequestInterface> requestComparator = new RequestComparator();
+
     public JsonRpc2Controller() {
     }
 
     public JsonRpc2Controller(boolean batchEnabled) {
         this.batchEnabled = batchEnabled;
+    }
+
+    public JsonRpc2Controller(boolean batchEnabled, int autoBatchTime) {
+        this.batchEnabled = batchEnabled;
+        this.autoBatchTime = autoBatchTime;
+    }
+
+    @Override
+    public int getAutoBatchTime() {
+        return autoBatchTime;
     }
 
     @Override

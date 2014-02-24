@@ -23,8 +23,6 @@ import java.io.Serializable;
  */
 public abstract class JsonProtocolController extends ProtocolController {
     protected ObjectMapper mapper = new ObjectMapper();
-    private String apiKey = null;
-    private String apiKeyName = null;
 
     protected JsonProtocolController() {
         mapper = getMapperInstance();
@@ -54,18 +52,8 @@ public abstract class JsonProtocolController extends ProtocolController {
         public int code;
     }
 
-    public void setApiKey(String name, String key) {
-        this.apiKeyName = name;
-        this.apiKey = key;
-
-    }
-
     public ObjectMapper getMapper() {
         return mapper;
-    }
-
-    public void setApiKey(String key) {
-        this.apiKey = key;
     }
 
     @Override
@@ -75,22 +63,5 @@ public abstract class JsonProtocolController extends ProtocolController {
         }
     }
 
-
-    @Override
-    public Object getAdditionalRequestData() {
-        return new ApiKey(apiKeyName, apiKey);
-    }
-
-
-    protected static class ApiKey {
-        public String apiKeyName = null;
-        public String apiKey = null;
-
-
-        public ApiKey(String apiKeyName, String apiKey) {
-            this.apiKeyName = apiKeyName;
-            this.apiKey = apiKey;
-        }
-    }
 
 }

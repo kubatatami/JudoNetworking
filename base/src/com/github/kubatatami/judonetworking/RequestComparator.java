@@ -1,7 +1,5 @@
 package com.github.kubatatami.judonetworking;
 
-import com.github.kubatatami.judonetworking.RequestInterface;
-
 import java.util.Comparator;
 
 /**

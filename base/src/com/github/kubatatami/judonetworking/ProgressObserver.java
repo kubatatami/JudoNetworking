@@ -8,6 +8,9 @@ package com.github.kubatatami.judonetworking;
  * To change this template use File | Settings | File Templates.
  */
 public interface ProgressObserver {
+
+    public void clearProgress();
+
     public void progressTick();
 
     public void progressTick(float progress);

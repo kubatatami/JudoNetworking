@@ -27,4 +27,7 @@ public interface RequestInterface {
     public boolean isAllowEmptyResult();
 
     public Object getAdditionalData();
+
+    public boolean isApiKeyRequired();
+
 }

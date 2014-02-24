@@ -24,6 +24,12 @@ public class BatchProgressObserver implements ProgressObserver {
     }
 
     @Override
+    public synchronized void clearProgress() {
+        this.progress = 0;
+        publishProgress();
+    }
+
+    @Override
     public void progressTick() {
         progressTick(1.0f);
     }

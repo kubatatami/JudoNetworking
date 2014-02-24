@@ -1,12 +1,14 @@
 package com.github.kubatatami.judonetworking;
 
-import com.github.kubatatami.judonetworking.Endpoint;
-
 /**
  * Created by Kuba on 21/02/14.
  */
-public interface TokenCaller {
+public abstract class TokenCaller {
 
-    public long doTokenRequest(Endpoint endpoint);
+    public abstract long doTokenRequest(Endpoint endpoint) throws Exception;
+
+    public boolean checkIsTokenException(Exception exception) {
+        return false;
+    }
 
 }

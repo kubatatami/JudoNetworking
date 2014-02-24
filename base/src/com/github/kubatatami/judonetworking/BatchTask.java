@@ -4,15 +4,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.Future;
 
 class BatchTask implements Runnable {
     private final Integer timeout;
     private final List<Request> requests;
-    private final Thread thread = new Thread(this);
     private List<RequestResult> response = null;
     private Exception ex = null;
     private final EndpointImplementation rpc;
     private ProgressObserver progressObserver;
+    private Future future;
 
     public BatchTask(EndpointImplementation rpc, ProgressObserver progressObserver, Integer timeout, List<Request> requests) {
         this.rpc = rpc;
@@ -32,7 +33,6 @@ class BatchTask implements Runnable {
     @Override
     public void run() {
         try {
-            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
             this.response = rpc.getRequestConnector().callBatch(this.requests, progressObserver, this.timeout);
         } catch (Exception e) {
             this.ex = e;
@@ -40,11 +40,11 @@ class BatchTask implements Runnable {
     }
 
     public void execute() {
-        thread.start();
+        future = rpc.getExecutorService().submit(this);
     }
 
-    public void join() throws InterruptedException {
-        thread.join();
+    public void join() throws Exception {
+        future.get();
     }
 
 

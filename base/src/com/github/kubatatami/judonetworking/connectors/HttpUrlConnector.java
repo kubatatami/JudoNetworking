@@ -76,7 +76,7 @@ public class HttpUrlConnector extends Connector {
             HashMap map = (HashMap) field.get(null);
             map.clear();
         } catch (Exception e) {
-            e.printStackTrace();
+
         }
         this.httpURLCreator = httpURLCreator;
         this.httpURLConnectionModifier = httpURLConnectionModifier;
@@ -177,9 +177,9 @@ public class HttpUrlConnector extends Connector {
             urlConnection.setRequestMethod(httpMethod.methodType());
         }
 
-        if(requestInfo.customHeaders!=null){
-            for(Map.Entry<String,String> entry : requestInfo.customHeaders.entrySet()){
-                urlConnection.addRequestProperty(entry.getKey(),entry.getValue());
+        if (requestInfo.customHeaders != null) {
+            for (Map.Entry<String, String> entry : requestInfo.customHeaders.entrySet()) {
+                urlConnection.addRequestProperty(entry.getKey(), entry.getValue());
             }
         }
 

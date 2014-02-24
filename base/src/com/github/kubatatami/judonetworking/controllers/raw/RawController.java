@@ -17,18 +17,6 @@ import java.util.Scanner;
  */
 public abstract class RawController extends ProtocolController {
 
-    private String apiKey = null;
-    private String apiKeyName = null;
-
-    public void setApiKey(String name, String key) {
-        this.apiKeyName = name;
-        this.apiKey = key;
-    }
-
-    public void setApiKey(String key) {
-        this.apiKey = key;
-    }
-
 
     @Override
     public abstract RequestInfo createRequest(String url, RequestInterface request) throws Exception;
@@ -74,20 +62,5 @@ public abstract class RawController extends ProtocolController {
         }
     }
 
-    @Override
-    public Object getAdditionalRequestData() {
-        return new ApiKey(apiKeyName, apiKey);
-    }
-
-    public static class ApiKey {
-        public String apiKeyName = null;
-        public String apiKey = null;
-
-
-        public ApiKey(String apiKeyName, String apiKey) {
-            this.apiKeyName = apiKeyName;
-            this.apiKey = apiKey;
-        }
-    }
 
 }

@@ -13,13 +13,28 @@ import java.util.Map;
  */
 public abstract class ProtocolController {
 
+    private String apiKey = null;
+    private String apiKeyName = null;
+
     public static class RequestInfo {
         public String url;
         public RequestInputStreamEntity entity;
         public String mimeType;
-        public Map<String,String> customHeaders;
+        public Map<String, String> customHeaders;
     }
 
+    public void setApiKey(String name, String key) {
+        this.apiKeyName = name;
+        this.apiKey = key;
+    }
+
+    public void setApiKey(String key) {
+        this.apiKey = key;
+    }
+
+    public int getAutoBatchTime() {
+        return 0;
+    }
 
     public abstract RequestInfo createRequest(String url, RequestInterface request) throws Exception;
 
@@ -41,7 +56,23 @@ public abstract class ProtocolController {
 
     }
 
-    public abstract Object getAdditionalRequestData();
+    public Object getAdditionalRequestData() {
+        return new ApiKey(apiKeyName, apiKey);
+    }
 
+    public TokenCaller getTokenCaller() {
+        return null;
+    }
+
+    public static class ApiKey {
+        public String apiKeyName = null;
+        public String apiKey = null;
+
+
+        public ApiKey(String apiKeyName, String apiKey) {
+            this.apiKeyName = apiKeyName;
+            this.apiKey = apiKey;
+        }
+    }
 
 }
