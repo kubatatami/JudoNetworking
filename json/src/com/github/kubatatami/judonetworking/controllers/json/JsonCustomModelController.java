@@ -120,17 +120,17 @@ public class JsonCustomModelController<T> extends JsonProtocolController {
             if (response == null) {
                 throw new RequestException("Empty response.");
             }
-            Boolean success = getStatus(response);
-            String message = getErrorMessage(response);
-            Integer code = getErrorCode(response);
+            Boolean status = getStatus(response);
+            String errorMessage = getErrorMessage(response);
+            Integer errorCode = getErrorCode(response);
             JsonNode data = getData(response);
 
             if (data == null) {
                 throw new RequestException("Data field is required.");
             }
 
-            if ((success != null && !success) || message != null || code != null) {
-                throw new RequestException(message, code);
+            if ((status != null && !status) || errorMessage != null || errorCode != null) {
+                throw new RequestException(errorMessage, errorCode);
             }
             Object result = null;
             if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {

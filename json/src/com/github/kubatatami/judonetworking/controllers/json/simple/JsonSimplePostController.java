@@ -13,7 +13,7 @@ import java.io.ByteArrayInputStream;
  * Time: 10:42
  * To change this template use File | Settings | File Templates.
  */
-public class JsonSimplePostController extends JsonSimpleController {
+public class JsonSimplePostController extends JsonSimpleBaseController {
 
     @Override
     public RequestInfo createRequest(String url, RequestInterface request) throws Exception {

@@ -31,6 +31,6 @@ public class JsonSimpleRestController extends RawRestController {
 
     @Override
     public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
-        return JsonSimpleController.parseResponse(mapper, request, stream);
+        return JsonSimpleBaseController.parseResponse(mapper, request, stream);
     }
 }

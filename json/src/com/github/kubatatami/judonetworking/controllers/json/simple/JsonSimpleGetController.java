@@ -11,7 +11,7 @@ import com.github.kubatatami.judonetworking.controllers.GetOrPostTools;
  * Time: 10:42
  * To change this template use File | Settings | File Templates.
  */
-public class JsonSimpleGetController extends JsonSimpleController {
+public class JsonSimpleGetController extends JsonSimpleBaseController {
 
     @Override
     public ProtocolController.RequestInfo createRequest(String url, RequestInterface request) {

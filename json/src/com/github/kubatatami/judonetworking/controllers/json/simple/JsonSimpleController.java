@@ -1,44 +1,53 @@
 package com.github.kubatatami.judonetworking.controllers.json.simple;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.kubatatami.judonetworking.ErrorResult;
-import com.github.kubatatami.judonetworking.RequestInterface;
-import com.github.kubatatami.judonetworking.RequestResult;
-import com.github.kubatatami.judonetworking.RequestSuccessResult;
-import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.kubatatami.judonetworking.*;
+
+import java.io.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
- * Date: 05.08.2013
- * Time: 10:42
+ * Date: 13.08.2013
+ * Time: 21:52
  * To change this template use File | Settings | File Templates.
  */
-public abstract class JsonSimpleController extends JsonProtocolController {
+public class JsonSimpleController extends JsonSimpleBaseController {
 
-    @Override
-    public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
-        return parseResponse(mapper, request, stream);
+    ObjectMapper mapper;
+
+    public JsonSimpleController() {
+        mapper=getMapperInstance();
     }
 
-
-    public static RequestResult parseResponse(ObjectMapper mapper, RequestInterface request, InputStream stream) {
-        try {
-            Object res = null;
-            InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
-            if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
-                res = mapper.readValue(inputStreamReader, mapper.getTypeFactory().constructType(request.getReturnType()));
-            }
-            inputStreamReader.close();
-            return new RequestSuccessResult(request.getId(), res);
-        } catch (Exception e) {
-            return new ErrorResult(request.getId(), e);
+    @Override
+    public RequestInfo createRequest(String url, RequestInterface request) throws IOException {
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfo.mimeType = "application/json";
+        if (url.lastIndexOf("/") != url.length() - 1) {
+            url += "/";
         }
+        url += request.getName();
+        Map<String, Object> req = new HashMap<String, Object>(request.getArgs().length);
+        int i = 0;
+        for (String paramName : request.getParamNames()) {
+            req.put(paramName, request.getArgs()[i]);
+            i++;
+        }
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        OutputStreamWriter writer = new OutputStreamWriter(stream);
+        mapper.writeValue(writer,req);
+        writer.close();
+
+        requestInfo.url = url;
+        requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(stream.toByteArray()), stream.size());
+
+        return requestInfo;
     }
 
 }
