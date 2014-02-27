@@ -1,7 +1,9 @@
 package com.github.kubatatami.judonetworking;
 
 import android.content.Context;
-import android.os.*;
+import android.os.Handler;
+import android.os.Looper;
+
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
@@ -47,7 +49,7 @@ class EndpointImplementation implements Endpoint {
                 @Override
                 public Thread newThread(Runnable r) {
                     Thread thread = new Thread(r);
-                    thread.setPriority(Thread.NORM_PRIORITY-1);
+                    thread.setPriority(Thread.NORM_PRIORITY - 1);
                     return thread;
                 }
             });
@@ -122,11 +124,11 @@ class EndpointImplementation implements Endpoint {
         this.maxWifiConnections = maxWifiConnections;
         int max = Math.max(maxMobileConnections, maxWifiConnections);
         connector.setMaxConnections(max);
-        setThreadPoolSize(Math.max(maxMobileConnections,maxWifiConnections));
+        setThreadPoolSize(Math.max(maxMobileConnections, maxWifiConnections));
     }
 
-    protected void setThreadPoolSize(int size){
-        executorService.setMaximumPoolSize(Math.max(2,size));
+    protected void setThreadPoolSize(int size) {
+        executorService.setMaximumPoolSize(Math.max(2, size));
     }
 
     @Override

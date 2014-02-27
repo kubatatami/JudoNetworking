@@ -45,7 +45,7 @@ public class EnumAnnotationModule extends SimpleModule {
         }
 
         @Override
-        public void serialize(Enum value, JsonGenerator jgen,SerializerProvider provider) throws IOException{
+        public void serialize(Enum value, JsonGenerator jgen, SerializerProvider provider) throws IOException {
             try {
                 JsonProperty property = value.getDeclaringClass().getDeclaredField(value.name()).getAnnotation(JsonProperty.class);
                 if (property != null) {
@@ -68,14 +68,14 @@ public class EnumAnnotationModule extends SimpleModule {
 
         @Override
         public Enum<?> deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-            String text=jp.getText();
+            String text = jp.getText();
             try {
 
-                for(Field field : getValueClass().getDeclaredFields()){
-                    if(field.isEnumConstant()){
-                        JsonProperty property=field.getAnnotation(JsonProperty.class);
-                        if(property!=null && property.value().equals(text)){
-                            return (Enum<?>)field.get(null);
+                for (Field field : getValueClass().getDeclaredFields()) {
+                    if (field.isEnumConstant()) {
+                        JsonProperty property = field.getAnnotation(JsonProperty.class);
+                        if (property != null && property.value().equals(text)) {
+                            return (Enum<?>) field.get(null);
                         }
                     }
                 }

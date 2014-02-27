@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
+import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
+
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -15,7 +17,7 @@ import java.util.Scanner;
 public abstract class Connector {
 
     public abstract Connection send(ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
-                                    int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws Exception;
+                                    int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws ConnectionException;
 
     public abstract void setMaxConnections(int max);
 
@@ -58,7 +60,7 @@ public abstract class Connector {
         LoggerImpl.longLog(tag, message);
     }
 
-    protected String convertStreamToString(InputStream is) {
+    protected static String convertStreamToString(InputStream is) {
         Scanner s = new Scanner(is).useDelimiter("\\A");
         return s.hasNext() ? s.next() : "";
     }

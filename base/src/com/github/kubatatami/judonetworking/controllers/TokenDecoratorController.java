@@ -44,9 +44,9 @@ public class TokenDecoratorController<T, Z> extends ProtocolController {
         this.baseController = baseController;
         this.keyName = keyName;
         this.tokenLifetime = tokenLifetime;
-        Type[] genericTypes=((ParameterizedType) getClass()
+        Type[] genericTypes = ((ParameterizedType) getClass()
                 .getGenericSuperclass()).getActualTypeArguments();
-        if(genericTypes.length!=2){
+        if (genericTypes.length != 2) {
             throw new RuntimeException("JsonCustomModelController must have two generic types!");
         }
         authMethod = findAuthMethod((Class<T>) ((ParameterizedType) getClass()
@@ -150,8 +150,8 @@ public class TokenDecoratorController<T, Z> extends ProtocolController {
     }
 
     @Override
-    public RequestInfo createRequest(String url, List<RequestInterface> requests) throws Exception {
-        return baseController.createRequest(url, requests);
+    public RequestInfo createRequests(String url, List<RequestInterface> requests) throws Exception {
+        return baseController.createRequests(url, requests);
     }
 
     @Override

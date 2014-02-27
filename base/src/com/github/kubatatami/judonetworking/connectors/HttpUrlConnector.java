@@ -3,6 +3,8 @@ package com.github.kubatatami.judonetworking.connectors;
 import android.os.Build;
 import android.util.Base64;
 import com.github.kubatatami.judonetworking.*;
+import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
+import com.github.kubatatami.judonetworking.exceptions.HttpException;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.FileNotFoundException;
@@ -15,10 +17,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.CookieHandler;
-import java.net.CookieManager;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -122,14 +121,11 @@ public class HttpUrlConnector extends Connector {
         return "Basic " + Base64.encodeToString(source.getBytes(), Base64.NO_WRAP);
     }
 
-    public Connection send(final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
-                           int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws Exception {
-
+    protected HttpURLConnection createHttpUrlConnection(String url) throws Exception {
         HttpURLConnection urlConnection = null;
-
         for (int i = 1; i <= reconnections; i++) {
             try {
-                urlConnection = httpURLCreator.create(requestInfo.url);
+                urlConnection = httpURLCreator.create(url);
                 break;
             } catch (IOException e) {
                 if (i == reconnections) {
@@ -137,13 +133,15 @@ public class HttpUrlConnector extends Connector {
                 }
             }
         }
+        return urlConnection;
+    }
 
+    protected void initSetup(HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo,
+                             int timeout, TimeStat timeStat, Method method, CacheInfo cacheInfo) throws Exception {
         if (urlConnection == null) {
-            throw new RequestException("Can't create HttpURLConnection.");
+            throw new ConnectException("Can't create HttpURLConnection.");
         }
-
         urlConnection.setInstanceFollowRedirects(followRedirection);
-
         if (cacheInfo != null) {
             if (cacheInfo.hash != null) {
                 urlConnection.addRequestProperty("If-None-Match", cacheInfo.hash);
@@ -151,39 +149,33 @@ public class HttpUrlConnector extends Connector {
                 urlConnection.addRequestProperty("If-Modified-Since", format.format(new Date(cacheInfo.time)));
             }
         }
-
         if (requestInfo.mimeType != null) {
             urlConnection.addRequestProperty("Content-Type", requestInfo.mimeType);
         }
-
         if (authKey != null) {
             urlConnection.addRequestProperty("Authorization", authKey);
         }
-
         urlConnection.setConnectTimeout(connectTimeout);
         if (timeout == 0) {
             timeout = methodTimeout;
         }
-
         timeStat.setTimeout(timeout);
         urlConnection.setReadTimeout(timeout);
-
         if (httpURLConnectionModifier != null) {
             httpURLConnectionModifier.modify(urlConnection);
         }
-
         if (method != null && method.isAnnotationPresent(JsonHttpMethod.class)) {
             JsonHttpMethod httpMethod = method.getAnnotation(JsonHttpMethod.class);
             urlConnection.setRequestMethod(httpMethod.methodType());
         }
-
         if (requestInfo.customHeaders != null) {
             for (Map.Entry<String, String> entry : requestInfo.customHeaders.entrySet()) {
                 urlConnection.addRequestProperty(entry.getKey(), entry.getValue());
             }
         }
+    }
 
-
+    protected void logRequestHeaders(int debugFlags, HttpURLConnection urlConnection) {
         if ((debugFlags & Endpoint.HEADERS_DEBUG) > 0) {
             String headers = "";
             for (String key : urlConnection.getRequestProperties().keySet()) {
@@ -192,6 +184,23 @@ public class HttpUrlConnector extends Connector {
             longLog("Request headers", headers);
         }
 
+    }
+
+    protected void logResponseHeaders(int debugFlags, HttpURLConnection urlConnection) {
+        if ((debugFlags & Endpoint.HEADERS_DEBUG) > 0) {
+            String headers = "";
+            if (urlConnection.getHeaderFields() != null) {
+                for (String key : urlConnection.getHeaderFields().keySet()) {
+                    if (key != null) {
+                        headers += key + ":" + urlConnection.getHeaderField(key) + " ";
+                    }
+                }
+            }
+            longLog("Response headers", headers);
+        }
+    }
+
+    protected void sendRequest(HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo, TimeStat timeStat, int debugFlags) throws Exception {
         if (requestInfo.entity != null) {
             urlConnection.setDoOutput(true);
             if (!(urlConnection instanceof HttpsURLConnection)) {   //prevent andoid bug
@@ -215,80 +224,91 @@ public class HttpUrlConnector extends Connector {
             timeStat.tickConnectionTime();
             timeStat.tickSendTime();
         }
+    }
 
-        if ((debugFlags & Endpoint.HEADERS_DEBUG) > 0) {
-            String headers = "";
-            if (urlConnection.getHeaderFields() != null) {
-                for (String key : urlConnection.getHeaderFields().keySet()) {
-                    if (key != null) {
-                        headers += key + ":" + urlConnection.getHeaderField(key) + " ";
-                    }
-                }
+    public Connection send(final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
+                           int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws ConnectionException {
+
+        try {
+            HttpURLConnection urlConnection = createHttpUrlConnection(requestInfo.url);
+
+            initSetup(urlConnection, requestInfo, timeout, timeStat, method, cacheInfo);
+            logRequestHeaders(debugFlags, urlConnection);
+            sendRequest(urlConnection, requestInfo, timeStat, debugFlags);
+            logResponseHeaders(debugFlags, urlConnection);
+
+            if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
+                longLog("Response code", urlConnection.getResponseCode() + "");
             }
-            longLog("Response headers", headers);
+            return new FinalConnection(urlConnection, protocolController);
+        } catch (Exception ex) {
+            throw new ConnectionException(ex);
+        }
+    }
+
+
+    static class FinalConnection implements Connection {
+
+        HttpURLConnection connection;
+        ProtocolController protocolController;
+
+        FinalConnection(HttpURLConnection connection, ProtocolController protocolController) {
+            this.connection = connection;
+            this.protocolController = protocolController;
         }
 
-        if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
-            longLog("Response code", urlConnection.getResponseCode() + "");
+        @Override
+        public InputStream getStream() throws Exception {
+            try {
+                return connection.getInputStream();
+            } catch (FileNotFoundException ex) {
+                int code = connection.getResponseCode();
+                String resp = convertStreamToString(connection.getErrorStream());
+                protocolController.parseError(code, resp);
+                throw new HttpException(resp + "(" + code + ")", code);
+            }
+
         }
 
-        final HttpURLConnection finalConnection = urlConnection;
-        return new Connection() {
-            @Override
-            public InputStream getStream() throws Exception {
+        public boolean isNewestAvailable() throws Exception {
+            int code = connection.getResponseCode();
+            return code != 304;
+        }
+
+        public int getContentLength() {
+            return connection.getContentLength();
+        }
+
+        public Map<String, List<String>> getHeaders() {
+            return connection.getHeaderFields();
+        }
+
+        @Override
+        public String getHash() {
+            return connection.getHeaderField("ETag");
+        }
+
+        @Override
+        public Long getDate() {
+            String lastModified = connection.getHeaderField("Last-Modified");
+            if (lastModified != null) {
+
                 try {
-                    return finalConnection.getInputStream();
-                } catch (FileNotFoundException ex) {
-                    int code = finalConnection.getResponseCode();
-                    String resp = convertStreamToString(finalConnection.getErrorStream());
-                    protocolController.parseError(code, resp);
-                    throw new HttpException(resp + "(" + code + ")", code);
-                }
-
-            }
-
-            public boolean isNewestAvailable() throws Exception {
-                int code = finalConnection.getResponseCode();
-                return code != 304;
-            }
-
-            public int getContentLength() {
-                return finalConnection.getContentLength();
-            }
-
-            public Map<String, List<String>> getHeaders() {
-                return finalConnection.getHeaderFields();
-            }
-
-            @Override
-            public String getHash() {
-                String etag = finalConnection.getHeaderField("ETag");
-                return etag;
-            }
-
-            @Override
-            public Long getDate() {
-                String lastModified = finalConnection.getHeaderField("Last-Modified");
-                if (lastModified != null) {
-
-                    try {
-                        Date date = format.parse(lastModified);
-                        return date.getTime();
-                    } catch (ParseException e) {
-                        return null;
-                    }
-
-                } else {
+                    Date date = format.parse(lastModified);
+                    return date.getTime();
+                } catch (ParseException e) {
                     return null;
                 }
-            }
 
-            @Override
-            public void close() {
-                finalConnection.disconnect();
+            } else {
+                return null;
             }
-        };
+        }
 
+        @Override
+        public void close() {
+            connection.disconnect();
+        }
     }
 
 

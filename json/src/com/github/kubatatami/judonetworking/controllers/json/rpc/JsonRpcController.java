@@ -24,7 +24,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
         requestInfo.url = url;
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         OutputStreamWriter writer = new OutputStreamWriter(stream);
-        mapper.writeValue(writer,createRequestObject(request));
+        mapper.writeValue(writer, createRequestObject(request));
         writer.close();
         requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(stream.toByteArray()), stream.size());
         requestInfo.mimeType = "application/json";
@@ -35,9 +35,9 @@ public abstract class JsonRpcController extends JsonProtocolController {
     public Object createRequestObject(RequestInterface request) throws IOException {
         Object finalArgs;
         ApiKey apiKeyModel = (ApiKey) request.getAdditionalData();
-        if(!request.isApiKeyRequired()){
-            apiKeyModel.apiKey=null;
-            apiKeyModel.apiKeyName=null;
+        if (!request.isApiKeyRequired()) {
+            apiKeyModel.apiKey = null;
+            apiKeyModel.apiKeyName = null;
         }
         if (request.getParamNames().length > 0 && request.getArgs() != null || apiKeyModel.apiKeyName != null) {
             int i = 0;
@@ -74,7 +74,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
     protected abstract Object createRequestModel(String name, Object params, Integer id);
 
 
-    protected static class JsonRpcRequestModel implements Serializable{
+    protected static class JsonRpcRequestModel implements Serializable {
         private final String method;
         private final Object params;
         private final Integer id;
@@ -86,7 +86,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
         }
     }
 
-    protected static class JsonRpcResponseModel extends JsonResponseModel implements Serializable,Comparable<JsonRpcResponseModel> {
+    protected static class JsonRpcResponseModel extends JsonResponseModel implements Serializable, Comparable<JsonRpcResponseModel> {
         Integer id;
 
         @Override

@@ -2,11 +2,14 @@ package com.github.kubatatami.judonetworking.controllers.json.simple;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.kubatatami.judonetworking.*;
+import com.github.kubatatami.judonetworking.RequestInputStreamEntity;
+import com.github.kubatatami.judonetworking.RequestInterface;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,7 +24,7 @@ public class JsonSimpleController extends JsonSimpleBaseController {
     ObjectMapper mapper;
 
     public JsonSimpleController() {
-        mapper=getMapperInstance();
+        mapper = getMapperInstance();
     }
 
     @Override
@@ -41,7 +44,7 @@ public class JsonSimpleController extends JsonSimpleBaseController {
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         OutputStreamWriter writer = new OutputStreamWriter(stream);
-        mapper.writeValue(writer,req);
+        mapper.writeValue(writer, req);
         writer.close();
 
         requestInfo.url = url;

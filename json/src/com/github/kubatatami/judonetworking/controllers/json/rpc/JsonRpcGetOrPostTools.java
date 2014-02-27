@@ -2,8 +2,13 @@ package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.kubatatami.judonetworking.*;
+import com.github.kubatatami.judonetworking.ErrorResult;
+import com.github.kubatatami.judonetworking.RequestInterface;
+import com.github.kubatatami.judonetworking.RequestResult;
+import com.github.kubatatami.judonetworking.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
+import com.github.kubatatami.judonetworking.exceptions.ParseException;
+import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -25,10 +30,10 @@ public abstract class JsonRpcGetOrPostTools {
             try {
                 response = mapper.readValue(inputStreamReader, JsonGetOrPostResponseModel.class);
             } catch (JsonProcessingException ex) {
-                throw new RequestException("Wrong server response. Did you select the correct protocol controller?", ex);
+                throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
             }
             if (response.error != null) {
-                throw new RequestException(response.error.message, response.error.code);
+                throw new ProtocolException(response.error.message, response.error.code);
             }
             inputStreamReader.close();
             if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {

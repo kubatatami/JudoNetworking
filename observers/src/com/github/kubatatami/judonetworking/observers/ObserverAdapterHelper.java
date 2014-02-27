@@ -6,7 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import com.github.kubatatami.judonetworking.RequestException;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -110,7 +110,7 @@ public class ObserverAdapterHelper {
                 convertView.setTag(layout, dataSources);
                 if (holderClass != null) {
                     if (isInnerClass(holderClass)) {
-                        throw new RequestException("Inner holder class must be static!");
+                        throw new JudoException("Inner holder class must be static!");
                     }
                     Constructor<?> constructor = holderClass.getDeclaredConstructors()[0];
                     constructor.setAccessible(true);
@@ -142,7 +142,7 @@ public class ObserverAdapterHelper {
     }
 
 
-    private void findViewTag(View view, List<Pair<View, DataSourceOrTarget>> data, Class<?> itemClass) throws RequestException {
+    private void findViewTag(View view, List<Pair<View, DataSourceOrTarget>> data, Class<?> itemClass) throws JudoException {
         if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
             for (int i = 0; i < group.getChildCount(); i++) {
@@ -155,7 +155,7 @@ public class ObserverAdapterHelper {
     }
 
     @SuppressWarnings("unchecked")
-    private void linkViewTag(final View view, List<Pair<View, DataSourceOrTarget>> data, Class<?> itemClass) throws RequestException {
+    private void linkViewTag(final View view, List<Pair<View, DataSourceOrTarget>> data, Class<?> itemClass) throws JudoException {
 
         if (view.getTag() != null && view.getTag() instanceof String) {
             String tag = (String) view.getTag();
@@ -163,7 +163,7 @@ public class ObserverAdapterHelper {
                 tag = tag.substring(2, tag.length() - 1);
                 DataSourceOrTarget dataSourceOrTarget = getDataSource(tag, itemClass);
                 if (dataSourceOrTarget.isSource() && !(view instanceof TextView)) {
-                    throw new RequestException("Method which returns value must be link with TextView");
+                    throw new JudoException("Method which returns value must be link with TextView");
                 }
                 data.add(new Pair<View, DataSourceOrTarget>(view, dataSourceOrTarget));
             }
