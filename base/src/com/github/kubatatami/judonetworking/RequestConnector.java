@@ -2,6 +2,9 @@ package com.github.kubatatami.judonetworking;
 
 
 import android.util.Base64;
+import com.github.kubatatami.judonetworking.exceptions.AuthException;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.exceptions.VerifyModelException;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -64,7 +67,7 @@ class RequestConnector {
                     try {
                         doTokenRequest(currentTokenExpireTimestamp);
                     } catch (Exception ex) {
-                        return new ErrorResult(request.getId(), new RequestException("Can't obtain api token", ex));
+                        return new ErrorResult(request.getId(), new AuthException("Can't obtain api token", ex));
                     }
                 }
                 Connector.Connection conn = connector.send(controller, requestInfo, request.getTimeout(), timeStat,
@@ -103,7 +106,7 @@ class RequestConnector {
                     request.setAdditionalControllerData(rpc.getProtocolController().getAdditionalRequestData());
                     return sendRequest(request, timeStat, hash, time, true);
                 } catch (Exception ex) {
-                    return new ErrorResult(request.getId(), new RequestException("Can't obtain api token", ex));
+                    return new ErrorResult(request.getId(), new AuthException("Can't obtain api token", ex));
                 }
             } else if (result instanceof RequestSuccessResult) {
                 if (rpc.isVerifyResultModel()) {
@@ -174,18 +177,18 @@ class RequestConnector {
 
     }
 
-    public static void verifyResult(Request request, RequestResult result) throws RequestException {
+    public static void verifyResult(Request request, RequestResult result) throws VerifyModelException {
         if (result instanceof RequestSuccessResult && !request.getReturnType().equals(Void.class)) {
 
 
             if (result.result == null) {
                 Required ann = request.getMethod().getAnnotation(Required.class);
                 if (ann != null) {
-                    throw new RequestException("Result object required.");
+                    throw new VerifyModelException("Result object required.");
                 }
                 RequiredList ann2 = request.getMethod().getAnnotation(RequiredList.class);
                 if (ann2 != null) {
-                    throw new RequestException("Result object required.");
+                    throw new VerifyModelException("Result object required.");
                 }
             } else {
                 RequiredList ann = request.getMethod().getAnnotation(RequiredList.class);
@@ -197,10 +200,10 @@ class RequestConnector {
                             i++;
                         }
                         if (ann.minSize() > 0 && i < ann.minSize()) {
-                            throw new RequestException("Result list from method " + request.getName() + "(size " + i + ") is smaller then limit: " + ann.minSize() + ".");
+                            throw new VerifyModelException("Result list from method " + request.getName() + "(size " + i + ") is smaller then limit: " + ann.minSize() + ".");
                         }
                         if (ann.maxSize() > 0 && i > ann.maxSize()) {
-                            throw new RequestException("Result list from method " + request.getName() + "(size " + i + ") is larger then limit: " + ann.maxSize() + ".");
+                            throw new VerifyModelException("Result list from method " + request.getName() + "(size " + i + ") is larger then limit: " + ann.maxSize() + ".");
                         }
                     }
                 }
@@ -209,7 +212,7 @@ class RequestConnector {
         }
     }
 
-    public static void verifyResultObject(Object object) throws RequestException {
+    public static void verifyResultObject(Object object) throws VerifyModelException {
         if (object instanceof Iterable) {
             for (Object obj : ((Iterable) object)) {
                 verifyResultObject(obj);
@@ -221,7 +224,7 @@ class RequestConnector {
 
                     if (field.get(object) == null) {
                         if (field.isAnnotationPresent(Required.class) || field.isAnnotationPresent(RequiredList.class)) {
-                            throw new RequestException("Field " + object.getClass().getName() + "." + field.getName() + " required.");
+                            throw new VerifyModelException("Field " + object.getClass().getName() + "." + field.getName() + " required.");
                         }
                     } else {
 
@@ -236,10 +239,10 @@ class RequestConnector {
                                 }
 
                                 if (ann.minSize() > 0 && i < ann.minSize()) {
-                                    throw new RequestException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is smaller then limit: " + ann.minSize() + ".");
+                                    throw new VerifyModelException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is smaller then limit: " + ann.minSize() + ".");
                                 }
                                 if (ann.maxSize() > 0 && i > ann.maxSize()) {
-                                    throw new RequestException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is larger then limit: " + ann.maxSize() + ".");
+                                    throw new VerifyModelException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is larger then limit: " + ann.maxSize() + ".");
                                 }
                             }
                         } else if (field.getAnnotation(Required.class) != null) {
@@ -568,7 +571,7 @@ class RequestConnector {
             TimeStat timeStat = new TimeStat(progressObserver);
 
 
-            ProtocolController.RequestInfo requestInfo = controller.createRequest(url, (List) requests);
+            ProtocolController.RequestInfo requestInfo = controller.createRequests(url, (List) requests);
             timeStat.tickCreateTime();
             lossCheck();
             delay();
@@ -583,7 +586,7 @@ class RequestConnector {
                 try {
                     doTokenRequest(currentTokenExpireTimestamp);
                 } catch (Exception ex) {
-                    throw new RequestException("Can't obtain api token", ex);
+                    throw new AuthException("Can't obtain api token", ex);
                 }
             }
             Connector.Connection conn = connector.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null, null);
@@ -617,16 +620,17 @@ class RequestConnector {
             for (Request request : requests) {
                 refreshErrorStat(request.getName(), request.getTimeout());
             }
-            throw new RequestException(requestsName.substring(1), e);
+            RequestProxy.addToExceptionMessage(requestsName.substring(1), e);
+            throw e;
         }
     }
 
 
-    private void lossCheck() throws RequestException {
-        float precentLoss = rpc.getPercentLoss();
+    private void lossCheck() throws JudoException {
+        float percentLoss = rpc.getPercentLoss();
         float random = randomGenerator.nextFloat();
-        if (precentLoss != 0 && random < precentLoss) {
-            throw new RequestException("Random package lost.");
+        if (percentLoss != 0 && random < percentLoss) {
+            throw new JudoException("Random package lost.");
         }
     }
 

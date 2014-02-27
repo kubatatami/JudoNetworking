@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
 import android.util.Pair;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -46,7 +47,12 @@ class RequestProxy implements InvocationHandler {
 
 
     public static String getMethodName(Method method, RequestMethod ann) {
-        return (ann != null && !ann.name().equals("")) ? ann.name() : method.getName();
+        NamePrefix namePrefix = method.getDeclaringClass().getAnnotation(NamePrefix.class);
+        String name = (ann != null && !ann.name().equals("")) ? ann.name() : method.getName();
+        if(namePrefix!=null){
+            name=namePrefix.value()+name;
+        }
+        return name;
     }
 
     public static StackTraceElement getExternalStacktrace(StackTraceElement[] stackTrace) {
@@ -124,8 +130,8 @@ class RequestProxy implements InvocationHandler {
             } else {
                 try {
                     return m.invoke(this, args);
-                } catch (InvocationTargetException e) {
-                    throw new RequestException("No @RequestMethod on " + m.getName());
+                } catch (IllegalArgumentException e) {
+                    throw new JudoException("No @RequestMethod on " + m.getName());
                 }
             }
         } catch (Exception e) {
@@ -378,7 +384,8 @@ class RequestProxy implements InvocationHandler {
                 if (request.isBatchFatal()) {
                     ex = e;
                 }
-                request.invokeCallbackException(new RequestException(request.getName(), e));
+                addToExceptionMessage(request.getName(), e);
+                request.invokeCallbackException(e);
             }
             i++;
         }
@@ -403,5 +410,15 @@ class RequestProxy implements InvocationHandler {
         }
     }
 
+    static void addToExceptionMessage(String additionalMessage, Exception exception) {
+        try {
+            Field field = Exception.class.getField("detailMessage");
+            field.setAccessible(true);
+            String message = additionalMessage + ": " + field.get(exception);
+            field.set(exception, message);
+        } catch (Exception ex) {
+            LoggerImpl.log(ex);
+        }
+    }
 
 }

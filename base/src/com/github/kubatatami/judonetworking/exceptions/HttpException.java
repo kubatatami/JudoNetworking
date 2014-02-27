@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking;
+package com.github.kubatatami.judonetworking.exceptions;
 
 public class HttpException extends Exception {
     private int code;

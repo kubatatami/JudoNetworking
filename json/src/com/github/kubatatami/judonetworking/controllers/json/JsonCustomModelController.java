@@ -1,10 +1,14 @@
 package com.github.kubatatami.judonetworking.controllers.json;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.*;
+import com.github.kubatatami.judonetworking.exceptions.ParseException;
+import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.annotation.ElementType;
@@ -52,9 +56,9 @@ public class JsonCustomModelController<T> extends JsonProtocolController {
 
     public JsonCustomModelController(JsonProtocolController baseController) {
         this.baseController = baseController;
-        Type[] genericTypes=((ParameterizedType) getClass()
+        Type[] genericTypes = ((ParameterizedType) getClass()
                 .getGenericSuperclass()).getActualTypeArguments();
-        if(genericTypes.length!=1){
+        if (genericTypes.length != 1) {
             throw new RuntimeException("JsonCustomModelController must be generic!");
         }
         model = (Class<T>) genericTypes[0];
@@ -62,16 +66,18 @@ public class JsonCustomModelController<T> extends JsonProtocolController {
         findCustomFields();
     }
 
-    protected void findCustomFields(){
-        for(Field field : model.getFields()){
-            if(field.isAnnotationPresent(Status.class)){
-                statusField=field;
-            }else if(field.isAnnotationPresent(ErrorMessage.class)){
-                errorMessageField =field;
-            }if(field.isAnnotationPresent(ErrorCode.class)){
-                errorCodeField =field;
-            }if(field.isAnnotationPresent(Data.class)){
-                dataField=field;
+    protected void findCustomFields() {
+        for (Field field : model.getFields()) {
+            if (field.isAnnotationPresent(Status.class)) {
+                statusField = field;
+            } else if (field.isAnnotationPresent(ErrorMessage.class)) {
+                errorMessageField = field;
+            }
+            if (field.isAnnotationPresent(ErrorCode.class)) {
+                errorCodeField = field;
+            }
+            if (field.isAnnotationPresent(Data.class)) {
+                dataField = field;
             }
         }
     }
@@ -103,7 +109,11 @@ public class JsonCustomModelController<T> extends JsonProtocolController {
 
     @Override
     public RequestInfo createRequest(String url, RequestInterface request) throws Exception {
-        return baseController.createRequest(url,request);
+        return baseController.createRequest(url, request);
+    }
+
+    protected T parseMainModel(InputStreamReader inputStreamReader, Class<T> model) throws Exception {
+        return mapper.readValue(inputStreamReader, model);
     }
 
     @Override
@@ -112,31 +122,31 @@ public class JsonCustomModelController<T> extends JsonProtocolController {
             T response;
             InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
             try {
-                response = mapper.readValue(inputStreamReader, model);
+                response = parseMainModel(inputStreamReader, model);
             } catch (JsonProcessingException ex) {
-                throw new RequestException("Wrong server response. Did you select the correct protocol controller?", ex);
+                throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
             }
             inputStreamReader.close();
             if (response == null) {
-                throw new RequestException("Empty response.");
+                throw new ParseException("Empty response.");
             }
-            Boolean success = getStatus(response);
-            String message = getErrorMessage(response);
-            Integer code = getErrorCode(response);
+            Boolean status = getStatus(response);
+            String errorMessage = getErrorMessage(response);
+            Integer errorCode = getErrorCode(response);
             JsonNode data = getData(response);
 
             if (data == null) {
-                throw new RequestException("Data field is required.");
+                throw new ParseException("Data field is required.");
             }
 
-            if ((success != null && !success) || message != null || code != null) {
-                throw new RequestException(message, code);
+            if ((status != null && !status) || errorMessage != null || errorCode != null) {
+                throw new ProtocolException(errorMessage, errorCode);
             }
             Object result = null;
             if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
                 result = mapper.readValue(data.traverse(), mapper.getTypeFactory().constructType(request.getReturnType()));
                 if (!request.isAllowEmptyResult() && result == null) {
-                    throw new RequestException("Empty result.");
+                    throw new ParseException("Empty result.");
                 }
             }
             return new RequestSuccessResult(request.getId(), result);
@@ -145,19 +155,31 @@ public class JsonCustomModelController<T> extends JsonProtocolController {
         }
     }
 
-    protected Boolean getStatus(T responseModel) throws Exception{
-        return (Boolean) statusField.get(responseModel);
+    protected Boolean getStatus(T responseModel) throws Exception {
+        if (statusField != null) {
+            return (Boolean) statusField.get(responseModel);
+        } else {
+            return null;
+        }
     }
 
-    protected String getErrorMessage(T responseModel)throws Exception{
-        return (String) errorMessageField.get(responseModel);
+    protected String getErrorMessage(T responseModel) throws Exception {
+        if (errorMessageField != null) {
+            return (String) errorMessageField.get(responseModel);
+        } else {
+            return null;
+        }
     }
 
-    protected Integer getErrorCode(T responseModel)throws Exception{
-        return (Integer) errorCodeField.get(responseModel);
+    protected Integer getErrorCode(T responseModel) throws Exception {
+        if (errorCodeField != null) {
+            return (Integer) errorCodeField.get(responseModel);
+        } else {
+            return null;
+        }
     }
 
-    protected JsonNode getData(T responseModel)throws Exception{
+    protected JsonNode getData(T responseModel) throws Exception {
         return (JsonNode) dataField.get(responseModel);
     }
 
@@ -167,8 +189,8 @@ public class JsonCustomModelController<T> extends JsonProtocolController {
     }
 
     @Override
-    public RequestInfo createRequest(String url, List<RequestInterface> requests) throws Exception {
-        return baseController.createRequest(url, requests);
+    public RequestInfo createRequests(String url, List<RequestInterface> requests) throws Exception {
+        return baseController.createRequests(url, requests);
     }
 
     @Override

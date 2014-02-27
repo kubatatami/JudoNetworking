@@ -44,12 +44,12 @@ class EndpointImplementation implements Endpoint {
     private boolean processingMethod = false;
     private long tokenExpireTimestamp = -1;
 
-    private ExecutorService executorService =
-            new ThreadPoolExecutor(2, 30, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(10), new ThreadFactory() {
+    private ThreadPoolExecutor executorService =
+            new ThreadPoolExecutor(2, 30, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(30), new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable r) {
                     Thread thread = new Thread(r);
-                    thread.setPriority(Thread.MIN_PRIORITY);
+                    thread.setPriority(Thread.NORM_PRIORITY - 1);
                     return thread;
                 }
             });
@@ -57,6 +57,7 @@ class EndpointImplementation implements Endpoint {
 
     public EndpointImplementation(Context context, ProtocolController protocolController, Connector connector, String url) {
         init(context, protocolController, connector, url);
+
     }
 
 
@@ -123,6 +124,11 @@ class EndpointImplementation implements Endpoint {
         this.maxWifiConnections = maxWifiConnections;
         int max = Math.max(maxMobileConnections, maxWifiConnections);
         connector.setMaxConnections(max);
+        setThreadPoolSize(Math.max(maxMobileConnections, maxWifiConnections));
+    }
+
+    protected void setThreadPoolSize(int size) {
+        executorService.setMaximumPoolSize(Math.max(2, size));
     }
 
     @Override

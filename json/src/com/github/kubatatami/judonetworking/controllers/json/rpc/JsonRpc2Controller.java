@@ -3,6 +3,8 @@ package com.github.kubatatami.judonetworking.controllers.json.rpc;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.github.kubatatami.judonetworking.*;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
+import com.github.kubatatami.judonetworking.exceptions.ParseException;
+import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -57,25 +59,25 @@ public class JsonRpc2Controller extends JsonRpcController {
             try {
                 response = mapper.readValue(inputStreamReader, JsonRpcResponseModel2.class);
             } catch (JsonProcessingException ex) {
-                throw new RequestException("Wrong server response. Did you select the correct protocol controller?", ex);
+                throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
             }
             inputStreamReader.close();
             if (response == null) {
-                throw new RequestException("Empty response.");
+                throw new ParseException("Empty response.");
             }
 
             if (response.jsonrpc == null) {
-                throw new RequestException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support json-com.github.kubatatami.judonetworking.controllers.json.rpc 2.0? Try JsonRpc1Controller.");
+                throw new ParseException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support json-com.github.kubatatami.judonetworking.controllers.json.rpc 2.0? Try JsonRpc1Controller.");
             }
 
             if (response.error != null) {
-                throw new RequestException(response.error.message, response.error.code);
+                throw new ProtocolException(response.error.message, response.error.code);
             }
             Object result = null;
             if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
                 result = mapper.readValue(response.result.traverse(), mapper.getTypeFactory().constructType(request.getReturnType()));
                 if (!request.isAllowEmptyResult() && result == null) {
-                    throw new RequestException("Empty result.");
+                    throw new ParseException("Empty result.");
                 }
             }
             return new RequestSuccessResult(request.getId(), result);
@@ -85,7 +87,7 @@ public class JsonRpc2Controller extends JsonRpcController {
     }
 
     @Override
-    public ProtocolController.RequestInfo createRequest(String url, List<RequestInterface> requests) throws Exception {
+    public ProtocolController.RequestInfo createRequests(String url, List<RequestInterface> requests) throws Exception {
         int i = 0;
         ProtocolController.RequestInfo requestInfo = new ProtocolController.RequestInfo();
         requestInfo.url = url;
@@ -112,14 +114,14 @@ public class JsonRpc2Controller extends JsonRpcController {
             responses = mapper.readValue(inputStreamReader, mapper.getTypeFactory().constructCollectionType(List.class, JsonRpcResponseModel2.class));
 
         } catch (JsonProcessingException ex) {
-            throw new RequestException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support batch? Try JsonRpc2Controller.", ex);
+            throw new ParseException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support batch? Try JsonRpc2Controller.", ex);
         }
 
         inputStreamReader.close();
 
 
         if (responses == null) {
-            throw new RequestException("Empty server response.");
+            throw new ParseException("Empty server response.");
         }
 
         Collections.sort(responses);
@@ -131,7 +133,7 @@ public class JsonRpc2Controller extends JsonRpcController {
         for (int i = 0; i < responses.size(); i++) {
             JsonRpcResponseModel2 res = responses.get(i);
             if (res.jsonrpc == null) {
-                throw new RequestException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support json-com.github.kubatatami.judonetworking.controllers.json.rpc 2.0? Try JsonRpc1Controller.");
+                throw new ParseException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support json-com.github.kubatatami.judonetworking.controllers.json.rpc 2.0? Try JsonRpc1Controller.");
             } else if (res.error == null) {
                 Object result = null;
                 try {
@@ -139,7 +141,7 @@ public class JsonRpc2Controller extends JsonRpcController {
                     if (!type.equals(Void.class)) {
                         result = mapper.readValue(res.result.traverse(), mapper.getTypeFactory().constructType(requests.get(i).getReturnType()));
                         if (!requests.get(i).isAllowEmptyResult() && result == null) {
-                            finalResponses.add(new ErrorResult(requests.get(i).getId(), new RequestException("Empty response.")));
+                            finalResponses.add(new ErrorResult(requests.get(i).getId(), new ParseException("Empty response.")));
                         } else {
                             finalResponses.add(new RequestSuccessResult(res.id, result));
                         }
@@ -147,11 +149,11 @@ public class JsonRpc2Controller extends JsonRpcController {
                         finalResponses.add(new RequestSuccessResult(res.id, null));
                     }
                 } catch (JsonProcessingException ex) {
-                    finalResponses.add(new ErrorResult(res.id, new RequestException(requests.get(i).getName(), ex)));
+                    finalResponses.add(new ErrorResult(res.id, new ParseException(requests.get(i).getName(), ex)));
                 }
 
             } else {
-                finalResponses.add(new ErrorResult(res.id, new RequestException(requests.get(i).getName() + ": " + res.error.message, res.error.code)));
+                finalResponses.add(new ErrorResult(res.id, new ProtocolException(requests.get(i).getName() + ": " + res.error.message, res.error.code)));
             }
         }
 

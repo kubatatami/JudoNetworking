@@ -1,7 +1,12 @@
 package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.github.kubatatami.judonetworking.*;
+import com.github.kubatatami.judonetworking.ErrorResult;
+import com.github.kubatatami.judonetworking.RequestInterface;
+import com.github.kubatatami.judonetworking.RequestResult;
+import com.github.kubatatami.judonetworking.RequestSuccessResult;
+import com.github.kubatatami.judonetworking.exceptions.ParseException;
+import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -18,7 +23,6 @@ import java.util.Map;
 public class JsonRpc1Controller extends JsonRpcController {
 
 
-
     @Override
     protected Object createRequestModel(String name, Object params, Integer id) {
         return new JsonRpcRequestModel(name, params, id);
@@ -33,19 +37,19 @@ public class JsonRpc1Controller extends JsonRpcController {
             try {
                 response = mapper.readValue(inputStreamReader, JsonRpcResponseModel1.class);
             } catch (JsonProcessingException ex) {
-                throw new RequestException("Wrong server response. Did you select the correct protocol controller?", ex);
+                throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
             }
             if (response == null) {
-                throw new RequestException("Empty server response.");
+                throw new ParseException("Empty server response.");
             }
             if (response.error != null) {
-                throw new RequestException(response.error);
+                throw new ProtocolException(response.error);
             }
             inputStreamReader.close();
             if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
                 Object result = mapper.readValue(response.result.traverse(), mapper.getTypeFactory().constructType(request.getReturnType()));
                 if (!request.isAllowEmptyResult() && result == null) {
-                    throw new RequestException("Empty result.");
+                    throw new ParseException("Empty result.");
                 }
                 return new RequestSuccessResult(request.getId(), result);
             }

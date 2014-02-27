@@ -1,5 +1,8 @@
 package com.github.kubatatami.judonetworking;
 
+import java.lang.reflect.Method;
+import java.util.*;
+
 class AsyncResult implements Runnable {
     private CallbackInterface<Object> callback;
     private BatchInterface<?> transaction;
@@ -49,6 +52,27 @@ class AsyncResult implements Runnable {
         type = Type.ERROR;
     }
 
+    protected Method findHandleMethod(Class<?> callbackClass, Class<?> exceptionClass) {
+        Method handleMethod=null;
+        for (; callbackClass != null; callbackClass = callbackClass.getSuperclass()) {
+            for (Method method : callbackClass.getMethods()) {
+                if (method.isAnnotationPresent(HandleException.class)){
+                    if(method.getParameterTypes().length!=1){
+                        throw new RuntimeException("Method " + method.getName() + " annotated HandleException must have one parameter.");
+                    }
+                    Class<?> handleExceptionClass = method.getParameterTypes()[0];
+                    if (handleExceptionClass.isAssignableFrom(exceptionClass)) {
+                        if(handleMethod==null || handleMethod.getParameterTypes()[0].isAssignableFrom(handleExceptionClass)){
+                            handleMethod=method;
+                        }
+                    }
+                }
+            }
+        }
+
+        return handleMethod;
+    }
+
     @Override
     public void run() {
         if (callback != null) {
@@ -57,7 +81,16 @@ class AsyncResult implements Runnable {
                     callback.onFinish(result);
                     break;
                 case ERROR:
-                    callback.onError(e);
+                    Method handleMethod = findHandleMethod(callback.getClass(), e.getClass());
+                    if (handleMethod != null) {
+                        try {
+                            handleMethod.invoke(callback, e);
+                        } catch (Exception invokeException) {
+                            throw new RuntimeException(invokeException);
+                        }
+                    } else {
+                        callback.onError(e);
+                    }
                     break;
                 case PROGRESS:
                     callback.onProgress(progress);
@@ -69,7 +102,16 @@ class AsyncResult implements Runnable {
                     transaction.onFinish(results);
                     break;
                 case ERROR:
-                    transaction.onError(e);
+                    Method handleMethod = findHandleMethod(transaction.getClass(), e.getClass());
+                    if (handleMethod != null) {
+                        try {
+                            handleMethod.invoke(transaction, e);
+                        } catch (Exception invokeException) {
+                            throw new RuntimeException(invokeException);
+                        }
+                    } else {
+                        transaction.onError(e);
+                    }
                     break;
                 case PROGRESS:
                     transaction.onProgress(progress);

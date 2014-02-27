@@ -1,12 +1,14 @@
 package com.github.kubatatami.judonetworking.controllers.raw;
 
 import com.github.kubatatami.judonetworking.*;
+import com.github.kubatatami.judonetworking.exceptions.HttpException;
+import com.github.kubatatami.judonetworking.exceptions.ParseException;
+import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 /**
  * Created with IntelliJ IDEA.
@@ -46,19 +48,15 @@ public abstract class RawController extends ProtocolController {
                 return new ErrorResult(request.getId(), e);
             }
         } else {
-            return new ErrorResult(request.getId(), new RequestException("RawController handle string, byte array or input stream response only."));
+            return new ErrorResult(request.getId(), new ParseException("RawController handle string, byte array or input stream response only."));
         }
     }
 
-    private static String convertStreamToString(InputStream is) {
-        Scanner s = new Scanner(is).useDelimiter("\\A");
-        return s.hasNext() ? s.next() : "";
-    }
 
     @Override
     public void parseError(int code, String resp) throws Exception {
         if (code == 405) {
-            throw new RequestException("Server response: Method Not Allowed. Did you select the correct protocol controller?", new HttpException(resp, code));
+            throw new ProtocolException("Server response: Method Not Allowed. Did you select the correct protocol controller?", new HttpException(resp, code));
         }
     }
 

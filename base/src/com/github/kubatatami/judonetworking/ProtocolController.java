@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 /**
  * Created with IntelliJ IDEA.
@@ -44,12 +45,12 @@ public abstract class ProtocolController {
         return false;
     }
 
-    public RequestInfo createRequest(String url, List<RequestInterface> requests) throws Exception {
-        throw new RequestException("CreateRequest not implemented.");
+    public RequestInfo createRequests(String url, List<RequestInterface> requests) throws Exception {
+        throw new UnsupportedOperationException("CreateRequests not implemented.");
     }
 
     public List<RequestResult> parseResponses(List<RequestInterface> requests, InputStream stream, Map<String, List<String>> headers) throws Exception {
-        throw new RequestException("ParseResponses not implemented.");
+        throw new UnsupportedOperationException("ParseResponses not implemented.");
     }
 
     public void parseError(int code, String resp) throws Exception {
@@ -73,6 +74,11 @@ public abstract class ProtocolController {
             this.apiKeyName = apiKeyName;
             this.apiKey = apiKey;
         }
+    }
+
+    protected static String convertStreamToString(InputStream is) {
+        Scanner s = new Scanner(is).useDelimiter("\\A");
+        return s.hasNext() ? s.next() : "";
     }
 
 }
