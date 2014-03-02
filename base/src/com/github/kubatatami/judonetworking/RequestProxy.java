@@ -5,6 +5,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.RejectedExecutionException;
 
 class RequestProxy implements InvocationHandler {
 
@@ -80,10 +81,21 @@ class RequestProxy implements InvocationHandler {
                 if (mode == BatchMode.AUTO) {
                     batchRequests.add(request);
                     batch = true;
-                    rpc.getExecutorService().execute(batchRunnable);
+                    try{
+                        rpc.getExecutorService().execute(batchRunnable);
+                    }catch (RejectedExecutionException ex){
+                        for(Request batchRequest : batchRequests){
+                            new AsyncResult(batchRequest.getCallback(),new JudoException("Request queue is full.",ex)).run();
+                        }
+                    }
                     return null;
                 } else {
-                    rpc.getExecutorService().execute(request);
+                    try{
+                        rpc.getExecutorService().execute(request);
+                    }catch (RejectedExecutionException ex){
+                        new AsyncResult(request.getCallback(),new JudoException("Request queue is full.",ex)).run();
+
+                    }
                     return null;
                 }
             }
