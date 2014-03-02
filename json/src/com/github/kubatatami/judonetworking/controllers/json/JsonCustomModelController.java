@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * Created by Kuba on 24/02/14.
  */
-public class JsonCustomModelController<T> extends JsonProtocolController {
+public class JsonCustomModelController<T> extends ProtocolController {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
@@ -50,18 +50,14 @@ public class JsonCustomModelController<T> extends JsonProtocolController {
     protected Field errorMessageField;
     protected Field errorCodeField;
     protected Field dataField;
-
-    protected JsonProtocolController baseController;
+    protected ObjectMapper mapper= JsonProtocolController.getMapperInstance();
+    protected ProtocolController baseController;
     protected Class<T> model;
 
-    public JsonCustomModelController(JsonProtocolController baseController) {
+    @SuppressWarnings("unchecked")
+    public JsonCustomModelController(ProtocolController baseController, Class<T> model) {
         this.baseController = baseController;
-        Type[] genericTypes = ((ParameterizedType) getClass()
-                .getGenericSuperclass()).getActualTypeArguments();
-        if (genericTypes.length != 1) {
-            throw new RuntimeException("JsonCustomModelController must be generic!");
-        }
-        model = (Class<T>) genericTypes[0];
+        this.model=model;
 
         findCustomFields();
     }
@@ -82,10 +78,7 @@ public class JsonCustomModelController<T> extends JsonProtocolController {
         }
     }
 
-    @Override
-    public ObjectMapper getMapper() {
-        return baseController.getMapper();
-    }
+
 
     @Override
     public void parseError(int code, String resp) throws Exception {
@@ -185,17 +178,7 @@ public class JsonCustomModelController<T> extends JsonProtocolController {
 
     @Override
     public boolean isBatchSupported() {
-        return baseController.isBatchSupported();
-    }
-
-    @Override
-    public RequestInfo createRequests(String url, List<RequestInterface> requests) throws Exception {
-        return baseController.createRequests(url, requests);
-    }
-
-    @Override
-    public List<RequestResult> parseResponses(List<RequestInterface> requests, InputStream stream, Map<String, List<String>> headers) throws Exception {
-        return baseController.parseResponses(requests, stream, headers);
+        return false;
     }
 
     @Override
@@ -208,7 +191,7 @@ public class JsonCustomModelController<T> extends JsonProtocolController {
         return baseController.getTokenCaller();
     }
 
-    public JsonProtocolController getBaseController() {
+    public ProtocolController getBaseController() {
         return baseController;
     }
 }

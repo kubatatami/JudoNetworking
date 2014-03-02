@@ -4,6 +4,8 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
@@ -172,14 +174,16 @@ class EndpointImplementation implements Endpoint {
         batch.run(proxy);
         pr.setBatchFatal(false);
         batch.runNonFatal(proxy);
-
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                pr.callBatch(batch);
-            }
-        });
-        thread.start();
+        try{
+            executorService.execute(new Runnable() {
+                @Override
+                public void run() {
+                    pr.callBatch(batch);
+                }
+            });
+        }catch (RejectedExecutionException ex){
+            new AsyncResult(batch,new JudoException("Request queue is full.", ex)).run();
+        } 
 
     }
 

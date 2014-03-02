@@ -164,7 +164,10 @@ public interface Endpoint {
 
     public void setProcessingMethod(boolean enabled);
 
-
+    /**
+     * No log.
+     */
+    public static final int NO_DEBUG = 0;
     /**
      * Log time of requests.
      */

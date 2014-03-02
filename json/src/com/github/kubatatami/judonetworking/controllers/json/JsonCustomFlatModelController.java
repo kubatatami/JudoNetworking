@@ -19,8 +19,8 @@ import java.util.Map;
  */
 public class JsonCustomFlatModelController<T> extends JsonCustomModelController<T> {
 
-    public JsonCustomFlatModelController(JsonProtocolController baseController) {
-        super(baseController);
+    public JsonCustomFlatModelController(JsonProtocolController baseController, Class<T> model) {
+        super(baseController,model);
     }
 
     protected T parseMainModel(String inputString, Class<T> model) throws Exception {
