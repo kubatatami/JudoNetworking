@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.github.kubatatami.judonetworking.ProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.HttpException;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
 import java.io.Serializable;
@@ -57,7 +58,7 @@ public abstract class JsonProtocolController extends ProtocolController {
     }
 
     @Override
-    public void parseError(int code, String resp) throws Exception {
+    public void parseError(int code, String resp) throws JudoException {
         if (code == 405) {
             throw new ProtocolException("Server response: Method Not Allowed. Did you select the correct protocol controller?", new HttpException(resp, code));
         }

@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.controllers;
 
 import com.github.kubatatami.judonetworking.*;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.io.InputStream;
 import java.lang.annotation.ElementType;
@@ -135,7 +136,7 @@ public class TokenDecoratorController<T, Z> extends ProtocolController {
     }
 
     @Override
-    public RequestInfo createRequest(String url, RequestInterface request) throws Exception {
+    public RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
         return baseController.createRequest(url, request);
     }
 
@@ -150,17 +151,17 @@ public class TokenDecoratorController<T, Z> extends ProtocolController {
     }
 
     @Override
-    public RequestInfo createRequests(String url, List<RequestInterface> requests) throws Exception {
+    public RequestInfo createRequests(String url, List<RequestInterface> requests) throws JudoException {
         return baseController.createRequests(url, requests);
     }
 
     @Override
-    public List<RequestResult> parseResponses(List<RequestInterface> requests, InputStream stream, Map<String, List<String>> headers) throws Exception {
+    public List<RequestResult> parseResponses(List<RequestInterface> requests, InputStream stream, Map<String, List<String>> headers) throws JudoException {
         return baseController.parseResponses(requests, stream, headers);
     }
 
     @Override
-    public void parseError(int code, String resp) throws Exception {
+    public void parseError(int code, String resp) throws JudoException {
         baseController.parseError(code, resp);
     }
 

@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking.controllers.json.rpc;
 import com.github.kubatatami.judonetworking.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.RequestInterface;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.io.*;
 import java.util.HashMap;
@@ -19,13 +20,17 @@ public abstract class JsonRpcController extends JsonProtocolController {
 
 
     @Override
-    public RequestInfo createRequest(String url, RequestInterface request) throws IOException {
+    public RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url;
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         OutputStreamWriter writer = new OutputStreamWriter(stream);
-        mapper.writeValue(writer, createRequestObject(request));
-        writer.close();
+        try{
+            mapper.writeValue(writer, createRequestObject(request));
+            writer.close();
+        }catch (IOException ex){
+            throw new JudoException("Can't create request",ex);
+        }
         requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(stream.toByteArray()), stream.size());
         requestInfo.mimeType = "application/json";
         return requestInfo;

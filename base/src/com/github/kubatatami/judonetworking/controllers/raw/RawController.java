@@ -2,6 +2,7 @@ package com.github.kubatatami.judonetworking.controllers.raw;
 
 import com.github.kubatatami.judonetworking.*;
 import com.github.kubatatami.judonetworking.exceptions.HttpException;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
 import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
@@ -21,7 +22,7 @@ public abstract class RawController extends ProtocolController {
 
 
     @Override
-    public abstract RequestInfo createRequest(String url, RequestInterface request) throws Exception;
+    public abstract RequestInfo createRequest(String url, RequestInterface request) throws JudoException;
 
     @Override
     public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
@@ -54,7 +55,7 @@ public abstract class RawController extends ProtocolController {
 
 
     @Override
-    public void parseError(int code, String resp) throws Exception {
+    public void parseError(int code, String resp) throws JudoException {
         if (code == 405) {
             throw new ProtocolException("Server response: Method Not Allowed. Did you select the correct protocol controller?", new HttpException(resp, code));
         }

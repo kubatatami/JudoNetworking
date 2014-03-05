@@ -4,6 +4,7 @@ package com.github.kubatatami.judonetworking.controllers.raw;
 import com.github.kubatatami.judonetworking.ProtocolController;
 import com.github.kubatatami.judonetworking.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.RequestInterface;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -43,7 +44,7 @@ public class RawRestController extends RawController {
     }
 
     @Override
-    public ProtocolController.RequestInfo createRequest(String url, RequestInterface request) throws Exception {
+    public ProtocolController.RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
         ProtocolController.RequestInfo requestInfo = new ProtocolController.RequestInfo();
         String result;
         Rest ann = request.getMethod().getAnnotation(Rest.class);

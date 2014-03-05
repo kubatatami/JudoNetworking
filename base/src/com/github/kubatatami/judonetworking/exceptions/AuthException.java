@@ -3,7 +3,7 @@ package com.github.kubatatami.judonetworking.exceptions;
 /**
  * Created by Kuba on 26/02/14.
  */
-public class AuthException extends Exception {
+public class AuthException extends JudoException {
     public AuthException() {
     }
 

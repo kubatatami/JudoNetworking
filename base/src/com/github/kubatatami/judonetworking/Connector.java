@@ -1,6 +1,9 @@
 package com.github.kubatatami.judonetworking;
 
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
+import com.github.kubatatami.judonetworking.exceptions.HttpException;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -17,7 +20,7 @@ import java.util.Scanner;
 public abstract class Connector {
 
     public abstract Connection send(ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
-                                    int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws ConnectionException;
+                                    int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException;
 
     public abstract void setMaxConnections(int max);
 

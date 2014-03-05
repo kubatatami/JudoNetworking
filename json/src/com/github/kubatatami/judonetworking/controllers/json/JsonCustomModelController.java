@@ -154,4 +154,7 @@ public class JsonCustomModelController<T> extends ProtocolControllerWrapper {
         return false;
     }
 
+    public ObjectMapper getMapper() {
+        return mapper;
+    }
 }

@@ -2,11 +2,16 @@ package com.github.kubatatami.judonetworking.connectors;
 
 import android.os.Build;
 import android.util.Base64;
-import com.github.kubatatami.judonetworking.*;
+
+import com.github.kubatatami.judonetworking.Connector;
+import com.github.kubatatami.judonetworking.Endpoint;
+import com.github.kubatatami.judonetworking.ProtocolController;
+import com.github.kubatatami.judonetworking.RequestOutputStream;
+import com.github.kubatatami.judonetworking.TimeStat;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.HttpException;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,13 +22,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.*;
+import java.net.ConnectException;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  * Created with IntelliJ IDEA.
@@ -200,41 +211,45 @@ public class HttpUrlConnector extends Connector {
         }
     }
 
-    protected void sendRequest(HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo, TimeStat timeStat, int debugFlags) throws Exception {
-        if (requestInfo.entity != null) {
-            urlConnection.setDoOutput(true);
-            if (!(urlConnection instanceof HttpsURLConnection)) {   //prevent andoid bug
-                urlConnection.setFixedLengthStreamingMode((int) requestInfo.entity.getContentLength());
+    protected void sendRequest(final ProtocolController protocolController, HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo, TimeStat timeStat, int debugFlags) throws Exception {
+        try {
+            if (requestInfo.entity != null) {
+                urlConnection.setDoOutput(true);
+                if (!(urlConnection instanceof HttpsURLConnection)) {   //prevent andoid bug
+                    urlConnection.setFixedLengthStreamingMode((int) requestInfo.entity.getContentLength());
+                }
+                OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
+                        new RequestOutputStream(urlConnection.getOutputStream(), timeStat, requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
+                timeStat.tickConnectionTime();
+                if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
+                    longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
+                    requestInfo.entity.reset();
+                }
+                requestInfo.entity.writeTo(stream);
+                stream.flush();
+                stream.close();
+            } else {
+                if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
+                    longLog("Request", requestInfo.url);
+                }
+                urlConnection.getInputStream();
+                timeStat.tickConnectionTime();
+                timeStat.tickSendTime();
             }
-            OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
-                    new RequestOutputStream(urlConnection.getOutputStream(), timeStat, requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
-            timeStat.tickConnectionTime();
-            if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
-                requestInfo.entity.reset();
-            }
-            requestInfo.entity.writeTo(stream);
-            stream.flush();
-            stream.close();
-        } else {
-            if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                longLog("Request", requestInfo.url);
-            }
-            urlConnection.getInputStream();
-            timeStat.tickConnectionTime();
-            timeStat.tickSendTime();
+        } catch (FileNotFoundException ex) {
+            handleHttpException(protocolController, urlConnection.getResponseCode(), convertStreamToString(urlConnection.getErrorStream()));
         }
     }
 
     public Connection send(final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
-                           int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws ConnectionException {
+                           int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException {
 
         try {
             HttpURLConnection urlConnection = createHttpUrlConnection(requestInfo.url);
 
             initSetup(urlConnection, requestInfo, timeout, timeStat, method, cacheInfo);
             logRequestHeaders(debugFlags, urlConnection);
-            sendRequest(urlConnection, requestInfo, timeStat, debugFlags);
+            sendRequest(protocolController, urlConnection, requestInfo, timeStat, debugFlags);
             logResponseHeaders(debugFlags, urlConnection);
 
             if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
@@ -242,12 +257,20 @@ public class HttpUrlConnector extends Connector {
             }
             return new FinalConnection(urlConnection, protocolController);
         } catch (Exception ex) {
-            throw new ConnectionException(ex);
+            if (!(ex instanceof JudoException)) {
+                throw new ConnectionException(ex);
+            } else {
+                throw (JudoException) ex;
+            }
         }
     }
 
+    protected void handleHttpException(ProtocolController protocolController, int code, String message) throws JudoException {
+        protocolController.parseError(code, message);
+        throw new HttpException(message + "(" + code + ")", code);
+    }
 
-    static class FinalConnection implements Connection {
+    class FinalConnection implements Connection {
 
         HttpURLConnection connection;
         ProtocolController protocolController;
@@ -262,13 +285,12 @@ public class HttpUrlConnector extends Connector {
             try {
                 return connection.getInputStream();
             } catch (FileNotFoundException ex) {
-                int code = connection.getResponseCode();
-                String resp = convertStreamToString(connection.getErrorStream());
-                protocolController.parseError(code, resp);
-                throw new HttpException(resp + "(" + code + ")", code);
+                handleHttpException(protocolController, connection.getResponseCode(), convertStreamToString(connection.getErrorStream()));
+                return null;
             }
 
         }
+
 
         public boolean isNewestAvailable() throws Exception {
             int code = connection.getResponseCode();

@@ -3,7 +3,7 @@ package com.github.kubatatami.judonetworking.exceptions;
 /**
  * Created by Kuba on 25/02/14.
  */
-public class ProtocolException extends Exception {
+public class ProtocolException extends JudoException {
 
     private int code;
 

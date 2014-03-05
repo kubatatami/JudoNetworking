@@ -8,8 +8,15 @@ package com.github.kubatatami.judonetworking.exceptions;
  */
 public class JudoException extends Exception {
 
-    public JudoException(String message, Exception e) {
+    public JudoException() {
+    }
+
+    public JudoException(String message, Throwable e) {
         super(message, e);
+    }
+
+    public JudoException(Throwable throwable) {
+        super(throwable);
     }
 
     public JudoException(String message) {

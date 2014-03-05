@@ -4,6 +4,7 @@ package com.github.kubatatami.judonetworking.controllers.json.simple;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.RequestInterface;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,7 +29,7 @@ public class JsonSimpleController extends JsonSimpleBaseController {
     }
 
     @Override
-    public RequestInfo createRequest(String url, RequestInterface request) throws IOException {
+    public RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.mimeType = "application/json";
         if (url.lastIndexOf("/") != url.length() - 1) {
@@ -44,8 +45,12 @@ public class JsonSimpleController extends JsonSimpleBaseController {
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         OutputStreamWriter writer = new OutputStreamWriter(stream);
-        mapper.writeValue(writer, req);
-        writer.close();
+        try {
+            mapper.writeValue(writer, req);
+            writer.close();
+        } catch (IOException ex) {
+            throw new JudoException("Can't create request",ex);
+        }
 
         requestInfo.url = url;
         requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(stream.toByteArray()), stream.size());
