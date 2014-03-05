@@ -3,6 +3,8 @@ package com.github.kubatatami.judonetworking.observers;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+
+import com.github.kubatatami.judonetworking.Callback;
 import com.github.kubatatami.judonetworking.NetworkUtils;
 
 import java.util.ArrayList;
@@ -10,7 +12,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class ObservableWrapper<T> {
+public class ObservableWrapper<T> extends Callback<T> {
     protected T object = null;
     protected final Handler handler = new Handler(Looper.getMainLooper());
     protected final List<WrapObserver<T>> observers = new ArrayList<WrapObserver<T>>();
@@ -20,7 +22,6 @@ public class ObservableWrapper<T> {
     protected long updateTime = 0;
     protected boolean allowNull = false;
     protected boolean forceUpdateOnNetworkStateChange = false;
-
     protected boolean checkNetworkState = false;
     protected boolean checkUpdateOnGet = false;
     protected long period=0;
@@ -38,6 +39,11 @@ public class ObservableWrapper<T> {
             }
         }
     };
+
+    @Override
+    public void onFinish(T result) {
+        set(result);
+    }
 
     protected final Runnable updateRunnable=new Runnable() {
         @Override
@@ -90,8 +96,11 @@ public class ObservableWrapper<T> {
         }
         if (add) {
             observers.add(observer);
-            if (notify && (object != null || allowNull)) {
-                observer.update(get());
+            if (notify) {
+                T obj = get();
+                if(obj != null || allowNull){
+                    observer.update(obj);
+                }
             }
         }
     }
@@ -167,16 +176,16 @@ public class ObservableWrapper<T> {
         }
     }
 
-    public void startCheckUpdatePeriodicaly(long period){
-        startCheckUpdatePeriodicaly(period,false);
+    public void startCheckUpdatePeriodically(long period){
+        startCheckUpdatePeriodically(period,false);
     }
 
-    public void startCheckUpdatePeriodicaly(long period, final boolean forceUpdate) {
+    public void startCheckUpdatePeriodically(long period, final boolean forceUpdate) {
 
         if(timer!=null && this.period==period){
             return;
         }
-        stopCheckUpdatePeriodicaly();
+        stopCheckUpdatePeriodically();
         timer = new Timer(true);
         this.period=period;
         timer.schedule(new TimerTask() {
@@ -191,7 +200,7 @@ public class ObservableWrapper<T> {
         }, period, period);
     }
 
-    public void stopCheckUpdatePeriodicaly() {
+    public void stopCheckUpdatePeriodically() {
         if(timer!=null){
             timer.cancel();
             timer.purge();

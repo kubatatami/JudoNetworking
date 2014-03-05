@@ -85,7 +85,7 @@ class RequestProxy implements InvocationHandler {
                         rpc.getExecutorService().execute(batchRunnable);
                     }catch (RejectedExecutionException ex){
                         for(Request batchRequest : batchRequests){
-                            new AsyncResult(batchRequest.getCallback(),new JudoException("Request queue is full.",ex)).run();
+                            new AsyncResult(batchRequest.getCallback(),new JudoException("Request queue is full.",ex),rpc.getDebugFlags()).run();
                         }
                     }
                     return null;
@@ -93,7 +93,7 @@ class RequestProxy implements InvocationHandler {
                     try{
                         rpc.getExecutorService().execute(request);
                     }catch (RejectedExecutionException ex){
-                        new AsyncResult(request.getCallback(),new JudoException("Request queue is full.",ex)).run();
+                        new AsyncResult(request.getCallback(),new JudoException("Request queue is full.",ex),rpc.getDebugFlags()).run();
 
                     }
                     return null;
@@ -424,7 +424,7 @@ class RequestProxy implements InvocationHandler {
 
     static void addToExceptionMessage(String additionalMessage, Exception exception) {
         try {
-            Field field = Exception.class.getField("detailMessage");
+            Field field = Throwable.class.getDeclaredField("detailMessage");
             field.setAccessible(true);
             String message = additionalMessage + ": " + field.get(exception);
             field.set(exception, message);

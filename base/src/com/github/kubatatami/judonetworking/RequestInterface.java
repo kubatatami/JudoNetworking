@@ -30,4 +30,8 @@ public interface RequestInterface {
 
     public boolean isApiKeyRequired();
 
+    public void setArgs(Object[] args);
+
+    public void setParamNames(String[] paramNames);
+
 }

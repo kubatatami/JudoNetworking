@@ -182,7 +182,7 @@ class EndpointImplementation implements Endpoint {
                 }
             });
         }catch (RejectedExecutionException ex){
-            new AsyncResult(batch,new JudoException("Request queue is full.", ex)).run();
+            new AsyncResult(batch,new JudoException("Request queue is full.", ex),debugFlags).run();
         } 
 
     }

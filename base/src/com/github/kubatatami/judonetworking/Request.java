@@ -12,7 +12,8 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     private RequestMethod ann;
     private float progress = 0;
     private int max = TimeStat.TICKS;
-    private final Object[] args;
+    private Object[] args;
+    private String[] paramNames;
     private Type returnType;
     private Method method;
     private boolean batchFatal = true;
@@ -26,6 +27,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         this.method = method;
         this.rpc = rpc;
         this.ann = ann;
+        this.paramNames=ann.paramNames();
         this.args = args;
         this.returnType = returnType;
         this.callback = callback;
@@ -53,22 +55,22 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     public void invokeCallbackException(Exception e) {
         if (callback != null) {
-            rpc.getHandler().post(new AsyncResult(callback, e));
+            rpc.getHandler().post(new AsyncResult(callback, e,rpc.getDebugFlags()));
         }
     }
 
     public void invokeCallback(Object result) {
         if (callback != null) {
-            rpc.getHandler().post(new AsyncResult(callback, result));
+            rpc.getHandler().post(new AsyncResult(callback, result,rpc.getDebugFlags()));
         }
     }
 
     public static void invokeBatchCallback(final EndpointImplementation rpc, Batch<?> batch, final Exception e) {
-        rpc.getHandler().post(new AsyncResult(batch, e));
+        rpc.getHandler().post(new AsyncResult(batch, e,rpc.getDebugFlags()));
     }
 
     public static void invokeBatchCallback(EndpointImplementation rpc, Batch<?> batch, Object[] results) {
-        rpc.getHandler().post(new AsyncResult(batch, results));
+        rpc.getHandler().post(new AsyncResult(batch, results,rpc.getDebugFlags()));
     }
 
     @Override
@@ -93,7 +95,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     @Override
     public String[] getParamNames() {
-        return ann.paramNames();
+        return paramNames;
     }
 
     @Override
@@ -113,6 +115,16 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
             ann = method.getDeclaringClass().getAnnotation(ApiKeyRequired.class);
         }
         return ann != null && ann.enabled();
+    }
+
+    @Override
+    public void setArgs(Object[] args) {
+        this.args=args;
+    }
+
+    @Override
+    public void setParamNames(String[] paramNames) {
+        this.paramNames=paramNames;
     }
 
     @Override
@@ -228,7 +240,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     private void tick() {
         if (callback != null) {
-            rpc.getHandler().post(new AsyncResult(callback, ((int) this.progress * 100 / max)));
+            rpc.getHandler().post(new AsyncResult(callback, ((int) this.progress * 100 / max),rpc.getDebugFlags()));
         }
     }
 

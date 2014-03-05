@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking.controllers.json;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.kubatatami.judonetworking.ErrorResult;
+import com.github.kubatatami.judonetworking.ProtocolController;
 import com.github.kubatatami.judonetworking.RequestInterface;
 import com.github.kubatatami.judonetworking.RequestResult;
 import com.github.kubatatami.judonetworking.RequestSuccessResult;
@@ -19,7 +20,7 @@ import java.util.Map;
  */
 public class JsonCustomFlatModelController<T> extends JsonCustomModelController<T> {
 
-    public JsonCustomFlatModelController(JsonProtocolController baseController, Class<T> model) {
+    public JsonCustomFlatModelController(ProtocolController baseController, Class<T> model) {
         super(baseController,model);
     }
 

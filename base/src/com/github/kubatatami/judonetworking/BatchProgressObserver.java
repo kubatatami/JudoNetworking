@@ -48,11 +48,11 @@ public class BatchProgressObserver implements ProgressObserver {
 
     public void publishProgress() {
         if (batch != null && progress > 0) {
-            rpc.getHandler().post(new AsyncResult(batch, (int) (progress * 100 / max)));
+            rpc.getHandler().post(new AsyncResult(batch, (int) (progress * 100 / max),rpc.getDebugFlags()));
         }
         for (Request request : requestList) {
             if (request.getCallback() != null) {
-                rpc.getHandler().post(new AsyncResult(request.getCallback(), (int) (progress * 100 / max)));
+                rpc.getHandler().post(new AsyncResult(request.getCallback(), (int) (progress * 100 / max),rpc.getDebugFlags()));
             }
         }
     }

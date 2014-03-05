@@ -200,7 +200,13 @@ public interface Endpoint {
     public static final int TOKEN_DEBUG = 64;
 
     /**
+     * Log request errors
+     */
+    public static final int ERROR_DEBUG = 128;
+
+
+    /**
      * Log everything.
      */
-    public static final int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG;
+    public static final int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG | ERROR_DEBUG;
 }

@@ -1,54 +1,63 @@
 package com.github.kubatatami.judonetworking;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.*;
 
 class AsyncResult implements Runnable {
-    private CallbackInterface<Object> callback;
-    private BatchInterface<?> transaction;
-    private Object result = null;
-    private Object[] results = null;
-    private Exception e = null;
-    private int progress = 0;
-    private final Type type;
+    protected CallbackInterface<Object> callback;
+    protected BatchInterface<?> transaction;
+    protected Object result = null;
+    protected Object[] results = null;
+    protected Exception e = null;
+    protected int progress = 0;
+    protected final Type type;
+    protected int debugFlags;
 
     enum Type {
         RESULT, ERROR, PROGRESS
     }
 
-    AsyncResult(BatchInterface<?> callback, Object results[]) {
+    AsyncResult(BatchInterface<?> callback, Object results[],int debugFlags) {
         this.results = results;
         this.transaction = callback;
+        this.debugFlags=debugFlags;
         type = Type.RESULT;
     }
 
-    AsyncResult(BatchInterface<?> callback, int progress) {
+    AsyncResult(BatchInterface<?> callback, int progress,int debugFlags) {
         this.progress = progress;
         this.transaction = callback;
+        this.debugFlags=debugFlags;
         type = Type.PROGRESS;
     }
 
-    AsyncResult(BatchInterface<?> callback, Exception e) {
+    AsyncResult(BatchInterface<?> callback, Exception e,int debugFlags) {
         this.e = e;
         this.transaction = callback;
+        this.debugFlags=debugFlags;
         type = Type.ERROR;
     }
 
-    AsyncResult(CallbackInterface<Object> callback, Object result) {
+    AsyncResult(CallbackInterface<Object> callback, Object result,int debugFlags) {
         this.result = result;
         this.callback = callback;
+        this.debugFlags=debugFlags;
         type = Type.RESULT;
     }
 
-    AsyncResult(CallbackInterface<Object> callback, int progress) {
+    AsyncResult(CallbackInterface<Object> callback, int progress,int debugFlags) {
         this.progress = progress;
         this.callback = callback;
+        this.debugFlags=debugFlags;
         type = Type.PROGRESS;
     }
 
-    AsyncResult(CallbackInterface<Object> callback, Exception e) {
+    AsyncResult(CallbackInterface<Object> callback, Exception e,int debugFlags) {
         this.e = e;
         this.callback = callback;
+        this.debugFlags=debugFlags;
         type = Type.ERROR;
     }
 
@@ -82,6 +91,7 @@ class AsyncResult implements Runnable {
                     break;
                 case ERROR:
                     Method handleMethod = findHandleMethod(callback.getClass(), e.getClass());
+                    logError(e);
                     if (handleMethod != null) {
                         try {
                             handleMethod.invoke(callback, e);
@@ -103,6 +113,7 @@ class AsyncResult implements Runnable {
                     break;
                 case ERROR:
                     Method handleMethod = findHandleMethod(transaction.getClass(), e.getClass());
+                    logError(e);
                     if (handleMethod != null) {
                         try {
                             handleMethod.invoke(transaction, e);
@@ -116,6 +127,19 @@ class AsyncResult implements Runnable {
                 case PROGRESS:
                     transaction.onProgress(progress);
                     break;
+            }
+        }
+    }
+
+    protected void logError(Exception ex){
+        if((debugFlags & Endpoint.ERROR_DEBUG) > 0){
+            if (ex != null) {
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                ex.printStackTrace(pw);
+                LoggerImpl.log(sw.toString());
+            } else {
+                LoggerImpl.log("Null exception");
             }
         }
     }

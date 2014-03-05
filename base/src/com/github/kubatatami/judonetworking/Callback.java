@@ -17,14 +17,7 @@ public class Callback<T> implements CallbackInterface<T> {
 
     @Override
     public void onError(Exception e) {
-        if (e != null) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            LoggerImpl.log(sw.toString());
-        } else {
-            LoggerImpl.log("Null exception");
-        }
+
     }
 
     @Override

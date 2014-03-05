@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.*;
+import com.github.kubatatami.judonetworking.controllers.ProtocolControllerWrapper;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
 import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
@@ -24,7 +25,7 @@ import java.util.Map;
 /**
  * Created by Kuba on 24/02/14.
  */
-public class JsonCustomModelController<T> extends ProtocolController {
+public class JsonCustomModelController<T> extends ProtocolControllerWrapper {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
@@ -51,14 +52,12 @@ public class JsonCustomModelController<T> extends ProtocolController {
     protected Field errorCodeField;
     protected Field dataField;
     protected ObjectMapper mapper= JsonProtocolController.getMapperInstance();
-    protected ProtocolController baseController;
     protected Class<T> model;
 
     @SuppressWarnings("unchecked")
     public JsonCustomModelController(ProtocolController baseController, Class<T> model) {
-        this.baseController = baseController;
+        super(baseController);
         this.model=model;
-
         findCustomFields();
     }
 
@@ -78,32 +77,6 @@ public class JsonCustomModelController<T> extends ProtocolController {
         }
     }
 
-
-
-    @Override
-    public void parseError(int code, String resp) throws Exception {
-        baseController.parseError(code, resp);
-    }
-
-    @Override
-    public void setApiKey(String name, String key) {
-        baseController.setApiKey(name, key);
-    }
-
-    @Override
-    public void setApiKey(String key) {
-        baseController.setApiKey(key);
-    }
-
-    @Override
-    public int getAutoBatchTime() {
-        return baseController.getAutoBatchTime();
-    }
-
-    @Override
-    public RequestInfo createRequest(String url, RequestInterface request) throws Exception {
-        return baseController.createRequest(url, request);
-    }
 
     protected T parseMainModel(InputStreamReader inputStreamReader, Class<T> model) throws Exception {
         return mapper.readValue(inputStreamReader, model);
@@ -181,17 +154,4 @@ public class JsonCustomModelController<T> extends ProtocolController {
         return false;
     }
 
-    @Override
-    public Object getAdditionalRequestData() {
-        return baseController.getAdditionalRequestData();
-    }
-
-    @Override
-    public TokenCaller getTokenCaller() {
-        return baseController.getTokenCaller();
-    }
-
-    public ProtocolController getBaseController() {
-        return baseController;
-    }
 }
