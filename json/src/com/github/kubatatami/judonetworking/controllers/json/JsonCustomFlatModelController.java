@@ -50,7 +50,7 @@ public class JsonCustomFlatModelController<T> extends JsonCustomModelController<
             Integer code = getErrorCode(response);
 
             if ((success != null && !success) || message != null || code != null) {
-                throw new ProtocolException(message, code);
+                throw new ProtocolException(message!=null ? message : "", code!=null ? code : 0);
             }
 
             return new RequestSuccessResult(request.getId(), parseFinalModel(responseString, request.getReturnType()));

@@ -102,9 +102,7 @@ class AsyncResult implements Runnable {
                     break;
                 case RESULT:
                     callback.onFinish(result);
-                    synchronized (rpc.getSingleCallMethods()){
-                        rpc.getSingleCallMethods().remove(method);
-                    }
+
                     break;
                 case ERROR:
 
@@ -119,15 +117,13 @@ class AsyncResult implements Runnable {
                     } else {
                         callback.onError(e);
                     }
-                    synchronized (rpc.getSingleCallMethods()){
-                        rpc.getSingleCallMethods().remove(method);
-                    }
+
                     break;
                 case PROGRESS:
                     callback.onProgress(progress);
                     break;
             }
-        } else {
+        } else if(transaction!=null){
             switch (type) {
                 case RESULT:
                     transaction.onFinish(results);
@@ -147,6 +143,19 @@ class AsyncResult implements Runnable {
                     break;
                 case PROGRESS:
                     transaction.onProgress(progress);
+                    break;
+            }
+        }
+        if(method!=null) {
+            switch (type) {
+                case ERROR:
+                case RESULT:
+                    synchronized (rpc.getSingleCallMethods()){
+                        rpc.getSingleCallMethods().remove(method);
+                        if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
+                            LoggerImpl.log("Request " + method.getName() + " removed - SingleCall.");
+                        }
+                    }
                     break;
             }
         }

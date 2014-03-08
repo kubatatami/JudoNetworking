@@ -64,7 +64,7 @@ public class RawRestController extends RawController {
                 result = result.replaceAll("\\{" + entry.getKey() + "\\}", entry.getValue() + "");
             }
             String content=null;
-            if(ann.postMode() == PostMode.RAW){
+            if(request.getMethod().isAnnotationPresent(RawPost.class)){
                 int i=0;
                 for(Annotation[] annotations : request.getMethod().getParameterAnnotations()){
                     for(Annotation annotation : annotations){
@@ -78,7 +78,7 @@ public class RawRestController extends RawController {
                     }
                     i++;
                 }
-            }else if(ann.postMode() == PostMode.FORM){
+            }else if(request.getMethod().isAnnotationPresent(FormPost.class)){
                 requestInfo.mimeType = "application/x-www-form-urlencoded";
                 List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
                 int i=0;
@@ -121,7 +121,6 @@ public class RawRestController extends RawController {
     @Target(ElementType.METHOD)
     public @interface Rest {
         String value() default "";
-        PostMode postMode() default PostMode.NONE;
         String mimeType() default "";
     }
 
@@ -131,9 +130,13 @@ public class RawRestController extends RawController {
         String value() default "";
     }
 
-    public enum PostMode{
-        NONE,RAW,FORM
-    }
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    public @interface RawPost {}
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    public @interface FormPost {}
 
     @Override
     public void setApiKey(String name, String key) {

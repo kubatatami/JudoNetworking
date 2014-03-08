@@ -60,15 +60,11 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     }
 
     public void invokeCallbackException(Exception e) {
-        if (callback != null) {
-            rpc.getHandler().post(new AsyncResult(this, e));
-        }
+        rpc.getHandler().post(new AsyncResult(this, e));
     }
 
     public void invokeCallback(Object result) {
-        if (callback != null) {
-            rpc.getHandler().post(new AsyncResult(this, result));
-        }
+        rpc.getHandler().post(new AsyncResult(this, result));
     }
 
     public void invokeProgress(int progress) {
