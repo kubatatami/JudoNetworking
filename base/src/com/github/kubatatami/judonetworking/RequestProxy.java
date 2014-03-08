@@ -69,14 +69,13 @@ class RequestProxy implements InvocationHandler {
         return stackTrace[0];
     }
 
-    protected Object performAsyncRequest(Method m, Object[] args, String name, int timeout, RequestMethod ann) throws Exception {
-        final Request request = callAsync(++id, m, name, args, m.getGenericParameterTypes(), timeout, ann);
+    protected void performAsyncRequest(Request request) throws Exception {
+
         synchronized (batchRequests) {
             if (batch) {
                 request.setBatchFatal(batchFatal);
                 batchRequests.add(request);
                 batch = true;
-                return null;
             } else {
                 if (mode == BatchMode.AUTO) {
                     batchRequests.add(request);
@@ -85,18 +84,16 @@ class RequestProxy implements InvocationHandler {
                         rpc.getExecutorService().execute(batchRunnable);
                     }catch (RejectedExecutionException ex){
                         for(Request batchRequest : batchRequests){
-                            new AsyncResult(batchRequest.getCallback(),new JudoException("Request queue is full.",ex),rpc.getDebugFlags()).run();
+                            new AsyncResult(request,new JudoException("Request queue is full.",ex)).run();
                         }
                     }
-                    return null;
                 } else {
                     try{
                         rpc.getExecutorService().execute(request);
                     }catch (RejectedExecutionException ex){
-                        new AsyncResult(request.getCallback(),new JudoException("Request queue is full.",ex),rpc.getDebugFlags()).run();
+                        new AsyncResult(request,new JudoException("Request queue is full.",ex)).run();
 
                     }
-                    return null;
                 }
             }
 
@@ -110,6 +107,8 @@ class RequestProxy implements InvocationHandler {
             if (ann != null) {
                 String name = getMethodName(m, ann);
                 int timeout = rpc.getRequestConnector().getMethodTimeout();
+                Request request;
+
 
                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
                     try {
@@ -132,12 +131,30 @@ class RequestProxy implements InvocationHandler {
                     timeout = ann.timeout();
                 }
 
+
+
                 if (!ann.async()) {
-                    Object additionalData = rpc.getProtocolController().getAdditionalRequestData();
-                    Request request = new Request(++id, rpc, m, name, ann, args, m.getReturnType(), timeout, null, additionalData);
+                    request = new Request(++id, rpc, m, name, ann, args, m.getReturnType(), timeout, null, rpc.getProtocolController().getAdditionalRequestData());
+                    if(request.isSingleCall()){
+                        throw new JudoException("SingleCall is not supported on no async method.");
+                    }
                     return rpc.getRequestConnector().call(request);
                 } else {
-                    return performAsyncRequest(m, args, name, timeout, ann);
+                    request = callAsync(++id, m, name, args, m.getGenericParameterTypes(), timeout, ann);
+                    if(request.isSingleCall()){
+                        if(rpc.getSingleCallMethods().contains(m)){
+                            if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
+                                LoggerImpl.log("Request " + name + " rejected - SingleCall.");
+                            }
+                            return null;
+                        }else{
+                            synchronized (rpc.getSingleCallMethods()){
+                                rpc.getSingleCallMethods().add(m);
+                            }
+                        }
+                    }
+                    performAsyncRequest(request);
+                    return null;
                 }
             } else {
                 try {
@@ -146,11 +163,11 @@ class RequestProxy implements InvocationHandler {
                     throw new JudoException("No @RequestMethod on " + m.getName());
                 }
             }
-        } catch (Exception e) {
+        } catch (JudoException e) {
             if (rpc.getErrorLogger() != null) {
                 rpc.getErrorLogger().onError(e);
             }
-            throw new RuntimeException(e);
+            throw e;
         }
     }
 
@@ -191,7 +208,7 @@ class RequestProxy implements InvocationHandler {
             if (rpc.isCacheEnabled()) {
                 for (int i = batches.size() - 1; i >= 0; i--) {
                     Request req = batches.get(i);
-
+                    req.invokeStart();
                     if (req.isLocalCachable() || rpc.isTest()) {
                         CacheResult result = rpc.getMemoryCache().get(req.getMethod(), req.getArgs(), rpc.isTest() ? 0 : req.getLocalCacheLifeTime(), req.getLocalCacheSize());
                         LocalCacheLevel cacheLevel = rpc.isTest() ? LocalCacheLevel.DISK_CACHE : req.getLocalCacheLevel();
@@ -284,7 +301,7 @@ class RequestProxy implements InvocationHandler {
         } else {
             this.batch = false;
             if (batch != null) {
-                batch.onFinish(new Object[]{});
+                Request.invokeBatchCallback(rpc, batch, new Object[]{});
             }
         }
     }
@@ -405,7 +422,7 @@ class RequestProxy implements InvocationHandler {
             if (ex == null) {
                 Request.invokeBatchCallback(rpc, batch, results);
             } else {
-                Request.invokeBatchCallback(rpc, batch, ex);
+                Request.invokeBatchCallbackException(rpc, batch, ex);
             }
         }
         if (ex != null) {

@@ -8,6 +8,8 @@ package com.github.kubatatami.judonetworking;
  */
 public interface CallbackInterface<T> {
 
+    public void onStart();
+
     public void onFinish(T result);
 
     public void onError(Exception e);

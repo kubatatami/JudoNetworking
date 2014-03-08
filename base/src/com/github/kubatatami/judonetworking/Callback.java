@@ -12,6 +12,11 @@ import java.io.StringWriter;
 public class Callback<T> implements CallbackInterface<T> {
 
     @Override
+    public void onStart() {
+
+    }
+
+    @Override
     public void onFinish(T result) {
     }
 

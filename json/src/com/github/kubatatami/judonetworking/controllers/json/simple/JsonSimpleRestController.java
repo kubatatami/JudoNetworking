@@ -33,4 +33,5 @@ public class JsonSimpleRestController extends RawRestController {
     public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
         return JsonSimpleBaseController.parseResponse(mapper, request, stream);
     }
+
 }

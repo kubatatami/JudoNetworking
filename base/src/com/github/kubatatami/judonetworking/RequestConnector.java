@@ -287,6 +287,7 @@ class RequestConnector {
                 Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
                 boolean implemented = true;
                 try {
+                    request.invokeStart();
                     request.getMethod().invoke(virtualServerInfo.server, args);
                     int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
                     for (int i = 0; i <= TimeStat.TICKS; i++) {
@@ -464,6 +465,7 @@ class RequestConnector {
                         Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
                         boolean implemented = true;
                         try {
+                            request.invokeStart();
                             request.getMethod().invoke(virtualServerInfo.server, args);
 
                         } catch (InvocationTargetException ex) {
@@ -485,15 +487,11 @@ class RequestConnector {
                         }
                     }
                 }
-
-
                 String requestsName = "";
                 for (Request request : requests) {
                     requestsName += " " + request.getName();
                     findAndCreateBase64(request);
                 }
-
-
                 if (copyRequest.size() > 0) {
                     results.addAll(callRealBatch(copyRequest, progressObserver, timeout, requestsName));
                 }

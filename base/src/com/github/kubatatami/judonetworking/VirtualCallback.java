@@ -9,6 +9,11 @@ class VirtualCallback implements CallbackInterface {
     }
 
     @Override
+    public void onStart() {
+
+    }
+
+    @Override
     public void onFinish(Object result) {
         this.result = new RequestSuccessResult(id, result);
     }

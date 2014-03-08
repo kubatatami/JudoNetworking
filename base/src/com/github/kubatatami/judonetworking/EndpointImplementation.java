@@ -8,9 +8,12 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
@@ -45,6 +48,8 @@ class EndpointImplementation implements Endpoint {
     private boolean verifyResultModel = false;
     private boolean processingMethod = false;
     private long tokenExpireTimestamp = -1;
+    private List<Method> singleCallMethods=new ArrayList<Method>();
+
 
     private ThreadPoolExecutor executorService =
             new ThreadPoolExecutor(2, 30, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(30), new ThreadFactory() {
@@ -182,7 +187,7 @@ class EndpointImplementation implements Endpoint {
                 }
             });
         }catch (RejectedExecutionException ex){
-            new AsyncResult(batch,new JudoException("Request queue is full.", ex),debugFlags).run();
+            new AsyncResult(this,batch,new JudoException("Request queue is full.", ex)).run();
         } 
 
     }
@@ -441,5 +446,9 @@ class EndpointImplementation implements Endpoint {
 
     public float getPercentLoss() {
         return percentLoss;
+    }
+
+    public List<Method> getSingleCallMethods() {
+        return singleCallMethods;
     }
 }

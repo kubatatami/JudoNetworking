@@ -37,8 +37,8 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     @Override
     public void run() {
         try {
+            invokeStart();
             Object result = rpc.getRequestConnector().call(this);
-
             invokeCallback(result);
         } catch (final Exception e) {
             invokeCallbackException(e);
@@ -53,24 +53,40 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         }
     }
 
+    public void invokeStart() {
+        if (callback != null) {
+            rpc.getHandler().post(new AsyncResult(this));
+        }
+    }
+
     public void invokeCallbackException(Exception e) {
         if (callback != null) {
-            rpc.getHandler().post(new AsyncResult(callback, e,rpc.getDebugFlags()));
+            rpc.getHandler().post(new AsyncResult(this, e));
         }
     }
 
     public void invokeCallback(Object result) {
         if (callback != null) {
-            rpc.getHandler().post(new AsyncResult(callback, result,rpc.getDebugFlags()));
+            rpc.getHandler().post(new AsyncResult(this, result));
         }
     }
 
-    public static void invokeBatchCallback(final EndpointImplementation rpc, Batch<?> batch, final Exception e) {
-        rpc.getHandler().post(new AsyncResult(batch, e,rpc.getDebugFlags()));
+    public void invokeProgress(int progress) {
+        if (callback != null) {
+            rpc.getHandler().post(new AsyncResult(this, progress));
+        }
+    }
+
+    public static void invokeBatchCallbackProgress(final EndpointImplementation rpc, Batch<?> batch, int progress) {
+        rpc.getHandler().post(new AsyncResult(rpc,batch, progress));
+    }
+
+    public static void invokeBatchCallbackException(final EndpointImplementation rpc, Batch<?> batch, final Exception e) {
+        rpc.getHandler().post(new AsyncResult(rpc,batch, e));
     }
 
     public static void invokeBatchCallback(EndpointImplementation rpc, Batch<?> batch, Object[] results) {
-        rpc.getHandler().post(new AsyncResult(batch, results,rpc.getDebugFlags()));
+        rpc.getHandler().post(new AsyncResult(rpc,batch, results));
     }
 
     @Override
@@ -158,6 +174,13 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         return ann;
     }
 
+    boolean isSingleCall() {
+        SingleCall ann = method.getAnnotation(SingleCall.class);
+        if (ann == null) {
+            ann = method.getDeclaringClass().getAnnotation(SingleCall.class);
+        }
+        return ann != null && ann.enabled();
+    }
 
     public int getLocalCacheLifeTime() {
         return getLocalCache().lifeTime();
@@ -240,8 +263,12 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     private void tick() {
         if (callback != null) {
-            rpc.getHandler().post(new AsyncResult(callback, ((int) this.progress * 100 / max),rpc.getDebugFlags()));
+            rpc.getHandler().post(new AsyncResult(this, ((int) this.progress * 100 / max)));
         }
+    }
+
+    public EndpointImplementation getRpc() {
+        return rpc;
     }
 
     @Override

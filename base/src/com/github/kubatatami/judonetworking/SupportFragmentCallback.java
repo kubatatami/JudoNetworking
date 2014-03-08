@@ -19,6 +19,13 @@ public class SupportFragmentCallback<T> extends Callback<T> {
         this.fragment = fragment;
     }
 
+    @Override
+    public final void onStart() {
+        if (fragment.getActivity() != null) {
+            onSafeStart();
+        }
+    }
+
     public final void onFinish(T result) {
         if (fragment.getActivity() != null) {
             onSafeFinish(result);
@@ -36,6 +43,10 @@ public class SupportFragmentCallback<T> extends Callback<T> {
         if (fragment.getActivity() != null) {
             onSafeProgress(progress);
         }
+    }
+
+    public void onSafeStart() {
+
     }
 
     public void onSafeProgress(int progress) {

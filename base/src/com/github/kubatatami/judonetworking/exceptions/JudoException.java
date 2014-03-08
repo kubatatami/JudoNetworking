@@ -6,7 +6,7 @@ package com.github.kubatatami.judonetworking.exceptions;
  * Date: 11.01.2013
  * Time: 10:48
  */
-public class JudoException extends Exception {
+public class JudoException extends RuntimeException {
 
     public JudoException() {
     }

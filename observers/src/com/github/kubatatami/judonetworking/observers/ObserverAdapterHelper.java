@@ -37,24 +37,35 @@ public class ObserverAdapterHelper {
         protected Context context;
         protected Field field;
         protected Method method;
+        protected List<Field> fields;
 
-        public DataSourceOrTarget(Context context, Field field) {
+        public DataSourceOrTarget(Context context, List<Field> fields, Field field) {
             this.context = context;
             this.field = field;
+            this.fields = fields;
         }
 
-        public DataSourceOrTarget(Context context, Method method) {
+        public DataSourceOrTarget(Context context, List<Field> fields, Method method) {
             this.context = context;
             this.method = method;
+            this.fields = fields;
         }
 
         public boolean isSource() {
             return field != null || !method.getReturnType().equals(Void.TYPE);
         }
 
+        protected Object findObject(Object item) throws IllegalAccessException {
+            for(Field field : fields){
+                item=field.get(item);
+            }
+            return item;
+        }
+
         public String getValue(Object item) {
             try {
                 String result;
+                item=findObject(item);
                 if (field != null) {
                     result = field.get(item).toString();
                 } else if (method.getParameterTypes().length == 1) {
@@ -72,6 +83,7 @@ public class ObserverAdapterHelper {
 
         public void setValue(Object item, View view) {
             try {
+                item=findObject(item);
                 method.invoke(item, view);
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -174,24 +186,26 @@ public class ObserverAdapterHelper {
     private DataSourceOrTarget getDataSource(String fieldName, Class<?> clazz) {
         int i = 0;
         Field field;
+        List<Field> fields = new ArrayList<Field>();
         String parts[] = fieldName.split(splitter);
         for (String part : parts) {
             i++;
             if (i != parts.length) {
                 try {
                     field = getField(part, clazz);
-                    clazz = field.getClass();
+                    clazz = field.getType();
+                    fields.add(field);
                 } catch (NoSuchFieldException e) {
                     throw new RuntimeException(e);
                 }
             } else {
                 try {
                     field = getField(part, clazz);
-                    return new DataSourceOrTarget(context, field);
+                    return new DataSourceOrTarget(context, fields, field);
                 } catch (NoSuchFieldException e) {
                     try {
                         Method method = getMethod(part, clazz);
-                        return new DataSourceOrTarget(context, method);
+                        return new DataSourceOrTarget(context, fields, method);
                     } catch (NoSuchFieldException e1) {
                         throw new RuntimeException(e1);
                     }
@@ -222,7 +236,7 @@ public class ObserverAdapterHelper {
     }
 
 
-    private static Method getMethod(String fieldName, Class<?> objectClass) throws NoSuchFieldException {
+    static Method getMethod(String fieldName, Class<?> objectClass) throws NoSuchFieldException {
         Method finalMethod = null;
         while (objectClass != null && finalMethod == null) {
             for (Method method : objectClass.getDeclaredMethods()) {

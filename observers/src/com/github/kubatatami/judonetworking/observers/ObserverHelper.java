@@ -12,9 +12,10 @@ import android.view.ViewGroup;
 import android.widget.Adapter;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import com.github.kubatatami.judonetworking.ErrorLogger;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -183,7 +184,7 @@ public class ObserverHelper {
                 tag = tag.replace(res, getStringResource(key.substring(8)));
 
             } else {
-                Object field = getFieldValue(key, object);
+                Object field = getFieldOrMethodValue(key, object);
                 tag = tag.replace(res, field != null ? field.toString() : "");
             }
         }
@@ -298,28 +299,43 @@ public class ObserverHelper {
         }
     }
 
-    private static Object getFieldFromObserver(String fieldName, Object object) throws IllegalAccessException {
+    private Object getFieldFromObserver(String fieldName, Object object) throws IllegalAccessException {
         String fields[] = fieldName.split(splitter);
         ObservableWrapper observableWrapper = (ObservableWrapper) ObservableCache.getField(fields[1]).get(object);
         Object data = observableWrapper.get();
         if (data == null) {
             return "";
         } else {
-            return getFieldValue(fieldName.substring(fields[1].length() + 2), data);
+            return getFieldOrMethodValue(fieldName.substring(fields[1].length() + 2), data);
         }
     }
 
-    private static Object getFieldValue(String fieldName, Object object) throws IllegalAccessException {
+    private Object getFieldOrMethodValue(String fieldName, Object object) throws IllegalAccessException {
         String parts[] = fieldName.split(splitter);
         Class<?> clazz;
+        int i=0;
         for (String part : parts) {
             clazz = object.getClass();
-            object = ObservableCache.getField(part, clazz).get(object);
+            try {
+                object = ObservableCache.getField(part, clazz).get(object);
+            } catch (Exception ex) {
+                if(i==parts.length-1){
+                    try {
+                        Method method = ObserverAdapterHelper.getMethod(part,clazz);
+                        if (method.getParameterTypes().length == 1) {
+                            return method.invoke(object, context).toString();
+                        } else {
+                            return method.invoke(object).toString();
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+            i++;
         }
         return object;
     }
-
-
 
 
     @SuppressWarnings("unchecked")

@@ -13,52 +13,63 @@ class AsyncResult implements Runnable {
     protected Exception e = null;
     protected int progress = 0;
     protected final Type type;
-    protected int debugFlags;
+    protected Method method;
+    protected EndpointImplementation rpc;
 
     enum Type {
-        RESULT, ERROR, PROGRESS
+        RESULT, ERROR, PROGRESS, START
     }
 
-    AsyncResult(BatchInterface<?> callback, Object results[],int debugFlags) {
+    AsyncResult(EndpointImplementation rpc, BatchInterface<?> callback, Object results[]) {
         this.results = results;
         this.transaction = callback;
-        this.debugFlags=debugFlags;
-        type = Type.RESULT;
+        this.rpc=rpc;
+        this.type = Type.RESULT;
     }
 
-    AsyncResult(BatchInterface<?> callback, int progress,int debugFlags) {
+    AsyncResult(EndpointImplementation rpc,BatchInterface<?> callback, int progress) {
         this.progress = progress;
         this.transaction = callback;
-        this.debugFlags=debugFlags;
-        type = Type.PROGRESS;
+        this.rpc=rpc;
+        this.type = Type.PROGRESS;
     }
 
-    AsyncResult(BatchInterface<?> callback, Exception e,int debugFlags) {
+    AsyncResult(EndpointImplementation rpc,BatchInterface<?> callback, Exception e) {
         this.e = e;
         this.transaction = callback;
-        this.debugFlags=debugFlags;
-        type = Type.ERROR;
+        this.rpc=rpc;
+        this.type = Type.ERROR;
     }
 
-    AsyncResult(CallbackInterface<Object> callback, Object result,int debugFlags) {
+    AsyncResult(Request request) {
+        this.callback = request.getCallback();
+        this.rpc=request.getRpc();
+        this.type = Type.START;
+    }
+
+
+    AsyncResult(Request request, Object result) {
         this.result = result;
-        this.callback = callback;
-        this.debugFlags=debugFlags;
-        type = Type.RESULT;
+        this.callback = request.getCallback();
+        this.rpc=request.getRpc();
+        this.method=request.getMethod();
+        this.type = Type.RESULT;
     }
 
-    AsyncResult(CallbackInterface<Object> callback, int progress,int debugFlags) {
+    AsyncResult(Request request, int progress) {
         this.progress = progress;
-        this.callback = callback;
-        this.debugFlags=debugFlags;
-        type = Type.PROGRESS;
+        this.callback = request.getCallback();
+        this.rpc=request.getRpc();
+        this.method=request.getMethod();
+        this.type = Type.PROGRESS;
     }
 
-    AsyncResult(CallbackInterface<Object> callback, Exception e,int debugFlags) {
+    AsyncResult(Request request, Exception e) {
         this.e = e;
-        this.callback = callback;
-        this.debugFlags=debugFlags;
-        type = Type.ERROR;
+        this.callback = request.getCallback();
+        this.rpc=request.getRpc();
+        this.method=request.getMethod();
+        this.type = Type.ERROR;
     }
 
     protected Method findHandleMethod(Class<?> callbackClass, Class<?> exceptionClass) {
@@ -86,10 +97,17 @@ class AsyncResult implements Runnable {
     public void run() {
         if (callback != null) {
             switch (type) {
+                case START:
+                    callback.onStart();
+                    break;
                 case RESULT:
                     callback.onFinish(result);
+                    synchronized (rpc.getSingleCallMethods()){
+                        rpc.getSingleCallMethods().remove(method);
+                    }
                     break;
                 case ERROR:
+
                     Method handleMethod = findHandleMethod(callback.getClass(), e.getClass());
                     logError(e);
                     if (handleMethod != null) {
@@ -100,6 +118,9 @@ class AsyncResult implements Runnable {
                         }
                     } else {
                         callback.onError(e);
+                    }
+                    synchronized (rpc.getSingleCallMethods()){
+                        rpc.getSingleCallMethods().remove(method);
                     }
                     break;
                 case PROGRESS:
@@ -132,7 +153,7 @@ class AsyncResult implements Runnable {
     }
 
     protected void logError(Exception ex){
-        if((debugFlags & Endpoint.ERROR_DEBUG) > 0){
+        if((rpc.getDebugFlags() & Endpoint.ERROR_DEBUG) > 0){
             if (ex != null) {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
