@@ -178,18 +178,20 @@ class RequestProxy implements InvocationHandler {
         Type returnType = Void.class;
         if (args.length > 0 && args[args.length - 1] instanceof CallbackInterface) {
             callback = (CallbackInterface<Object>) args[args.length - 1];
+            returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
             if (args.length > 1) {
                 newArgs = new Object[args.length - 1];
                 System.arraycopy(args, 0, newArgs, 0, args.length - 1);
             } else {
                 newArgs = null;
             }
-        }
-        Type[] genericTypes=m.getGenericParameterTypes();
-        if(genericTypes.length>0){
-            ParameterizedType parameterizedType = (ParameterizedType)genericTypes[genericTypes.length-1];
-            if(parameterizedType.getRawType().equals(CallbackInterface.class)) {
-                returnType = parameterizedType.getActualTypeArguments()[0];
+        }else{
+            Type[] genericTypes = m.getGenericParameterTypes();
+            if (genericTypes.length > 0) {
+                ParameterizedType parameterizedType = (ParameterizedType) genericTypes[genericTypes.length - 1];
+                if (parameterizedType.getRawType().equals(CallbackInterface.class)) {
+                    returnType = parameterizedType.getActualTypeArguments()[0];
+                }
             }
         }
 

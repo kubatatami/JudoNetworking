@@ -66,14 +66,11 @@ public class RawRestController extends RawController {
             String content=null;
             if(request.getMethod().isAnnotationPresent(RawPost.class)){
                 int i=0;
+                content="";
                 for(Annotation[] annotations : request.getMethod().getParameterAnnotations()){
                     for(Annotation annotation : annotations){
                         if(annotation instanceof Post){
-                            if(content==null){
-                                content=request.getArgs()[i].toString();
-                            }else{
-                                content+=request.getArgs()[i].toString();
-                            }
+                            content+=request.getArgs()[i].toString();
                         }
                     }
                     i++;
