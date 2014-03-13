@@ -32,8 +32,6 @@ public abstract class RawController extends ProtocolController {
     public static RequestResult parseResponse(RequestInterface request, InputStream stream) {
         if (request.getReturnType().equals(String.class)) {
             return new RequestSuccessResult(request.getId(), convertStreamToString(stream));
-        } else if (request.getReturnType().equals(InputStream.class)) {
-            return new RequestSuccessResult(request.getId(), stream);
         } else if (request.getReturnType().equals(Byte[].class)) {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
@@ -49,7 +47,7 @@ public abstract class RawController extends ProtocolController {
                 return new ErrorResult(request.getId(), e);
             }
         } else {
-            return new ErrorResult(request.getId(), new ParseException("RawController handle string, byte array or input stream response only."));
+            return new ErrorResult(request.getId(), new ParseException("RawController handle string or byte array response only."));
         }
     }
 

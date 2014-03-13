@@ -94,6 +94,9 @@ class RequestConnector {
                     result.hash = conn.getHash();
                     result.time = conn.getDate();
                 }
+                try{
+                    stream.close();
+                }catch(Exception e){}
                 timeStat.tickParseTime();
                 conn.close();
             }
