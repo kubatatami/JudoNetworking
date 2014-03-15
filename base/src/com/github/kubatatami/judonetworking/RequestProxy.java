@@ -84,8 +84,10 @@ class RequestProxy implements InvocationHandler {
                         rpc.getExecutorService().execute(batchRunnable);
                     }catch (RejectedExecutionException ex){
                         for(Request batchRequest : batchRequests){
-                            new AsyncResult(request,new JudoException("Request queue is full.",ex)).run();
+                            new AsyncResult(batchRequest,new JudoException("Request queue is full.",ex)).run();
                         }
+                        batchRequests.clear();
+                        batch = false;
                     }
                 } else {
                     try{

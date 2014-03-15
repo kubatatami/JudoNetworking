@@ -16,6 +16,7 @@ public class BatchProgressObserver implements ProgressObserver {
     Batch batch;
     EndpointImplementation rpc;
     List<Request> requestList;
+    int lastProgress=0;
 
     public BatchProgressObserver(EndpointImplementation rpc, Batch batch, List<Request> requestList) {
         this.rpc = rpc;
@@ -26,6 +27,7 @@ public class BatchProgressObserver implements ProgressObserver {
     @Override
     public synchronized void clearProgress() {
         this.progress = 0;
+        this.lastProgress=0;
         publishProgress();
     }
 
@@ -47,11 +49,15 @@ public class BatchProgressObserver implements ProgressObserver {
 
 
     public void publishProgress() {
-        if (batch != null && progress > 0) {
-            Request.invokeBatchCallbackProgress(rpc,batch, (int) (progress * 100 / max));
-        }
-        for (Request request : requestList) {
-            request.invokeProgress((int) (progress * 100 / max));
+        int percentProgress=(int) (progress * 100 / max);
+        if(lastProgress<percentProgress) {
+            lastProgress=percentProgress;
+            if (batch != null && progress > 0) {
+                Request.invokeBatchCallbackProgress(rpc, batch, percentProgress);
+            }
+            for (Request request : requestList) {
+                request.invokeProgress(percentProgress);
+            }
         }
     }
 

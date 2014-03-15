@@ -24,7 +24,7 @@ public class ObservableWrapper<T> extends Callback<T> {
     protected boolean forceUpdateOnNetworkStateChange = false;
     protected boolean checkNetworkState = false;
     protected boolean checkUpdateOnGet = false;
-    protected long period=0;
+    protected long period = 0;
     protected Timer timer;
 
     protected NetworkUtils.NetworkStateListener networkStateListener = new NetworkUtils.NetworkStateListener() {
@@ -45,7 +45,7 @@ public class ObservableWrapper<T> extends Callback<T> {
         set(result);
     }
 
-    protected final Runnable updateRunnable=new Runnable() {
+    protected final Runnable updateRunnable = new Runnable() {
         @Override
         public void run() {
             listener.onUpdate(ObservableWrapper.this);
@@ -98,7 +98,7 @@ public class ObservableWrapper<T> extends Callback<T> {
             observers.add(observer);
             if (notify) {
                 T obj = get();
-                if(obj != null || allowNull){
+                if (obj != null || allowNull) {
                     observer.update(obj);
                 }
             }
@@ -176,18 +176,18 @@ public class ObservableWrapper<T> extends Callback<T> {
         }
     }
 
-    public void startCheckUpdatePeriodically(long period){
-        startCheckUpdatePeriodically(period,false);
+    public void startCheckUpdatePeriodically(long period) {
+        startCheckUpdatePeriodically(period, false);
     }
 
     public void startCheckUpdatePeriodically(long period, final boolean forceUpdate) {
 
-        if(timer!=null && this.period==period){
+        if (timer != null && this.period == period) {
             return;
         }
         stopCheckUpdatePeriodically();
         timer = new Timer(true);
-        this.period=period;
+        this.period = period;
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -201,10 +201,10 @@ public class ObservableWrapper<T> extends Callback<T> {
     }
 
     public void stopCheckUpdatePeriodically() {
-        if(timer!=null){
+        if (timer != null) {
             timer.cancel();
             timer.purge();
-            timer=null;
+            timer = null;
         }
     }
 

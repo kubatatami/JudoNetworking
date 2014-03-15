@@ -24,7 +24,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
     protected int[] resource;
     protected ObserverAdapterHelper adapterHelper;
     protected FilterInterface<T> filterInterface;
-    protected Field mLockField,mOriginalField,mObjectsField;
+    protected Field mLockField, mOriginalField, mObjectsField;
     protected Object mLock;
 
     public ObserverAdapter(Context context, int... resource) {
@@ -110,8 +110,8 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
                         return results;
                     }
                     List<T> newValues = new ArrayList<T>();
-                    for(T value: values){
-                        if(filterInterface.filter(constraint,value)){
+                    for (T value : values) {
+                        if (filterInterface.filter(constraint, value)) {
                             newValues.add(value);
                         }
                     }
@@ -127,7 +127,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
             @Override
             protected void publishResults(CharSequence constraint, FilterResults results) {
                 try {
-                    mObjectsField.set(ObserverAdapter.this,results.values);
+                    mObjectsField.set(ObserverAdapter.this, results.values);
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }

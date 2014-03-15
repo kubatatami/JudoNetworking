@@ -16,8 +16,11 @@ import java.lang.annotation.Target;
 public @interface DataObserver {
 
     String fieldName() default "";
+
     boolean onStartup() default true;
+
     boolean crashable() default true;
+
     Class<?> observerClass() default Void.class;
 
 }

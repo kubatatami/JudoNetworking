@@ -13,6 +13,7 @@ import java.lang.annotation.Target;
 public @interface ObserverSettings {
 
     boolean tags() default false;
+
     boolean dataObservers() default false;
 
 }

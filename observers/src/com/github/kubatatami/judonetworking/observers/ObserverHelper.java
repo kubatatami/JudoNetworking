@@ -313,15 +313,15 @@ public class ObserverHelper {
     private Object getFieldOrMethodValue(String fieldName, Object object) throws IllegalAccessException {
         String parts[] = fieldName.split(splitter);
         Class<?> clazz;
-        int i=0;
+        int i = 0;
         for (String part : parts) {
             clazz = object.getClass();
             try {
                 object = ObservableCache.getField(part, clazz).get(object);
             } catch (Exception ex) {
-                if(i==parts.length-1){
+                if (i == parts.length - 1) {
                     try {
-                        Method method = ObserverAdapterHelper.getMethod(part,clazz);
+                        Method method = ObserverAdapterHelper.getMethod(part, clazz);
                         if (method.getParameterTypes().length == 1) {
                             return method.invoke(object, context).toString();
                         } else {

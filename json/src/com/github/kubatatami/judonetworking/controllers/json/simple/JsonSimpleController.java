@@ -49,7 +49,7 @@ public class JsonSimpleController extends JsonSimpleBaseController {
             mapper.writeValue(writer, req);
             writer.close();
         } catch (IOException ex) {
-            throw new JudoException("Can't create request",ex);
+            throw new JudoException("Can't create request", ex);
         }
 
         requestInfo.url = url;

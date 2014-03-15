@@ -122,7 +122,7 @@ public class JsonRpc2Controller extends JsonRpcController {
             requestInfo.mimeType = "application/json";
             return requestInfo;
         } catch (IOException ex) {
-            throw new JudoException("Can't create request",ex);
+            throw new JudoException("Can't create request", ex);
         }
     }
 

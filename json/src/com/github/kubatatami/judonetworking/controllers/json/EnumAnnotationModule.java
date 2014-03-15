@@ -4,7 +4,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.Version;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.DeserializationConfig;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.Deserializers;
 import com.fasterxml.jackson.databind.deser.Deserializers.Base;
 import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
@@ -13,9 +19,10 @@ import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 public class EnumAnnotationModule extends SimpleModule {
+
+    protected static ObjectMapper mapper = new ObjectMapper();
 
     public EnumAnnotationModule() {
         super("enum-annotation", new Version(1, 0, 0, "", EnumAnnotationModule.class.getPackage().getName(), ""));
@@ -31,6 +38,7 @@ public class EnumAnnotationModule extends SimpleModule {
             public JsonDeserializer<?> findEnumDeserializer(Class<?> type,
                                                             DeserializationConfig config, BeanDescription beanDesc)
                     throws JsonMappingException {
+
                 return new EnumAnnotationDeserializer((Class<Enum<?>>) type);
             }
         };
@@ -50,13 +58,11 @@ public class EnumAnnotationModule extends SimpleModule {
                 JsonProperty property = value.getDeclaringClass().getDeclaredField(value.name()).getAnnotation(JsonProperty.class);
                 if (property != null) {
                     jgen.writeString(property.value());
-                } else {
-                    jgen.writeString(value.name());
+                    return;
                 }
             } catch (NoSuchFieldException e) {
-                jgen.writeString(value.name());
             }
-
+            mapper.writeValue(jgen, value);
         }
     }
 
@@ -64,6 +70,7 @@ public class EnumAnnotationModule extends SimpleModule {
 
         protected EnumAnnotationDeserializer(Class<Enum<?>> clazz) {
             super(clazz);
+
         }
 
         @Override
@@ -79,11 +86,11 @@ public class EnumAnnotationModule extends SimpleModule {
                         }
                     }
                 }
-                Method valueOfMethod = getValueClass().getDeclaredMethod("valueOf", String.class);
-                return (Enum<?>) valueOfMethod.invoke(null, text);
+
+
             } catch (Exception e) {
-                return null;
             }
+            return (Enum<?>) mapper.readValue("\"" + text + "\"", getValueClass());
         }
 
     }

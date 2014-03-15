@@ -52,7 +52,7 @@ class EndpointImplementation implements Endpoint {
 
 
     private ThreadPoolExecutor executorService =
-            new ThreadPoolExecutor(2, 30, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(30), new ThreadFactory() {
+            new ThreadPoolExecutor(2, 30, 30, TimeUnit.SECONDS, new SynchronousQueue <Runnable>(), new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable r) {
                     Thread thread = new Thread(r);
@@ -135,7 +135,7 @@ class EndpointImplementation implements Endpoint {
     }
 
     protected void setThreadPoolSize(int size) {
-        executorService.setMaximumPoolSize(Math.max(2, size));
+        executorService.setCorePoolSize(Math.max(2, size));
     }
 
     @Override

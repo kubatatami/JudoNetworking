@@ -15,7 +15,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 public class JsonSimpleGetController extends JsonSimpleBaseController {
 
     @Override
-    public ProtocolController.RequestInfo createRequest(String url, RequestInterface request) throws JudoException{
+    public ProtocolController.RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
         ApiKey apiKeyModel = (ApiKey) request.getAdditionalData();
         ProtocolController.RequestInfo requestInfo = new ProtocolController.RequestInfo();
         requestInfo.url = url + request.getName() + "?" + GetOrPostTools.createRequest(request, apiKeyModel.apiKey, apiKeyModel.apiKeyName);
