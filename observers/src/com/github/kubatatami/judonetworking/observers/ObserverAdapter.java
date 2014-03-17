@@ -92,7 +92,6 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
             protected FilterResults performFiltering(CharSequence constraint) {
                 FilterResults results = new FilterResults();
                 try {
-
                     List<T> mObjects = (List<T>) mObjectsField.get(ObserverAdapter.this);
                     if (mOriginalField.get(ObserverAdapter.this) == null) {
                         synchronized (mLock) {
@@ -149,4 +148,5 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
         public boolean filter(CharSequence constraint, T item);
 
     }
+
 }

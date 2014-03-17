@@ -14,6 +14,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.github.kubatatami.judonetworking.ErrorLogger;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -236,12 +237,12 @@ public class ObserverHelper {
                                     observerMethod.method.invoke(object, data);
                                 }
                             } catch (Exception e) {
-                                RuntimeException ex;
+                                JudoException ex;
                                 if (e.getCause() != null) {
-                                    ex = new RuntimeException(e.getCause());
+                                    ex = new JudoException(e.getCause());
                                     ex.setStackTrace(e.getCause().getStackTrace());
                                 } else {
-                                    ex = new RuntimeException(e);
+                                    ex = new JudoException(e);
                                 }
                                 if (observerMethod.dataObserver.crashable()) {
                                     throw ex;
@@ -272,12 +273,12 @@ public class ObserverHelper {
                             try {
                                 observerMethod.method.invoke(object, param);
                             } catch (Exception e) {
-                                RuntimeException ex;
+                                JudoException ex;
                                 if (e.getCause() != null) {
-                                    ex = new RuntimeException(e.getCause());
+                                    ex = new JudoException(e.getCause());
                                     ex.setStackTrace(e.getCause().getStackTrace());
                                 } else {
-                                    ex = new RuntimeException(e);
+                                    ex = new JudoException(e);
                                 }
                                 if (observerMethod.dataObserver.crashable()) {
                                     throw ex;

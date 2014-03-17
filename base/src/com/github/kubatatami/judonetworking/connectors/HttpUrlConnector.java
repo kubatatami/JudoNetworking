@@ -281,20 +281,30 @@ public class HttpUrlConnector extends Connector {
         }
 
         @Override
-        public InputStream getStream() throws Exception {
+        public InputStream getStream() throws ConnectionException {
             try {
                 return connection.getInputStream();
             } catch (FileNotFoundException ex) {
-                handleHttpException(protocolController, connection.getResponseCode(), convertStreamToString(connection.getErrorStream()));
+                try {
+                    handleHttpException(protocolController, connection.getResponseCode(), convertStreamToString(connection.getErrorStream()));
+                } catch (IOException e) {
+                    throw new ConnectionException(e);
+                }
                 return null;
+            } catch (IOException e) {
+                throw new ConnectionException(e);
             }
 
         }
 
 
-        public boolean isNewestAvailable() throws Exception {
-            int code = connection.getResponseCode();
-            return code != 304;
+        public boolean isNewestAvailable() throws ConnectionException {
+            try {
+                int code = connection.getResponseCode();
+                return code != 304;
+            } catch (IOException e) {
+                throw new ConnectionException(e);
+            }
         }
 
         public int getContentLength() {

@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -10,7 +12,7 @@ package com.github.kubatatami.judonetworking;
 public class ErrorResult extends RequestResult {
 
 
-    public ErrorResult(Integer id, Exception error) {
+    public ErrorResult(Integer id, JudoException error) {
         this.id = id;
         this.error = error;
     }

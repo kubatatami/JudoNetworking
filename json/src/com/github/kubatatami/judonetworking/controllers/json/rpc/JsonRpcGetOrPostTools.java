@@ -7,9 +7,12 @@ import com.github.kubatatami.judonetworking.RequestInterface;
 import com.github.kubatatami.judonetworking.RequestResult;
 import com.github.kubatatami.judonetworking.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
+import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
 import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
@@ -25,22 +28,27 @@ public abstract class JsonRpcGetOrPostTools {
 
     public static RequestResult parseResponse(ObjectMapper mapper, RequestInterface request, InputStream stream) {
         try {
-            InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
+
             JsonGetOrPostResponseModel response;
             try {
+                InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
                 response = mapper.readValue(inputStreamReader, JsonGetOrPostResponseModel.class);
+                inputStreamReader.close();
+
+                if (response.error != null) {
+                    throw new ProtocolException(response.error.message, response.error.code);
+                }
+
+                if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
+                    return new RequestSuccessResult(request.getId(), mapper.readValue(response.result.traverse(), mapper.getTypeFactory().constructType(request.getReturnType())));
+                }
             } catch (JsonProcessingException ex) {
                 throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
-            }
-            if (response.error != null) {
-                throw new ProtocolException(response.error.message, response.error.code);
-            }
-            inputStreamReader.close();
-            if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
-                return new RequestSuccessResult(request.getId(), mapper.readValue(response.result.traverse(), mapper.getTypeFactory().constructType(request.getReturnType())));
+            } catch (IOException ex) {
+                throw new ConnectionException(ex);
             }
             return new RequestSuccessResult(request.getId(), null);
-        } catch (Exception e) {
+        } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
         }
     }

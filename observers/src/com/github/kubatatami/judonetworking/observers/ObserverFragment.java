@@ -2,8 +2,6 @@ package com.github.kubatatami.judonetworking.observers;
 
 import android.app.Activity;
 import android.app.Fragment;
-import android.os.Bundle;
-import android.view.View;
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,14 +20,14 @@ class ObserverFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        observerHelper.start(this, view);
+    public void onStart() {
+        super.onStart();
+        observerHelper.start(this, getView());
     }
 
     @Override
-    public void onDestroyView() {
+    public void onStop() {
+        super.onStop();
         observerHelper.stop();
-        super.onDestroyView();
     }
 }

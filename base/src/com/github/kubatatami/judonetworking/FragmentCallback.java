@@ -3,9 +3,6 @@ package com.github.kubatatami.judonetworking;
 
 import android.app.Fragment;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -20,9 +17,16 @@ public class FragmentCallback<T> extends Callback<T> {
         this.fragment = fragment;
     }
 
-    public final void onFinish(T result) {
+    @Override
+    public final void onStart() {
         if (fragment.getActivity() != null) {
-            onSafeFinish(result);
+            onSafeStart();
+        }
+    }
+
+    public final void onSuccess(T result) {
+        if (fragment.getActivity() != null) {
+            onSafeSuccess(result);
         }
     }
 
@@ -32,21 +36,37 @@ public class FragmentCallback<T> extends Callback<T> {
         }
     }
 
+    @Override
+    public final void onProgress(int progress) {
+        if (fragment.getActivity() != null) {
+            onSafeProgress(progress);
+        }
+    }
 
-    public void onSafeFinish(T result) {
+    @Override
+    public final void onFinish() {
+        if (fragment.getActivity() != null) {
+            onSafeFinish();
+        }
+    }
+
+    public void onSafeStart() {
+
+    }
+
+    public void onSafeProgress(int progress) {
+
+    }
+
+    public void onSafeSuccess(T result) {
+
+    }
+
+    public void onSafeFinish() {
 
     }
 
     public void onSafeError(Exception e) {
-        if (e != null) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            LoggerImpl.log(sw.toString());
-        } else {
-            LoggerImpl.log("Null exception");
-        }
+
     }
-
-
 }

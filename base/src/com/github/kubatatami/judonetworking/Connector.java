@@ -1,9 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
-import com.github.kubatatami.judonetworking.exceptions.HttpException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
-import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -34,7 +32,7 @@ public abstract class Connector {
 
 
     public interface Connection {
-        public InputStream getStream() throws Exception;
+        public InputStream getStream() throws ConnectionException;
 
         public int getContentLength();
 
@@ -46,7 +44,7 @@ public abstract class Connector {
 
         public Map<String, List<String>> getHeaders();
 
-        public boolean isNewestAvailable() throws Exception;
+        public boolean isNewestAvailable() throws ConnectionException;
     }
 
     public static class CacheInfo {

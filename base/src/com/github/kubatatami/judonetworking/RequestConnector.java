@@ -2,6 +2,7 @@ package com.github.kubatatami.judonetworking;
 
 
 import android.util.Base64;
+
 import com.github.kubatatami.judonetworking.exceptions.AuthException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.VerifyModelException;
@@ -12,10 +13,15 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.Scanner;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 class RequestConnector {
 
@@ -86,7 +92,7 @@ class RequestConnector {
 
                     String resStr = convertStreamToString(conn.getStream());
                     longLog("Response(" + resStr.length() + "B)", resStr);
-                    connectionStream = new ByteArrayInputStream(resStr.getBytes("UTF-8"));
+                    connectionStream = new ByteArrayInputStream(resStr.getBytes());
                 }
                 RequestInputStream stream = new RequestInputStream(connectionStream, timeStat, conn.getContentLength());
                 result = controller.parseResponse(request, stream, conn.getHeaders());
@@ -94,9 +100,10 @@ class RequestConnector {
                     result.hash = conn.getHash();
                     result.time = conn.getDate();
                 }
-                try{
+                try {
                     stream.close();
-                }catch(Exception e){}
+                } catch (Exception e) {
+                }
                 timeStat.tickParseTime();
                 conn.close();
             }
@@ -120,7 +127,7 @@ class RequestConnector {
                 }
             }
             return result;
-        } catch (Exception e) {
+        } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
         }
 
@@ -267,52 +274,56 @@ class RequestConnector {
     }
 
 
-    private Object handleVirtualServerRequest(Request request, TimeStat timeStat) throws Exception {
-        VirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(request.getMethod().getDeclaringClass());
-        if (virtualServerInfo != null) {
-            if (request.getCallback() == null) {
-                try {
-                    Object object = request.getMethod().invoke(virtualServerInfo.server, request.getArgs());
-                    int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
-                    for (int i = 0; i <= TimeStat.TICKS; i++) {
-                        Thread.sleep(delay / TimeStat.TICKS);
-                        timeStat.tickTime(i);
+    private Object handleVirtualServerRequest(Request request, TimeStat timeStat) throws JudoException {
+        try {
+            VirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(request.getMethod().getDeclaringClass());
+            if (virtualServerInfo != null) {
+                if (request.getCallback() == null) {
+                    try {
+                        Object object = request.getMethod().invoke(virtualServerInfo.server, request.getArgs());
+                        int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
+                        for (int i = 0; i <= TimeStat.TICKS; i++) {
+                            Thread.sleep(delay / TimeStat.TICKS);
+                            timeStat.tickTime(i);
+                        }
+                        return object;
+                    } catch (InvocationTargetException ex) {
+                        if (ex.getCause() == null || !(ex.getCause() instanceof UnsupportedOperationException)) {
+                            throw ex;
+                        }
                     }
-                    return object;
-                } catch (InvocationTargetException ex) {
-                    if (ex.getCause() == null || !(ex.getCause() instanceof UnsupportedOperationException)) {
-                        throw ex;
-                    }
-                }
 
-            } else {
-                VirtualCallback callback = new VirtualCallback(request.getId());
-                Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
-                boolean implemented = true;
-                try {
-                    request.invokeStart();
-                    request.getMethod().invoke(virtualServerInfo.server, args);
-                    int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
-                    for (int i = 0; i <= TimeStat.TICKS; i++) {
-                        Thread.sleep(delay / TimeStat.TICKS);
-                        timeStat.tickTime(i);
+                } else {
+                    VirtualCallback callback = new VirtualCallback(request.getId());
+                    Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
+                    boolean implemented = true;
+                    try {
+                        request.invokeStart();
+                        request.getMethod().invoke(virtualServerInfo.server, args);
+                        int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
+                        for (int i = 0; i <= TimeStat.TICKS; i++) {
+                            Thread.sleep(delay / TimeStat.TICKS);
+                            timeStat.tickTime(i);
+                        }
+                    } catch (InvocationTargetException ex) {
+                        if (ex.getCause() != null && ex.getCause() instanceof UnsupportedOperationException) {
+                            implemented = false;
+                        } else {
+                            throw ex;
+                        }
                     }
-                } catch (InvocationTargetException ex) {
-                    if (ex.getCause() != null && ex.getCause() instanceof UnsupportedOperationException) {
-                        implemented = false;
-                    } else {
-                        throw ex;
+                    if (implemented) {
+                        if (callback.getResult().error != null) {
+                            throw callback.getResult().error;
+                        }
+                        return callback.getResult().result;
                     }
-                }
-                if (implemented) {
-                    if (callback.getResult().error != null) {
-                        throw callback.getResult().error;
-                    }
-                    return callback.getResult().result;
                 }
             }
+            return null;
+        } catch (Exception e) {
+            throw new JudoException("Can't invoke virtual server", e);
         }
-        return null;
     }
 
     protected Base64Param findBase64Annotation(Annotation[] annotations) {
@@ -342,7 +353,7 @@ class RequestConnector {
     }
 
     @SuppressWarnings("unchecked")
-    public Object call(Request request) throws Exception {
+    public Object call(Request request) throws JudoException {
         try {
 
             CacheResult localCacheObject = null;
@@ -437,14 +448,14 @@ class RequestConnector {
 
 
             return result.result;
-        } catch (Exception e) {
+        } catch (JudoException e) {
             refreshErrorStat(request.getName(), request.getTimeout());
             throw e;
         }
 
     }
 
-    public List<RequestResult> callBatch(List<Request> requests, ProgressObserver progressObserver, Integer timeout) throws Exception {
+    public List<RequestResult> callBatch(List<Request> requests, ProgressObserver progressObserver, Integer timeout) throws JudoException {
         final List<RequestResult> results = new ArrayList<RequestResult>(requests.size());
 
 
@@ -469,13 +480,17 @@ class RequestConnector {
                         boolean implemented = true;
                         try {
                             request.invokeStart();
-                            request.getMethod().invoke(virtualServerInfo.server, args);
+                            try {
+                                request.getMethod().invoke(virtualServerInfo.server, args);
+                            } catch (IllegalAccessException e) {
+                                throw new JudoException("Can't invoke virtual server", e);
+                            }
 
                         } catch (InvocationTargetException ex) {
                             if (ex.getCause() != null && ex.getCause() instanceof UnsupportedOperationException) {
                                 implemented = false;
                             } else {
-                                throw ex;
+                                throw new JudoException("Can't invoke virtual server", ex);
                             }
                         }
                         if (implemented) {
@@ -485,7 +500,12 @@ class RequestConnector {
                     }
                     if (copyRequest.size() == 0) {
                         for (int z = 0; z < TimeStat.TICKS; z++) {
-                            Thread.sleep(delay / TimeStat.TICKS);
+                            try {
+                                Thread.sleep(delay / TimeStat.TICKS);
+                            } catch (InterruptedException e) {
+                                throw new JudoException("Thread sleep error", e);
+                            }
+
                             timeStat.tickTime(z);
                         }
                     }
@@ -507,7 +527,7 @@ class RequestConnector {
                 synchronized (progressObserver) {
                     progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (requests.size() - 1) * TimeStat.TICKS);
                 }
-                ExecutorService executors = Executors.newFixedThreadPool(rpc.getMaxConnections());
+
                 List<Callable<Object>> todo = new ArrayList<Callable<Object>>();
 
                 for (final Request request : requests) {
@@ -544,8 +564,16 @@ class RequestConnector {
                     }));
 
                 }
-                executors.invokeAll(todo);
-                executors.shutdown();
+                try {
+                    List<Future<Object>> futureList = rpc.getExecutorService().invokeAll(todo);
+                    for (Future<Object> future : futureList) {
+                        future.get();
+                    }
+                } catch (InterruptedException e) {
+                    throw new JudoException("Can't invoke batch tasks", e);
+                } catch (ExecutionException e) {
+                    throw new JudoException("Can't execute batch task", e);
+                }
             }
         }
         return results;
@@ -563,7 +591,7 @@ class RequestConnector {
         }
     }
 
-    public List<RequestResult> callRealBatch(List<Request> requests, ProgressObserver progressObserver, Integer timeout, String requestsName) throws Exception {
+    public List<RequestResult> callRealBatch(List<Request> requests, ProgressObserver progressObserver, Integer timeout, String requestsName) throws JudoException {
 
         try {
 
@@ -596,7 +624,7 @@ class RequestConnector {
 
                 String resStr = convertStreamToString(conn.getStream());
                 longLog("Response body(" + resStr.length() + " Bytes)", resStr);
-                connectionStream = new ByteArrayInputStream(resStr.getBytes("UTF-8"));
+                connectionStream = new ByteArrayInputStream(resStr.getBytes());
             }
 
             RequestInputStream stream = new RequestInputStream(connectionStream, timeStat, conn.getContentLength());
@@ -617,7 +645,7 @@ class RequestConnector {
             }
 
             return responses;
-        } catch (Exception e) {
+        } catch (JudoException e) {
             for (Request request : requests) {
                 refreshErrorStat(request.getName(), request.getTimeout());
             }

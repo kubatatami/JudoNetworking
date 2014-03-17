@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.Constructor;
@@ -56,8 +57,8 @@ public class ObserverAdapterHelper {
         }
 
         protected Object findObject(Object item) throws IllegalAccessException {
-            for(Field field : fields){
-                item=field.get(item);
+            for (Field field : fields) {
+                item = field.get(item);
             }
             return item;
         }
@@ -65,7 +66,7 @@ public class ObserverAdapterHelper {
         public String getValue(Object item) {
             try {
                 String result;
-                item=findObject(item);
+                item = findObject(item);
                 if (field != null) {
                     result = field.get(item).toString();
                 } else if (method.getParameterTypes().length == 1) {
@@ -83,7 +84,7 @@ public class ObserverAdapterHelper {
 
         public void setValue(Object item, View view) {
             try {
-                item=findObject(item);
+                item = findObject(item);
                 method.invoke(item, view);
             } catch (Exception e) {
                 throw new RuntimeException(e);

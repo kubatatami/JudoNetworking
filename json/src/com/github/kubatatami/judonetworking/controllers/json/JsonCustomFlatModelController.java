@@ -7,9 +7,12 @@ import com.github.kubatatami.judonetworking.ProtocolController;
 import com.github.kubatatami.judonetworking.RequestInterface;
 import com.github.kubatatami.judonetworking.RequestResult;
 import com.github.kubatatami.judonetworking.RequestSuccessResult;
+import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
 import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -21,14 +24,14 @@ import java.util.Map;
 public class JsonCustomFlatModelController<T> extends JsonCustomModelController<T> {
 
     public JsonCustomFlatModelController(ProtocolController baseController, Class<T> model) {
-        super(baseController,model);
+        super(baseController, model);
     }
 
-    protected T parseMainModel(String inputString, Class<T> model) throws Exception {
+    protected T parseMainModel(String inputString, Class<T> model) throws IOException {
         return mapper.readValue(inputString, model);
     }
 
-    protected Object parseFinalModel(String inputString, Type type) throws Exception {
+    protected Object parseFinalModel(String inputString, Type type) throws IOException {
         return mapper.readValue(inputString, mapper.getTypeFactory().constructType(type));
     }
 
@@ -41,6 +44,8 @@ public class JsonCustomFlatModelController<T> extends JsonCustomModelController<
                 response = parseMainModel(responseString, model);
             } catch (JsonProcessingException ex) {
                 throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
+            } catch (IOException ex) {
+                throw new ConnectionException(ex);
             }
             if (response == null) {
                 throw new ParseException("Empty response.");
@@ -50,17 +55,22 @@ public class JsonCustomFlatModelController<T> extends JsonCustomModelController<
             Integer code = getErrorCode(response);
 
             if ((success != null && !success) || message != null || code != null) {
-                throw new ProtocolException(message!=null ? message : "", code!=null ? code : 0);
+                throw new ProtocolException(message != null ? message : "", code != null ? code : 0);
             }
-
-            return new RequestSuccessResult(request.getId(), parseFinalModel(responseString, request.getReturnType()));
-        } catch (Exception e) {
+            try {
+                return new RequestSuccessResult(request.getId(), parseFinalModel(responseString, request.getReturnType()));
+            } catch (JsonProcessingException ex) {
+                throw new ParseException(ex);
+            } catch (IOException ex) {
+                throw new ConnectionException(ex);
+            }
+        } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
         }
     }
 
     @Override
-    protected final JsonNode getData(T responseModel) throws Exception {
+    protected final JsonNode getData(T responseModel) throws JudoException {
         throw new UnsupportedOperationException("Flat model don't have a data field.");
     }
 }

@@ -11,7 +11,6 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 
-import java.io.ByteArrayInputStream;
 import java.io.StringBufferInputStream;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
@@ -19,7 +18,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,46 +61,45 @@ public class RawRestController extends RawController {
             for (Map.Entry<String, Object> entry : ((Map<String, Object>) request.getAdditionalData()).entrySet()) {
                 result = result.replaceAll("\\{" + entry.getKey() + "\\}", entry.getValue() + "");
             }
-            String content=null;
-            if(request.getMethod().isAnnotationPresent(RawPost.class)){
-                int i=0;
-                content="";
-                for(Annotation[] annotations : request.getMethod().getParameterAnnotations()){
-                    for(Annotation annotation : annotations){
-                        if(annotation instanceof Post){
-                            content+=request.getArgs()[i].toString();
+            String content = null;
+            if (request.getMethod().isAnnotationPresent(RawPost.class)) {
+                int i = 0;
+                content = "";
+                for (Annotation[] annotations : request.getMethod().getParameterAnnotations()) {
+                    for (Annotation annotation : annotations) {
+                        if (annotation instanceof Post) {
+                            content += request.getArgs()[i].toString();
                         }
                     }
                     i++;
                 }
-            }else if(request.getMethod().isAnnotationPresent(FormPost.class)){
+            } else if (request.getMethod().isAnnotationPresent(FormPost.class)) {
                 requestInfo.mimeType = "application/x-www-form-urlencoded";
                 List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
-                int i=0;
-                for(Annotation[] annotations : request.getMethod().getParameterAnnotations()){
-                    for(Annotation annotation : annotations){
-                        if(annotation instanceof Post){
+                int i = 0;
+                for (Annotation[] annotations : request.getMethod().getParameterAnnotations()) {
+                    for (Annotation annotation : annotations) {
+                        if (annotation instanceof Post) {
                             Object arg = request.getArgs()[i];
-                            nameValuePairs.add(new BasicNameValuePair(((Post)annotation).value(), arg == null ? "" : arg.toString()));
+                            nameValuePairs.add(new BasicNameValuePair(((Post) annotation).value(), arg == null ? "" : arg.toString()));
                         }
                     }
                     i++;
                 }
-                content= URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8).replaceAll("\\+", "%20");
+                content = URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8).replaceAll("\\+", "%20");
             }
-            if(content!=null){
-                if(ann.mimeType()!=null){
+            if (content != null) {
+                if (ann.mimeType() != null) {
                     requestInfo.mimeType = ann.mimeType();
                 }
-                requestInfo.entity = new RequestInputStreamEntity(new StringBufferInputStream(content),content.length());
+                requestInfo.entity = new RequestInputStreamEntity(new StringBufferInputStream(content), content.length());
 
             }
         } else {
             result = request.getName();
         }
 
-        requestInfo.url = url + (url.lastIndexOf("/") != url.length()-1 ? "/" : "") + result;
-
+        requestInfo.url = url + (url.lastIndexOf("/") != url.length() - 1 ? "/" : "") + result;
 
 
         return requestInfo;
@@ -118,6 +115,7 @@ public class RawRestController extends RawController {
     @Target(ElementType.METHOD)
     public @interface Rest {
         String value() default "";
+
         String mimeType() default "";
     }
 
@@ -129,11 +127,13 @@ public class RawRestController extends RawController {
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
-    public @interface RawPost {}
+    public @interface RawPost {
+    }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
-    public @interface FormPost {}
+    public @interface FormPost {
+    }
 
     @Override
     public void setApiKey(String name, String key) {

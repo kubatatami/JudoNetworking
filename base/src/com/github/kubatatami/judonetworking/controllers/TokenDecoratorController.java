@@ -1,6 +1,10 @@
 package com.github.kubatatami.judonetworking.controllers;
 
-import com.github.kubatatami.judonetworking.*;
+import com.github.kubatatami.judonetworking.Endpoint;
+import com.github.kubatatami.judonetworking.ProtocolController;
+import com.github.kubatatami.judonetworking.RequestInterface;
+import com.github.kubatatami.judonetworking.RequestResult;
+import com.github.kubatatami.judonetworking.TokenCaller;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.io.InputStream;

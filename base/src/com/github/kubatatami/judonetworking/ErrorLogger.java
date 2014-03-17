@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -9,6 +11,6 @@ package com.github.kubatatami.judonetworking;
  */
 public interface ErrorLogger {
 
-    public void onError(Exception e);
+    public void onError(JudoException e);
 
 }

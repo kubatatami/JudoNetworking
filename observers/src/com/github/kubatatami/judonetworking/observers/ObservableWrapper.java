@@ -41,7 +41,7 @@ public class ObservableWrapper<T> extends Callback<T> {
     };
 
     @Override
-    public void onFinish(T result) {
+    public void onSuccess(T result) {
         set(result);
     }
 

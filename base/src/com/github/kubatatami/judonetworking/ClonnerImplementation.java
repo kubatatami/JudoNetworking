@@ -1,6 +1,11 @@
 package com.github.kubatatami.judonetworking;
 
-import java.io.*;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,16 +17,19 @@ import java.io.*;
 public class ClonnerImplementation implements Clonner {
 
     @Override
-    public <T> T clone(T object) throws IOException, ClassNotFoundException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream out = new ObjectOutputStream(bos);
-        out.writeObject(object);
-        out.flush();
-        out.close();
-        ObjectInputStream in = new ObjectInputStream(
-                new ByteArrayInputStream(bos.toByteArray()));
-        object = (T) in.readObject();
-
+    public <T> T clone(T object) throws JudoException {
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream out = new ObjectOutputStream(bos);
+            out.writeObject(object);
+            out.flush();
+            out.close();
+            ObjectInputStream in = new ObjectInputStream(
+                    new ByteArrayInputStream(bos.toByteArray()));
+            object = (T) in.readObject();
+        } catch (Exception e) {
+            throw new JudoException("Can't clone object " + object.getClass().getName(), e);
+        }
         return object;
     }
 

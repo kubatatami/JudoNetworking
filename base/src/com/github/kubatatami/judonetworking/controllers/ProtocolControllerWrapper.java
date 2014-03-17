@@ -23,17 +23,17 @@ public class ProtocolControllerWrapper extends ProtocolController {
 
     @Override
     public RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
-        return baseController.createRequest(url,request);
+        return baseController.createRequest(url, request);
     }
 
     @Override
     public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
-        return baseController.parseResponse(request,stream,headers);
+        return baseController.parseResponse(request, stream, headers);
     }
 
     @Override
     public void setApiKey(String name, String key) {
-        baseController.setApiKey(name,key);
+        baseController.setApiKey(name, key);
     }
 
     @Override

@@ -1,16 +1,15 @@
 package com.github.kubatatami.judonetworking;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
 import java.lang.reflect.Method;
-import java.util.*;
 
 class AsyncResult implements Runnable {
     protected CallbackInterface<Object> callback;
     protected BatchInterface<?> transaction;
     protected Object result = null;
     protected Object[] results = null;
-    protected Exception e = null;
+    protected JudoException e = null;
     protected int progress = 0;
     protected final Type type;
     protected Method method;
@@ -23,27 +22,27 @@ class AsyncResult implements Runnable {
     AsyncResult(EndpointImplementation rpc, BatchInterface<?> callback, Object results[]) {
         this.results = results;
         this.transaction = callback;
-        this.rpc=rpc;
+        this.rpc = rpc;
         this.type = Type.RESULT;
     }
 
-    AsyncResult(EndpointImplementation rpc,BatchInterface<?> callback, int progress) {
+    AsyncResult(EndpointImplementation rpc, BatchInterface<?> callback, int progress) {
         this.progress = progress;
         this.transaction = callback;
-        this.rpc=rpc;
+        this.rpc = rpc;
         this.type = Type.PROGRESS;
     }
 
-    AsyncResult(EndpointImplementation rpc,BatchInterface<?> callback, Exception e) {
+    AsyncResult(EndpointImplementation rpc, BatchInterface<?> callback, JudoException e) {
         this.e = e;
         this.transaction = callback;
-        this.rpc=rpc;
+        this.rpc = rpc;
         this.type = Type.ERROR;
     }
 
     AsyncResult(Request request) {
         this.callback = request.getCallback();
-        this.rpc=request.getRpc();
+        this.rpc = request.getRpc();
         this.type = Type.START;
     }
 
@@ -51,39 +50,39 @@ class AsyncResult implements Runnable {
     AsyncResult(Request request, Object result) {
         this.result = result;
         this.callback = request.getCallback();
-        this.rpc=request.getRpc();
-        this.method=request.getMethod();
+        this.rpc = request.getRpc();
+        this.method = request.getMethod();
         this.type = Type.RESULT;
     }
 
     AsyncResult(Request request, int progress) {
         this.progress = progress;
         this.callback = request.getCallback();
-        this.rpc=request.getRpc();
-        this.method=request.getMethod();
+        this.rpc = request.getRpc();
+        this.method = request.getMethod();
         this.type = Type.PROGRESS;
     }
 
-    AsyncResult(Request request, Exception e) {
+    AsyncResult(Request request, JudoException e) {
         this.e = e;
         this.callback = request.getCallback();
-        this.rpc=request.getRpc();
-        this.method=request.getMethod();
+        this.rpc = request.getRpc();
+        this.method = request.getMethod();
         this.type = Type.ERROR;
     }
 
     protected Method findHandleMethod(Class<?> callbackClass, Class<?> exceptionClass) {
-        Method handleMethod=null;
+        Method handleMethod = null;
         for (; callbackClass != null; callbackClass = callbackClass.getSuperclass()) {
             for (Method method : callbackClass.getMethods()) {
-                if (method.isAnnotationPresent(HandleException.class)){
-                    if(method.getParameterTypes().length!=1){
+                if (method.isAnnotationPresent(HandleException.class)) {
+                    if (method.getParameterTypes().length != 1) {
                         throw new RuntimeException("Method " + method.getName() + " annotated HandleException must have one parameter.");
                     }
                     Class<?> handleExceptionClass = method.getParameterTypes()[0];
                     if (handleExceptionClass.isAssignableFrom(exceptionClass)) {
-                        if(handleMethod==null || handleMethod.getParameterTypes()[0].isAssignableFrom(handleExceptionClass)){
-                            handleMethod=method;
+                        if (handleMethod == null || handleMethod.getParameterTypes()[0].isAssignableFrom(handleExceptionClass)) {
+                            handleMethod = method;
                         }
                     }
                 }
@@ -101,11 +100,9 @@ class AsyncResult implements Runnable {
                     callback.onStart();
                     break;
                 case RESULT:
-                    callback.onFinish(result);
-
+                    callback.onSuccess(result);
                     break;
                 case ERROR:
-
                     Method handleMethod = findHandleMethod(callback.getClass(), e.getClass());
                     logError(e);
                     if (handleMethod != null) {
@@ -123,10 +120,13 @@ class AsyncResult implements Runnable {
                     callback.onProgress(progress);
                     break;
             }
-        } else if(transaction!=null){
+            if (type == Type.RESULT || type == Type.ERROR) {
+                callback.onFinish();
+            }
+        } else if (transaction != null) {
             switch (type) {
                 case RESULT:
-                    transaction.onFinish(results);
+                    transaction.onSuccess(results);
                     break;
                 case ERROR:
                     Method handleMethod = findHandleMethod(transaction.getClass(), e.getClass());
@@ -145,12 +145,15 @@ class AsyncResult implements Runnable {
                     transaction.onProgress(progress);
                     break;
             }
+            if (type == Type.RESULT || type == Type.ERROR) {
+                transaction.onFinish();
+            }
         }
-        if(method!=null) {
+        if (method != null) {
             switch (type) {
                 case ERROR:
                 case RESULT:
-                    synchronized (rpc.getSingleCallMethods()){
+                    synchronized (rpc.getSingleCallMethods()) {
                         rpc.getSingleCallMethods().remove(method);
                         if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
                             LoggerImpl.log("Request " + method.getName() + " removed - SingleCall.");
@@ -161,16 +164,9 @@ class AsyncResult implements Runnable {
         }
     }
 
-    protected void logError(Exception ex){
-        if((rpc.getDebugFlags() & Endpoint.ERROR_DEBUG) > 0){
-            if (ex != null) {
-                StringWriter sw = new StringWriter();
-                PrintWriter pw = new PrintWriter(sw);
-                ex.printStackTrace(pw);
-                LoggerImpl.log(sw.toString());
-            } else {
-                LoggerImpl.log("Null exception");
-            }
+    protected void logError(Exception ex) {
+        if ((rpc.getDebugFlags() & Endpoint.ERROR_DEBUG) > 0) {
+            LoggerImpl.log(ex);
         }
     }
 }

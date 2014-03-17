@@ -1,7 +1,6 @@
 package com.github.kubatatami.judonetworking;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,11 +16,16 @@ public class Callback<T> implements CallbackInterface<T> {
     }
 
     @Override
-    public void onFinish(T result) {
+    public void onSuccess(T result) {
     }
 
     @Override
-    public void onError(Exception e) {
+    public void onError(JudoException e) {
+
+    }
+
+    @Override
+    public void onFinish() {
 
     }
 

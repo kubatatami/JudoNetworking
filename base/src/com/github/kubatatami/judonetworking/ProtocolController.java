@@ -1,8 +1,6 @@
 package com.github.kubatatami.judonetworking;
 
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
-import com.github.kubatatami.judonetworking.exceptions.ParseException;
-import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
 import java.io.InputStream;
 import java.util.List;

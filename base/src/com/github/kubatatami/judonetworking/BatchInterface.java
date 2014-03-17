@@ -12,9 +12,12 @@ public interface BatchInterface<T> {
 
     public void runNonFatal(final T api);
 
-    public void onFinish(Object[] results);
+    public void onProgress(int progress);
 
     public void onError(Exception e);
 
-    public void onProgress(int progress);
+    public void onSuccess(Object[] results);
+
+    public void onFinish();
+
 }

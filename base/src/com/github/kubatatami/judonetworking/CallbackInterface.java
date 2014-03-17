@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -10,10 +12,12 @@ public interface CallbackInterface<T> {
 
     public void onStart();
 
-    public void onFinish(T result);
-
-    public void onError(Exception e);
-
     public void onProgress(int progress);
+
+    public void onSuccess(T result);
+
+    public void onError(JudoException e);
+
+    public void onFinish();
 
 }

@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -10,7 +12,7 @@ package com.github.kubatatami.judonetworking;
 public interface Clonner {
 
 
-    public <T> T clone(T object) throws Exception;
+    public <T> T clone(T object) throws JudoException;
 
 
 }

@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -11,7 +13,7 @@ public abstract class RequestResult implements Comparable<RequestResult> {
 
     public Integer id;
     public Object result;
-    public Exception error;
+    public JudoException error;
     public Object cacheObject;
 
     public String hash;

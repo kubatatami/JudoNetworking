@@ -1,10 +1,21 @@
 package com.github.kubatatami.judonetworking;
 
 import android.util.Pair;
+
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 
 class RequestProxy implements InvocationHandler {
@@ -50,8 +61,8 @@ class RequestProxy implements InvocationHandler {
     public static String getMethodName(Method method, RequestMethod ann) {
         NamePrefix namePrefix = method.getDeclaringClass().getAnnotation(NamePrefix.class);
         String name = (ann != null && !ann.name().equals("")) ? ann.name() : method.getName();
-        if(namePrefix!=null){
-            name=namePrefix.value()+name;
+        if (namePrefix != null) {
+            name = namePrefix.value() + name;
         }
         return name;
     }
@@ -80,20 +91,20 @@ class RequestProxy implements InvocationHandler {
                 if (mode == BatchMode.AUTO) {
                     batchRequests.add(request);
                     batch = true;
-                    try{
+                    try {
                         rpc.getExecutorService().execute(batchRunnable);
-                    }catch (RejectedExecutionException ex){
-                        for(Request batchRequest : batchRequests){
-                            new AsyncResult(batchRequest,new JudoException("Request queue is full.",ex)).run();
+                    } catch (RejectedExecutionException ex) {
+                        for (Request batchRequest : batchRequests) {
+                            new AsyncResult(batchRequest, new JudoException("Request queue is full.", ex)).run();
                         }
                         batchRequests.clear();
                         batch = false;
                     }
                 } else {
-                    try{
+                    try {
                         rpc.getExecutorService().execute(request);
-                    }catch (RejectedExecutionException ex){
-                        new AsyncResult(request,new JudoException("Request queue is full.",ex)).run();
+                    } catch (RejectedExecutionException ex) {
+                        new AsyncResult(request, new JudoException("Request queue is full.", ex)).run();
 
                     }
                 }
@@ -134,23 +145,22 @@ class RequestProxy implements InvocationHandler {
                 }
 
 
-
                 if (!ann.async()) {
                     request = new Request(++id, rpc, m, name, ann, args, m.getReturnType(), timeout, null, rpc.getProtocolController().getAdditionalRequestData());
-                    if(request.isSingleCall()){
+                    if (request.isSingleCall()) {
                         throw new JudoException("SingleCall is not supported on no async method.");
                     }
                     return rpc.getRequestConnector().call(request);
                 } else {
                     request = callAsync(++id, m, name, args, m.getGenericParameterTypes(), timeout, ann);
-                    if(request.isSingleCall()){
-                        if(rpc.getSingleCallMethods().contains(m)){
+                    if (request.isSingleCall()) {
+                        if (rpc.getSingleCallMethods().contains(m)) {
                             if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
                                 LoggerImpl.log("Request " + name + " rejected - SingleCall.");
                             }
                             return null;
-                        }else{
-                            synchronized (rpc.getSingleCallMethods()){
+                        } else {
+                            synchronized (rpc.getSingleCallMethods()) {
                                 rpc.getSingleCallMethods().add(m);
                             }
                         }
@@ -187,9 +197,9 @@ class RequestProxy implements InvocationHandler {
             } else {
                 newArgs = null;
             }
-        }else{
+        } else {
             Type[] genericTypes = m.getGenericParameterTypes();
-            if (genericTypes.length > 0) {
+            if (genericTypes.length > 0 && genericTypes[genericTypes.length - 1] instanceof ParameterizedType) {
                 ParameterizedType parameterizedType = (ParameterizedType) genericTypes[genericTypes.length - 1];
                 if (parameterizedType.getRawType().equals(CallbackInterface.class)) {
                     returnType = parameterizedType.getActualTypeArguments()[0];
@@ -259,7 +269,7 @@ class RequestProxy implements InvocationHandler {
             if (batches.size() > 0) {
                 try {
                     responses = sendBatchRequest(batches, batchProgressObserver, cacheObjects.size());
-                } catch (final Exception e) {
+                } catch (final JudoException e) {
                     responses = new ArrayList<RequestResult>(batches.size());
                     for (Request request : batches) {
                         responses.add(new ErrorResult(request.getId(), e));
@@ -339,7 +349,7 @@ class RequestProxy implements InvocationHandler {
         return timeout;
     }
 
-    protected List<RequestResult> sendBatchRequest(List<Request> batches, BatchProgressObserver progressObserver, int cachedRequests) throws Exception {
+    protected List<RequestResult> sendBatchRequest(List<Request> batches, BatchProgressObserver progressObserver, int cachedRequests) throws JudoException {
         int conn = rpc.getMaxConnections();
 
         if (batches.size() > 1 && conn > 1) {
@@ -378,7 +388,7 @@ class RequestProxy implements InvocationHandler {
 
     protected void handleBatchResponse(List<Request> requests, Batch batch, List<RequestResult> responses) {
         Object[] results = new Object[requests.size()];
-        Exception ex = null;
+        JudoException ex = null;
         int i = 0;
         for (Request request : requests) {
             try {
@@ -419,11 +429,10 @@ class RequestProxy implements InvocationHandler {
                     }
                 }
                 request.invokeCallback(results[i]);
-            } catch (Exception e) {
+            } catch (JudoException e) {
                 if (request.isBatchFatal()) {
                     ex = e;
                 }
-                addToExceptionMessage(request.getName(), e);
                 request.invokeCallbackException(e);
             }
             i++;
@@ -436,7 +445,7 @@ class RequestProxy implements InvocationHandler {
             }
         }
         if (ex != null) {
-            final Exception finalEx = ex;
+            final JudoException finalEx = ex;
             if (rpc.getErrorLogger() != null) {
                 rpc.getHandler().post(new Runnable() {
                     @Override

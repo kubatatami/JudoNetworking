@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
 class VirtualCallback implements CallbackInterface {
     private int id;
     private RequestResult result;
@@ -14,13 +16,18 @@ class VirtualCallback implements CallbackInterface {
     }
 
     @Override
-    public void onFinish(Object result) {
+    public void onSuccess(Object result) {
         this.result = new RequestSuccessResult(id, result);
     }
 
     @Override
-    public void onError(Exception e) {
+    public void onError(JudoException e) {
         this.result = new ErrorResult(id, e);
+    }
+
+    @Override
+    public void onFinish() {
+
     }
 
     @Override

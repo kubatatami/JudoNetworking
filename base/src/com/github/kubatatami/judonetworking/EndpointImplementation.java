@@ -6,7 +6,12 @@ import android.os.Looper;
 
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -15,7 +20,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 class EndpointImplementation implements Endpoint {
 
@@ -48,11 +58,11 @@ class EndpointImplementation implements Endpoint {
     private boolean verifyResultModel = false;
     private boolean processingMethod = false;
     private long tokenExpireTimestamp = -1;
-    private List<Method> singleCallMethods=new ArrayList<Method>();
+    private List<Method> singleCallMethods = new ArrayList<Method>();
 
 
     private ThreadPoolExecutor executorService =
-            new ThreadPoolExecutor(2, 30, 30, TimeUnit.SECONDS, new SynchronousQueue <Runnable>(), new ThreadFactory() {
+            new ThreadPoolExecutor(2, 30, 30, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable r) {
                     Thread thread = new Thread(r);
@@ -179,16 +189,16 @@ class EndpointImplementation implements Endpoint {
         batch.run(proxy);
         pr.setBatchFatal(false);
         batch.runNonFatal(proxy);
-        try{
+        try {
             executorService.execute(new Runnable() {
                 @Override
                 public void run() {
                     pr.callBatch(batch);
                 }
             });
-        }catch (RejectedExecutionException ex){
-            new AsyncResult(this,batch,new JudoException("Request queue is full.", ex)).run();
-        } 
+        } catch (RejectedExecutionException ex) {
+            new AsyncResult(this, batch, new JudoException("Request queue is full.", ex)).run();
+        }
 
     }
 

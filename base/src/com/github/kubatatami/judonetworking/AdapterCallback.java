@@ -29,7 +29,7 @@ public class AdapterCallback<T> extends Callback<List<T>> {
     }
 
     @Override
-    public void onFinish(List<T> result) {
+    public void onSuccess(List<T> result) {
         if (clear) {
             adapter.clear();
         }

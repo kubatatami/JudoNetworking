@@ -2,9 +2,6 @@ package com.github.kubatatami.judonetworking;
 
 import android.support.v4.app.Fragment;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -26,9 +23,9 @@ public class SupportFragmentCallback<T> extends Callback<T> {
         }
     }
 
-    public final void onFinish(T result) {
+    public final void onSuccess(T result) {
         if (fragment.getActivity() != null) {
-            onSafeFinish(result);
+            onSafeSuccess(result);
         }
     }
 
@@ -45,6 +42,13 @@ public class SupportFragmentCallback<T> extends Callback<T> {
         }
     }
 
+    @Override
+    public final void onFinish() {
+        if (fragment.getActivity() != null) {
+            onSafeFinish();
+        }
+    }
+
     public void onSafeStart() {
 
     }
@@ -53,19 +57,16 @@ public class SupportFragmentCallback<T> extends Callback<T> {
 
     }
 
-    public void onSafeFinish(T result) {
+    public void onSafeSuccess(T result) {
+
+    }
+
+    public void onSafeFinish() {
 
     }
 
     public void onSafeError(Exception e) {
-        if (e != null) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            e.printStackTrace(pw);
-            LoggerImpl.log(sw.toString());
-        } else {
-            LoggerImpl.log("Null exception");
-        }
+
     }
 
 

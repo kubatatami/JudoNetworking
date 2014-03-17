@@ -1,8 +1,5 @@
 package com.github.kubatatami.judonetworking;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -21,19 +18,20 @@ public abstract class Batch<T> implements BatchInterface<T> {
     }
 
     @Override
-    public void onFinish(Object[] results) {
+    public void onSuccess(Object[] results) {
     }
 
     @Override
     public void onError(Exception e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        LoggerImpl.log(sw.toString());
+
     }
 
     @Override
     public void onProgress(int progress) {
     }
 
+    @Override
+    public void onFinish() {
+
+    }
 }

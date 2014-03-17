@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
@@ -27,7 +29,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         this.method = method;
         this.rpc = rpc;
         this.ann = ann;
-        this.paramNames=ann.paramNames();
+        this.paramNames = ann.paramNames();
         this.args = args;
         this.returnType = returnType;
         this.callback = callback;
@@ -40,7 +42,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
             invokeStart();
             Object result = rpc.getRequestConnector().call(this);
             invokeCallback(result);
-        } catch (final Exception e) {
+        } catch (final JudoException e) {
             invokeCallbackException(e);
             if (rpc.getErrorLogger() != null) {
                 rpc.getHandler().post(new Runnable() {
@@ -59,7 +61,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         }
     }
 
-    public void invokeCallbackException(Exception e) {
+    public void invokeCallbackException(JudoException e) {
         rpc.getHandler().post(new AsyncResult(this, e));
     }
 
@@ -74,15 +76,15 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     }
 
     public static void invokeBatchCallbackProgress(final EndpointImplementation rpc, Batch<?> batch, int progress) {
-        rpc.getHandler().post(new AsyncResult(rpc,batch, progress));
+        rpc.getHandler().post(new AsyncResult(rpc, batch, progress));
     }
 
-    public static void invokeBatchCallbackException(final EndpointImplementation rpc, Batch<?> batch, final Exception e) {
-        rpc.getHandler().post(new AsyncResult(rpc,batch, e));
+    public static void invokeBatchCallbackException(final EndpointImplementation rpc, Batch<?> batch, final JudoException e) {
+        rpc.getHandler().post(new AsyncResult(rpc, batch, e));
     }
 
     public static void invokeBatchCallback(EndpointImplementation rpc, Batch<?> batch, Object[] results) {
-        rpc.getHandler().post(new AsyncResult(rpc,batch, results));
+        rpc.getHandler().post(new AsyncResult(rpc, batch, results));
     }
 
     @Override
@@ -131,12 +133,12 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     @Override
     public void setArgs(Object[] args) {
-        this.args=args;
+        this.args = args;
     }
 
     @Override
     public void setParamNames(String[] paramNames) {
-        this.paramNames=paramNames;
+        this.paramNames = paramNames;
     }
 
     @Override

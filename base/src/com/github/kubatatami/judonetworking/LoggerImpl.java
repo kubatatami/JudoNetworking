@@ -36,11 +36,15 @@ class LoggerImpl {
         }
     }
 
-    public static void log(Exception e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        LoggerImpl.log(sw.toString());
+    public static void log(Exception ex) {
+        if (ex != null) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            LoggerImpl.log(sw.toString());
+        } else {
+            LoggerImpl.log("Null exception");
+        }
     }
 
     public static void setTag(String tag) {

@@ -1,12 +1,17 @@
 package com.github.kubatatami.judonetworking.controllers.json.simple;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.ErrorResult;
 import com.github.kubatatami.judonetworking.RequestInterface;
 import com.github.kubatatami.judonetworking.RequestResult;
 import com.github.kubatatami.judonetworking.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
+import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.exceptions.ParseException;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
@@ -30,13 +35,20 @@ public abstract class JsonSimpleBaseController extends JsonProtocolController {
     public static RequestResult parseResponse(ObjectMapper mapper, RequestInterface request, InputStream stream) {
         try {
             Object res = null;
-            InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
-            if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
-                res = mapper.readValue(inputStreamReader, mapper.getTypeFactory().constructType(request.getReturnType()));
+            try {
+                InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
+                if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
+                    res = mapper.readValue(inputStreamReader, mapper.getTypeFactory().constructType(request.getReturnType()));
+                }
+                inputStreamReader.close();
+
+            } catch (JsonProcessingException ex) {
+                throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
+            } catch (IOException ex) {
+                throw new ConnectionException(ex);
             }
-            inputStreamReader.close();
             return new RequestSuccessResult(request.getId(), res);
-        } catch (Exception e) {
+        } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
         }
     }

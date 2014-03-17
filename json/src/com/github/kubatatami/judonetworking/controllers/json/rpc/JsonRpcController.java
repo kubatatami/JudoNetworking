@@ -5,7 +5,11 @@ import com.github.kubatatami.judonetworking.RequestInterface;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,11 +29,11 @@ public abstract class JsonRpcController extends JsonProtocolController {
         requestInfo.url = url;
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         OutputStreamWriter writer = new OutputStreamWriter(stream);
-        try{
+        try {
             mapper.writeValue(writer, createRequestObject(request));
             writer.close();
-        }catch (IOException ex){
-            throw new JudoException("Can't create request",ex);
+        } catch (IOException ex) {
+            throw new JudoException("Can't create request", ex);
         }
         requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(stream.toByteArray()), stream.size());
         requestInfo.mimeType = "application/json";

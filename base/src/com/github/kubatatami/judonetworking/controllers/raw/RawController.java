@@ -1,6 +1,11 @@
 package com.github.kubatatami.judonetworking.controllers.raw;
 
-import com.github.kubatatami.judonetworking.*;
+import com.github.kubatatami.judonetworking.ErrorResult;
+import com.github.kubatatami.judonetworking.ProtocolController;
+import com.github.kubatatami.judonetworking.RequestInterface;
+import com.github.kubatatami.judonetworking.RequestResult;
+import com.github.kubatatami.judonetworking.RequestSuccessResult;
+import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.HttpException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
@@ -44,7 +49,7 @@ public abstract class RawController extends ProtocolController {
                 buffer.flush();
                 return new RequestSuccessResult(request.getId(), buffer.toByteArray());
             } catch (Exception e) {
-                return new ErrorResult(request.getId(), e);
+                return new ErrorResult(request.getId(), new ConnectionException(e));
             }
         } else {
             return new ErrorResult(request.getId(), new ParseException("RawController handle string or byte array response only."));

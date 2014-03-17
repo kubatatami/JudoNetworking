@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -10,7 +12,7 @@ class BatchTask implements Runnable {
     private final Integer timeout;
     private final List<Request> requests;
     private List<RequestResult> response = null;
-    private Exception ex = null;
+    private JudoException ex = null;
     private final EndpointImplementation rpc;
     private ProgressObserver progressObserver;
     private Future future;
@@ -26,7 +28,7 @@ class BatchTask implements Runnable {
         return this.response;
     }
 
-    public Exception getEx() {
+    public JudoException getEx() {
         return ex;
     }
 
@@ -34,7 +36,7 @@ class BatchTask implements Runnable {
     public void run() {
         try {
             this.response = rpc.getRequestConnector().callBatch(this.requests, progressObserver, this.timeout);
-        } catch (Exception e) {
+        } catch (JudoException e) {
             this.ex = e;
         }
     }
@@ -43,8 +45,12 @@ class BatchTask implements Runnable {
         future = rpc.getExecutorService().submit(this);
     }
 
-    public void join() throws Exception {
-        future.get();
+    public void join() throws JudoException {
+        try {
+            future.get();
+        } catch (Exception e) {
+            throw new JudoException("Batch task exception", e);
+        }
     }
 
 

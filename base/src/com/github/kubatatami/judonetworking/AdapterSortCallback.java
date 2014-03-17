@@ -32,7 +32,7 @@ public class AdapterSortCallback<T extends Comparable<T>> extends Callback<List<
     }
 
     @Override
-    public void onFinish(List<T> result) {
+    public void onSuccess(List<T> result) {
         adapter.clear();
         if (comparator != null) {
             Collections.sort(result, comparator);

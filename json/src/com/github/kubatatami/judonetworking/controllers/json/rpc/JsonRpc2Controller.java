@@ -72,13 +72,17 @@ public class JsonRpc2Controller extends JsonRpcController {
     public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
         try {
             JsonRpcResponseModel2 response;
-            InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
+
             try {
+                InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
                 response = mapper.readValue(inputStreamReader, JsonRpcResponseModel2.class);
+                inputStreamReader.close();
             } catch (JsonProcessingException ex) {
                 throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
+            } catch (IOException ex) {
+                throw new ConnectionException(ex);
             }
-            inputStreamReader.close();
+
             if (response == null) {
                 throw new ParseException("Empty response.");
             }
@@ -92,13 +96,19 @@ public class JsonRpc2Controller extends JsonRpcController {
             }
             Object result = null;
             if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
-                result = mapper.readValue(response.result.traverse(), mapper.getTypeFactory().constructType(request.getReturnType()));
+                try {
+                    result = mapper.readValue(response.result.traverse(), mapper.getTypeFactory().constructType(request.getReturnType()));
+                } catch (JsonProcessingException ex) {
+                    throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
+                } catch (IOException ex) {
+                    throw new ConnectionException(ex);
+                }
                 if (!request.isAllowEmptyResult() && result == null) {
                     throw new ParseException("Empty result.");
                 }
             }
             return new RequestSuccessResult(request.getId(), result);
-        } catch (Exception e) {
+        } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
         }
     }
