@@ -8,7 +8,6 @@ import android.widget.Filter;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -24,8 +23,8 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
     protected int[] resource;
     protected ObserverAdapterHelper adapterHelper;
     protected FilterInterface<T> filterInterface;
-    protected Field mLockField, mOriginalField, mObjectsField;
-    protected Object mLock;
+    protected Field  mObjectsField;
+    protected List<T> mOriginals;
 
     public ObserverAdapter(Context context, int... resource) {
         super(context, 0);
@@ -54,13 +53,8 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
     protected void init(Context context) {
         try {
             adapterHelper = new ObserverAdapterHelper(context);
-            mLockField = ArrayAdapter.class.getDeclaredField("mLock");
-            mOriginalField = ArrayAdapter.class.getDeclaredField("mOriginalValues");
             mObjectsField = ArrayAdapter.class.getDeclaredField("mObjects");
-            mLockField.setAccessible(true);
-            mOriginalField.setAccessible(true);
             mObjectsField.setAccessible(true);
-            mLock = mLockField.get(this);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -92,35 +86,29 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
             protected FilterResults performFiltering(CharSequence constraint) {
                 FilterResults results = new FilterResults();
                 try {
-                    List<T> mObjects = (List<T>) mObjectsField.get(ObserverAdapter.this);
-                    if (mOriginalField.get(ObserverAdapter.this) == null) {
-                        synchronized (mLock) {
-                            mOriginalField.set(ObserverAdapter.this, new ArrayList<T>(mObjects));
+                    if(mOriginals==null){
+                        mOriginals = (List<T>) mObjectsField.get(ObserverAdapter.this);
+                    }
+                    // We implement here the filter logic
+                    if (constraint == null || constraint.length() == 0) {
+                        // No filter implemented we return all the list
+                        results.values = mOriginals;
+                        results.count = mOriginals.size();
+                    } else {
+                        List<T> newValues = new ArrayList<T>();
+                        for (T value : mOriginals) {
+                            if (filterInterface.filter(constraint, value)) {
+                                newValues.add(value);
+                            }
                         }
+                        results.values = newValues;
+                        results.count = newValues.size();
                     }
-
-                    ArrayList<T> values;
-                    synchronized (mLock) {
-                        values = new ArrayList<T>((Collection<? extends T>) mOriginalField.get(ObserverAdapter.this));
-                    }
-                    if (filterInterface == null) {
-                        results.values = values;
-                        results.count = values.size();
-                        return results;
-                    }
-                    List<T> newValues = new ArrayList<T>();
-                    for (T value : values) {
-                        if (filterInterface.filter(constraint, value)) {
-                            newValues.add(value);
-                        }
-                    }
-                    results.values = newValues;
-                    results.count = newValues.size();
-                    return results;
 
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
+                return results;
             }
 
             @Override
