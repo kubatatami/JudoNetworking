@@ -23,8 +23,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
     protected int[] resource;
     protected ObserverAdapterHelper adapterHelper;
     protected FilterInterface<T> filterInterface;
-    protected Field  mObjectsField;
-    protected List<T> mOriginals;
+    protected Field  mObjectsField,mOriginalField;
 
     public ObserverAdapter(Context context, int... resource) {
         super(context, 0);
@@ -55,6 +54,8 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
             adapterHelper = new ObserverAdapterHelper(context);
             mObjectsField = ArrayAdapter.class.getDeclaredField("mObjects");
             mObjectsField.setAccessible(true);
+            mOriginalField = ArrayAdapter.class.getDeclaredField("mOriginalValues");
+            mOriginalField.setAccessible(true);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -86,8 +87,10 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
             protected FilterResults performFiltering(CharSequence constraint) {
                 FilterResults results = new FilterResults();
                 try {
+                    List<T> mOriginals= (List<T>) mOriginalField.get(ObserverAdapter.this);
                     if(mOriginals==null){
                         mOriginals = (List<T>) mObjectsField.get(ObserverAdapter.this);
+                        mOriginalField.set(ObserverAdapter.this,mOriginals);
                     }
                     // We implement here the filter logic
                     if (constraint == null || constraint.length() == 0) {
