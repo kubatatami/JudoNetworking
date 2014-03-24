@@ -27,6 +27,8 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -49,9 +51,13 @@ public class HttpUrlConnector extends Connector {
     private int methodTimeout = 10000;
     private boolean followRedirection = true;
     private CookieManager cookieManager;
-    private String authKey = null;
+    private String authKey;
+    private String username;
+    private String password;
+    private String realm, nonce,algorithm,opaque, qop;
+    private int digestCounter=0;
     private HttpURLCreator httpURLCreator = null;
-    private HttpURLConnectionModifier httpURLConnectionModifier = null;
+    private HttpURLConnectionModifier httpURLConnectionModifier;
     private static SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
 
     public HttpUrlConnector() {
@@ -115,6 +121,11 @@ public class HttpUrlConnector extends Connector {
         this.httpURLConnectionModifier = httpURLConnectionModifier;
     }
 
+    public void setDigestAuthentication(final String username, final String password) {
+        this.username = username;
+        this.password = password;
+    }
+
     public void setBasicAuthentication(final String username, final String password) {
         authKey = auth(username, password);
     }
@@ -130,6 +141,47 @@ public class HttpUrlConnector extends Connector {
     private String auth(String login, String pass) {
         String source = login + ":" + pass;
         return "Basic " + Base64.encodeToString(source.getBytes(), Base64.NO_WRAP);
+    }
+
+    private String auth(String login, String realm, String pass) {
+        String source = login + ":" +  realm + ":" + pass;
+        return md5(source);
+    }
+
+    private String auth(String login, String realm, String pass , String nonce, String nonceCount, String clientNonce, String qop, String method, String digestURI) {
+        String source = auth(login, realm, pass) + ":" +  nonce + ":" + nonceCount+ ":" + clientNonce+ ":" + qop+ ":" + authMethod(method,digestURI);
+        return md5(source);
+    }
+
+    private String authMethod(String method, String digestURI) {
+        String source = method + ":" +  digestURI;
+        return md5(source);
+    }
+
+
+    public static String md5(final String s) {
+        final String MD5 = "MD5";
+        try {
+            // Create MD5 Hash
+            MessageDigest digest = java.security.MessageDigest
+                    .getInstance(MD5);
+            digest.update(s.getBytes());
+            byte messageDigest[] = digest.digest();
+
+            // Create Hex String
+            StringBuilder hexString = new StringBuilder();
+            for (byte aMessageDigest : messageDigest) {
+                String h = Integer.toHexString(0xFF & aMessageDigest);
+                while (h.length() < 2)
+                    h = "0" + h;
+                hexString.append(h);
+            }
+            return hexString.toString();
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
     protected HttpURLConnection createHttpUrlConnection(String url) throws Exception {
@@ -211,58 +263,123 @@ public class HttpUrlConnector extends Connector {
         }
     }
 
-    protected void sendRequest(final ProtocolController protocolController, HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo, TimeStat timeStat, int debugFlags) throws Exception {
-        try {
-            if (requestInfo.entity != null) {
-                urlConnection.setDoOutput(true);
-                if (!(urlConnection instanceof HttpsURLConnection)) {   //prevent andoid bug
-                    urlConnection.setFixedLengthStreamingMode((int) requestInfo.entity.getContentLength());
+    protected boolean handleDigestAuth(HttpURLConnection urlConnection, int responseCode) {
+        if(responseCode==401){
+            String digestResponse=urlConnection.getHeaderField("WWW-Authenticate");
+            if(digestResponse!=null && digestResponse.indexOf("Digest")==0){
+
+
+                for(String item : digestResponse.substring(7).replaceAll(",","").split(" ")){
+                    String name=item.split("=")[0];
+                    String value=item.split("=")[1].replaceAll("\"","");
+                    if(name.equals("realm")){
+                        realm=value;
+                    }else if(name.equals("nonce")){
+                        nonce=value;
+                    }else if(name.equals("qop")){
+                        qop=value;
+                    }else if(name.equals("opaque")){
+                        opaque=value;
+                    }else if(name.equals("algorithm")){
+                        algorithm=value;
+                    }
                 }
-                OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
-                        new RequestOutputStream(urlConnection.getOutputStream(), timeStat, requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
-                timeStat.tickConnectionTime();
-                if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                    longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
-                    requestInfo.entity.reset();
-                }
-                requestInfo.entity.writeTo(stream);
-                stream.flush();
-                stream.close();
-            } else {
-                if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                    longLog("Request", requestInfo.url);
-                }
-                urlConnection.getInputStream();
-                timeStat.tickConnectionTime();
-                timeStat.tickSendTime();
+
+                digestCounter=0;
+                return true;
             }
-        } catch (FileNotFoundException ex) {
-            handleHttpException(protocolController, urlConnection.getResponseCode(), convertStreamToString(urlConnection.getErrorStream()));
         }
+        return false;
+    }
+
+    protected void sendRequest(HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo, TimeStat timeStat, int debugFlags) throws Exception {
+
+        if(realm!=null){
+            digestCounter++;
+            String cnonce=Base64.encodeToString((System.currentTimeMillis() + "").getBytes(), Base64.NO_WRAP);
+            URL url=urlConnection.getURL();
+            String base = url.getProtocol() + "://" + url.getHost();
+            String uri=url.toString().substring(base.length());
+            String nc=digestCounter+"";
+            String method=requestInfo.entity != null ? "POST" : "GET";
+            String response=auth(username,realm,password,nonce,nc,cnonce,qop,method,uri);
+            String digestHeader="Digest username=\"" + username + "\", realm=\"" + realm +"\", nonce=\""+nonce+"\"," +
+                    " uri=\""+uri+"\", cnonce=\""+cnonce+"\","+
+                    "nc="+nc+", qop="+qop+", response=\""+response+"\", opaque=\""+opaque+"\", algorithm=\""+algorithm+"\"";
+            if ((debugFlags & Endpoint.TOKEN_DEBUG) > 0) {
+                longLog("digest", digestHeader);
+            }
+            urlConnection.addRequestProperty("Authorization",digestHeader);
+        }
+
+        if (requestInfo.entity != null) {
+            urlConnection.setDoOutput(true);
+            if (!(urlConnection instanceof HttpsURLConnection)) {   //prevent android bug
+                urlConnection.setFixedLengthStreamingMode((int) requestInfo.entity.getContentLength());
+            }
+            OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
+                    new RequestOutputStream(urlConnection.getOutputStream(), timeStat, requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
+            timeStat.tickConnectionTime();
+            if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
+                longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
+                requestInfo.entity.reset();
+            }
+            requestInfo.entity.writeTo(stream);
+            stream.flush();
+            stream.close();
+        } else {
+            if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
+                longLog("Request", requestInfo.url);
+            }
+            urlConnection.getInputStream();
+            timeStat.tickConnectionTime();
+            timeStat.tickSendTime();
+        }
+
     }
 
     public Connection send(final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
                            int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException {
+        boolean repeat = false;
+        HttpURLConnection urlConnection=null;
+        do {
+            try {
+                urlConnection = createHttpUrlConnection(requestInfo.url);
 
-        try {
-            HttpURLConnection urlConnection = createHttpUrlConnection(requestInfo.url);
+                initSetup(urlConnection, requestInfo, timeout, timeStat, method, cacheInfo);
+                logRequestHeaders(debugFlags, urlConnection);
+                sendRequest(urlConnection, requestInfo, timeStat, debugFlags);
+                logResponseHeaders(debugFlags, urlConnection);
 
-            initSetup(urlConnection, requestInfo, timeout, timeStat, method, cacheInfo);
-            logRequestHeaders(debugFlags, urlConnection);
-            sendRequest(protocolController, urlConnection, requestInfo, timeStat, debugFlags);
-            logResponseHeaders(debugFlags, urlConnection);
-
-            if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
-                longLog("Response code", urlConnection.getResponseCode() + "");
+                if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
+                    longLog("Response code", urlConnection.getResponseCode() + "");
+                }
+                return new FinalConnection(urlConnection, protocolController);
+            } catch (FileNotFoundException ex) {
+                int code;
+                try{
+                    code=urlConnection.getResponseCode();
+                }catch (IOException e){
+                    throw new ConnectionException(e);
+                }
+                if (!repeat && username != null) {
+                    repeat = handleDigestAuth(urlConnection, code);
+                    if (!repeat) {
+                        handleHttpException(protocolController, code, convertStreamToString(urlConnection.getErrorStream()));
+                    }
+                } else {
+                    handleHttpException(protocolController, code, convertStreamToString(urlConnection.getErrorStream()));
+                }
+            } catch (Exception ex) {
+                if (!(ex instanceof JudoException)) {
+                    throw new ConnectionException(ex);
+                } else {
+                    throw (JudoException) ex;
+                }
             }
-            return new FinalConnection(urlConnection, protocolController);
-        } catch (Exception ex) {
-            if (!(ex instanceof JudoException)) {
-                throw new ConnectionException(ex);
-            } else {
-                throw (JudoException) ex;
-            }
-        }
+
+        } while (repeat);
+        return null;
     }
 
     protected void handleHttpException(ProtocolController protocolController, int code, String message) throws JudoException {
