@@ -154,9 +154,9 @@ class AsyncResult implements Runnable {
                 case ERROR:
                 case RESULT:
                     synchronized (rpc.getSingleCallMethods()) {
-                        rpc.getSingleCallMethods().remove(method);
-                        if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                            LoggerImpl.log("Request " + method.getName() + " removed - SingleCall.");
+                        boolean result = rpc.getSingleCallMethods().remove(method);
+                        if (result && (rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
+                            LoggerImpl.log("Request " + method.getName() + " removed from SingleCall queue.");
                         }
                     }
                     break;
