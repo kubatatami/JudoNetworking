@@ -3,6 +3,8 @@ package com.github.kubatatami.judonetworking;
 
 import android.app.Fragment;
 
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -24,13 +26,15 @@ public class FragmentCallback<T> extends Callback<T> {
         }
     }
 
+    @Override
     public final void onSuccess(T result) {
         if (fragment.getActivity() != null) {
             onSafeSuccess(result);
         }
     }
 
-    public final void onError(Exception e) {
+    @Override
+    public final void onError(JudoException e) {
         if (fragment.getActivity() != null) {
             onSafeError(e);
         }
