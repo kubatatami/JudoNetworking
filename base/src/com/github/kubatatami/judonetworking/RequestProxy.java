@@ -60,9 +60,13 @@ class RequestProxy implements InvocationHandler {
 
     public static String getMethodName(Method method, RequestMethod ann) {
         NamePrefix namePrefix = method.getDeclaringClass().getAnnotation(NamePrefix.class);
+        NameSuffix nameSuffix = method.getDeclaringClass().getAnnotation(NameSuffix.class);
         String name = (ann != null && !ann.name().equals("")) ? ann.name() : method.getName();
         if (namePrefix != null) {
             name = namePrefix.value() + name;
+        }
+        if (nameSuffix != null) {
+            name+= nameSuffix.value();
         }
         return name;
     }
