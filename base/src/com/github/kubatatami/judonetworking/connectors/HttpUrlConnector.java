@@ -54,8 +54,8 @@ public class HttpUrlConnector extends Connector {
     private String authKey;
     private String username;
     private String password;
-    private String realm, nonce,algorithm,opaque, qop;
-    private int digestCounter=0;
+    private String realm, nonce, algorithm, opaque, qop;
+    private int digestCounter = 0;
     private HttpURLCreator httpURLCreator = null;
     private HttpURLConnectionModifier httpURLConnectionModifier;
     private static SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
@@ -144,17 +144,17 @@ public class HttpUrlConnector extends Connector {
     }
 
     private String auth(String login, String realm, String pass) {
-        String source = login + ":" +  realm + ":" + pass;
+        String source = login + ":" + realm + ":" + pass;
         return md5(source);
     }
 
-    private String auth(String login, String realm, String pass , String nonce, String nonceCount, String clientNonce, String qop, String method, String digestURI) {
-        String source = auth(login, realm, pass) + ":" +  nonce + ":" + nonceCount+ ":" + clientNonce+ ":" + qop+ ":" + authMethod(method,digestURI);
+    private String auth(String login, String realm, String pass, String nonce, String nonceCount, String clientNonce, String qop, String method, String digestURI) {
+        String source = auth(login, realm, pass) + ":" + nonce + ":" + nonceCount + ":" + clientNonce + ":" + qop + ":" + authMethod(method, digestURI);
         return md5(source);
     }
 
     private String authMethod(String method, String digestURI) {
-        String source = method + ":" +  digestURI;
+        String source = method + ":" + digestURI;
         return md5(source);
     }
 
@@ -264,28 +264,28 @@ public class HttpUrlConnector extends Connector {
     }
 
     protected boolean handleDigestAuth(HttpURLConnection urlConnection, int responseCode) {
-        if(responseCode==401){
-            String digestResponse=urlConnection.getHeaderField("WWW-Authenticate");
-            if(digestResponse!=null && digestResponse.indexOf("Digest")==0){
+        if (responseCode == 401) {
+            String digestResponse = urlConnection.getHeaderField("WWW-Authenticate");
+            if (digestResponse != null && digestResponse.indexOf("Digest") == 0) {
 
 
-                for(String item : digestResponse.substring(7).replaceAll(",","").split(" ")){
-                    String name=item.split("=")[0];
-                    String value=item.split("=")[1].replaceAll("\"","");
-                    if(name.equals("realm")){
-                        realm=value;
-                    }else if(name.equals("nonce")){
-                        nonce=value;
-                    }else if(name.equals("qop")){
-                        qop=value;
-                    }else if(name.equals("opaque")){
-                        opaque=value;
-                    }else if(name.equals("algorithm")){
-                        algorithm=value;
+                for (String item : digestResponse.substring(7).replaceAll(",", "").split(" ")) {
+                    String name = item.split("=")[0];
+                    String value = item.split("=")[1].replaceAll("\"", "");
+                    if (name.equals("realm")) {
+                        realm = value;
+                    } else if (name.equals("nonce")) {
+                        nonce = value;
+                    } else if (name.equals("qop")) {
+                        qop = value;
+                    } else if (name.equals("opaque")) {
+                        opaque = value;
+                    } else if (name.equals("algorithm")) {
+                        algorithm = value;
                     }
                 }
 
-                digestCounter=0;
+                digestCounter = 0;
                 return true;
             }
         }
@@ -294,22 +294,22 @@ public class HttpUrlConnector extends Connector {
 
     protected void sendRequest(HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo, TimeStat timeStat, int debugFlags) throws Exception {
 
-        if(realm!=null){
+        if (realm != null) {
             digestCounter++;
-            String cnonce=Base64.encodeToString((System.currentTimeMillis() + "").getBytes(), Base64.NO_WRAP);
-            URL url=urlConnection.getURL();
+            String cnonce = Base64.encodeToString((System.currentTimeMillis() + "").getBytes(), Base64.NO_WRAP);
+            URL url = urlConnection.getURL();
             String base = url.getProtocol() + "://" + url.getHost();
-            String uri=url.toString().substring(base.length());
-            String nc=digestCounter+"";
-            String method=requestInfo.entity != null ? "POST" : "GET";
-            String response=auth(username,realm,password,nonce,nc,cnonce,qop,method,uri);
-            String digestHeader="Digest username=\"" + username + "\", realm=\"" + realm +"\", nonce=\""+nonce+"\"," +
-                    " uri=\""+uri+"\", cnonce=\""+cnonce+"\","+
-                    "nc="+nc+", qop="+qop+", response=\""+response+"\", opaque=\""+opaque+"\", algorithm=\""+algorithm+"\"";
+            String uri = url.toString().substring(base.length());
+            String nc = digestCounter + "";
+            String method = requestInfo.entity != null ? "POST" : "GET";
+            String response = auth(username, realm, password, nonce, nc, cnonce, qop, method, uri);
+            String digestHeader = "Digest username=\"" + username + "\", realm=\"" + realm + "\", nonce=\"" + nonce + "\"," +
+                    " uri=\"" + uri + "\", cnonce=\"" + cnonce + "\"," +
+                    "nc=" + nc + ", qop=" + qop + ", response=\"" + response + "\", opaque=\"" + opaque + "\", algorithm=\"" + algorithm + "\"";
             if ((debugFlags & Endpoint.TOKEN_DEBUG) > 0) {
                 longLog("digest", digestHeader);
             }
-            urlConnection.addRequestProperty("Authorization",digestHeader);
+            urlConnection.addRequestProperty("Authorization", digestHeader);
         }
 
         if (requestInfo.entity != null) {
@@ -341,7 +341,7 @@ public class HttpUrlConnector extends Connector {
     public Connection send(final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
                            int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException {
         boolean repeat = false;
-        HttpURLConnection urlConnection=null;
+        HttpURLConnection urlConnection = null;
         do {
             try {
                 urlConnection = createHttpUrlConnection(requestInfo.url);
@@ -357,9 +357,9 @@ public class HttpUrlConnector extends Connector {
                 return new FinalConnection(urlConnection, protocolController);
             } catch (FileNotFoundException ex) {
                 int code;
-                try{
-                    code=urlConnection.getResponseCode();
-                }catch (IOException e){
+                try {
+                    code = urlConnection.getResponseCode();
+                } catch (IOException e) {
                     throw new ConnectionException(e);
                 }
                 if (!repeat && username != null) {
