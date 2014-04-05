@@ -9,6 +9,8 @@ public interface AsyncResult {
 
     public boolean isCancelled();
 
+    public boolean isRunning();
+
     public void cancel();
 
 

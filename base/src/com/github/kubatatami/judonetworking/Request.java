@@ -21,7 +21,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     private Method method;
     private boolean batchFatal = true;
     private Object additionalControllerData = null;
-    private boolean cancelled, done;
+    private boolean cancelled, done, running;
 
     public Request(Integer id, EndpointImplementation rpc, Method method, String name, RequestMethod ann,
                    Object[] args, Type returnType, int timeout, CallbackInterface<Object> callback, Object additionalControllerData) {
@@ -309,11 +309,30 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     @Override
     public void cancel() {
-        cancelled = true;
+        this.cancelled = true;
+        if(running){
+            running=false;
+            rpc.getHandler().post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onFinish();
+                }
+            });
+        }
+    }
+
+    @Override
+    public boolean isRunning() {
+        return running;
     }
 
     public void done() {
         this.done = true;
+        this.running=false;
+    }
+
+    public void start() {
+        this.running = true;
     }
 
 }

@@ -105,11 +105,11 @@ class AsyncResultSender implements Runnable {
             }
             switch (type) {
                 case START:
+                    request.start();
                     callback.onStart();
                     break;
                 case RESULT:
                     callback.onSuccess(result);
-                    request.done();
                     break;
                 case ERROR:
                     Method handleMethod = findHandleMethod(callback.getClass(), e.getClass());
@@ -123,7 +123,6 @@ class AsyncResultSender implements Runnable {
                     } else {
                         callback.onError(e);
                     }
-                    request.done();
                     break;
                 case PROGRESS:
                     callback.onProgress(progress);
@@ -131,6 +130,7 @@ class AsyncResultSender implements Runnable {
             }
             if (type == Type.RESULT || type == Type.ERROR) {
                 callback.onFinish();
+                request.done();
             }
         } else if (transaction != null) {
             switch (type) {
