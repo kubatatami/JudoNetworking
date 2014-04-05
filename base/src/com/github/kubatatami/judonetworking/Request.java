@@ -2,10 +2,11 @@ package com.github.kubatatami.judonetworking;
 
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-class Request implements Runnable, Comparable<Request>, ProgressObserver, RequestInterface {
+class Request implements Runnable, Comparable<Request>, ProgressObserver, RequestInterface, AsyncResult {
     private Integer id;
     private final EndpointImplementation rpc;
     private CallbackInterface<Object> callback;
@@ -20,6 +21,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     private Method method;
     private boolean batchFatal = true;
     private Object additionalControllerData = null;
+    private boolean cancelled, done;
 
     public Request(Integer id, EndpointImplementation rpc, Method method, String name, RequestMethod ann,
                    Object[] args, Type returnType, int timeout, CallbackInterface<Object> callback, Object additionalControllerData) {
@@ -57,34 +59,34 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     public void invokeStart() {
         if (callback != null) {
-            rpc.getHandler().post(new AsyncResult(this));
+            rpc.getHandler().post(new AsyncResultSender(this));
         }
     }
 
     public void invokeCallbackException(JudoException e) {
-        rpc.getHandler().post(new AsyncResult(this, e));
+        rpc.getHandler().post(new AsyncResultSender(this, e));
     }
 
     public void invokeCallback(Object result) {
-        rpc.getHandler().post(new AsyncResult(this, result));
+        rpc.getHandler().post(new AsyncResultSender(this, result));
     }
 
     public void invokeProgress(int progress) {
         if (callback != null) {
-            rpc.getHandler().post(new AsyncResult(this, progress));
+            rpc.getHandler().post(new AsyncResultSender(this, progress));
         }
     }
 
     public static void invokeBatchCallbackProgress(final EndpointImplementation rpc, Batch<?> batch, int progress) {
-        rpc.getHandler().post(new AsyncResult(rpc, batch, progress));
+        rpc.getHandler().post(new AsyncResultSender(rpc, batch, progress));
     }
 
     public static void invokeBatchCallbackException(final EndpointImplementation rpc, Batch<?> batch, final JudoException e) {
-        rpc.getHandler().post(new AsyncResult(rpc, batch, e));
+        rpc.getHandler().post(new AsyncResultSender(rpc, batch, e));
     }
 
     public static void invokeBatchCallback(EndpointImplementation rpc, Batch<?> batch, Object[] results) {
-        rpc.getHandler().post(new AsyncResult(rpc, batch, results));
+        rpc.getHandler().post(new AsyncResultSender(rpc, batch, results));
     }
 
     @Override
@@ -261,7 +263,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     private void tick() {
         if (callback != null) {
-            rpc.getHandler().post(new AsyncResult(this, ((int) this.progress * 100 / max)));
+            rpc.getHandler().post(new AsyncResultSender(this, ((int) this.progress * 100 / max)));
         }
     }
 
@@ -291,7 +293,27 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         this.batchFatal = batchFatal;
     }
 
-    public void setAdditionalControllerData(Object additionalControllerData) {
+    public void setAdditionalControllerData(Serializable additionalControllerData) {
         this.additionalControllerData = additionalControllerData;
     }
+
+    @Override
+    public boolean isDone() {
+        return done;
+    }
+
+    @Override
+    public boolean isCancelled() {
+        return cancelled;
+    }
+
+    @Override
+    public void cancel() {
+        cancelled = true;
+    }
+
+    public void done() {
+        this.done = true;
+    }
+
 }

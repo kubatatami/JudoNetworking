@@ -66,7 +66,7 @@ class RequestProxy implements InvocationHandler {
             name = namePrefix.value() + name;
         }
         if (nameSuffix != null) {
-            name+= nameSuffix.value();
+            name += nameSuffix.value();
         }
         return name;
     }
@@ -99,7 +99,7 @@ class RequestProxy implements InvocationHandler {
                         rpc.getExecutorService().execute(batchRunnable);
                     } catch (RejectedExecutionException ex) {
                         for (Request batchRequest : batchRequests) {
-                            new AsyncResult(batchRequest, new JudoException("Request queue is full.", ex)).run();
+                            new AsyncResultSender(batchRequest, new JudoException("Request queue is full.", ex)).run();
                         }
                         batchRequests.clear();
                         batch = false;
@@ -108,7 +108,7 @@ class RequestProxy implements InvocationHandler {
                     try {
                         rpc.getExecutorService().execute(request);
                     } catch (RejectedExecutionException ex) {
-                        new AsyncResult(request, new JudoException("Request queue is full.", ex)).run();
+                        new AsyncResultSender(request, new JudoException("Request queue is full.", ex)).run();
 
                     }
                 }
@@ -117,6 +117,7 @@ class RequestProxy implements InvocationHandler {
         }
     }
 
+    @Override
     public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
         try {
 
@@ -162,7 +163,8 @@ class RequestProxy implements InvocationHandler {
                             if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
                                 LoggerImpl.log("Request " + name + " rejected - SingleCall.");
                             }
-                            return null;
+                            request.cancel();
+                            return request;
                         } else {
                             synchronized (rpc.getSingleCallMethods()) {
                                 rpc.getSingleCallMethods().add(m);
@@ -170,7 +172,7 @@ class RequestProxy implements InvocationHandler {
                         }
                     }
                     performAsyncRequest(request);
-                    return null;
+                    return request;
                 }
             } else {
                 try {
