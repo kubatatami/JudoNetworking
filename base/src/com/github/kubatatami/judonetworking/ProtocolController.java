@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -59,7 +60,7 @@ public abstract class ProtocolController {
 
     }
 
-    public Object getAdditionalRequestData() {
+    public Serializable getAdditionalRequestData() {
         return new ApiKey(apiKeyName, apiKey);
     }
 
@@ -67,7 +68,7 @@ public abstract class ProtocolController {
         return null;
     }
 
-    public static class ApiKey {
+    public static class ApiKey implements Serializable {
         public String apiKeyName = null;
         public String apiKey = null;
 
