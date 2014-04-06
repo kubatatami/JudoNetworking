@@ -6,7 +6,7 @@ import java.lang.reflect.Method;
 
 class AsyncResultSender implements Runnable {
     protected CallbackInterface<Object> callback;
-    protected BatchInterface<?> transaction;
+    protected RequestProxy requestProxy;
     protected Object result = null;
     protected Object[] results = null;
     protected JudoException e = null;
@@ -20,23 +20,29 @@ class AsyncResultSender implements Runnable {
         RESULT, ERROR, PROGRESS, START
     }
 
-    AsyncResultSender(EndpointImplementation rpc, BatchInterface<?> callback, Object results[]) {
+    AsyncResultSender(EndpointImplementation rpc, RequestProxy requestProxy) {
+        this.requestProxy = requestProxy;
+        this.rpc = rpc;
+        this.type = Type.START;
+    }
+
+    AsyncResultSender(EndpointImplementation rpc, RequestProxy requestProxy, Object results[]) {
         this.results = results;
-        this.transaction = callback;
+        this.requestProxy = requestProxy;
         this.rpc = rpc;
         this.type = Type.RESULT;
     }
 
-    AsyncResultSender(EndpointImplementation rpc, BatchInterface<?> callback, int progress) {
+    AsyncResultSender(EndpointImplementation rpc, RequestProxy requestProxy, int progress) {
         this.progress = progress;
-        this.transaction = callback;
+        this.requestProxy = requestProxy;
         this.rpc = rpc;
         this.type = Type.PROGRESS;
     }
 
-    AsyncResultSender(EndpointImplementation rpc, BatchInterface<?> callback, JudoException e) {
+    AsyncResultSender(EndpointImplementation rpc, RequestProxy requestProxy, JudoException e) {
         this.e = e;
-        this.transaction = callback;
+        this.requestProxy = requestProxy;
         this.rpc = rpc;
         this.type = Type.ERROR;
     }
@@ -132,8 +138,16 @@ class AsyncResultSender implements Runnable {
                 callback.onFinish();
                 request.done();
             }
-        } else if (transaction != null) {
+        } else if (requestProxy.getBatchCallback() != null) {
+            Batch<?> transaction = requestProxy.getBatchCallback();
+            if (requestProxy.isCancelled()) {
+                return;
+            }
             switch (type) {
+                case START:
+                    requestProxy.start();
+                    transaction.onStart();
+                    break;
                 case RESULT:
                     transaction.onSuccess(results);
                     break;
@@ -156,6 +170,7 @@ class AsyncResultSender implements Runnable {
             }
             if (type == Type.RESULT || type == Type.ERROR) {
                 transaction.onFinish();
+                requestProxy.done();
             }
         }
         if (method != null) {

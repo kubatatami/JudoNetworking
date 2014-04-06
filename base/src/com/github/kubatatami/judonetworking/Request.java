@@ -77,16 +77,20 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         }
     }
 
-    public static void invokeBatchCallbackProgress(final EndpointImplementation rpc, Batch<?> batch, int progress) {
-        rpc.getHandler().post(new AsyncResultSender(rpc, batch, progress));
+    public static void invokeBatchCallbackStart(final EndpointImplementation rpc, RequestProxy requestProxy) {
+        rpc.getHandler().post(new AsyncResultSender(rpc, requestProxy));
     }
 
-    public static void invokeBatchCallbackException(final EndpointImplementation rpc, Batch<?> batch, final JudoException e) {
-        rpc.getHandler().post(new AsyncResultSender(rpc, batch, e));
+    public static void invokeBatchCallbackProgress(final EndpointImplementation rpc, RequestProxy requestProxy, int progress) {
+        rpc.getHandler().post(new AsyncResultSender(rpc, requestProxy, progress));
     }
 
-    public static void invokeBatchCallback(EndpointImplementation rpc, Batch<?> batch, Object[] results) {
-        rpc.getHandler().post(new AsyncResultSender(rpc, batch, results));
+    public static void invokeBatchCallbackException(final EndpointImplementation rpc, RequestProxy requestProxy, final JudoException e) {
+        rpc.getHandler().post(new AsyncResultSender(rpc, requestProxy, e));
+    }
+
+    public static void invokeBatchCallback(EndpointImplementation rpc, RequestProxy requestProxy, Object[] results) {
+        rpc.getHandler().post(new AsyncResultSender(rpc, requestProxy, results));
     }
 
     @Override

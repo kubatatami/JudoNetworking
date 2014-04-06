@@ -160,7 +160,7 @@ class EndpointImplementation implements Endpoint {
 
     @SuppressWarnings("unchecked")
     public <T> T getService(Class<T> obj) {
-        return getService(obj, new RequestProxy(this, obj, protocolController.getAutoBatchTime() > 0 ? BatchMode.AUTO : BatchMode.NONE));
+        return getService(obj, new RequestProxy(this, obj, protocolController.getAutoBatchTime() > 0 ? BatchMode.AUTO : BatchMode.NONE,null));
     }
 
     @SuppressWarnings("unchecked")
@@ -170,7 +170,7 @@ class EndpointImplementation implements Endpoint {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> void callInBatch(Class<T> obj, final Batch<T> batch) {
+    public <T> AsyncResult callInBatch(Class<T> obj, final Batch<T> batch) {
 
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
             try {
@@ -183,7 +183,7 @@ class EndpointImplementation implements Endpoint {
             }
         }
 
-        final RequestProxy pr = new RequestProxy(this, obj, BatchMode.MANUAL);
+        final RequestProxy pr = new RequestProxy(this, obj, BatchMode.MANUAL,batch);
         T proxy = getService(obj, pr);
         pr.setBatchFatal(true);
         batch.run(proxy);
@@ -193,13 +193,13 @@ class EndpointImplementation implements Endpoint {
             executorService.execute(new Runnable() {
                 @Override
                 public void run() {
-                    pr.callBatch(batch);
+                    pr.callBatch();
                 }
             });
         } catch (RejectedExecutionException ex) {
-            new AsyncResultSender(this, batch, new JudoException("Request queue is full.", ex)).run();
+            new AsyncResultSender(this, pr, new JudoException("Request queue is full.", ex)).run();
         }
-
+        return pr;
     }
 
     public TokenCaller getTokenCaller() {

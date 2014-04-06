@@ -8,6 +8,8 @@ package com.github.kubatatami.judonetworking;
  */
 public interface BatchInterface<T> {
 
+    public void onStart();
+
     public void run(final T api);
 
     public void runNonFatal(final T api);

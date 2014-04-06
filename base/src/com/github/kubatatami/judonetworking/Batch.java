@@ -9,6 +9,11 @@ package com.github.kubatatami.judonetworking;
 public abstract class Batch<T> implements BatchInterface<T> {
 
     @Override
+    public void onStart() {
+
+    }
+
+    @Override
     public void run(final T api) {
 
     }

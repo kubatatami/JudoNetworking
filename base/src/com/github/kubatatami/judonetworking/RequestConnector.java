@@ -538,6 +538,7 @@ class RequestConnector {
                         @Override
                         public void run() {
                             CacheResult cacheObject = null;
+                            request.invokeStart();
                             if (rpc.isCacheEnabled() && request.isServerCachable()) {
                                 CacheMethod cacheMethod = new CacheMethod(url, request.getMethod(), request.getServerCacheLevel());
                                 cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getServerCacheSize());
