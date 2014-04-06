@@ -46,9 +46,9 @@ import javax.net.ssl.HttpsURLConnection;
  */
 public class HttpTransportLayer extends TransportLayer {
 
-    private int reconnections = 3;
-    private int connectTimeout = 15000;
-    private int methodTimeout = 10000;
+    private int reconnections = 2;
+    private int connectTimeout = 7500;
+    private int methodTimeout = 5000;
     private boolean followRedirection = true;
     private CookieManager cookieManager;
     private String authKey;
