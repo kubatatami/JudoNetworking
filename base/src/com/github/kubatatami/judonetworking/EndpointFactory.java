@@ -17,8 +17,8 @@ public class EndpointFactory {
      * @param url     Server url.
      * @return Endpoint instance.
      */
-    public static Endpoint createEndpoint(Context context, ProtocolController protocolController, Connector connector, String url) {
-        return new EndpointImplementation(context, protocolController, connector, url);
+    public static Endpoint createEndpoint(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
+        return new EndpointImplementation(context, protocolController, transportLayer, url);
     }
 
 

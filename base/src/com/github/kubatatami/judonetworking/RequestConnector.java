@@ -27,13 +27,13 @@ class RequestConnector {
 
     private final String url;
     private final EndpointImplementation rpc;
-    private final Connector connector;
+    private final TransportLayer transportLayer;
     private final Random randomGenerator = new Random();
 
-    public RequestConnector(String url, EndpointImplementation rpc, Connector connector) {
+    public RequestConnector(String url, EndpointImplementation rpc, TransportLayer transportLayer) {
         this.url = url;
         this.rpc = rpc;
-        this.connector = connector;
+        this.transportLayer = transportLayer;
     }
 
     private static void longLog(String tag, String message) {
@@ -76,8 +76,8 @@ class RequestConnector {
                         return new ErrorResult(request.getId(), new AuthException("Can't obtain api token", ex));
                     }
                 }
-                Connector.Connection conn = connector.send(controller, requestInfo, request.getTimeout(), timeStat,
-                        rpc.getDebugFlags(), request.getMethod(), new Connector.CacheInfo(hash, time));
+                TransportLayer.Connection conn = transportLayer.send(controller, requestInfo, request.getTimeout(), timeStat,
+                        rpc.getDebugFlags(), request.getMethod(), new TransportLayer.CacheInfo(hash, time));
 
                 if (!conn.isNewestAvailable()) {
                     if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
@@ -619,7 +619,7 @@ class RequestConnector {
                     throw new AuthException("Can't obtain api token", ex);
                 }
             }
-            Connector.Connection conn = connector.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null, null);
+            TransportLayer.Connection conn = transportLayer.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null, null);
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
 
@@ -691,19 +691,19 @@ class RequestConnector {
     }
 
     public void setReconnections(int reconnections) {
-        connector.setReconnections(reconnections);
+        transportLayer.setReconnections(reconnections);
     }
 
     public void setConnectTimeout(int connectTimeout) {
-        connector.setConnectTimeout(connectTimeout);
+        transportLayer.setConnectTimeout(connectTimeout);
     }
 
     public void setMethodTimeout(int methodTimeout) {
-        connector.setMethodTimeout(methodTimeout);
+        transportLayer.setMethodTimeout(methodTimeout);
     }
 
     public int getMethodTimeout() {
-        return connector.getMethodTimeout();
+        return transportLayer.getMethodTimeout();
     }
 
     public int randDelay(int minDelay, int maxDelay) {

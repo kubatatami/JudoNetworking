@@ -32,7 +32,7 @@ class EndpointImplementation implements Endpoint {
     private int maxMobileConnections = 1;
     private int maxWifiConnections = 2;
     private RequestConnector requestConnector;
-    private Connector connector;
+    private TransportLayer transportLayer;
     private Handler handler = new Handler();
     private Context context;
     private boolean cacheEnabled = false;
@@ -72,15 +72,15 @@ class EndpointImplementation implements Endpoint {
             });
 
 
-    public EndpointImplementation(Context context, ProtocolController protocolController, Connector connector, String url) {
-        init(context, protocolController, connector, url);
+    public EndpointImplementation(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
+        init(context, protocolController, transportLayer, url);
 
     }
 
 
-    private void init(Context context, ProtocolController protocolController, Connector connector, String url) {
-        this.connector = connector;
-        this.requestConnector = new RequestConnector(url, this, connector);
+    private void init(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
+        this.transportLayer = transportLayer;
+        this.requestConnector = new RequestConnector(url, this, transportLayer);
         this.context = context;
         this.protocolController = protocolController;
         this.url = url;
@@ -140,7 +140,7 @@ class EndpointImplementation implements Endpoint {
         this.maxMobileConnections = maxMobileConnections;
         this.maxWifiConnections = maxWifiConnections;
         int max = Math.max(maxMobileConnections, maxWifiConnections);
-        connector.setMaxConnections(max);
+        transportLayer.setMaxConnections(max);
         setThreadPoolSize(Math.max(maxMobileConnections, maxWifiConnections));
     }
 

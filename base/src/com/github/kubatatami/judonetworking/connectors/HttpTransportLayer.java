@@ -3,7 +3,7 @@ package com.github.kubatatami.judonetworking.connectors;
 import android.os.Build;
 import android.util.Base64;
 
-import com.github.kubatatami.judonetworking.Connector;
+import com.github.kubatatami.judonetworking.TransportLayer;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.ProtocolController;
 import com.github.kubatatami.judonetworking.RequestOutputStream;
@@ -44,7 +44,7 @@ import javax.net.ssl.HttpsURLConnection;
  * Date: 29.03.2013
  * Time: 13:14
  */
-public class HttpUrlConnector extends Connector {
+public class HttpTransportLayer extends TransportLayer {
 
     private int reconnections = 3;
     private int connectTimeout = 15000;
@@ -60,28 +60,28 @@ public class HttpUrlConnector extends Connector {
     private HttpURLConnectionModifier httpURLConnectionModifier;
     private static SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
 
-    public HttpUrlConnector() {
+    public HttpTransportLayer() {
         init(new HttpURLCreatorImplementation(), null, false);
     }
 
-    public HttpUrlConnector(HttpURLCreator httpURLCreator) {
+    public HttpTransportLayer(HttpURLCreator httpURLCreator) {
         init(httpURLCreator, null, false);
     }
 
-    public HttpUrlConnector(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier) {
+    public HttpTransportLayer(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier) {
         init(httpURLCreator, httpURLConnectionModifier, false);
     }
 
 
-    public HttpUrlConnector(boolean forceDisableKeepAlive) {
+    public HttpTransportLayer(boolean forceDisableKeepAlive) {
         init(new HttpURLCreatorImplementation(), null, forceDisableKeepAlive);
     }
 
-    public HttpUrlConnector(HttpURLCreator httpURLCreator, boolean forceDisableKeepAlive) {
+    public HttpTransportLayer(HttpURLCreator httpURLCreator, boolean forceDisableKeepAlive) {
         init(httpURLCreator, null, forceDisableKeepAlive);
     }
 
-    public HttpUrlConnector(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier, boolean forceDisableKeepAlive) {
+    public HttpTransportLayer(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier, boolean forceDisableKeepAlive) {
         init(httpURLCreator, httpURLConnectionModifier, forceDisableKeepAlive);
     }
 
