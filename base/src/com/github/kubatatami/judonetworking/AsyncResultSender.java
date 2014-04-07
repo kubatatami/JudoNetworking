@@ -138,7 +138,7 @@ class AsyncResultSender implements Runnable {
                 callback.onFinish();
                 request.done();
             }
-        } else if (requestProxy.getBatchCallback() != null) {
+        } else if (requestProxy!=null && requestProxy.getBatchCallback() != null) {
             Batch<?> transaction = requestProxy.getBatchCallback();
             if (requestProxy.isCancelled()) {
                 return;

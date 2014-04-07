@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -16,7 +18,7 @@ public interface BatchInterface<T> {
 
     public void onProgress(int progress);
 
-    public void onError(Exception e);
+    public void onError(JudoException e);
 
     public void onSuccess(Object[] results);
 
