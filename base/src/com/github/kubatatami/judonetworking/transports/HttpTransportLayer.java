@@ -1,13 +1,13 @@
-package com.github.kubatatami.judonetworking.connectors;
+package com.github.kubatatami.judonetworking.transports;
 
 import android.os.Build;
-import android.util.Base64;
 
-import com.github.kubatatami.judonetworking.TransportLayer;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.ProtocolController;
 import com.github.kubatatami.judonetworking.RequestOutputStream;
+import com.github.kubatatami.judonetworking.SecurityUtils;
 import com.github.kubatatami.judonetworking.TimeStat;
+import com.github.kubatatami.judonetworking.TransportLayer;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.HttpException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -27,8 +27,6 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -54,8 +52,7 @@ public class HttpTransportLayer extends TransportLayer {
     private String authKey;
     private String username;
     private String password;
-    private String realm, nonce, algorithm, opaque, qop;
-    private int digestCounter = 0;
+    private SecurityUtils.DigestAuth digestAuth;
     private HttpURLCreator httpURLCreator = null;
     private HttpURLConnectionModifier httpURLConnectionModifier;
     private static SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
@@ -127,7 +124,7 @@ public class HttpTransportLayer extends TransportLayer {
     }
 
     public void setBasicAuthentication(final String username, final String password) {
-        authKey = auth(username, password);
+        authKey = SecurityUtils.getBasicAuthHeader(username, password);
     }
 
     public void setBasicAuthentication(final String hash) {
@@ -138,51 +135,6 @@ public class HttpTransportLayer extends TransportLayer {
         this.followRedirection = followRedirection;
     }
 
-    private String auth(String login, String pass) {
-        String source = login + ":" + pass;
-        return "Basic " + Base64.encodeToString(source.getBytes(), Base64.NO_WRAP);
-    }
-
-    private String auth(String login, String realm, String pass) {
-        String source = login + ":" + realm + ":" + pass;
-        return md5(source);
-    }
-
-    private String auth(String login, String realm, String pass, String nonce, String nonceCount, String clientNonce, String qop, String method, String digestURI) {
-        String source = auth(login, realm, pass) + ":" + nonce + ":" + nonceCount + ":" + clientNonce + ":" + qop + ":" + authMethod(method, digestURI);
-        return md5(source);
-    }
-
-    private String authMethod(String method, String digestURI) {
-        String source = method + ":" + digestURI;
-        return md5(source);
-    }
-
-
-    public static String md5(final String s) {
-        final String MD5 = "MD5";
-        try {
-            // Create MD5 Hash
-            MessageDigest digest = java.security.MessageDigest
-                    .getInstance(MD5);
-            digest.update(s.getBytes());
-            byte messageDigest[] = digest.digest();
-
-            // Create Hex String
-            StringBuilder hexString = new StringBuilder();
-            for (byte aMessageDigest : messageDigest) {
-                String h = Integer.toHexString(0xFF & aMessageDigest);
-                while (h.length() < 2)
-                    h = "0" + h;
-                hexString.append(h);
-            }
-            return hexString.toString();
-
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
 
     protected HttpURLConnection createHttpUrlConnection(String url) throws Exception {
         HttpURLConnection urlConnection = null;
@@ -263,49 +215,12 @@ public class HttpTransportLayer extends TransportLayer {
         }
     }
 
-    protected boolean handleDigestAuth(HttpURLConnection urlConnection, int responseCode) {
-        if (responseCode == 401) {
-            String digestResponse = urlConnection.getHeaderField("WWW-Authenticate");
-            if (digestResponse != null && digestResponse.indexOf("Digest") == 0) {
 
+    protected void sendRequest(HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo,
+                               TimeStat timeStat, int debugFlags) throws Exception {
 
-                for (String item : digestResponse.substring(7).replaceAll(",", "").split(" ")) {
-                    String name = item.split("=")[0];
-                    String value = item.split("=")[1].replaceAll("\"", "");
-                    if (name.equals("realm")) {
-                        realm = value;
-                    } else if (name.equals("nonce")) {
-                        nonce = value;
-                    } else if (name.equals("qop")) {
-                        qop = value;
-                    } else if (name.equals("opaque")) {
-                        opaque = value;
-                    } else if (name.equals("algorithm")) {
-                        algorithm = value;
-                    }
-                }
-
-                digestCounter = 0;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    protected void sendRequest(HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo, TimeStat timeStat, int debugFlags) throws Exception {
-
-        if (realm != null) {
-            digestCounter++;
-            String cnonce = Base64.encodeToString((System.currentTimeMillis() + "").getBytes(), Base64.NO_WRAP);
-            URL url = urlConnection.getURL();
-            String base = url.getProtocol() + "://" + url.getHost();
-            String uri = url.toString().substring(base.length());
-            String nc = digestCounter + "";
-            String method = requestInfo.entity != null ? "POST" : "GET";
-            String response = auth(username, realm, password, nonce, nc, cnonce, qop, method, uri);
-            String digestHeader = "Digest username=\"" + username + "\", realm=\"" + realm + "\", nonce=\"" + nonce + "\"," +
-                    " uri=\"" + uri + "\", cnonce=\"" + cnonce + "\"," +
-                    "nc=" + nc + ", qop=" + qop + ", response=\"" + response + "\", opaque=\"" + opaque + "\", algorithm=\"" + algorithm + "\"";
+        if (digestAuth != null) {
+            String digestHeader = SecurityUtils.getDigestAuthHeader(digestAuth, urlConnection.getURL(), requestInfo, username, password);
             if ((debugFlags & Endpoint.TOKEN_DEBUG) > 0) {
                 longLog("digest", digestHeader);
             }
@@ -318,7 +233,8 @@ public class HttpTransportLayer extends TransportLayer {
                 urlConnection.setFixedLengthStreamingMode((int) requestInfo.entity.getContentLength());
             }
             OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
-                    new RequestOutputStream(urlConnection.getOutputStream(), timeStat, requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
+                    new RequestOutputStream(urlConnection.getOutputStream(), timeStat,
+                            requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
             timeStat.tickConnectionTime();
             if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
                 longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
@@ -363,7 +279,8 @@ public class HttpTransportLayer extends TransportLayer {
                     throw new ConnectionException(e);
                 }
                 if (!repeat && username != null) {
-                    repeat = handleDigestAuth(urlConnection, code);
+                    digestAuth = SecurityUtils.handleDigestAuth(urlConnection, code);
+                    repeat = (digestAuth != null);
                     if (!repeat) {
                         handleHttpException(protocolController, code, convertStreamToString(urlConnection.getErrorStream()));
                     }
