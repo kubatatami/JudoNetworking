@@ -314,8 +314,8 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     @Override
     public void cancel() {
         this.cancelled = true;
-        if(running){
-            running=false;
+        if (running) {
+            running = false;
             rpc.getHandler().post(new Runnable() {
                 @Override
                 public void run() {
@@ -332,7 +332,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     public void done() {
         this.done = true;
-        this.running=false;
+        this.running = false;
     }
 
     public void start() {

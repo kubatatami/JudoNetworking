@@ -33,7 +33,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
     public RequestProxy(EndpointImplementation rpc, Class<?> apiInterface, BatchMode mode, Batch<?> batchCallback) {
         this.rpc = rpc;
         this.mode = mode;
-        this.batchCallback=batchCallback;
+        this.batchCallback = batchCallback;
         batchEnabled = (mode == BatchMode.MANUAL);
 
         Method[] methods = apiInterface.getMethods();
@@ -226,19 +226,19 @@ class RequestProxy implements InvocationHandler, AsyncResult {
         List<Request> batches;
         if (batchRequests.size() > 0) {
 
-            if(mode.equals(BatchMode.AUTO)) {
+            if (mode.equals(BatchMode.AUTO)) {
                 synchronized (batchRequests) {
                     batches = new ArrayList<Request>(batchRequests.size());
                     batches.addAll(batchRequests);
                     batchRequests.clear();
                     this.batchEnabled = false;
                 }
-            }else{
+            } else {
                 this.batchEnabled = false;
-                batches=batchRequests;
+                batches = batchRequests;
             }
 
-            Request.invokeBatchCallbackStart(rpc,this);
+            Request.invokeBatchCallbackStart(rpc, this);
 
             Map<Integer, Pair<Request, Object>> cacheObjects = new HashMap<Integer, Pair<Request, Object>>();
             if (rpc.isCacheEnabled()) {
@@ -498,11 +498,11 @@ class RequestProxy implements InvocationHandler, AsyncResult {
     @Override
     public void cancel() {
         this.cancelled = true;
-        for(Request request : batchRequests){
+        for (Request request : batchRequests) {
             request.cancel();
         }
-        if(running){
-            running=false;
+        if (running) {
+            running = false;
             rpc.getHandler().post(new Runnable() {
                 @Override
                 public void run() {
@@ -519,7 +519,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
     public void done() {
         this.done = true;
-        this.running=false;
+        this.running = false;
     }
 
     public void start() {
