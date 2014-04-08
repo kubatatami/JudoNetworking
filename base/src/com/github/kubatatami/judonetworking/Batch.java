@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
+import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -7,6 +9,11 @@ package com.github.kubatatami.judonetworking;
  * Time: 22:48
  */
 public abstract class Batch<T> implements BatchInterface<T> {
+
+    @Override
+    public void onStart() {
+
+    }
 
     @Override
     public void run(final T api) {
@@ -22,7 +29,7 @@ public abstract class Batch<T> implements BatchInterface<T> {
     }
 
     @Override
-    public void onError(Exception e) {
+    public void onError(JudoException e) {
 
     }
 

@@ -7,6 +7,7 @@ import com.github.kubatatami.judonetworking.TokenCaller;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -67,7 +68,7 @@ public class ProtocolControllerWrapper extends ProtocolController {
     }
 
     @Override
-    public Object getAdditionalRequestData() {
+    public Serializable getAdditionalRequestData() {
         return baseController.getAdditionalRequestData();
     }
 

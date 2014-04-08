@@ -16,8 +16,8 @@ public class CallbackWrapper<T> extends Callback<T> {
     }
 
     @Override
-    public void onStart() {
-        baseCallback.onStart();
+    public void onStart(boolean isCached) {
+        baseCallback.onStart(isCached);
     }
 
     @Override

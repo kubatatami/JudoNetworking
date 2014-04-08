@@ -15,7 +15,7 @@ import java.util.Scanner;
  * Date: 24.03.2013
  * Time: 21:53
  */
-public abstract class Connector {
+public abstract class TransportLayer {
 
     public abstract Connection send(ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
                                     int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException;

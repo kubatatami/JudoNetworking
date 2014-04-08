@@ -18,21 +18,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.RejectedExecutionException;
 
-class RequestProxy implements InvocationHandler {
+class RequestProxy implements InvocationHandler, AsyncResult {
 
     protected final EndpointImplementation rpc;
     protected int id = 0;
-    protected boolean batch = false;
+    protected boolean batchEnabled = false;
     protected boolean batchFatal = true;
     protected final List<Request> batchRequests = new ArrayList<Request>();
     protected BatchMode mode = BatchMode.NONE;
     protected Map<Method, RequestMethod> annotations;
+    protected boolean cancelled, done, running;
+    protected Batch<?> batchCallback;
 
-
-    public RequestProxy(EndpointImplementation rpc, Class<?> apiInterface, BatchMode mode) {
+    public RequestProxy(EndpointImplementation rpc, Class<?> apiInterface, BatchMode mode, Batch<?> batchCallback) {
         this.rpc = rpc;
         this.mode = mode;
-        batch = (mode == BatchMode.MANUAL);
+        this.batchCallback = batchCallback;
+        batchEnabled = (mode == BatchMode.MANUAL);
 
         Method[] methods = apiInterface.getMethods();
         annotations = new HashMap<Method, RequestMethod>(methods.length);
@@ -49,7 +51,7 @@ class RequestProxy implements InvocationHandler {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            callBatch(null);
+            callBatch();
         }
     };
 
@@ -60,9 +62,13 @@ class RequestProxy implements InvocationHandler {
 
     public static String getMethodName(Method method, RequestMethod ann) {
         NamePrefix namePrefix = method.getDeclaringClass().getAnnotation(NamePrefix.class);
+        NameSuffix nameSuffix = method.getDeclaringClass().getAnnotation(NameSuffix.class);
         String name = (ann != null && !ann.name().equals("")) ? ann.name() : method.getName();
         if (namePrefix != null) {
             name = namePrefix.value() + name;
+        }
+        if (nameSuffix != null) {
+            name += nameSuffix.value();
         }
         return name;
     }
@@ -80,39 +86,42 @@ class RequestProxy implements InvocationHandler {
         return stackTrace[0];
     }
 
-    protected void performAsyncRequest(Request request) throws Exception {
+    protected AsyncResult performAsyncRequest(Request request) throws Exception {
 
         synchronized (batchRequests) {
-            if (batch) {
+            if (batchEnabled) {
                 request.setBatchFatal(batchFatal);
                 batchRequests.add(request);
-                batch = true;
+                batchEnabled = true;
+                return null;
             } else {
                 if (mode == BatchMode.AUTO) {
                     batchRequests.add(request);
-                    batch = true;
+                    batchEnabled = true;
                     try {
                         rpc.getExecutorService().execute(batchRunnable);
                     } catch (RejectedExecutionException ex) {
                         for (Request batchRequest : batchRequests) {
-                            new AsyncResult(batchRequest, new JudoException("Request queue is full.", ex)).run();
+                            new AsyncResultSender(batchRequest, new JudoException("Request queue is full.", ex)).run();
                         }
                         batchRequests.clear();
-                        batch = false;
+                        batchEnabled = false;
                     }
+                    return request;
                 } else {
                     try {
                         rpc.getExecutorService().execute(request);
                     } catch (RejectedExecutionException ex) {
-                        new AsyncResult(request, new JudoException("Request queue is full.", ex)).run();
-
+                        new AsyncResultSender(request, new JudoException("Request queue is full.", ex)).run();
                     }
+                    return request;
                 }
             }
 
         }
     }
 
+    @Override
     public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
         try {
 
@@ -126,7 +135,7 @@ class RequestProxy implements InvocationHandler {
                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
                     try {
                         StackTraceElement stackTraceElement = getExternalStacktrace(Thread.currentThread().getStackTrace());
-                        if (batch && mode == BatchMode.MANUAL) {
+                        if (batchEnabled && mode == BatchMode.MANUAL) {
                             LoggerImpl.log("Batch request " + name + " from " +
                                     stackTraceElement.getClassName() +
                                     "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
@@ -158,7 +167,8 @@ class RequestProxy implements InvocationHandler {
                             if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
                                 LoggerImpl.log("Request " + name + " rejected - SingleCall.");
                             }
-                            return null;
+                            request.cancel();
+                            return request;
                         } else {
                             synchronized (rpc.getSingleCallMethods()) {
                                 rpc.getSingleCallMethods().add(m);
@@ -166,7 +176,7 @@ class RequestProxy implements InvocationHandler {
                         }
                     }
                     performAsyncRequest(request);
-                    return null;
+                    return request;
                 }
             } else {
                 try {
@@ -212,23 +222,28 @@ class RequestProxy implements InvocationHandler {
     }
 
 
-    public void callBatch(final Batch batch) {
+    public void callBatch() {
         List<Request> batches;
         if (batchRequests.size() > 0) {
 
-
-            synchronized (batchRequests) {
-                batches = new ArrayList<Request>(batchRequests.size());
-                batches.addAll(batchRequests);
-                batchRequests.clear();
-                this.batch = false;
+            if (mode.equals(BatchMode.AUTO)) {
+                synchronized (batchRequests) {
+                    batches = new ArrayList<Request>(batchRequests.size());
+                    batches.addAll(batchRequests);
+                    batchRequests.clear();
+                    this.batchEnabled = false;
+                }
+            } else {
+                this.batchEnabled = false;
+                batches = batchRequests;
             }
+
+            Request.invokeBatchCallbackStart(rpc, this);
 
             Map<Integer, Pair<Request, Object>> cacheObjects = new HashMap<Integer, Pair<Request, Object>>();
             if (rpc.isCacheEnabled()) {
                 for (int i = batches.size() - 1; i >= 0; i--) {
                     Request req = batches.get(i);
-                    req.invokeStart();
                     if (req.isLocalCachable() || rpc.isTest()) {
                         CacheResult result = rpc.getMemoryCache().get(req.getMethod(), req.getArgs(), rpc.isTest() ? 0 : req.getLocalCacheLifeTime(), req.getLocalCacheSize());
                         LocalCacheLevel cacheLevel = rpc.isTest() ? LocalCacheLevel.DISK_CACHE : req.getLocalCacheLevel();
@@ -239,6 +254,7 @@ class RequestProxy implements InvocationHandler {
                                     cacheObjects.put(req.getId(), new Pair<Request, Object>(req, result.object));
                                     if (!req.isLocalCacheOnlyOnError()) {
                                         batches.remove(i);
+                                        req.invokeStart(true);
                                     }
                                 } catch (Exception e) {
                                     LoggerImpl.log(e);
@@ -256,15 +272,17 @@ class RequestProxy implements InvocationHandler {
                                 cacheObjects.put(req.getId(), new Pair<Request, Object>(req, result.object));
                                 if (!req.isLocalCacheOnlyOnError()) {
                                     batches.remove(i);
+                                    req.invokeStart(true);
                                 }
                             }
 
                         }
                     }
+
                 }
             }
 
-            BatchProgressObserver batchProgressObserver = new BatchProgressObserver(rpc, batch, batches);
+            BatchProgressObserver batchProgressObserver = new BatchProgressObserver(rpc, this, batches);
             List<RequestResult> responses;
             if (batches.size() > 0) {
                 try {
@@ -315,13 +333,13 @@ class RequestProxy implements InvocationHandler {
                     return lhs.id.compareTo(rhs.id);
                 }
             });
-            handleBatchResponse(batches, batch, responses);
+            handleBatchResponse(batches, batchCallback, responses);
 
 
         } else {
-            this.batch = false;
-            if (batch != null) {
-                Request.invokeBatchCallback(rpc, batch, new Object[]{});
+            this.batchEnabled = false;
+            if (batchCallback != null) {
+                Request.invokeBatchCallback(rpc, this, new Object[]{});
             }
         }
     }
@@ -439,9 +457,9 @@ class RequestProxy implements InvocationHandler {
         }
         if (batch != null) {
             if (ex == null) {
-                Request.invokeBatchCallback(rpc, batch, results);
+                Request.invokeBatchCallback(rpc, this, results);
             } else {
-                Request.invokeBatchCallbackException(rpc, batch, ex);
+                Request.invokeBatchCallbackException(rpc, this, ex);
             }
         }
         if (ex != null) {
@@ -469,4 +487,48 @@ class RequestProxy implements InvocationHandler {
         }
     }
 
+    @Override
+    public boolean isDone() {
+        return done;
+    }
+
+    @Override
+    public boolean isCancelled() {
+        return cancelled;
+    }
+
+    @Override
+    public void cancel() {
+        this.cancelled = true;
+        for (Request request : batchRequests) {
+            request.cancel();
+        }
+        if (running) {
+            running = false;
+            rpc.getHandler().post(new Runnable() {
+                @Override
+                public void run() {
+                    batchCallback.onFinish();
+                }
+            });
+        }
+    }
+
+    @Override
+    public boolean isRunning() {
+        return running;
+    }
+
+    public void done() {
+        this.done = true;
+        this.running = false;
+    }
+
+    public void start() {
+        this.running = true;
+    }
+
+    public Batch<?> getBatchCallback() {
+        return batchCallback;
+    }
 }

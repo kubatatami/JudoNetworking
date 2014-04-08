@@ -13,14 +13,14 @@ public class BatchProgressObserver implements ProgressObserver {
 
     int max = TimeStat.TICKS;
     float progress = 0;
-    Batch batch;
+    RequestProxy requestProxy;
     EndpointImplementation rpc;
     List<Request> requestList;
     int lastProgress = 0;
 
-    public BatchProgressObserver(EndpointImplementation rpc, Batch batch, List<Request> requestList) {
+    public BatchProgressObserver(EndpointImplementation rpc, RequestProxy requestProxy, List<Request> requestList) {
         this.rpc = rpc;
-        this.batch = batch;
+        this.requestProxy = requestProxy;
         this.requestList = requestList;
     }
 
@@ -52,8 +52,8 @@ public class BatchProgressObserver implements ProgressObserver {
         int percentProgress = (int) (progress * 100 / max);
         if (lastProgress < percentProgress) {
             lastProgress = percentProgress;
-            if (batch != null && progress > 0) {
-                Request.invokeBatchCallbackProgress(rpc, batch, percentProgress);
+            if (requestProxy.getBatchCallback() != null && progress > 0) {
+                Request.invokeBatchCallbackProgress(rpc, requestProxy, percentProgress);
             }
             for (Request request : requestList) {
                 request.invokeProgress(percentProgress);

@@ -27,13 +27,13 @@ class RequestConnector {
 
     private final String url;
     private final EndpointImplementation rpc;
-    private final Connector connector;
+    private final TransportLayer transportLayer;
     private final Random randomGenerator = new Random();
 
-    public RequestConnector(String url, EndpointImplementation rpc, Connector connector) {
+    public RequestConnector(String url, EndpointImplementation rpc, TransportLayer transportLayer) {
         this.url = url;
         this.rpc = rpc;
-        this.connector = connector;
+        this.transportLayer = transportLayer;
     }
 
     private static void longLog(String tag, String message) {
@@ -76,8 +76,8 @@ class RequestConnector {
                         return new ErrorResult(request.getId(), new AuthException("Can't obtain api token", ex));
                     }
                 }
-                Connector.Connection conn = connector.send(controller, requestInfo, request.getTimeout(), timeStat,
-                        rpc.getDebugFlags(), request.getMethod(), new Connector.CacheInfo(hash, time));
+                TransportLayer.Connection conn = transportLayer.send(controller, requestInfo, request.getTimeout(), timeStat,
+                        rpc.getDebugFlags(), request.getMethod(), new TransportLayer.CacheInfo(hash, time));
 
                 if (!conn.isNewestAvailable()) {
                     if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
@@ -298,7 +298,6 @@ class RequestConnector {
                     Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
                     boolean implemented = true;
                     try {
-                        request.invokeStart();
                         request.getMethod().invoke(virtualServerInfo.server, args);
                         int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
                         for (int i = 0; i <= TimeStat.TICKS; i++) {
@@ -366,6 +365,7 @@ class RequestConnector {
                 localCacheObject = rpc.getMemoryCache().get(request.getMethod(), request.getArgs(), rpc.isTest() ? 0 : request.getLocalCacheLifeTime(), request.getLocalCacheSize());
                 if (localCacheObject.result) {
                     if (!request.isLocalCacheOnlyOnError()) {
+                        request.invokeStart(true);
                         timeStat.tickCacheTime();
                         return localCacheObject.object;
                     }
@@ -377,6 +377,7 @@ class RequestConnector {
                             rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), localCacheObject.object, request.getLocalCacheSize());
                         }
                         if (!request.isLocalCacheOnlyOnError()) {
+                            request.invokeStart(true);
                             timeStat.tickCacheTime();
                             return localCacheObject.object;
                         }
@@ -392,7 +393,7 @@ class RequestConnector {
             }
 
             findAndCreateBase64(request);
-
+            request.invokeStart(false);
             RequestResult result;
             if (serverCacheObject != null && serverCacheObject.result) {
                 result = sendRequest(request, timeStat, serverCacheObject.hash, serverCacheObject.time);
@@ -479,7 +480,7 @@ class RequestConnector {
                         Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
                         boolean implemented = true;
                         try {
-                            request.invokeStart();
+                            request.invokeStart(false);
                             try {
                                 request.getMethod().invoke(virtualServerInfo.server, args);
                             } catch (IllegalAccessException e) {
@@ -538,6 +539,7 @@ class RequestConnector {
                         @Override
                         public void run() {
                             CacheResult cacheObject = null;
+                            request.invokeStart(false);
                             if (rpc.isCacheEnabled() && request.isServerCachable()) {
                                 CacheMethod cacheMethod = new CacheMethod(url, request.getMethod(), request.getServerCacheLevel());
                                 cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getServerCacheSize());
@@ -618,7 +620,7 @@ class RequestConnector {
                     throw new AuthException("Can't obtain api token", ex);
                 }
             }
-            Connector.Connection conn = connector.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null, null);
+            TransportLayer.Connection conn = transportLayer.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null, null);
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
 
@@ -690,19 +692,19 @@ class RequestConnector {
     }
 
     public void setReconnections(int reconnections) {
-        connector.setReconnections(reconnections);
+        transportLayer.setReconnections(reconnections);
     }
 
     public void setConnectTimeout(int connectTimeout) {
-        connector.setConnectTimeout(connectTimeout);
+        transportLayer.setConnectTimeout(connectTimeout);
     }
 
     public void setMethodTimeout(int methodTimeout) {
-        connector.setMethodTimeout(methodTimeout);
+        transportLayer.setMethodTimeout(methodTimeout);
     }
 
     public int getMethodTimeout() {
-        return connector.getMethodTimeout();
+        return transportLayer.getMethodTimeout();
     }
 
     public int randDelay(int minDelay, int maxDelay) {
