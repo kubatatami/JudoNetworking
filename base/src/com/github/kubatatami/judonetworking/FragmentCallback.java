@@ -20,9 +20,9 @@ public class FragmentCallback<T> extends Callback<T> {
     }
 
     @Override
-    public final void onStart() {
+    public final void onStart(boolean isCached) {
         if (fragment.getActivity() != null) {
-            onSafeStart();
+            onSafeStart(isCached);
         }
     }
 
@@ -54,7 +54,7 @@ public class FragmentCallback<T> extends Callback<T> {
         }
     }
 
-    public void onSafeStart() {
+    public void onSafeStart(boolean isCached) {
 
     }
 

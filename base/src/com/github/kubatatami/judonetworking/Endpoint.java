@@ -113,7 +113,7 @@ public interface Endpoint {
     public void setTimeProfilerEnabled(boolean enabled);
 
     /**
-     * @return
+     * @return Max stats file size
      */
     public int getMaxStatFileSize();
 

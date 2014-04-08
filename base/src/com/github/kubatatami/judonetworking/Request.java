@@ -41,7 +41,6 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     @Override
     public void run() {
         try {
-            invokeStart();
             Object result = rpc.getRequestConnector().call(this);
             invokeCallback(result);
         } catch (final JudoException e) {
@@ -57,9 +56,9 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         }
     }
 
-    public void invokeStart() {
+    public void invokeStart(boolean isCached) {
         if (callback != null) {
-            rpc.getHandler().post(new AsyncResultSender(this));
+            rpc.getHandler().post(new AsyncResultSender(this,isCached));
         }
     }
 

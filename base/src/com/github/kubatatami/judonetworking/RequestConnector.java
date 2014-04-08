@@ -298,7 +298,6 @@ class RequestConnector {
                     Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
                     boolean implemented = true;
                     try {
-                        request.invokeStart();
                         request.getMethod().invoke(virtualServerInfo.server, args);
                         int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
                         for (int i = 0; i <= TimeStat.TICKS; i++) {
@@ -366,6 +365,7 @@ class RequestConnector {
                 localCacheObject = rpc.getMemoryCache().get(request.getMethod(), request.getArgs(), rpc.isTest() ? 0 : request.getLocalCacheLifeTime(), request.getLocalCacheSize());
                 if (localCacheObject.result) {
                     if (!request.isLocalCacheOnlyOnError()) {
+                        request.invokeStart(true);
                         timeStat.tickCacheTime();
                         return localCacheObject.object;
                     }
@@ -377,6 +377,7 @@ class RequestConnector {
                             rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), localCacheObject.object, request.getLocalCacheSize());
                         }
                         if (!request.isLocalCacheOnlyOnError()) {
+                            request.invokeStart(true);
                             timeStat.tickCacheTime();
                             return localCacheObject.object;
                         }
@@ -392,7 +393,7 @@ class RequestConnector {
             }
 
             findAndCreateBase64(request);
-
+            request.invokeStart(false);
             RequestResult result;
             if (serverCacheObject != null && serverCacheObject.result) {
                 result = sendRequest(request, timeStat, serverCacheObject.hash, serverCacheObject.time);
@@ -479,7 +480,7 @@ class RequestConnector {
                         Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
                         boolean implemented = true;
                         try {
-                            request.invokeStart();
+                            request.invokeStart(false);
                             try {
                                 request.getMethod().invoke(virtualServerInfo.server, args);
                             } catch (IllegalAccessException e) {
@@ -538,7 +539,7 @@ class RequestConnector {
                         @Override
                         public void run() {
                             CacheResult cacheObject = null;
-                            request.invokeStart();
+                            request.invokeStart(false);
                             if (rpc.isCacheEnabled() && request.isServerCachable()) {
                                 CacheMethod cacheMethod = new CacheMethod(url, request.getMethod(), request.getServerCacheLevel());
                                 cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getServerCacheSize());

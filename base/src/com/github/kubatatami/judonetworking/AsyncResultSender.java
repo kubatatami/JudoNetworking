@@ -15,6 +15,7 @@ class AsyncResultSender implements Runnable {
     protected Method method;
     protected EndpointImplementation rpc;
     protected Request request;
+    protected boolean isCached;
 
     enum Type {
         RESULT, ERROR, PROGRESS, START
@@ -47,11 +48,12 @@ class AsyncResultSender implements Runnable {
         this.type = Type.ERROR;
     }
 
-    AsyncResultSender(Request request) {
+    AsyncResultSender(Request request,boolean isCached) {
         this.callback = request.getCallback();
         this.request = request;
         this.rpc = request.getRpc();
         this.type = Type.START;
+        this.isCached=isCached;
     }
 
 
@@ -112,7 +114,7 @@ class AsyncResultSender implements Runnable {
             switch (type) {
                 case START:
                     request.start();
-                    callback.onStart();
+                    callback.onStart(isCached);
                     break;
                 case RESULT:
                     callback.onSuccess(result);
