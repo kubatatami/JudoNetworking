@@ -70,7 +70,7 @@ public class FragmentCallback<T> extends Callback<T> {
 
     }
 
-    public void onSafeError(Exception e) {
+    public void onSafeError(JudoException e) {
 
     }
 }

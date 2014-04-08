@@ -69,7 +69,7 @@ public class SupportFragmentCallback<T> extends Callback<T> {
 
     }
 
-    public void onSafeError(Exception e) {
+    public void onSafeError(JudoException e) {
 
     }
 
