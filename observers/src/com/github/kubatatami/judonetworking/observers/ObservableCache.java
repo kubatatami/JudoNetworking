@@ -37,7 +37,9 @@ public class ObservableCache {
                     String className = iter.nextElement();
                     if (className.contains(packageName)) {
                         Class<?> clazz = Class.forName(className);
-                        dataObserverMethodsCache.put(clazz, getMethods(clazz));
+                        try {
+                            dataObserverMethodsCache.put(clazz, getMethods(clazz));
+                        }catch (NoClassDefFoundError ex){}
                     }
                 }
             } catch (Exception e) {

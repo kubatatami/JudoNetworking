@@ -11,6 +11,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 
+import java.io.Serializable;
 import java.io.StringBufferInputStream;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
@@ -31,7 +32,7 @@ import java.util.Map;
  */
 public class RawRestController extends RawController {
 
-    protected Map<String, Object> customKeys = new HashMap<String, Object>();
+    protected HashMap<String, Object> customKeys = new HashMap<String, Object>();
 
     public void addCustomKey(String name, Object value) {
         customKeys.put(name, value);
@@ -107,7 +108,7 @@ public class RawRestController extends RawController {
 
 
     @Override
-    public Object getAdditionalRequestData() {
+    public Serializable getAdditionalRequestData() {
         return customKeys;
     }
 

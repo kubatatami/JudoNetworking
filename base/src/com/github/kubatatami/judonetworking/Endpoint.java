@@ -55,7 +55,7 @@ public interface Endpoint {
      * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
-    public <T> void callInBatch(Class<T> apiInterface, Batch<T> batch);
+    public <T> AsyncResult callInBatch(Class<T> apiInterface, Batch<T> batch);
 
     /**
      * @param connectionTimeout
@@ -113,7 +113,7 @@ public interface Endpoint {
     public void setTimeProfilerEnabled(boolean enabled);
 
     /**
-     * @return
+     * @return Max stats file size
      */
     public int getMaxStatFileSize();
 

@@ -10,7 +10,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  */
 public interface CallbackInterface<T> {
 
-    public void onStart();
+    public void onStart(boolean isCached);
 
     public void onProgress(int progress);
 

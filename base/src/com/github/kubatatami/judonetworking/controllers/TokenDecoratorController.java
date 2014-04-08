@@ -8,6 +8,7 @@ import com.github.kubatatami.judonetworking.TokenCaller;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.io.InputStream;
+import java.io.Serializable;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -170,7 +171,7 @@ public class TokenDecoratorController<T, Z> extends ProtocolController {
     }
 
     @Override
-    public Object getAdditionalRequestData() {
+    public Serializable getAdditionalRequestData() {
         return baseController.getAdditionalRequestData();
     }
 

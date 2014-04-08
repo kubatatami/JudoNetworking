@@ -30,11 +30,10 @@ public class GetOrPostTools {
             nameValuePairs.add(new BasicNameValuePair(apiKeyName, apiKey));
         }
 
-        if (request.getArgs().length != request.getParamNames().length) {
-            throw new JudoException("Wrong param names.");
-        }
-
         if (request.getArgs() != null) {
+            if (request.getArgs().length != request.getParamNames().length) {
+                throw new JudoException("Wrong param names.");
+            }
             for (Object arg : request.getArgs()) {
                 nameValuePairs.add(new BasicNameValuePair(request.getParamNames()[i], arg == null ? "" : arg.toString()));
                 i++;

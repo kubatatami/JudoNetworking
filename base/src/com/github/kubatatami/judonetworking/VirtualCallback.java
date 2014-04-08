@@ -11,7 +11,7 @@ class VirtualCallback implements CallbackInterface {
     }
 
     @Override
-    public void onStart() {
+    public void onStart(boolean isCached) {
 
     }
 

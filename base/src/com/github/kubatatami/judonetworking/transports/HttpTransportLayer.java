@@ -1,13 +1,13 @@
-package com.github.kubatatami.judonetworking.connectors;
+package com.github.kubatatami.judonetworking.transports;
 
 import android.os.Build;
-import android.util.Base64;
 
-import com.github.kubatatami.judonetworking.Connector;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.ProtocolController;
 import com.github.kubatatami.judonetworking.RequestOutputStream;
+import com.github.kubatatami.judonetworking.SecurityUtils;
 import com.github.kubatatami.judonetworking.TimeStat;
+import com.github.kubatatami.judonetworking.TransportLayer;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.HttpException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -42,40 +42,43 @@ import javax.net.ssl.HttpsURLConnection;
  * Date: 29.03.2013
  * Time: 13:14
  */
-public class HttpUrlConnector extends Connector {
+public class HttpTransportLayer extends TransportLayer {
 
-    private int reconnections = 3;
-    private int connectTimeout = 15000;
-    private int methodTimeout = 10000;
+    private int reconnections = 2;
+    private int connectTimeout = 7500;
+    private int methodTimeout = 5000;
     private boolean followRedirection = true;
     private CookieManager cookieManager;
-    private String authKey = null;
+    private String authKey;
+    private String username;
+    private String password;
+    private SecurityUtils.DigestAuth digestAuth;
     private HttpURLCreator httpURLCreator = null;
-    private HttpURLConnectionModifier httpURLConnectionModifier = null;
+    private HttpURLConnectionModifier httpURLConnectionModifier;
     private static SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
 
-    public HttpUrlConnector() {
+    public HttpTransportLayer() {
         init(new HttpURLCreatorImplementation(), null, false);
     }
 
-    public HttpUrlConnector(HttpURLCreator httpURLCreator) {
+    public HttpTransportLayer(HttpURLCreator httpURLCreator) {
         init(httpURLCreator, null, false);
     }
 
-    public HttpUrlConnector(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier) {
+    public HttpTransportLayer(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier) {
         init(httpURLCreator, httpURLConnectionModifier, false);
     }
 
 
-    public HttpUrlConnector(boolean forceDisableKeepAlive) {
+    public HttpTransportLayer(boolean forceDisableKeepAlive) {
         init(new HttpURLCreatorImplementation(), null, forceDisableKeepAlive);
     }
 
-    public HttpUrlConnector(HttpURLCreator httpURLCreator, boolean forceDisableKeepAlive) {
+    public HttpTransportLayer(HttpURLCreator httpURLCreator, boolean forceDisableKeepAlive) {
         init(httpURLCreator, null, forceDisableKeepAlive);
     }
 
-    public HttpUrlConnector(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier, boolean forceDisableKeepAlive) {
+    public HttpTransportLayer(HttpURLCreator httpURLCreator, HttpURLConnectionModifier httpURLConnectionModifier, boolean forceDisableKeepAlive) {
         init(httpURLCreator, httpURLConnectionModifier, forceDisableKeepAlive);
     }
 
@@ -115,8 +118,13 @@ public class HttpUrlConnector extends Connector {
         this.httpURLConnectionModifier = httpURLConnectionModifier;
     }
 
+    public void setDigestAuthentication(final String username, final String password) {
+        this.username = username;
+        this.password = password;
+    }
+
     public void setBasicAuthentication(final String username, final String password) {
-        authKey = auth(username, password);
+        authKey = SecurityUtils.getBasicAuthHeader(username, password);
     }
 
     public void setBasicAuthentication(final String hash) {
@@ -127,10 +135,6 @@ public class HttpUrlConnector extends Connector {
         this.followRedirection = followRedirection;
     }
 
-    private String auth(String login, String pass) {
-        String source = login + ":" + pass;
-        return "Basic " + Base64.encodeToString(source.getBytes(), Base64.NO_WRAP);
-    }
 
     protected HttpURLConnection createHttpUrlConnection(String url) throws Exception {
         HttpURLConnection urlConnection = null;
@@ -211,58 +215,88 @@ public class HttpUrlConnector extends Connector {
         }
     }
 
-    protected void sendRequest(final ProtocolController protocolController, HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo, TimeStat timeStat, int debugFlags) throws Exception {
-        try {
-            if (requestInfo.entity != null) {
-                urlConnection.setDoOutput(true);
-                if (!(urlConnection instanceof HttpsURLConnection)) {   //prevent andoid bug
-                    urlConnection.setFixedLengthStreamingMode((int) requestInfo.entity.getContentLength());
-                }
-                OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
-                        new RequestOutputStream(urlConnection.getOutputStream(), timeStat, requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
-                timeStat.tickConnectionTime();
-                if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                    longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
-                    requestInfo.entity.reset();
-                }
-                requestInfo.entity.writeTo(stream);
-                stream.flush();
-                stream.close();
-            } else {
-                if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                    longLog("Request", requestInfo.url);
-                }
-                urlConnection.getInputStream();
-                timeStat.tickConnectionTime();
-                timeStat.tickSendTime();
+
+    protected void sendRequest(HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo,
+                               TimeStat timeStat, int debugFlags) throws Exception {
+
+        if (digestAuth != null) {
+            String digestHeader = SecurityUtils.getDigestAuthHeader(digestAuth, urlConnection.getURL(), requestInfo, username, password);
+            if ((debugFlags & Endpoint.TOKEN_DEBUG) > 0) {
+                longLog("digest", digestHeader);
             }
-        } catch (FileNotFoundException ex) {
-            handleHttpException(protocolController, urlConnection.getResponseCode(), convertStreamToString(urlConnection.getErrorStream()));
+            urlConnection.addRequestProperty("Authorization", digestHeader);
         }
+
+        if (requestInfo.entity != null) {
+            urlConnection.setDoOutput(true);
+            if (!(urlConnection instanceof HttpsURLConnection)) {   //prevent android bug
+                urlConnection.setFixedLengthStreamingMode((int) requestInfo.entity.getContentLength());
+            }
+            OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
+                    new RequestOutputStream(urlConnection.getOutputStream(), timeStat,
+                            requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
+            timeStat.tickConnectionTime();
+            if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
+                longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
+                requestInfo.entity.reset();
+            }
+            requestInfo.entity.writeTo(stream);
+            stream.flush();
+            stream.close();
+        } else {
+            if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
+                longLog("Request", requestInfo.url);
+            }
+            urlConnection.getInputStream();
+            timeStat.tickConnectionTime();
+            timeStat.tickSendTime();
+        }
+
     }
 
     public Connection send(final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
                            int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException {
+        boolean repeat = false;
+        HttpURLConnection urlConnection = null;
+        do {
+            try {
+                urlConnection = createHttpUrlConnection(requestInfo.url);
 
-        try {
-            HttpURLConnection urlConnection = createHttpUrlConnection(requestInfo.url);
+                initSetup(urlConnection, requestInfo, timeout, timeStat, method, cacheInfo);
+                logRequestHeaders(debugFlags, urlConnection);
+                sendRequest(urlConnection, requestInfo, timeStat, debugFlags);
+                logResponseHeaders(debugFlags, urlConnection);
 
-            initSetup(urlConnection, requestInfo, timeout, timeStat, method, cacheInfo);
-            logRequestHeaders(debugFlags, urlConnection);
-            sendRequest(protocolController, urlConnection, requestInfo, timeStat, debugFlags);
-            logResponseHeaders(debugFlags, urlConnection);
-
-            if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
-                longLog("Response code", urlConnection.getResponseCode() + "");
+                if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
+                    longLog("Response code", urlConnection.getResponseCode() + "");
+                }
+                return new FinalConnection(urlConnection, protocolController);
+            } catch (FileNotFoundException ex) {
+                int code;
+                try {
+                    code = urlConnection.getResponseCode();
+                } catch (IOException e) {
+                    throw new ConnectionException(e);
+                }
+                if (!repeat && username != null) {
+                    digestAuth = SecurityUtils.handleDigestAuth(urlConnection, code);
+                    repeat = (digestAuth != null);
+                    if (!repeat) {
+                        handleHttpException(protocolController, code, convertStreamToString(urlConnection.getErrorStream()));
+                    }
+                } else {
+                    handleHttpException(protocolController, code, convertStreamToString(urlConnection.getErrorStream()));
+                }
+            } catch (Exception ex) {
+                if (!(ex instanceof JudoException)) {
+                    throw new ConnectionException(ex);
+                } else {
+                    throw (JudoException) ex;
+                }
             }
-            return new FinalConnection(urlConnection, protocolController);
-        } catch (Exception ex) {
-            if (!(ex instanceof JudoException)) {
-                throw new ConnectionException(ex);
-            } else {
-                throw (JudoException) ex;
-            }
-        }
+
+        } while (repeat);
+        return null;
     }
 
     protected void handleHttpException(ProtocolController protocolController, int code, String message) throws JudoException {
