@@ -1,5 +1,8 @@
--testy automatyczne
+-usuniecie metody z obiektu request, wyciagniecie potrzebnych informacji do obiektu serializable
+-warstwa abstrakcji na parametry z adnotacji i classic
 -call in batch niezalezne od obiektu rpc, mozliwe wywolania z kilku serwerow
+
+-testy automatyczne
 -zmiana implementacji tagow - nadpisanie layoutinflater
 -DOKUMENTACJA!!!
 
