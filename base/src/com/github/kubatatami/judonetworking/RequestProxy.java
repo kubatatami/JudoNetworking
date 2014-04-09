@@ -4,6 +4,7 @@ import android.util.Pair;
 
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -120,6 +121,8 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
         }
     }
+
+
 
     @Override
     public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {

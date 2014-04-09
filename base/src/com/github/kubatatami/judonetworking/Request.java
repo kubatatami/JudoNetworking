@@ -20,11 +20,13 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     private Type returnType;
     private Method method;
     private boolean batchFatal = true;
-    private Object additionalControllerData = null;
+    private Serializable additionalControllerData = null;
     private boolean cancelled, done, running;
+    private boolean isApiKeyRequired;
+    private String customUrl;
 
     public Request(Integer id, EndpointImplementation rpc, Method method, String name, RequestMethod ann,
-                   Object[] args, Type returnType, int timeout, CallbackInterface<Object> callback, Object additionalControllerData) {
+                   Object[] args, Type returnType, int timeout, CallbackInterface<Object> callback, Serializable additionalControllerData) {
         this.id = id;
         this.name = name;
         this.timeout = timeout;
@@ -58,7 +60,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     public void invokeStart(boolean isCached) {
         if (callback != null) {
-            rpc.getHandler().post(new AsyncResultSender(this,isCached));
+            rpc.getHandler().post(new AsyncResultSender(this, isCached));
         }
     }
 
@@ -129,11 +131,15 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     @Override
     public boolean isApiKeyRequired() {
-        ApiKeyRequired ann = method.getAnnotation(ApiKeyRequired.class);
-        if (ann == null) {
-            ann = method.getDeclaringClass().getAnnotation(ApiKeyRequired.class);
+        if (method != null) {
+            ApiKeyRequired ann = method.getAnnotation(ApiKeyRequired.class);
+            if (ann == null) {
+                ann = method.getDeclaringClass().getAnnotation(ApiKeyRequired.class);
+            }
+            return ann != null && ann.enabled();
+        } else {
+            return isApiKeyRequired;
         }
-        return ann != null && ann.enabled();
     }
 
     @Override
@@ -147,7 +153,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     }
 
     @Override
-    public Object getAdditionalData() {
+    public Serializable getAdditionalData() {
         return additionalControllerData;
     }
 
@@ -156,33 +162,45 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     }
 
     LocalCache getLocalCache() {
-        LocalCache ann = method.getAnnotation(LocalCache.class);
-        if (ann == null) {
-            ann = method.getDeclaringClass().getAnnotation(LocalCache.class);
+        if (method != null) {
+            LocalCache ann = method.getAnnotation(LocalCache.class);
+            if (ann == null) {
+                ann = method.getDeclaringClass().getAnnotation(LocalCache.class);
+            }
+            if (ann != null && !ann.enabled()) {
+                ann = null;
+            }
+            return ann;
+        } else {
+            return null;
         }
-        if (ann != null && !ann.enabled()) {
-            ann = null;
-        }
-        return ann;
     }
 
     ServerCache getServerCache() {
-        ServerCache ann = method.getAnnotation(ServerCache.class);
-        if (ann == null) {
-            ann = method.getDeclaringClass().getAnnotation(ServerCache.class);
+        if (method != null) {
+            ServerCache ann = method.getAnnotation(ServerCache.class);
+            if (ann == null) {
+                ann = method.getDeclaringClass().getAnnotation(ServerCache.class);
+            }
+            if (ann != null && !ann.enabled()) {
+                ann = null;
+            }
+            return ann;
+        } else {
+            return null;
         }
-        if (ann != null && !ann.enabled()) {
-            ann = null;
-        }
-        return ann;
     }
 
     boolean isSingleCall() {
-        SingleCall ann = method.getAnnotation(SingleCall.class);
-        if (ann == null) {
-            ann = method.getDeclaringClass().getAnnotation(SingleCall.class);
+        if (method != null) {
+            SingleCall ann = method.getAnnotation(SingleCall.class);
+            if (ann == null) {
+                ann = method.getDeclaringClass().getAnnotation(SingleCall.class);
+            }
+            return ann != null && ann.enabled();
+        } else {
+            return false;
         }
-        return ann != null && ann.enabled();
     }
 
     public int getLocalCacheLifeTime() {
@@ -338,4 +356,15 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         this.running = true;
     }
 
+    public String getCustomUrl() {
+        return customUrl;
+    }
+
+    public void setCustomUrl(String customUrl) {
+        this.customUrl = customUrl;
+    }
+
+    public void setApiKeyRequired(boolean isApiKeyRequired) {
+        this.isApiKeyRequired = isApiKeyRequired;
+    }
 }

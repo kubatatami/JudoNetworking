@@ -24,12 +24,17 @@ public class ObservableWrapper<T> extends Callback<T> {
     protected boolean forceUpdateOnNetworkStateChange = false;
     protected boolean checkNetworkState = false;
     protected boolean checkUpdateOnGet = false;
+    protected boolean firstNetworkState = true;
     protected long period = 0;
     protected Timer timer;
 
     protected NetworkUtils.NetworkStateListener networkStateListener = new NetworkUtils.NetworkStateListener() {
         @Override
         public void onNetworkStateChange(boolean networkAvailable) {
+            if(firstNetworkState){
+                firstNetworkState=false;
+                return;
+            }
             if (networkAvailable) {
                 if (forceUpdateOnNetworkStateChange) {
                     forceUpdate();

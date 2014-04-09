@@ -12,8 +12,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,7 +30,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-class EndpointImplementation implements Endpoint {
+class EndpointImplementation implements Endpoint, EndpointClassic {
 
     private int maxMobileConnections = 1;
     private int maxWifiConnections = 2;
@@ -59,7 +62,7 @@ class EndpointImplementation implements Endpoint {
     private boolean processingMethod = false;
     private long tokenExpireTimestamp = -1;
     private List<Method> singleCallMethods = new ArrayList<Method>();
-
+    private int id = 0;
 
     private ThreadPoolExecutor executorService =
             new ThreadPoolExecutor(2, 30, 30, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
@@ -166,6 +169,29 @@ class EndpointImplementation implements Endpoint {
     @SuppressWarnings("unchecked")
     private <T> T getService(Class<T> obj, RequestProxy proxy) {
         return (T) Proxy.newProxyInstance(obj.getClassLoader(), new Class<?>[]{obj}, proxy);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> AsyncResult sendAsyncRequest(String url, String name, CallbackInterface<T> callback, Object... args) {
+        return sendAsyncRequest(url, name, new RequestOptions(), callback, args);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> AsyncResult sendAsyncRequest(String url, String name, RequestOptions requestOptions, CallbackInterface<T> callback, Object... args) {
+        id++;
+        Request request = new Request(
+                id, this, null,
+                name, requestOptions, args,
+                ((ParameterizedType)callback.getClass().getGenericSuperclass()).getActualTypeArguments()[0], getRequestConnector().getMethodTimeout(),
+                (CallbackInterface<Object>) callback, getProtocolController().getAdditionalRequestData());
+        request.setCustomUrl(url);
+        request.setApiKeyRequired(requestOptions.apiKeyRequired());
+        try {
+            getExecutorService().execute(request);
+        } catch (RejectedExecutionException ex) {
+            new AsyncResultSender(request, new JudoException("Request queue is full.", ex)).run();
+        }
+        return request;
     }
 
     @Override

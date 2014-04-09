@@ -63,7 +63,9 @@ class RequestConnector {
                 currentTokenExpireTimestamp = 0;
                 result = new RequestSuccessResult(request.getId(), virtualObject);
             } else {
-                ProtocolController.RequestInfo requestInfo = controller.createRequest(url, request);
+                ProtocolController.RequestInfo requestInfo = controller.createRequest(
+                                request.getCustomUrl() == null ? url : request.getCustomUrl(),
+                                request);
                 timeStat.tickCreateTime();
                 lossCheck();
                 delay();
@@ -276,46 +278,48 @@ class RequestConnector {
 
     private Object handleVirtualServerRequest(Request request, TimeStat timeStat) throws JudoException {
         try {
-            VirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(request.getMethod().getDeclaringClass());
-            if (virtualServerInfo != null) {
-                if (request.getCallback() == null) {
-                    try {
-                        Object object = request.getMethod().invoke(virtualServerInfo.server, request.getArgs());
-                        int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
-                        for (int i = 0; i <= TimeStat.TICKS; i++) {
-                            Thread.sleep(delay / TimeStat.TICKS);
-                            timeStat.tickTime(i);
+            if(request.getMethod()!=null) {
+                VirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(request.getMethod().getDeclaringClass());
+                if (virtualServerInfo != null) {
+                    if (request.getCallback() == null) {
+                        try {
+                            Object object = request.getMethod().invoke(virtualServerInfo.server, request.getArgs());
+                            int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
+                            for (int i = 0; i <= TimeStat.TICKS; i++) {
+                                Thread.sleep(delay / TimeStat.TICKS);
+                                timeStat.tickTime(i);
+                            }
+                            return object;
+                        } catch (InvocationTargetException ex) {
+                            if (ex.getCause() == null || !(ex.getCause() instanceof UnsupportedOperationException)) {
+                                throw ex;
+                            }
                         }
-                        return object;
-                    } catch (InvocationTargetException ex) {
-                        if (ex.getCause() == null || !(ex.getCause() instanceof UnsupportedOperationException)) {
-                            throw ex;
-                        }
-                    }
 
-                } else {
-                    VirtualCallback callback = new VirtualCallback(request.getId());
-                    Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
-                    boolean implemented = true;
-                    try {
-                        request.getMethod().invoke(virtualServerInfo.server, args);
-                        int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
-                        for (int i = 0; i <= TimeStat.TICKS; i++) {
-                            Thread.sleep(delay / TimeStat.TICKS);
-                            timeStat.tickTime(i);
+                    } else {
+                        VirtualCallback callback = new VirtualCallback(request.getId());
+                        Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
+                        boolean implemented = true;
+                        try {
+                            request.getMethod().invoke(virtualServerInfo.server, args);
+                            int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
+                            for (int i = 0; i <= TimeStat.TICKS; i++) {
+                                Thread.sleep(delay / TimeStat.TICKS);
+                                timeStat.tickTime(i);
+                            }
+                        } catch (InvocationTargetException ex) {
+                            if (ex.getCause() != null && ex.getCause() instanceof UnsupportedOperationException) {
+                                implemented = false;
+                            } else {
+                                throw ex;
+                            }
                         }
-                    } catch (InvocationTargetException ex) {
-                        if (ex.getCause() != null && ex.getCause() instanceof UnsupportedOperationException) {
-                            implemented = false;
-                        } else {
-                            throw ex;
+                        if (implemented) {
+                            if (callback.getResult().error != null) {
+                                throw callback.getResult().error;
+                            }
+                            return callback.getResult().result;
                         }
-                    }
-                    if (implemented) {
-                        if (callback.getResult().error != null) {
-                            throw callback.getResult().error;
-                        }
-                        return callback.getResult().result;
                     }
                 }
             }
@@ -337,16 +341,18 @@ class RequestConnector {
     protected void findAndCreateBase64(Request request) {
         if (request.getArgs() != null) {
             int i = 0;
-            Annotation[][] annotations = request.getMethod().getParameterAnnotations();
-            for (Object object : request.getArgs()) {
+            if(request.getMethod()!=null) {
+                Annotation[][] annotations = request.getMethod().getParameterAnnotations();
+                for (Object object : request.getArgs()) {
 
-                if (object instanceof byte[]) {
-                    Base64Param ann = findBase64Annotation(annotations[i]);
-                    if (ann != null) {
-                        request.getArgs()[i] = ann.prefix() + Base64.encodeToString((byte[]) object, ann.type()) + ann.suffix();
+                    if (object instanceof byte[]) {
+                        Base64Param ann = findBase64Annotation(annotations[i]);
+                        if (ann != null) {
+                            request.getArgs()[i] = ann.prefix() + Base64.encodeToString((byte[]) object, ann.type()) + ann.suffix();
+                        }
                     }
+                    i++;
                 }
-                i++;
             }
         }
     }
