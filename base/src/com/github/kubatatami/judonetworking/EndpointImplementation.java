@@ -18,6 +18,7 @@ import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -178,9 +179,8 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
     @SuppressWarnings("unchecked")
     public <T> AsyncResult sendAsyncRequest(String url, String name, RequestOptions requestOptions, CallbackInterface<T> callback, Object... args) {
-        id++;
         Request request = new Request(
-                id, this, null,
+                ++id, this, null,
                 name, requestOptions, args,
                 ((ParameterizedType)callback.getClass().getGenericSuperclass()).getActualTypeArguments()[0], getRequestConnector().getMethodTimeout(),
                 (CallbackInterface<Object>) callback, getProtocolController().getAdditionalRequestData());
@@ -194,7 +194,18 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         return request;
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T sendRequest(String url, String name, Type returnType, RequestOptions requestOptions, Object... args) throws JudoException{
+        Request request = new Request(++id, this, null, name, requestOptions, args,
+                returnType,
+                getRequestConnector().getMethodTimeout(),
+                null, getProtocolController().getAdditionalRequestData());
+        request.setCustomUrl(url);
+        request.setApiKeyRequired(requestOptions.apiKeyRequired());
+        return (T) getRequestConnector().call(request);
+    }
+
+        @Override
     @SuppressWarnings("unchecked")
     public <T> AsyncResult callInBatch(Class<T> obj, final Batch<T> batch) {
 
