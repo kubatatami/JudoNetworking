@@ -31,6 +31,10 @@ public interface EndpointBase {
 
     public void setPercentLoss(float percentLoss);
 
+    public int getThreadPriority();
+
+    public void setThreadPriority(int threadPriority);
+
     /**
      * @param onlyInDebugMode
      */

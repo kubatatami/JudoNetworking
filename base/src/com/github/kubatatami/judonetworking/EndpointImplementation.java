@@ -64,13 +64,14 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     private long tokenExpireTimestamp = -1;
     private List<Method> singleCallMethods = new ArrayList<Method>();
     private int id = 0;
+    private int threadPriority=Thread.NORM_PRIORITY - 1;
 
     private ThreadPoolExecutor executorService =
             new ThreadPoolExecutor(2, 30, 30, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable r) {
                     Thread thread = new Thread(r);
-                    thread.setPriority(Thread.NORM_PRIORITY - 1);
+                    thread.setPriority(threadPriority);
                     return thread;
                 }
             });
@@ -78,7 +79,6 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
     public EndpointImplementation(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         init(context, protocolController, transportLayer, url);
-
     }
 
 
@@ -497,5 +497,13 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
     public List<Method> getSingleCallMethods() {
         return singleCallMethods;
+    }
+
+    public int getThreadPriority() {
+        return threadPriority;
+    }
+
+    public void setThreadPriority(int threadPriority) {
+        this.threadPriority = threadPriority;
     }
 }
