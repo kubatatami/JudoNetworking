@@ -4,7 +4,6 @@ import android.util.Pair;
 
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -61,10 +60,15 @@ class RequestProxy implements InvocationHandler, AsyncResult {
     }
 
 
-    public static String getMethodName(Method method, RequestMethod ann) {
+    public static String createMethodName(Method method, RequestMethod ann) {
         NamePrefix namePrefix = method.getDeclaringClass().getAnnotation(NamePrefix.class);
         NameSuffix nameSuffix = method.getDeclaringClass().getAnnotation(NameSuffix.class);
-        String name = (ann != null && !ann.name().equals("")) ? ann.name() : method.getName();
+        String name;
+        if (ann != null &&  !("".equals(ann.name()))) {
+            name=ann.name();
+        }else{
+            name=method.getName();
+        }
         if (namePrefix != null) {
             name = namePrefix.value() + name;
         }
@@ -130,7 +134,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
             RequestMethod ann = annotations.get(m);
             if (ann != null) {
-                String name = getMethodName(m, ann);
+                String name = createMethodName(m, ann);
                 int timeout = rpc.getRequestConnector().getMethodTimeout();
                 Request request;
 
