@@ -48,12 +48,12 @@ class AsyncResultSender implements Runnable {
         this.type = Type.ERROR;
     }
 
-    AsyncResultSender(Request request,boolean isCached) {
+    AsyncResultSender(Request request, boolean isCached) {
         this.callback = request.getCallback();
         this.request = request;
         this.rpc = request.getRpc();
         this.type = Type.START;
-        this.isCached=isCached;
+        this.isCached = isCached;
     }
 
 
@@ -114,7 +114,7 @@ class AsyncResultSender implements Runnable {
             switch (type) {
                 case START:
                     request.start();
-                    callback.onStart(isCached);
+                    callback.onStart(isCached, request != null ? request : requestProxy);
                     break;
                 case RESULT:
                     callback.onSuccess(result);
@@ -140,7 +140,7 @@ class AsyncResultSender implements Runnable {
                 callback.onFinish();
                 request.done();
             }
-        } else if (requestProxy!=null && requestProxy.getBatchCallback() != null) {
+        } else if (requestProxy != null && requestProxy.getBatchCallback() != null) {
             Batch<?> transaction = requestProxy.getBatchCallback();
             if (requestProxy.isCancelled()) {
                 return;

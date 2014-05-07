@@ -93,9 +93,13 @@ public interface EndpointBase {
      */
     public static final int ERROR_DEBUG = 128;
 
+    /**
+     * Log cancellations
+     */
+    public static final int CANCEL_DEBUG = 256;
 
     /**
      * Log everything.
      */
-    public static final int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG | ERROR_DEBUG;
+    public static final int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG | TOKEN_DEBUG | ERROR_DEBUG | CANCEL_DEBUG;
 }

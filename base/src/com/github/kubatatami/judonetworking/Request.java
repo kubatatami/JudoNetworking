@@ -5,6 +5,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.concurrent.Future;
 
 class Request implements Runnable, Comparable<Request>, ProgressObserver, RequestInterface, AsyncResult {
     private Integer id;
@@ -24,6 +25,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     private boolean cancelled, done, running;
     private boolean isApiKeyRequired;
     private String customUrl;
+    private Future<?> future;
 
     public Request(Integer id, EndpointImplementation rpc, Method method, String name, RequestMethod ann,
                    Object[] args, Type returnType, int timeout, CallbackInterface<Object> callback, Serializable additionalControllerData) {
@@ -47,7 +49,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
             invokeCallback(result);
         } catch (final JudoException e) {
             invokeCallbackException(e);
-            if (rpc.getErrorLogger() != null) {
+            if (rpc.getErrorLogger() != null && !(e instanceof CancelException)) {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
@@ -173,6 +175,21 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
             return ann;
         } else {
             return null;
+        }
+    }
+
+    int getDelay() {
+        if (method != null) {
+            Delay ann = method.getAnnotation(Delay.class);
+            if (ann == null) {
+                ann = method.getDeclaringClass().getAnnotation(Delay.class);
+            }
+            if (ann != null && !ann.enabled()) {
+                ann = null;
+            }
+            return ann != null ? ann.value() : 0;
+        } else {
+            return 0;
         }
     }
 
@@ -332,7 +349,16 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     public void cancel() {
         this.cancelled = true;
         if (running) {
+            if ((rpc.getDebugFlags() & Endpoint.CANCEL_DEBUG) > 0) {
+                LoggerImpl.log("Request " + method.getName() + " cancelled.");
+            }
             running = false;
+            synchronized (rpc.getSingleCallMethods()) {
+                rpc.getSingleCallMethods().remove(method);
+            }
+            if (future != null) {
+                future.cancel(true);
+            }
             rpc.getHandler().post(new Runnable() {
                 @Override
                 public void run() {
@@ -366,5 +392,9 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     public void setApiKeyRequired(boolean isApiKeyRequired) {
         this.isApiKeyRequired = isApiKeyRequired;
+    }
+
+    public void setFuture(Future<?> future) {
+        this.future = future;
     }
 }

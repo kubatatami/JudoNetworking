@@ -3,7 +3,7 @@ package com.github.kubatatami.judonetworking;
 /**
  * Created by Kuba on 08/04/14.
  */
-public interface EndpointClassic extends EndpointBase{
+public interface EndpointClassic extends EndpointBase {
 
     public <T> AsyncResult sendAsyncRequest(String url, String name, CallbackInterface<T> callback, Object... args);
 

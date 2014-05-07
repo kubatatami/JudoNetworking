@@ -1,17 +1,16 @@
 package com.github.kubatatami.judonetworking;
 
 import java.lang.annotation.Annotation;
-import java.util.Arrays;
 
 /**
  * Created by Kuba on 09/04/14.
  */
 public class RequestOptions implements RequestMethod {
 
-    private String[] paramNames=new String[0];
-    private int timeout=0;
-    private boolean allowEmptyResult=false;
-    private boolean isApiKeyRequired=false;
+    private String[] paramNames = new String[0];
+    private int timeout = 0;
+    private boolean allowEmptyResult = false;
+    private boolean isApiKeyRequired = false;
 
     public RequestOptions() {
     }

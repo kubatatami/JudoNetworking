@@ -12,9 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
@@ -25,8 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -64,10 +62,10 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     private long tokenExpireTimestamp = -1;
     private List<Method> singleCallMethods = new ArrayList<Method>();
     private int id = 0;
-    private int threadPriority=Thread.NORM_PRIORITY - 1;
+    private int threadPriority = Thread.NORM_PRIORITY - 1;
 
     private ThreadPoolExecutor executorService =
-            new ThreadPoolExecutor(2, 30, 30, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
+            new ThreadPoolExecutor(2, 20, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable r) {
                     Thread thread = new Thread(r);
@@ -182,20 +180,17 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         Request request = new Request(
                 ++id, this, null,
                 name, requestOptions, args,
-                ((ParameterizedType)callback.getClass().getGenericSuperclass()).getActualTypeArguments()[0], getRequestConnector().getMethodTimeout(),
+                ((ParameterizedType) callback.getClass().getGenericSuperclass()).getActualTypeArguments()[0], getRequestConnector().getMethodTimeout(),
                 (CallbackInterface<Object>) callback, getProtocolController().getAdditionalRequestData());
         request.setCustomUrl(url);
         request.setApiKeyRequired(requestOptions.apiKeyRequired());
-        try {
-            getExecutorService().execute(request);
-        } catch (RejectedExecutionException ex) {
-            new AsyncResultSender(request, new JudoException("Request queue is full.", ex)).run();
-        }
+        Future<?> future = executorService.submit(request);
+        request.setFuture(future);
         return request;
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T sendRequest(String url, String name, Type returnType, RequestOptions requestOptions, Object... args) throws JudoException{
+    public <T> T sendRequest(String url, String name, Type returnType, RequestOptions requestOptions, Object... args) throws JudoException {
         Request request = new Request(++id, this, null, name, requestOptions, args,
                 returnType,
                 getRequestConnector().getMethodTimeout(),
@@ -205,7 +200,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         return (T) getRequestConnector().call(request);
     }
 
-        @Override
+    @Override
     @SuppressWarnings("unchecked")
     public <T> AsyncResult callInBatch(Class<T> obj, final Batch<T> batch) {
 
@@ -226,16 +221,12 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         batch.run(proxy);
         pr.setBatchFatal(false);
         batch.runNonFatal(proxy);
-        try {
-            executorService.execute(new Runnable() {
-                @Override
-                public void run() {
-                    pr.callBatch();
-                }
-            });
-        } catch (RejectedExecutionException ex) {
-            new AsyncResultSender(this, pr, new JudoException("Request queue is full.", ex)).run();
-        }
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                pr.callBatch();
+            }
+        });
         return pr;
     }
 
@@ -417,6 +408,11 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         return timeProfiler;
     }
 
+    public static void checkThread() throws CancelException {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new CancelException();
+        }
+    }
 
     @SuppressWarnings("unchecked")
     public Map<String, MethodStat> getStats() {

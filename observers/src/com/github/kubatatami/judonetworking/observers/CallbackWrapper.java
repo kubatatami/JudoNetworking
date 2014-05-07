@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking.observers;
 
+import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.Callback;
 import com.github.kubatatami.judonetworking.CallbackInterface;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -16,8 +17,8 @@ public class CallbackWrapper<T> extends Callback<T> {
     }
 
     @Override
-    public void onStart(boolean isCached) {
-        baseCallback.onStart(isCached);
+    public void onStart(boolean isCached, AsyncResult asyncResult) {
+        baseCallback.onStart(isCached,asyncResult);
     }
 
     @Override

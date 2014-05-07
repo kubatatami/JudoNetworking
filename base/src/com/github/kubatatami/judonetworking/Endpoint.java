@@ -7,7 +7,7 @@ package com.github.kubatatami.judonetworking;
  * Date: 07.01.2013
  * Time: 12:49
  */
-public interface Endpoint extends EndpointBase{
+public interface Endpoint extends EndpointBase {
 
     /**
      * @param type
@@ -56,7 +56,6 @@ public interface Endpoint extends EndpointBase{
      * @return Batch thread useful for synchronized wait
      */
     public <T> AsyncResult callInBatch(Class<T> apiInterface, Batch<T> batch);
-
 
 
     /**

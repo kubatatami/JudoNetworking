@@ -261,10 +261,18 @@ public class HttpTransportLayer extends TransportLayer {
         do {
             try {
                 urlConnection = createHttpUrlConnection(requestInfo.url);
-
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
+                }
                 initSetup(urlConnection, requestInfo, timeout, timeStat, method, cacheInfo);
                 logRequestHeaders(debugFlags, urlConnection);
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
+                }
                 sendRequest(urlConnection, requestInfo, timeStat, debugFlags);
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
+                }
                 logResponseHeaders(debugFlags, urlConnection);
 
                 if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {

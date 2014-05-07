@@ -64,12 +64,12 @@ class RequestConnector {
                 result = new RequestSuccessResult(request.getId(), virtualObject);
             } else {
                 ProtocolController.RequestInfo requestInfo = controller.createRequest(
-                                request.getCustomUrl() == null ? url : request.getCustomUrl(),
-                                request);
+                        request.getCustomUrl() == null ? url : request.getCustomUrl(),
+                        request);
                 timeStat.tickCreateTime();
                 lossCheck();
-                delay();
-
+                EndpointImplementation.checkThread();
+                delay(request.getDelay());
                 currentTokenExpireTimestamp = rpc.getTokenExpireTimestamp();
                 if (rpc.getTokenCaller() != null && request.isApiKeyRequired() && !ignoreTokenError && !checkTokenExpireTimestamp(currentTokenExpireTimestamp)) {
                     try {
@@ -80,7 +80,7 @@ class RequestConnector {
                 }
                 TransportLayer.Connection conn = transportLayer.send(controller, requestInfo, request.getTimeout(), timeStat,
                         rpc.getDebugFlags(), request.getMethod(), new TransportLayer.CacheInfo(hash, time));
-
+                EndpointImplementation.checkThread();
                 if (!conn.isNewestAvailable()) {
                     if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
                         LoggerImpl.log("No new data for method " + request.getName());
@@ -97,7 +97,9 @@ class RequestConnector {
                     connectionStream = new ByteArrayInputStream(resStr.getBytes());
                 }
                 RequestInputStream stream = new RequestInputStream(connectionStream, timeStat, conn.getContentLength());
+                EndpointImplementation.checkThread();
                 result = controller.parseResponse(request, stream, conn.getHeaders());
+                EndpointImplementation.checkThread();
                 if (result instanceof RequestSuccessResult) {
                     result.hash = conn.getHash();
                     result.time = conn.getDate();
@@ -278,7 +280,7 @@ class RequestConnector {
 
     private Object handleVirtualServerRequest(Request request, TimeStat timeStat) throws JudoException {
         try {
-            if(request.getMethod()!=null) {
+            if (request.getMethod() != null) {
                 VirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(request.getMethod().getDeclaringClass());
                 if (virtualServerInfo != null) {
                     if (request.getCallback() == null) {
@@ -341,7 +343,7 @@ class RequestConnector {
     protected void findAndCreateBase64(Request request) {
         if (request.getArgs() != null) {
             int i = 0;
-            if(request.getMethod()!=null) {
+            if (request.getMethod() != null) {
                 Annotation[][] annotations = request.getMethod().getParameterAnnotations();
                 for (Object object : request.getArgs()) {
 
@@ -588,13 +590,13 @@ class RequestConnector {
     }
 
 
-    private void delay() {
-        int delay = rpc.getDelay();
+    private void delay(int requestDelay) {
+        int delay = rpc.getDelay() + requestDelay;
         if (delay > 0) {
             try {
                 Thread.sleep(delay);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                throw new CancelException();
             }
         }
     }
@@ -611,7 +613,12 @@ class RequestConnector {
             ProtocolController.RequestInfo requestInfo = controller.createRequests(url, (List) requests);
             timeStat.tickCreateTime();
             lossCheck();
-            delay();
+            int maxDelay = 0;
+            for (Request request : requests) {
+                maxDelay = Math.max(maxDelay, request.getDelay());
+            }
+            EndpointImplementation.checkThread();
+            delay(maxDelay);
             boolean isApiRequired = false;
             for (Request request : requests) {
                 if (request.isApiKeyRequired()) {
@@ -627,6 +634,7 @@ class RequestConnector {
                 }
             }
             TransportLayer.Connection conn = transportLayer.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null, null);
+            EndpointImplementation.checkThread();
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
 
@@ -634,7 +642,7 @@ class RequestConnector {
                 longLog("Response body(" + resStr.length() + " Bytes)", resStr);
                 connectionStream = new ByteArrayInputStream(resStr.getBytes());
             }
-
+            EndpointImplementation.checkThread();
             RequestInputStream stream = new RequestInputStream(connectionStream, timeStat, conn.getContentLength());
             responses = controller.parseResponses((List) requests, stream, conn.getHeaders());
             timeStat.tickParseTime();
