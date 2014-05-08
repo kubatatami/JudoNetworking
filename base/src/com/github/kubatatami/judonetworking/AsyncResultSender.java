@@ -114,7 +114,7 @@ class AsyncResultSender implements Runnable {
             switch (type) {
                 case START:
                     request.start();
-                    callback.onStart(isCached, request != null ? request : requestProxy);
+                    callback.onStart(isCached, request);
                     break;
                 case RESULT:
                     callback.onSuccess(result);
@@ -180,7 +180,7 @@ class AsyncResultSender implements Runnable {
                 case ERROR:
                 case RESULT:
                     synchronized (rpc.getSingleCallMethods()) {
-                        boolean result = rpc.getSingleCallMethods().remove(method);
+                        boolean result = rpc.getSingleCallMethods().remove(method)!=null;
                         if (result && (rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
                             LoggerImpl.log("Request " + method.getName() + " removed from SingleCall queue.");
                         }

@@ -208,15 +208,18 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         }
     }
 
-    boolean isSingleCall() {
+    SingleCall getSingleCall() {
         if (method != null) {
             SingleCall ann = method.getAnnotation(SingleCall.class);
             if (ann == null) {
                 ann = method.getDeclaringClass().getAnnotation(SingleCall.class);
             }
-            return ann != null && ann.enabled();
+            if (ann != null && !ann.enabled()) {
+                ann = null;
+            }
+            return ann;
         } else {
-            return false;
+            return null;
         }
     }
 

@@ -60,7 +60,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     private boolean verifyResultModel = false;
     private boolean processingMethod = false;
     private long tokenExpireTimestamp = -1;
-    private List<Method> singleCallMethods = new ArrayList<Method>();
+    private Map<Method,Request> singleCallMethods = new HashMap<Method, Request>();
     private int id = 0;
     private int threadPriority = Thread.NORM_PRIORITY - 1;
 
@@ -491,7 +491,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         return percentLoss;
     }
 
-    public List<Method> getSingleCallMethods() {
+    public Map<Method,Request> getSingleCallMethods() {
         return singleCallMethods;
     }
 

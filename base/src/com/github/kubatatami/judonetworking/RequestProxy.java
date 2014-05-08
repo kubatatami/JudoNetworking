@@ -161,22 +161,35 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
                 if (!ann.async()) {
                     request = new Request(getNextId(), rpc, m, name, ann, args, m.getReturnType(), timeout, null, rpc.getProtocolController().getAdditionalRequestData());
-                    if (request.isSingleCall()) {
+                    if (request.getSingleCall()!=null) {
                         throw new JudoException("SingleCall is not supported on no async method.");
                     }
                     return rpc.getRequestConnector().call(request);
                 } else {
                     request = callAsync(getNextId(), m, name, args, m.getGenericParameterTypes(), timeout, ann);
-                    if (request.isSingleCall()) {
-                        if (rpc.getSingleCallMethods().contains(m)) {
-                            if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                                LoggerImpl.log("Request " + name + " rejected - SingleCall.");
+                    if (request.getSingleCall()!=null) {
+                        if (rpc.getSingleCallMethods().containsKey(m)) {
+                            SingleMode mode=request.getSingleCall().mode();
+
+                            if(mode == SingleMode.CANCEL_NEW) {
+                                if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
+                                    LoggerImpl.log("Request " + name + " rejected - SingleCall.");
+                                }
+                                request.cancel();
+                                return request;
+                            }else{
+                                Request oldRequest=rpc.getSingleCallMethods().get(m);
+                                if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
+                                    LoggerImpl.log("Request " + oldRequest.getName() + " rejected - SingleCall.");
+                                }
+                                oldRequest.cancel();
+                                synchronized (rpc.getSingleCallMethods()) {
+                                    rpc.getSingleCallMethods().put(m,request);
+                                }
                             }
-                            request.cancel();
-                            return request;
                         } else {
                             synchronized (rpc.getSingleCallMethods()) {
-                                rpc.getSingleCallMethods().add(m);
+                                rpc.getSingleCallMethods().put(m,request);
                             }
                         }
                     }
