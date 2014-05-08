@@ -353,7 +353,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         this.cancelled = true;
         if (running) {
             if ((rpc.getDebugFlags() & Endpoint.CANCEL_DEBUG) > 0) {
-                LoggerImpl.log("Request " + method.getName() + " cancelled.");
+                LoggerImpl.log("Request " + name + " cancelled.");
             }
             running = false;
             synchronized (rpc.getSingleCallMethods()) {
