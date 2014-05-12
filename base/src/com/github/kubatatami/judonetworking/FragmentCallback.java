@@ -1,7 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
-
 import android.app.Fragment;
+import android.app.FragmentManager;
 
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
@@ -11,13 +11,16 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  * Date: 23.04.2013
  * Time: 11:40
  */
-public class FragmentCallback<T> extends Callback<T> {
+public class FragmentCallback<T> extends Callback<T> implements FragmentManager.OnBackStackChangedListener {
 
     private final Fragment fragment;
     private AsyncResult asyncResult;
+    private FragmentManager manager;
 
     public FragmentCallback(Fragment fragment) {
         this.fragment = fragment;
+        this.manager = fragment.getFragmentManager();
+        manager.addOnBackStackChangedListener(this);
     }
 
     @Override
@@ -25,8 +28,8 @@ public class FragmentCallback<T> extends Callback<T> {
         this.asyncResult = asyncResult;
         if (fragment.getActivity() != null) {
             onSafeStart(isCached, asyncResult);
-        } else if (asyncResult != null) {
-            asyncResult.cancel();
+        } else {
+            tryCancel();
         }
     }
 
@@ -34,8 +37,8 @@ public class FragmentCallback<T> extends Callback<T> {
     public final void onSuccess(T result) {
         if (fragment.getActivity() != null) {
             onSafeSuccess(result);
-        } else if (asyncResult != null) {
-            asyncResult.cancel();
+        } else {
+            tryCancel();
         }
     }
 
@@ -43,8 +46,8 @@ public class FragmentCallback<T> extends Callback<T> {
     public final void onError(JudoException e) {
         if (fragment.getActivity() != null) {
             onSafeError(e);
-        } else if (asyncResult != null) {
-            asyncResult.cancel();
+        } else {
+            tryCancel();
         }
     }
 
@@ -52,8 +55,8 @@ public class FragmentCallback<T> extends Callback<T> {
     public final void onProgress(int progress) {
         if (fragment.getActivity() != null) {
             onSafeProgress(progress);
-        } else if (asyncResult != null) {
-            asyncResult.cancel();
+        } else {
+            tryCancel();
         }
     }
 
@@ -61,8 +64,16 @@ public class FragmentCallback<T> extends Callback<T> {
     public final void onFinish() {
         if (fragment.getActivity() != null) {
             onSafeFinish();
-        } else if (asyncResult != null) {
+        } else {
+            tryCancel();
+        }
+        manager.removeOnBackStackChangedListener(this);
+    }
+
+    protected void tryCancel() {
+        if (asyncResult != null) {
             asyncResult.cancel();
+            manager.removeOnBackStackChangedListener(this);
         }
     }
 
@@ -84,5 +95,13 @@ public class FragmentCallback<T> extends Callback<T> {
 
     public void onSafeError(JudoException e) {
 
+    }
+
+
+    @Override
+    public void onBackStackChanged() {
+        if (fragment.getActivity() == null) {
+            tryCancel();
+        }
     }
 }
