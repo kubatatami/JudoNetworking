@@ -208,8 +208,9 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
     public void filterNullArgs(Request request){
         if(ignoreNullParams){
-            List<String> paramNames= Arrays.asList(request.getParamNames());
-            List<Object> args = Arrays.asList(request.getArgs());
+
+            List<String> paramNames= new ArrayList<String>(Arrays.asList(request.getParamNames()));
+            List<Object> args = new ArrayList<Object>(Arrays.asList(request.getArgs()));
             for(int i=args.size()-1;i>=0;i--){
                 if(args.get(i)==null){
                     args.remove(i);
