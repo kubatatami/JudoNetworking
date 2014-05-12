@@ -18,6 +18,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -63,6 +64,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     private Map<Method,Request> singleCallMethods = new HashMap<Method, Request>();
     private int id = 0;
     private int threadPriority = Thread.NORM_PRIORITY - 1;
+    private boolean ignoreNullParams = false;
 
     private ThreadPoolExecutor executorService =
             new ThreadPoolExecutor(2, 20, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
@@ -171,11 +173,13 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public <T> AsyncResult sendAsyncRequest(String url, String name, CallbackInterface<T> callback, Object... args) {
         return sendAsyncRequest(url, name, new RequestOptions(), callback, args);
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public <T> AsyncResult sendAsyncRequest(String url, String name, RequestOptions requestOptions, CallbackInterface<T> callback, Object... args) {
         Request request = new Request(
                 ++id, this, null,
@@ -184,6 +188,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
                 (CallbackInterface<Object>) callback, getProtocolController().getAdditionalRequestData());
         request.setCustomUrl(url);
         request.setApiKeyRequired(requestOptions.apiKeyRequired());
+        filterNullArgs(request);
         Future<?> future = executorService.submit(request);
         request.setFuture(future);
         return request;
@@ -197,7 +202,29 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
                 null, getProtocolController().getAdditionalRequestData());
         request.setCustomUrl(url);
         request.setApiKeyRequired(requestOptions.apiKeyRequired());
+        filterNullArgs(request);
         return (T) getRequestConnector().call(request);
+    }
+
+    public void filterNullArgs(Request request){
+        if(ignoreNullParams){
+            List<String> paramNames= Arrays.asList(request.getParamNames());
+            List<Object> args = Arrays.asList(request.getArgs());
+            for(int i=args.size()-1;i>=0;i--){
+                if(args.get(i)==null){
+                    args.remove(i);
+                    if(paramNames.size()>i) {
+                        paramNames.remove(i);
+                    }
+                }
+            }
+            request.setArgs(args.toArray());
+            request.setParamNames(paramNames.toArray(new String[paramNames.size()]));
+        }
+    }
+
+    public void setIgnoreNullParams(boolean ignoreNullParams) {
+        this.ignoreNullParams = ignoreNullParams;
     }
 
     @Override
