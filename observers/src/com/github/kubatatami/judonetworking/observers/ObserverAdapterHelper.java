@@ -65,20 +65,21 @@ public class ObserverAdapterHelper {
 
         public String getValue(Object item) {
             try {
-                String result;
+                Object result;
                 item = findObject(item);
                 if (field != null) {
-                    result = field.get(item).toString();
+                    result = field.get(item);
                 } else if (method.getParameterTypes().length == 1) {
-                    result = method.invoke(item, context).toString();
+                    result = method.invoke(item, context);
                 } else {
-                    result = method.invoke(item).toString();
+                    result = method.invoke(item);
                 }
 
-                return result;
+                return result!=null ? result.toString() : "null";
 
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                ExceptionHandler.throwRuntimeException(e);
+                return null;
             }
         }
 
@@ -87,11 +88,13 @@ public class ObserverAdapterHelper {
                 item = findObject(item);
                 method.invoke(item, view);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                ExceptionHandler.throwRuntimeException(e);
             }
         }
 
     }
+
+
 
     public View getView(int layout, Object item, View convertView, ViewGroup parent) {
         return getView(layout, item, convertView, parent, null);
@@ -149,7 +152,7 @@ public class ObserverAdapterHelper {
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            ExceptionHandler.throwRuntimeException(e);
         }
         return convertView;
     }
@@ -197,7 +200,7 @@ public class ObserverAdapterHelper {
                     clazz = field.getType();
                     fields.add(field);
                 } catch (NoSuchFieldException e) {
-                    throw new RuntimeException(e);
+                    ExceptionHandler.throwRuntimeException(e);
                 }
             } else {
                 try {
@@ -208,7 +211,7 @@ public class ObserverAdapterHelper {
                         Method method = getMethod(part, clazz);
                         return new DataSourceOrTarget(context, fields, method);
                     } catch (NoSuchFieldException e1) {
-                        throw new RuntimeException(e1);
+                        ExceptionHandler.throwRuntimeException(e);
                     }
 
 

@@ -57,7 +57,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
             mOriginalField = ArrayAdapter.class.getDeclaredField("mOriginalValues");
             mOriginalField.setAccessible(true);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            ExceptionHandler.throwRuntimeException(e);
         }
     }
 
@@ -109,7 +109,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
                     }
 
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    ExceptionHandler.throwRuntimeException(e);
                 }
                 return results;
             }

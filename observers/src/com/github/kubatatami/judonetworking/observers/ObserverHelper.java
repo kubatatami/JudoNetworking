@@ -151,7 +151,7 @@ public class ObserverHelper {
 
                             }
                         } catch (Exception e) {
-                            throw new RuntimeException(e);
+                            ExceptionHandler.throwRuntimeException(e);
                         }
                     }
                 };
@@ -168,7 +168,7 @@ public class ObserverHelper {
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            ExceptionHandler.throwRuntimeException(e);
         }
     }
 
@@ -329,7 +329,7 @@ public class ObserverHelper {
                             return method.invoke(object).toString();
                         }
                     } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        ExceptionHandler.throwRuntimeException(e);
                     }
                 }
             }
