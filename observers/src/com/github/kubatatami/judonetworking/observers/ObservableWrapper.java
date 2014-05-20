@@ -173,9 +173,15 @@ public class ObservableWrapper<T> extends Callback<T> {
     }
 
     public void set(T object) {
+        set(object,true);
+    }
+
+    public void set(T object,boolean notify) {
         dataSetTime = System.currentTimeMillis();
         this.object = object;
-        notifyObservers();
+        if(notify) {
+            notifyObservers();
+        }
         if (listener != null) {
             listener.onSet(this, object);
         }
