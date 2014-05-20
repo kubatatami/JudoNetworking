@@ -162,36 +162,36 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                 if (!ann.async()) {
                     request = new Request(getNextId(), rpc, m, name, ann, args, m.getReturnType(), timeout, null, rpc.getProtocolController().getAdditionalRequestData());
                     rpc.filterNullArgs(request);
-                    if (request.getSingleCall()!=null) {
+                    if (request.getSingleCall() != null) {
                         throw new JudoException("SingleCall is not supported on no async method.");
                     }
                     return rpc.getRequestConnector().call(request);
                 } else {
                     request = callAsync(getNextId(), m, name, args, m.getGenericParameterTypes(), timeout, ann);
                     rpc.filterNullArgs(request);
-                    if (request.getSingleCall()!=null) {
+                    if (request.getSingleCall() != null) {
                         if (rpc.getSingleCallMethods().containsKey(m)) {
-                            SingleMode mode=request.getSingleCall().mode();
+                            SingleMode mode = request.getSingleCall().mode();
 
-                            if(mode == SingleMode.CANCEL_NEW) {
+                            if (mode == SingleMode.CANCEL_NEW) {
                                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
                                     LoggerImpl.log("Request " + name + " rejected - SingleCall.");
                                 }
                                 request.cancel();
                                 return request;
-                            }else{
-                                Request oldRequest=rpc.getSingleCallMethods().get(m);
+                            } else {
+                                Request oldRequest = rpc.getSingleCallMethods().get(m);
                                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
                                     LoggerImpl.log("Request " + oldRequest.getName() + " rejected - SingleCall.");
                                 }
                                 oldRequest.cancel();
                                 synchronized (rpc.getSingleCallMethods()) {
-                                    rpc.getSingleCallMethods().put(m,request);
+                                    rpc.getSingleCallMethods().put(m, request);
                                 }
                             }
                         } else {
                             synchronized (rpc.getSingleCallMethods()) {
-                                rpc.getSingleCallMethods().put(m,request);
+                                rpc.getSingleCallMethods().put(m, request);
                             }
                         }
                     }
@@ -309,58 +309,14 @@ class RequestProxy implements InvocationHandler, AsyncResult {
             BatchProgressObserver batchProgressObserver = new BatchProgressObserver(rpc, this, batches);
             List<RequestResult> responses;
             if (batches.size() > 0) {
-                try {
-                    for (Request request : batches) {
-                        request.invokeStart(false);
-                    }
-                    responses = sendBatchRequest(batches, batchProgressObserver, cacheObjects.size());
-                } catch (final JudoException e) {
-                    responses = new ArrayList<RequestResult>(batches.size());
-                    for (Request request : batches) {
-                        responses.add(new ErrorResult(request.getId(), e));
-                    }
-                }
-                Collections.sort(responses);
+                sendBatchRequest(batches, batchProgressObserver, cacheObjects);
+
             } else {
                 responses = new ArrayList<RequestResult>();
                 batchProgressObserver.setMaxProgress(1);
                 batchProgressObserver.progressTick(1);
+                receiveResponse(batches, responses, cacheObjects);
             }
-
-            if (rpc.isCacheEnabled()) {
-                for (int i = responses.size() - 1; i >= 0; i--) {
-                    RequestResult result = responses.get(i);
-                    if (cacheObjects.containsKey(result.id) && result instanceof ErrorResult) {
-                        responses.remove(result);
-                        RequestSuccessResult res = new RequestSuccessResult(cacheObjects.get(result.id).second);
-                        res.id = result.id;
-                        responses.add(res);
-                        cacheObjects.remove(result.id);
-                    } else {
-                        cacheObjects.remove(result.id);
-                    }
-                }
-
-                for (Map.Entry<Integer, Pair<Request, Object>> pairs : cacheObjects.entrySet()) {
-                    RequestSuccessResult res = new RequestSuccessResult(cacheObjects.get(pairs.getKey()).second);
-                    res.id = pairs.getKey();
-                    responses.add(res);
-                    batches.add(pairs.getKey(), pairs.getValue().first);
-                }
-            }
-            Collections.sort(batches, new Comparator<Request>() {
-                @Override
-                public int compare(Request lhs, Request rhs) {
-                    return lhs.getId().compareTo(rhs.getId());
-                }
-            });
-            Collections.sort(responses, new Comparator<RequestResult>() {
-                @Override
-                public int compare(RequestResult lhs, RequestResult rhs) {
-                    return lhs.id.compareTo(rhs.id);
-                }
-            });
-            handleBatchResponse(batches, batchCallback, responses);
 
 
         } else {
@@ -369,6 +325,44 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                 Request.invokeBatchCallback(rpc, this, new Object[]{});
             }
         }
+    }
+
+
+    protected void receiveResponse(List<Request> batches, List<RequestResult> responses, Map<Integer, Pair<Request, Object>> cacheObjects) {
+        if (rpc.isCacheEnabled()) {
+            for (int i = responses.size() - 1; i >= 0; i--) {
+                RequestResult result = responses.get(i);
+                if (cacheObjects.containsKey(result.id) && result instanceof ErrorResult) {
+                    responses.remove(result);
+                    RequestSuccessResult res = new RequestSuccessResult(cacheObjects.get(result.id).second);
+                    res.id = result.id;
+                    responses.add(res);
+                    cacheObjects.remove(result.id);
+                } else {
+                    cacheObjects.remove(result.id);
+                }
+            }
+
+            for (Map.Entry<Integer, Pair<Request, Object>> pairs : cacheObjects.entrySet()) {
+                RequestSuccessResult res = new RequestSuccessResult(cacheObjects.get(pairs.getKey()).second);
+                res.id = pairs.getKey();
+                responses.add(res);
+                batches.add(pairs.getKey(), pairs.getValue().first);
+            }
+        }
+        Collections.sort(batches, new Comparator<Request>() {
+            @Override
+            public int compare(Request lhs, Request rhs) {
+                return lhs.getId().compareTo(rhs.getId());
+            }
+        });
+        Collections.sort(responses, new Comparator<RequestResult>() {
+            @Override
+            public int compare(RequestResult lhs, RequestResult rhs) {
+                return lhs.id.compareTo(rhs.id);
+            }
+        });
+        handleBatchResponse(batches, batchCallback, responses);
     }
 
     protected List<List<Request>> assignRequestsToConnections(List<Request> list, final int partsNo) {
@@ -394,41 +388,74 @@ class RequestProxy implements InvocationHandler, AsyncResult {
         return timeout;
     }
 
-    protected List<RequestResult> sendBatchRequest(List<Request> batches, BatchProgressObserver progressObserver, int cachedRequests) throws JudoException {
-        int conn = rpc.getMaxConnections();
+    protected void sendBatchRequest(final List<Request> batches, BatchProgressObserver progressObserver,
+                                    final Map<Integer, Pair<Request, Object>> cacheObjects) {
+        final List<RequestResult> responses = new ArrayList<RequestResult>(batches.size());
 
-        if (batches.size() > 1 && conn > 1) {
-            int connections = Math.min(batches.size(), conn);
-            List<List<Request>> requestParts = assignRequestsToConnections(batches, connections);
-            List<RequestResult> response = new ArrayList<RequestResult>(batches.size());
-            List<BatchTask> tasks = new ArrayList<BatchTask>(connections);
-
-            progressObserver.setMaxProgress((requestParts.size() + cachedRequests) * TimeStat.TICKS);
-            if (cachedRequests > 0) {
-                progressObserver.progressTick(cachedRequests * TimeStat.TICKS);
+        try {
+            for (Request request : batches) {
+                request.invokeStart(false);
             }
+            int conn = rpc.getMaxConnections();
 
-            for (List<Request> requests : requestParts) {
+            if (batches.size() > 1 && conn > 1) {
+                int connections = Math.min(batches.size(), conn);
+                List<List<Request>> requestParts = assignRequestsToConnections(batches, connections);
 
-                BatchTask task = new BatchTask(rpc, progressObserver, calculateTimeout(requests), requests);
-                tasks.add(task);
-            }
-            for (BatchTask task : tasks) {
-                task.execute();
-            }
-            for (BatchTask task : tasks) {
-                task.join();
-                if (task.getEx() != null) {
-                    throw task.getEx();
-                } else {
-                    response.addAll(task.getResponse());
+                final List<BatchTask> tasks = new ArrayList<BatchTask>(connections);
+
+                progressObserver.setMaxProgress((requestParts.size() + cacheObjects.size()) * TimeStat.TICKS);
+                if (cacheObjects.size() > 0) {
+                    progressObserver.progressTick(cacheObjects.size() * TimeStat.TICKS);
                 }
+
+                for (List<Request> requests : requestParts) {
+
+                    BatchTask task = new BatchTask(rpc, progressObserver, calculateTimeout(requests), requests);
+                    tasks.add(task);
+                }
+                for (BatchTask task : tasks) {
+                    task.execute();
+                }
+                Runnable waitAndMergeTask = new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            for (BatchTask task : tasks) {
+                                task.join();
+                                if (task.getEx() != null) {
+                                    throw task.getEx();
+                                } else {
+                                    responses.addAll(task.getResponse());
+                                }
+                            }
+                            Collections.sort(responses);
+                            receiveResponse(batches, responses, cacheObjects);
+                        } catch (final JudoException e) {
+                            for (Request request : batches) {
+                                responses.add(new ErrorResult(request.getId(), e));
+                            }
+                            Collections.sort(responses);
+                            receiveResponse(batches, responses, cacheObjects);
+                        }
+                    }
+                };
+                new Thread(waitAndMergeTask).start();
+
+            } else {
+                progressObserver.setMaxProgress(TimeStat.TICKS);
+                responses.addAll(rpc.getRequestConnector().callBatch(batches, progressObserver, calculateTimeout(batches)));
+                Collections.sort(responses);
+                receiveResponse(batches, responses, cacheObjects);
             }
-            return response;
-        } else {
-            progressObserver.setMaxProgress(TimeStat.TICKS);
-            return rpc.getRequestConnector().callBatch(batches, progressObserver, calculateTimeout(batches));
+        } catch (final JudoException e) {
+            for (Request request : batches) {
+                responses.add(new ErrorResult(request.getId(), e));
+            }
+            Collections.sort(responses);
+            receiveResponse(batches, responses, cacheObjects);
         }
+
     }
 
     protected void handleBatchResponse(List<Request> requests, Batch batch, List<RequestResult> responses) {

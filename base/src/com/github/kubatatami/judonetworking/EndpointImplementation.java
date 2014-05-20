@@ -63,18 +63,10 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     private long tokenExpireTimestamp = -1;
     private Map<Method,Request> singleCallMethods = new HashMap<Method, Request>();
     private int id = 0;
-    private int threadPriority = Thread.NORM_PRIORITY - 1;
+
     private boolean ignoreNullParams = false;
 
-    private ThreadPoolExecutor executorService =
-            new ThreadPoolExecutor(2, 20, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
-                @Override
-                public Thread newThread(Runnable r) {
-                    Thread thread = new Thread(r);
-                    thread.setPriority(threadPriority);
-                    return thread;
-                }
-            });
+    private JudoExecutor executorService = new JudoExecutor();
 
 
     public EndpointImplementation(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
@@ -525,10 +517,10 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     }
 
     public int getThreadPriority() {
-        return threadPriority;
+        return executorService.getThreadPriority();
     }
 
     public void setThreadPriority(int threadPriority) {
-        this.threadPriority = threadPriority;
+        executorService.setThreadPriority(threadPriority);
     }
 }
