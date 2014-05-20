@@ -8,6 +8,7 @@ import android.widget.Filter;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -138,6 +139,22 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
 
         public boolean filter(CharSequence constraint, T item);
 
+    }
+
+    public void preHoneycombAddAll(Collection<? extends T> collection) {
+        setNotifyOnChange(false);
+        for(T item : collection){
+            add(item);
+        }
+        notifyDataSetChanged();
+    }
+
+    public void preHoneycombAddAll(T... items) {
+        setNotifyOnChange(false);
+        for(T item : items){
+            add(item);
+        }
+        notifyDataSetChanged();
     }
 
 }
