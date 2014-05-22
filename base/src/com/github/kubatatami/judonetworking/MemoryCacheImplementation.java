@@ -32,11 +32,14 @@ class MemoryCacheImplementation implements MemoryCache {
         CacheResult result = new CacheResult();
         Integer hash = Arrays.deepHashCode(params);
         if (cache.containsKey(method)) {
+            if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
+                LoggerImpl.log("Search for " + method + " with hash:" + hash);
+            }
             CacheObject cacheObject = cache.get(method).get(hash);
             if (cacheObject != null) {
                 if (cacheLifeTime == 0 || System.currentTimeMillis() - cacheObject.createTime < cacheLifeTime) {
                     if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
-                        LoggerImpl.log("Cache(" + method + "): Get from memory cache.");
+                        LoggerImpl.log("Cache(" + method + "): Get from memory cache object with hash:" + hash);
                     }
                     result.object = cacheObject.getObject();
                     result.result = true;
@@ -56,7 +59,7 @@ class MemoryCacheImplementation implements MemoryCache {
         Integer hash = Arrays.deepHashCode(params);
         cache.get(method).put(hash, new CacheObject(System.currentTimeMillis(), object));
         if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
-            LoggerImpl.log("Cache(" + method + "): Saved in memory cache.");
+            LoggerImpl.log("Cache(" + method + "): Saved in memory cache with hash:" + hash);
         }
     }
 
