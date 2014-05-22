@@ -141,7 +141,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                     try {
                         StackTraceElement stackTraceElement = getExternalStacktrace(Thread.currentThread().getStackTrace());
                         if (batchEnabled && mode == BatchMode.MANUAL) {
-                            LoggerImpl.log("Batch request " + name + " from " +
+                            LoggerImpl.log("In batch request " + name + " from " +
                                     stackTraceElement.getClassName() +
                                     "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
                         } else {
