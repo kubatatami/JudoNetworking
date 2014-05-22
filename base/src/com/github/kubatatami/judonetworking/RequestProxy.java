@@ -273,16 +273,12 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                         LocalCacheLevel cacheLevel = rpc.isTest() ? LocalCacheLevel.DISK_CACHE : req.getLocalCacheLevel();
                         if (result.result) {
                             if (rpc.getCacheMode() == CacheMode.CLONE) {
-                                try {
-                                    result.object = rpc.getClonner().clone(result.object);
-                                    cacheObjects.put(req.getId(), new Pair<Request, Object>(req, result.object));
-                                    if (!req.isLocalCacheOnlyOnError()) {
-                                        batches.remove(i);
-                                        req.invokeStart(true);
-                                    }
-                                } catch (Exception e) {
-                                    LoggerImpl.log(e);
-                                }
+                                result.object = rpc.getClonner().clone(result.object);
+                            }
+                            cacheObjects.put(req.getId(), new Pair<Request, Object>(req, result.object));
+                            if (!req.isLocalCacheOnlyOnError()) {
+                                batches.remove(i);
+                                req.invokeStart(true);
                             }
 
 
@@ -347,7 +343,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                 RequestSuccessResult res = new RequestSuccessResult(cacheObjects.get(pairs.getKey()).second);
                 res.id = pairs.getKey();
                 responses.add(res);
-                batches.add(pairs.getKey(), pairs.getValue().first);
+                batches.add(pairs.getValue().first);
             }
         }
         Collections.sort(batches, new Comparator<Request>() {
