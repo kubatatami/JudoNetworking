@@ -62,8 +62,7 @@ public interface Endpoint extends EndpointBase {
      * @param maxMobileConnections
      * @param maxWifiConnections
      */
-    public void setMultiBatchConnections(int maxMobileConnections, int maxWifiConnections);
-
+    public void setMultiBatchConnections(int maxMobileConnections, int maxWifiConnections,int minBatchSize);
     /**
      * @param mode
      */

@@ -16,7 +16,7 @@ import java.util.Set;
 public class NetworkUtils {
 
     protected static Set<NetworkStateListener> networkStateListeners = new HashSet<NetworkStateListener>();
-
+    protected static ConnectivityManager connectManager;
     protected NetworkUtils() {
     }
 
@@ -38,7 +38,9 @@ public class NetworkUtils {
 
 
     public static boolean isWifi(Context context) {
-        final ConnectivityManager connectManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if(connectManager==null) {
+            connectManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        }
         final NetworkInfo wifi = connectManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         return wifi != null && wifi.getState() == NetworkInfo.State.CONNECTED;
     }

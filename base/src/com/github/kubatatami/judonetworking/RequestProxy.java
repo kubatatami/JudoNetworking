@@ -124,7 +124,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
     @Override
     public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
         try {
-
+            rpc.resizeThreadPool();
             RequestMethod ann = ReflectionCache.getAnnotation(m,RequestMethod.class);
             if (ann != null) {
                 String name = createMethodName(m, ann);
@@ -243,6 +243,13 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
     public void callBatch() {
         List<Request> batches;
+        synchronized (batchRequests) {
+            for (int i = batchRequests.size() - 1; i >= 0; i--) {
+                if (batchRequests.get(i).isCancelled()){
+                    batchRequests.remove(i);
+                }
+            }
+        }
         if (batchRequests.size() > 0) {
 
             if (mode.equals(BatchMode.AUTO)) {
@@ -384,13 +391,13 @@ class RequestProxy implements InvocationHandler, AsyncResult {
         final List<RequestResult> responses = new ArrayList<RequestResult>(batches.size());
 
         try {
-            for (Request request : batches) {
-                request.invokeStart(false);
-            }
-            int conn = rpc.getMaxConnections();
+            rpc.getHandler().post(new AsyncResultSender(batches, false));
+            int connections = Math.min(rpc.getMaxConnections(),
+                    rpc.getExecutorService().getMaximumPoolSize()-rpc.getExecutorService().getActiveCount()-1);
+            connections = Math.min(batches.size()/rpc.getMinBatchSize()+1, connections);
 
-            if (batches.size() > 1 && conn > 1) {
-                int connections = Math.min(batches.size(), conn);
+            if (connections > 1) {
+
                 List<List<Request>> requestParts = assignRequestsToConnections(batches, connections);
 
                 final List<BatchTask> tasks = new ArrayList<BatchTask>(connections);

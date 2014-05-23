@@ -52,8 +52,10 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     @Override
     public void run() {
         try {
-            Object result = rpc.getRequestConnector().call(this);
-            invokeCallback(result);
+            if(!cancelled) {
+                Object result = rpc.getRequestConnector().call(this);
+                invokeCallback(result);
+            }
         } catch (final JudoException e) {
             invokeCallbackException(e);
             if (rpc.getErrorLogger() != null && !(e instanceof CancelException)) {

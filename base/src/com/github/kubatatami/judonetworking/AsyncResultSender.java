@@ -80,8 +80,13 @@ class AsyncResultSender implements Runnable {
     AsyncResultSender(List<Request> requests, int progress) {
         this.progress = progress;
         this.requests = requests;
-        this.rpc = requests.get(0).getRpc();
         this.type = Type.PROGRESS;
+    }
+
+    AsyncResultSender(List<Request> requests, boolean isCached) {
+        this.isCached = isCached;
+        this.requests = requests;
+        this.type = Type.START;
     }
 
     AsyncResultSender(Request request, JudoException e) {
@@ -191,6 +196,12 @@ class AsyncResultSender implements Runnable {
             for(Request batchRequest : requests){
                 if(batchRequest.getCallback()!=null) {
                     batchRequest.getCallback().onProgress(progress);
+                }
+            }
+        }else if(requests!=null && type==Type.START){
+            for(Request batchRequest : requests){
+                if(batchRequest.getCallback()!=null) {
+                    batchRequest.getCallback().onStart(isCached,batchRequest);
                 }
             }
         }

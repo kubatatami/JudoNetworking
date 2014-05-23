@@ -547,6 +547,9 @@ class RequestConnector {
                         @Override
                         public void run() {
                             CacheResult cacheObject = null;
+                            if(request.isCancelled()){
+                                return;
+                            }
                             request.invokeStart(false);
                             if (rpc.isCacheEnabled() && request.isServerCachable()) {
                                 CacheMethod cacheMethod = new CacheMethod(url, request.getMethod(), request.getServerCacheLevel());

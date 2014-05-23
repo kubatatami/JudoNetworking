@@ -63,7 +63,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     private long tokenExpireTimestamp = -1;
     private Map<Method,Request> singleCallMethods = new HashMap<Method, Request>();
     private int id = 0;
-
+    private int minBatchSize=3;
     private boolean ignoreNullParams = false;
 
     private JudoExecutor executorService = new JudoExecutor();
@@ -89,7 +89,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         return virtualServers;
     }
 
-    public ExecutorService getExecutorService() {
+    public JudoExecutor getExecutorService() {
         return executorService;
     }
 
@@ -132,12 +132,15 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
 
     @Override
-    public void setMultiBatchConnections(int maxMobileConnections, int maxWifiConnections) {
+    public void setMultiBatchConnections(int maxMobileConnections, int maxWifiConnections,int minBatchSize) {
         this.maxMobileConnections = maxMobileConnections;
         this.maxWifiConnections = maxWifiConnections;
-        int max = Math.max(maxMobileConnections, maxWifiConnections);
-        transportLayer.setMaxConnections(max);
-        setThreadPoolSize(Math.max(maxMobileConnections, maxWifiConnections));
+        this.minBatchSize=minBatchSize;
+        setThreadPoolSize(getMaxConnections());
+    }
+
+    public void resizeThreadPool(){
+        setThreadPoolSize(getMaxConnections());
     }
 
     protected void setThreadPoolSize(int size) {
@@ -274,6 +277,10 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
     public int getMaxConnections() {
         return NetworkUtils.isWifi(context) ? getMaxWifiConnections() : getMaxMobileConnections();
+    }
+
+    public int getMinBatchSize() {
+        return minBatchSize;
     }
 
     @Override
