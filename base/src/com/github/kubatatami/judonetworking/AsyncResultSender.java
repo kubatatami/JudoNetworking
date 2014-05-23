@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 class AsyncResultSender implements Runnable {
     protected CallbackInterface<Object> callback;
@@ -15,6 +16,7 @@ class AsyncResultSender implements Runnable {
     protected Method method;
     protected EndpointImplementation rpc;
     protected Request request;
+    protected List<Request> requests;
     protected boolean isCached;
 
     enum Type {
@@ -72,6 +74,13 @@ class AsyncResultSender implements Runnable {
         this.request = request;
         this.rpc = request.getRpc();
         this.method = request.getMethod();
+        this.type = Type.PROGRESS;
+    }
+
+    AsyncResultSender(List<Request> requests, int progress) {
+        this.progress = progress;
+        this.requests = requests;
+        this.rpc = requests.get(0).getRpc();
         this.type = Type.PROGRESS;
     }
 
@@ -177,6 +186,12 @@ class AsyncResultSender implements Runnable {
             }
             if (type == Type.RESULT || type == Type.ERROR) {
                 transaction.onFinish();
+            }
+        }else if(requests!=null && type==Type.PROGRESS){
+            for(Request batchRequest : requests){
+                if(batchRequest.getCallback()!=null) {
+                    batchRequest.getCallback().onProgress(progress);
+                }
             }
         }
         if (method != null) {

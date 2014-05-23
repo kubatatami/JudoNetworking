@@ -1,8 +1,12 @@
 package com.github.kubatatami.judonetworking;
 
+import android.support.v4.util.LruCache;
+
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.concurrent.Future;
@@ -20,6 +24,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     private String[] paramNames;
     private Type returnType;
     private Method method;
+    private Class<?> apiInterface;
     private boolean batchFatal = true;
     private Serializable additionalControllerData = null;
     private boolean cancelled, done, running;
@@ -27,12 +32,14 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     private String customUrl;
     private Future<?> future;
 
+
     public Request(Integer id, EndpointImplementation rpc, Method method, String name, RequestMethod ann,
                    Object[] args, Type returnType, int timeout, CallbackInterface<Object> callback, Serializable additionalControllerData) {
         this.id = id;
         this.name = name;
         this.timeout = timeout;
         this.method = method;
+        this.apiInterface=method.getDeclaringClass();
         this.rpc = rpc;
         this.ann = ann;
         this.paramNames = ann.paramNames();
@@ -72,12 +79,6 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     public void invokeCallback(Object result) {
         rpc.getHandler().post(new AsyncResultSender(this, result));
-    }
-
-    public void invokeProgress(int progress) {
-        if (callback != null) {
-            rpc.getHandler().post(new AsyncResultSender(this, progress));
-        }
     }
 
     public static void invokeBatchCallbackStart(final EndpointImplementation rpc, RequestProxy requestProxy) {
@@ -134,9 +135,9 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     @Override
     public boolean isApiKeyRequired() {
         if (method != null) {
-            ApiKeyRequired ann = method.getAnnotation(ApiKeyRequired.class);
+            ApiKeyRequired ann = ReflectionCache.getAnnotation(method,ApiKeyRequired.class);
             if (ann == null) {
-                ann = method.getDeclaringClass().getAnnotation(ApiKeyRequired.class);
+                ann = ReflectionCache.getAnnotation(apiInterface,ApiKeyRequired.class);
             }
             return ann != null && ann.enabled();
         } else {
@@ -165,9 +166,9 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     LocalCache getLocalCache() {
         if (method != null) {
-            LocalCache ann = method.getAnnotation(LocalCache.class);
+            LocalCache ann = ReflectionCache.getAnnotation(method,LocalCache.class);
             if (ann == null) {
-                ann = method.getDeclaringClass().getAnnotation(LocalCache.class);
+                ann = ReflectionCache.getAnnotation(apiInterface,LocalCache.class);
             }
             if (ann != null && !ann.enabled()) {
                 ann = null;
@@ -180,9 +181,9 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     int getDelay() {
         if (method != null) {
-            Delay ann = method.getAnnotation(Delay.class);
+            Delay ann = ReflectionCache.getAnnotation(method,Delay.class);
             if (ann == null) {
-                ann = method.getDeclaringClass().getAnnotation(Delay.class);
+                ann = ReflectionCache.getAnnotation(apiInterface,Delay.class);
             }
             if (ann != null && !ann.enabled()) {
                 ann = null;
@@ -195,9 +196,9 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     ServerCache getServerCache() {
         if (method != null) {
-            ServerCache ann = method.getAnnotation(ServerCache.class);
+            ServerCache ann = ReflectionCache.getAnnotation(method,ServerCache.class);
             if (ann == null) {
-                ann = method.getDeclaringClass().getAnnotation(ServerCache.class);
+                ann = ReflectionCache.getAnnotation(apiInterface,ServerCache.class);
             }
             if (ann != null && !ann.enabled()) {
                 ann = null;
@@ -210,9 +211,9 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     SingleCall getSingleCall() {
         if (method != null) {
-            SingleCall ann = method.getAnnotation(SingleCall.class);
+            SingleCall ann = ReflectionCache.getAnnotation(method,SingleCall.class);
             if (ann == null) {
-                ann = method.getDeclaringClass().getAnnotation(SingleCall.class);
+                ann = ReflectionCache.getAnnotation(apiInterface,SingleCall.class);
             }
             if (ann != null && !ann.enabled()) {
                 ann = null;

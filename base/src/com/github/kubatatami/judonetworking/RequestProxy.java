@@ -26,7 +26,6 @@ class RequestProxy implements InvocationHandler, AsyncResult {
     protected boolean batchFatal = true;
     protected final List<Request> batchRequests = new ArrayList<Request>();
     protected BatchMode mode = BatchMode.NONE;
-    protected Map<Method, RequestMethod> annotations;
     protected boolean cancelled, done, running;
     protected Batch<?> batchCallback;
 
@@ -37,10 +36,6 @@ class RequestProxy implements InvocationHandler, AsyncResult {
         batchEnabled = (mode == BatchMode.MANUAL);
 
         Method[] methods = apiInterface.getMethods();
-        annotations = new HashMap<Method, RequestMethod>(methods.length);
-        for (Method method : methods) {
-            annotations.put(method, method.getAnnotation(RequestMethod.class));
-        }
     }
 
     protected final Runnable batchRunnable = new Runnable() {
@@ -130,7 +125,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
     public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
         try {
 
-            RequestMethod ann = annotations.get(m);
+            RequestMethod ann = ReflectionCache.getAnnotation(m,RequestMethod.class);
             if (ann != null) {
                 String name = createMethodName(m, ann);
                 int timeout = rpc.getRequestConnector().getMethodTimeout();
@@ -167,7 +162,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                     }
                     return rpc.getRequestConnector().call(request);
                 } else {
-                    request = callAsync(getNextId(), m, name, args, m.getGenericParameterTypes(), timeout, ann);
+                    request = callAsync(getNextId(), m, name, args, ReflectionCache.getGenericParameterTypes(m), timeout, ann);
                     rpc.filterNullArgs(request);
                     if (request.getSingleCall() != null) {
                         if (rpc.getSingleCallMethods().containsKey(m)) {

@@ -430,7 +430,7 @@ class RequestConnector {
 
 
             if (rpc.isTimeProfiler()) {
-                refreshStat(request.getName(), timeStat.getMethodTime());
+                refreshStat(request.getName(), timeStat.getMethodTime(),true);
             }
 
             if ((rpc.getDebugFlags() & Endpoint.TIME_DEBUG) > 0) {
@@ -458,7 +458,7 @@ class RequestConnector {
 
             return result.result;
         } catch (JudoException e) {
-            refreshErrorStat(request.getName(), request.getTimeout());
+            refreshErrorStat(request.getName(), request.getTimeout(),true);
             throw e;
         }
 
@@ -651,8 +651,9 @@ class RequestConnector {
             if (rpc.isTimeProfiler()) {
 
                 for (Request request : requests) {
-                    refreshStat(request.getName(), timeStat.getMethodTime() / requests.size());
+                    refreshStat(request.getName(), timeStat.getMethodTime() / requests.size(),false);
                 }
+                rpc.saveStat();
             }
 
 
@@ -663,7 +664,8 @@ class RequestConnector {
             return responses;
         } catch (JudoException e) {
             for (Request request : requests) {
-                refreshErrorStat(request.getName(), request.getTimeout());
+                refreshErrorStat(request.getName(), request.getTimeout(),false);
+                rpc.saveStat();
             }
             RequestProxy.addToExceptionMessage(requestsName.substring(1), e);
             throw e;
@@ -690,14 +692,14 @@ class RequestConnector {
         return stat;
     }
 
-    private void refreshStat(String method, long time) {
+    private void refreshStat(String method, long time, boolean save) {
         MethodStat stat = getStat(method);
         stat.avgTime = ((stat.avgTime * stat.requestCount) + time) / (stat.requestCount + 1);
         stat.requestCount++;
         rpc.saveStat();
     }
 
-    private void refreshErrorStat(String method, long timeout) {
+    private void refreshErrorStat(String method, long timeout, boolean save) {
         MethodStat stat = getStat(method);
         stat.avgTime = ((stat.avgTime * stat.requestCount) + timeout) / (stat.requestCount + 1);
         stat.errors++;
