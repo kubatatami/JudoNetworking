@@ -25,14 +25,15 @@ public class ObservableWrapper<T> extends Callback<T> {
     protected boolean checkNetworkState = false;
     protected boolean checkUpdateOnGet = false;
     protected boolean firstNetworkState = true;
+    protected boolean setOnlyWhenDifferentHash = false;
     protected long period = 0;
     protected Timer timer;
 
     protected NetworkUtils.NetworkStateListener networkStateListener = new NetworkUtils.NetworkStateListener() {
         @Override
         public void onNetworkStateChange(boolean networkAvailable) {
-            if(firstNetworkState){
-                firstNetworkState=false;
+            if (firstNetworkState) {
+                firstNetworkState = false;
                 return;
             }
             if (networkAvailable) {
@@ -172,19 +173,31 @@ public class ObservableWrapper<T> extends Callback<T> {
         return updateTime == 0 || System.currentTimeMillis() - getDataSetTime() <= updateTime;
     }
 
-    public void set(T object) {
-        set(object,true);
+    public boolean set(T object) {
+        return set(object, true);
     }
 
-    public void set(T object,boolean notify) {
+    public boolean set(T object, boolean notify) {
+
+        if (setOnlyWhenDifferentHash && this.object != null && object!=null && object.hashCode() == this.object.hashCode()) {
+           return false;
+        }
+
         dataSetTime = System.currentTimeMillis();
         this.object = object;
-        if(notify) {
+
+
+        if (notify) {
             notifyObservers();
         }
         if (listener != null) {
             listener.onSet(this, object);
         }
+        return true;
+    }
+
+    public void set(T object, ObservableTransaction transaction) {
+        transaction.add(this, object);
     }
 
     public void startCheckUpdatePeriodically(long period) {
@@ -266,4 +279,7 @@ public class ObservableWrapper<T> extends Callback<T> {
         this.allowNull = allowNull;
     }
 
+    public void setOnlyWhenDifferentHash(boolean setOnlyWhenDifferentHash) {
+        this.setOnlyWhenDifferentHash = setOnlyWhenDifferentHash;
+    }
 }
