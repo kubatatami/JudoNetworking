@@ -393,7 +393,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
         try {
             rpc.getHandler().post(new AsyncResultSender(batches, false));
             int connections = Math.min(rpc.getMaxConnections(),
-                    rpc.getExecutorService().getMaximumPoolSize()-rpc.getExecutorService().getActiveCount()-1);
+                    rpc.getExecutorService().getMaximumPoolSize()-(rpc.getExecutorService().getActiveCount()-1));
             connections = Math.min(batches.size()/rpc.getMinBatchSize()+1, connections);
 
             if (connections > 1) {
