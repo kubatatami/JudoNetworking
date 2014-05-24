@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
+import com.github.kubatatami.judonetworking.ReflectionCache;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -82,11 +83,11 @@ public class EnumAnnotationModule extends SimpleModule {
 
                 for (Field field : getValueClass().getDeclaredFields()) {
                     if (field.isEnumConstant()) {
-                        JsonProperty property = field.getAnnotation(JsonProperty.class);
+                        JsonProperty property = ReflectionCache.getAnnotation(field, JsonProperty.class);
                         if (property != null && property.value().equals(text)) {
                             return (Enum<?>) field.get(null);
                         }
-                        if(field.isAnnotationPresent(JsonDefaultEnum.class)){
+                        if(ReflectionCache.getAnnotation(field,JsonDefaultEnum.class)!=null){
                             if(defaultEnum==null) {
                                 defaultEnum = (Enum<?>) field.get(null);
                             }else{

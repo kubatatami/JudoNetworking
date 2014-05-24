@@ -3,16 +3,18 @@ package com.github.kubatatami.judonetworking;
 import android.support.v4.util.LruCache;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 /**
  * Created by Kuba on 23/05/14.
  */
-class ReflectionCache {
+public class ReflectionCache {
 
     protected final static LruCache<Class<?>, Annotation[]> interfaceAnnotationCache = new LruCache<Class<?>, Annotation[]> (100);
     protected final static LruCache<Method, Annotation[]> methodAnnotationCache = new LruCache<Method, Annotation[]>(100);
+    protected final static LruCache<Field, Annotation[]> fieldAnnotationCache = new LruCache<Field, Annotation[]>(100);
     protected final static LruCache<Method, Type[]> methodParamsTypeCache = new LruCache<Method, Type[]>(100);
 
     public static Annotation[] getAnnotations(Class<?> apiInterface){
@@ -33,6 +35,14 @@ class ReflectionCache {
         return result;
     }
 
+    public static Annotation[] getAnnotations(Field field){
+        Annotation[] result = fieldAnnotationCache.get(field);
+        if(result==null){
+            result=field.getAnnotations();
+            fieldAnnotationCache.put(field,result);
+        }
+        return result;
+    }
 
     public static <T> T getAnnotation(Class<?> apiInterface, Class<T> annotationClass) {
         Annotation[] annotations=getAnnotations(apiInterface);
@@ -46,6 +56,16 @@ class ReflectionCache {
 
     public static <T> T getAnnotation(Method method, Class<T> annotationClass) {
         Annotation[] annotations=getAnnotations(method);
+        for(Annotation annotation : annotations){
+            if(annotationClass.isInstance(annotation)){
+                return (T) annotation;
+            }
+        }
+        return null;
+    }
+
+    public static <T> T getAnnotation(Field field, Class<T> annotationClass) {
+        Annotation[] annotations=getAnnotations(field);
         for(Annotation annotation : annotations){
             if(annotationClass.isInstance(annotation)){
                 return (T) annotation;
