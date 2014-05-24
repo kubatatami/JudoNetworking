@@ -1,10 +1,11 @@
+-auto batch batchy
 -observer wrappery przechowujace dane w dyskowym cache-u(oszczedzanie ram-u)
 -force method hash
 -usuniecie metody z obiektu request, wyciagniecie potrzebnych informacji do obiektu serializable (nazwa, hashcode, adnotacje)
 -warstwa abstrakcji na parametry z adnotacji i classic (wprowadzenie w classic pozostałych możliwości(poza virtualservers i batch)
 -call in batch niezalezne od obiektu rpc, mozliwe wywolania z kilku serwerow
 -kolejka requestow bez callbacka(np. do synchronizacji danych gdy apka dziala offline)
--
+
 -testy automatyczne
 -zmiana implementacji tagow - nadpisanie layoutinflater
 -DOKUMENTACJA!!!
