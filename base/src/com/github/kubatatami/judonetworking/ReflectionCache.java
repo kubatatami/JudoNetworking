@@ -12,6 +12,7 @@ import java.lang.reflect.Type;
  */
 public class ReflectionCache {
 
+    protected final static LruCache<Class<?>, Method[]> interfaceMethodCache = new LruCache<Class<?>, Method[]> (100);
     protected final static LruCache<Class<?>, Annotation[]> interfaceAnnotationCache = new LruCache<Class<?>, Annotation[]> (100);
     protected final static LruCache<Method, Annotation[]> methodAnnotationCache = new LruCache<Method, Annotation[]>(100);
     protected final static LruCache<Field, Annotation[]> fieldAnnotationCache = new LruCache<Field, Annotation[]>(100);
@@ -22,6 +23,15 @@ public class ReflectionCache {
         if(result==null){
             result=apiInterface.getAnnotations();
             interfaceAnnotationCache.put(apiInterface,result);
+        }
+        return result;
+    }
+
+    public static Method[] getMethods(Class<?> apiInterface){
+        Method[] result = interfaceMethodCache.get(apiInterface);
+        if(result==null){
+            result=apiInterface.getMethods();
+            interfaceMethodCache.put(apiInterface,result);
         }
         return result;
     }
@@ -83,4 +93,16 @@ public class ReflectionCache {
         return result;
     }
 
+    public static void preLoad(final Class<?> apiInterface){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                getAnnotations(apiInterface);
+                for(Method method: apiInterface.getMethods()){
+                    getAnnotations(method);
+                    getGenericParameterTypes(method);
+                }
+            }
+        }).start();
+    }
 }

@@ -164,7 +164,9 @@ public class JsonRpc2Controller extends JsonRpcController {
 
             for (int i = 0; i < responses.size(); i++) {
                 JsonRpcResponseModel2 res = responses.get(i);
-                if (res.jsonrpc == null) {
+                if (requests.get(i).isCancelled()) {
+                    finalResponses.add(new RequestSuccessResult(res.id, null));
+                } else if (res.jsonrpc == null) {
                     throw new ParseException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support json-com.github.kubatatami.judonetworking.controllers.json.rpc 2.0? Try JsonRpc1Controller.");
                 } else if (res.error == null) {
                     Object result = null;

@@ -34,4 +34,6 @@ public interface RequestInterface {
 
     public void setParamNames(String[] paramNames);
 
+    public boolean isCancelled();
+
 }

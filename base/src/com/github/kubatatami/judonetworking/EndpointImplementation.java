@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
 import android.content.Context;
+import android.net.NetworkInfo;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -32,10 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 class EndpointImplementation implements Endpoint, EndpointClassic {
 
-    private int maxMobileConnections = 1;
-    private int maxWifiConnections = 2;
     private RequestConnector requestConnector;
-    private TransportLayer transportLayer;
     private Handler handler = new Handler();
     private Context context;
     private boolean cacheEnabled = false;
@@ -63,9 +61,8 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     private long tokenExpireTimestamp = -1;
     private Map<Method,Request> singleCallMethods = new HashMap<Method, Request>();
     private int id = 0;
-    private int minBatchSize=3;
     private boolean ignoreNullParams = false;
-
+    private ThreadPoolSizer threadPoolSizer=new DefaultThreadPoolSizer();
     private JudoExecutor executorService = new JudoExecutor();
 
 
@@ -75,7 +72,6 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
 
     private void init(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
-        this.transportLayer = transportLayer;
         this.requestConnector = new RequestConnector(url, this, transportLayer);
         this.context = context;
         this.protocolController = protocolController;
@@ -83,6 +79,12 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         this.statFile = new File(context.getCacheDir(), "stats");
         this.memoryCache = new MemoryCacheImplementation(context);
         this.diskCache = new DiskCacheImplementation(context);
+        NetworkUtils.addNetworkStateListener(context,new NetworkUtils.NetworkStateListener() {
+            @Override
+            public void onNetworkStateChange(NetworkInfo activeNetworkInfo) {
+                setThreadPoolSize(threadPoolSizer.getThreadPoolSize(activeNetworkInfo));
+            }
+        });
     }
 
     public HashMap<Class, VirtualServerInfo> getVirtualServers() {
@@ -130,21 +132,8 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         }
     }
 
-
-    @Override
-    public void setMultiBatchConnections(int maxMobileConnections, int maxWifiConnections,int minBatchSize) {
-        this.maxMobileConnections = maxMobileConnections;
-        this.maxWifiConnections = maxWifiConnections;
-        this.minBatchSize=minBatchSize;
-        setThreadPoolSize(getMaxConnections());
-    }
-
-    public void resizeThreadPool(){
-        setThreadPoolSize(getMaxConnections());
-    }
-
     protected void setThreadPoolSize(int size) {
-        executorService.setCorePoolSize(Math.max(2, size));
+        executorService.setMaximumPoolSize(Math.max(2, size));
     }
 
     @Override
@@ -159,7 +148,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
     @SuppressWarnings("unchecked")
     public <T> T getService(Class<T> obj) {
-        return getService(obj, new RequestProxy(this, obj, protocolController.getAutoBatchTime() > 0 ? BatchMode.AUTO : BatchMode.NONE, null));
+        return getService(obj, new RequestProxy(this, protocolController.getAutoBatchTime() > 0 ? BatchMode.AUTO : BatchMode.NONE, null));
     }
 
     @SuppressWarnings("unchecked")
@@ -226,7 +215,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> AsyncResult callInBatch(Class<T> obj, final Batch<T> batch) {
+    public <T> AsyncResult callInBatch(final Class<T> obj, final Batch<T> batch) {
 
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
             try {
@@ -239,15 +228,15 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
             }
         }
 
-        final RequestProxy pr = new RequestProxy(this, obj, BatchMode.MANUAL, batch);
-        T proxy = getService(obj, pr);
-        pr.setBatchFatal(true);
-        batch.run(proxy);
-        pr.setBatchFatal(false);
-        batch.runNonFatal(proxy);
+        final RequestProxy pr = new RequestProxy(this, BatchMode.MANUAL, batch);
         executorService.execute(new Runnable() {
             @Override
             public void run() {
+                T proxy = getService(obj, pr);
+                pr.setBatchFatal(true);
+                batch.run(proxy);
+                pr.setBatchFatal(false);
+                batch.runNonFatal(proxy);
                 pr.callBatch();
             }
         });
@@ -266,22 +255,6 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         return requestConnector;
     }
 
-
-    public int getMaxMobileConnections() {
-        return maxMobileConnections;
-    }
-
-    public int getMaxWifiConnections() {
-        return maxWifiConnections;
-    }
-
-    public int getMaxConnections() {
-        return NetworkUtils.isWifi(context) ? getMaxWifiConnections() : getMaxMobileConnections();
-    }
-
-    public int getMinBatchSize() {
-        return minBatchSize;
-    }
 
     @Override
     public void setBatchTimeoutMode(BatchTimeoutMode mode) {
@@ -529,5 +502,9 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
     public void setThreadPriority(int threadPriority) {
         executorService.setThreadPriority(threadPriority);
+    }
+
+    public void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer) {
+        this.threadPoolSizer = threadPoolSizer;
     }
 }

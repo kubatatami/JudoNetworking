@@ -1,7 +1,5 @@
 package com.github.kubatatami.judonetworking;
 
-import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -16,14 +14,15 @@ public class JudoExecutor extends ThreadPoolExecutor{
     protected ThreadFactory threadFactory =  new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
-            Thread thread = new Thread(r);
+            Thread thread = new Thread(r,"JudoNetworking ConnectionPool");
             thread.setPriority(threadPriority);
             return thread;
         }
     };
 
     public JudoExecutor() {
-        super(2, 30, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+        super(DefaultThreadPoolSizer.DEFAULT_THREAD_COUNT, DefaultThreadPoolSizer.DEFAULT_THREAD_COUNT,
+                0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
         setThreadFactory(threadFactory);
     }
 

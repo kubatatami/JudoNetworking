@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking;
 
+import android.os.Debug;
 import android.util.Pair;
 
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -29,13 +30,11 @@ class RequestProxy implements InvocationHandler, AsyncResult {
     protected boolean cancelled, done, running;
     protected Batch<?> batchCallback;
 
-    public RequestProxy(EndpointImplementation rpc, Class<?> apiInterface, BatchMode mode, Batch<?> batchCallback) {
+    public RequestProxy(EndpointImplementation rpc, BatchMode mode, Batch<?> batchCallback) {
         this.rpc = rpc;
         this.mode = mode;
         this.batchCallback = batchCallback;
         batchEnabled = (mode == BatchMode.MANUAL);
-
-        Method[] methods = apiInterface.getMethods();
     }
 
     protected final Runnable batchRunnable = new Runnable() {
@@ -67,8 +66,8 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
 
     public static String createMethodName(Method method, RequestMethod ann) {
-        NamePrefix namePrefix = method.getDeclaringClass().getAnnotation(NamePrefix.class);
-        NameSuffix nameSuffix = method.getDeclaringClass().getAnnotation(NameSuffix.class);
+        NamePrefix namePrefix = ReflectionCache.getAnnotation(method.getDeclaringClass(),NamePrefix.class);
+        NameSuffix nameSuffix = ReflectionCache.getAnnotation(method.getDeclaringClass(),NameSuffix.class);
         String name;
         if (ann != null && !("".equals(ann.name()))) {
             name = ann.name();
@@ -124,7 +123,6 @@ class RequestProxy implements InvocationHandler, AsyncResult {
     @Override
     public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
         try {
-            rpc.resizeThreadPool();
             RequestMethod ann = ReflectionCache.getAnnotation(m,RequestMethod.class);
             if (ann != null) {
                 String name = createMethodName(m, ann);
@@ -392,10 +390,8 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
         try {
             rpc.getHandler().post(new AsyncResultSender(batches, false));
-            int connections = Math.min(rpc.getMaxConnections(),
-                    rpc.getExecutorService().getMaximumPoolSize()-(rpc.getExecutorService().getActiveCount()-1));
-            connections = Math.min(batches.size()/rpc.getMinBatchSize()+1, connections);
-
+            int connections = rpc.getExecutorService().getMaximumPoolSize()-(rpc.getExecutorService().getActiveCount()-1);
+            connections=Math.min(connections,batches.size());
             if (connections > 1) {
 
                 List<List<Request>> requestParts = assignRequestsToConnections(batches, connections);

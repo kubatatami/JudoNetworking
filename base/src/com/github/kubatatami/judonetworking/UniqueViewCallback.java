@@ -8,14 +8,19 @@ import java.util.Map;
 /**
  * Created by Kuba on 23/05/14.
  */
-public class UniqueViewCallback<T> extends Callback<T>{
+public class  UniqueViewCallback<Z,T> extends Callback<T>{
 
     protected static final Map<View, UniqueViewCallback> viewCache = new HashMap<View, UniqueViewCallback>();
     protected final View view;
     protected AsyncResult asyncResult;
+    protected Z object;
 
     public UniqueViewCallback(View view) {
         this.view = view;
+    }
+
+    public void setObject(Z object) {
+        this.object = object;
         cancelRequest(view);
         viewCache.put(view,this);
     }

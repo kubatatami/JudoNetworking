@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.observers;
 
 import android.content.Context;
+import android.net.NetworkInfo;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -31,12 +32,12 @@ public class ObservableWrapper<T> extends Callback<T> {
 
     protected NetworkUtils.NetworkStateListener networkStateListener = new NetworkUtils.NetworkStateListener() {
         @Override
-        public void onNetworkStateChange(boolean networkAvailable) {
+        public void onNetworkStateChange(NetworkInfo activeNetworkInfo) {
             if (firstNetworkState) {
                 firstNetworkState = false;
                 return;
             }
-            if (networkAvailable) {
+            if (activeNetworkInfo!=null && activeNetworkInfo.isConnected()) {
                 if (forceUpdateOnNetworkStateChange) {
                     forceUpdate();
                 } else {

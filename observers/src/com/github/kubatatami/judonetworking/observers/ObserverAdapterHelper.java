@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.github.kubatatami.judonetworking.ReflectionCache;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.Constructor;
@@ -75,7 +76,7 @@ public class ObserverAdapterHelper {
                     result = method.invoke(item);
                 }
 
-                return result!=null ? result.toString() : "null";
+                return result != null ? result.toString() : "null";
 
             } catch (Exception e) {
                 ExceptionHandler.throwRuntimeException(e);
@@ -93,7 +94,6 @@ public class ObserverAdapterHelper {
         }
 
     }
-
 
 
     public View getView(int layout, Object item, View convertView, ViewGroup parent) {
@@ -132,10 +132,17 @@ public class ObserverAdapterHelper {
                     constructor.setAccessible(true);
                     Object holder = constructor.newInstance();
                     for (Field field : holderClass.getDeclaredFields()) {
-                        HolderView viewById = field.getAnnotation(HolderView.class);
+                        HolderView viewById = ReflectionCache.getAnnotation(field, HolderView.class);
                         if (viewById != null) {
                             field.setAccessible(true);
                             field.set(holder, convertView.findViewById(viewById.value()));
+                        }
+                        HolderCallback holderCallback = ReflectionCache.getAnnotation(field, HolderCallback.class);
+                        if (holderCallback != null) {
+                            field.setAccessible(true);
+                            View view = convertView.findViewById(holderCallback.value());
+                            Object callback = field.getType().getConstructor(View.class).newInstance(view);
+                            field.set(holder, callback);
                         }
                     }
                     convertView.setTag(holder);

@@ -17,14 +17,18 @@ public class NetworkUtils {
 
     protected static Set<NetworkStateListener> networkStateListeners = new HashSet<NetworkStateListener>();
     protected static ConnectivityManager connectManager;
+
     protected NetworkUtils() {
     }
 
     protected static BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            ConnectivityManager connectivityManager
+                    = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
             for (NetworkStateListener networkStateListener : networkStateListeners) {
-                networkStateListener.onNetworkStateChange(isNetworkAvailable(context));
+                networkStateListener.onNetworkStateChange(activeNetworkInfo);
             }
         }
     };
@@ -38,7 +42,7 @@ public class NetworkUtils {
 
 
     public static boolean isWifi(Context context) {
-        if(connectManager==null) {
+        if (connectManager == null) {
             connectManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         }
         final NetworkInfo wifi = connectManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
@@ -63,7 +67,7 @@ public class NetworkUtils {
 
     public static interface NetworkStateListener {
 
-        public void onNetworkStateChange(boolean networkAvailable);
+        public void onNetworkStateChange(NetworkInfo activeNetworkInfo);
 
     }
 

@@ -59,11 +59,6 @@ public interface Endpoint extends EndpointBase {
 
 
     /**
-     * @param maxMobileConnections
-     * @param maxWifiConnections
-     */
-    public void setMultiBatchConnections(int maxMobileConnections, int maxWifiConnections,int minBatchSize);
-    /**
      * @param mode
      */
     public void setBatchTimeoutMode(BatchTimeoutMode mode);
@@ -119,5 +114,7 @@ public interface Endpoint extends EndpointBase {
 
 
     public MemoryCache getMemoryCache();
+
+    public void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer);
 
 }
