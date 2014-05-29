@@ -196,16 +196,16 @@ class RequestConnector {
 
 
             if (result.result == null) {
-                Required ann = request.getMethod().getAnnotation(Required.class);
+                Required ann = ReflectionCache.getAnnotation(request.getMethod(), Required.class);
                 if (ann != null) {
                     throw new VerifyModelException("Result object required.");
                 }
-                RequiredList ann2 = request.getMethod().getAnnotation(RequiredList.class);
+                RequiredList ann2 = ReflectionCache.getAnnotation(request.getMethod(), RequiredList.class);
                 if (ann2 != null) {
                     throw new VerifyModelException("Result object required.");
                 }
             } else {
-                RequiredList ann = request.getMethod().getAnnotation(RequiredList.class);
+                RequiredList ann = ReflectionCache.getAnnotation(request.getMethod(), RequiredList.class);
                 if (ann != null) {
                     if (result.result instanceof Iterable) {
                         int i = 0;
@@ -370,7 +370,7 @@ class RequestConnector {
 
             if ((rpc.isCacheEnabled() && request.isLocalCachable()) || rpc.isTest()) {
                 LocalCacheLevel cacheLevel = rpc.isTest() ? LocalCacheLevel.DISK_CACHE : request.getLocalCacheLevel();
-                localCacheObject = rpc.getMemoryCache().get(request.getMethod(), request.getArgs(), rpc.isTest() ? 0 : request.getLocalCacheLifeTime(), request.getLocalCacheSize());
+                localCacheObject = rpc.getMemoryCache().get(request.getMethodId(), request.getArgs(), rpc.isTest() ? 0 : request.getLocalCacheLifeTime(), request.getLocalCacheSize());
                 if (localCacheObject.result) {
                     if (!request.isLocalCacheOnlyOnError()) {
                         request.invokeStart(new CacheInfo(true,localCacheObject.time));
@@ -378,11 +378,11 @@ class RequestConnector {
                         return localCacheObject.object;
                     }
                 } else if (cacheLevel != LocalCacheLevel.MEMORY_ONLY) {
-                    CacheMethod cacheMethod = new CacheMethod(rpc.getTestName(), rpc.getTestRevision(), url, request.getMethod(), cacheLevel);
+                    CacheMethod cacheMethod = new CacheMethod(request,rpc.getTestName(), rpc.getTestRevision(), url, cacheLevel);
                     localCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getLocalCacheLifeTime());
                     if (localCacheObject.result) {
                         if (!rpc.isTest()) {  //we don't know when test will be stop
-                            rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), localCacheObject.object, request.getLocalCacheSize());
+                            rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), localCacheObject.object, request.getLocalCacheSize());
                         }
                         if (!request.isLocalCacheOnlyOnError()) {
                             request.invokeStart(new CacheInfo(true,localCacheObject.time));
@@ -395,7 +395,7 @@ class RequestConnector {
             }
 
             if (rpc.isCacheEnabled() && request.isServerCachable()) {
-                CacheMethod cacheMethod = new CacheMethod(url, request.getMethod(), request.getServerCacheLevel());
+                CacheMethod cacheMethod = new CacheMethod(request, url, request.getServerCacheLevel());
                 serverCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
 
             }
@@ -438,20 +438,20 @@ class RequestConnector {
             }
 
             if ((rpc.isCacheEnabled() && request.isLocalCachable()) || rpc.isTest()) {
-                rpc.getMemoryCache().put(request.getMethod(), request.getArgs(), result.result, request.getLocalCacheSize());
+                rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), result.result, request.getLocalCacheSize());
                 if (rpc.getCacheMode() == CacheMode.CLONE) {
                     result.result = rpc.getClonner().clone(result.result);
                 }
                 LocalCacheLevel cacheLevel = rpc.isTest() ? LocalCacheLevel.DISK_CACHE : request.getLocalCacheLevel();
                 if (cacheLevel != LocalCacheLevel.MEMORY_ONLY) {
 
-                    CacheMethod cacheMethod = new CacheMethod(rpc.getTestName(), rpc.getTestRevision(), url, request.getMethod(), cacheLevel);
+                    CacheMethod cacheMethod = new CacheMethod(request, rpc.getTestName(), rpc.getTestRevision(), url, cacheLevel);
                     rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getLocalCacheSize());
                 }
 
 
             } else if (rpc.isCacheEnabled() && request.isServerCachable() && (result.hash != null || result.time != null)) {
-                CacheMethod cacheMethod = new CacheMethod(url, request.getMethod(), request.getServerCacheLevel());
+                CacheMethod cacheMethod = new CacheMethod(request, url, request.getServerCacheLevel());
                 rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getServerCacheSize());
             }
 
@@ -552,7 +552,7 @@ class RequestConnector {
                             }
                             request.invokeStart(new CacheInfo(false,0L));
                             if (rpc.isCacheEnabled() && request.isServerCachable()) {
-                                CacheMethod cacheMethod = new CacheMethod(url, request.getMethod(), request.getServerCacheLevel());
+                                CacheMethod cacheMethod = new CacheMethod(request,url, request.getServerCacheLevel());
                                 cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getServerCacheSize());
 
                             }

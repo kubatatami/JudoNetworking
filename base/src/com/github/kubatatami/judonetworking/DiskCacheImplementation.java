@@ -211,7 +211,7 @@ class DiskCacheImplementation implements DiskCache {
         }
         name += method.getMethod().getDeclaringClass().getSimpleName() + "/";
         name += method.getUrl().hashCode() + "/";
-        name += method.getMethod().getName() + "/";
+        name += method.getMethodId() + "/";
 
         File file = new File(name);
         file.mkdirs();

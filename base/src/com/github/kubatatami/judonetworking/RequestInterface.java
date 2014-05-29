@@ -22,8 +22,6 @@ public interface RequestInterface {
 
     public String[] getParamNames();
 
-    public Method getMethod();
-
     public boolean isAllowEmptyResult();
 
     public Object getAdditionalData();
@@ -36,4 +34,7 @@ public interface RequestInterface {
 
     public boolean isCancelled();
 
+    public int getMethodId();
+
+    public Method getMethod();
 }

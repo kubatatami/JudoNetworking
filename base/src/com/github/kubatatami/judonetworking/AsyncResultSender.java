@@ -13,7 +13,7 @@ class AsyncResultSender implements Runnable {
     protected JudoException e = null;
     protected int progress = 0;
     protected final Type type;
-    protected Method method;
+    protected Integer methodId;
     protected EndpointImplementation rpc;
     protected Request request;
     protected List<Request> requests;
@@ -64,7 +64,7 @@ class AsyncResultSender implements Runnable {
         this.callback = request.getCallback();
         this.request = request;
         this.rpc = request.getRpc();
-        this.method = request.getMethod();
+        this.methodId = request.getMethodId();
         this.type = Type.RESULT;
     }
 
@@ -73,7 +73,7 @@ class AsyncResultSender implements Runnable {
         this.callback = request.getCallback();
         this.request = request;
         this.rpc = request.getRpc();
-        this.method = request.getMethod();
+        this.methodId = request.getMethodId();
         this.type = Type.PROGRESS;
     }
 
@@ -94,7 +94,7 @@ class AsyncResultSender implements Runnable {
         this.callback = request.getCallback();
         this.request = request;
         this.rpc = request.getRpc();
-        this.method = request.getMethod();
+        this.methodId = request.getMethodId();
         this.type = Type.ERROR;
     }
 
@@ -205,14 +205,14 @@ class AsyncResultSender implements Runnable {
                 }
             }
         }
-        if (method != null) {
+        if (methodId != null) {
             switch (type) {
                 case ERROR:
                 case RESULT:
                     synchronized (rpc.getSingleCallMethods()) {
-                        boolean result = rpc.getSingleCallMethods().remove(method)!=null;
+                        boolean result = rpc.getSingleCallMethods().remove(methodId)!=null;
                         if (result && (rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                            LoggerImpl.log("Request " + method.getName() + " removed from SingleCall queue.");
+                            LoggerImpl.log("Request " + request.getName() + "("+methodId+")"+" removed from SingleCall queue.");
                         }
                     }
                     break;

@@ -55,6 +55,11 @@ public class RequestOptions implements RequestMethod {
     }
 
     @Override
+    public int id() {
+        return 0;
+    }
+
+    @Override
     public final String name() {
         return null;
     }

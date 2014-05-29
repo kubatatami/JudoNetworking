@@ -59,7 +59,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     private boolean verifyResultModel = false;
     private boolean processingMethod = false;
     private long tokenExpireTimestamp = -1;
-    private Map<Method,Request> singleCallMethods = new HashMap<Method, Request>();
+    private Map<Integer,Request> singleCallMethods = new HashMap<Integer, Request>();
     private int id = 0;
     private boolean ignoreNullParams = false;
     private ThreadPoolSizer threadPoolSizer=new DefaultThreadPoolSizer();
@@ -492,7 +492,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         return percentLoss;
     }
 
-    public Map<Method,Request> getSingleCallMethods() {
+    public Map<Integer,Request> getSingleCallMethods() {
         return singleCallMethods;
     }
 

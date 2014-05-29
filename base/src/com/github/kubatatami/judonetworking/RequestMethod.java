@@ -8,6 +8,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface RequestMethod {
+
+    public int id() default 0;
+
     public String name() default "";
 
     public String[] paramNames() default {};

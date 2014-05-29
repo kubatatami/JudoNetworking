@@ -125,6 +125,11 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     }
 
     @Override
+    public int getMethodId() {
+        return CacheMethod.getMethodId(method);
+    }
+
+    @Override
     public Method getMethod() {
         return method;
     }
