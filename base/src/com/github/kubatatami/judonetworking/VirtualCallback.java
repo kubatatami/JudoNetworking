@@ -11,7 +11,7 @@ class VirtualCallback implements CallbackInterface {
     }
 
     @Override
-    public void onStart(boolean isCached, AsyncResult asyncResult) {
+    public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
 
     }
 

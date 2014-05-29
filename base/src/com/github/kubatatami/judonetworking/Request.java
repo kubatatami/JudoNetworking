@@ -69,9 +69,9 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         }
     }
 
-    public void invokeStart(boolean isCached) {
+    public void invokeStart(CacheInfo cacheInfo) {
         if (callback != null) {
-            rpc.getHandler().post(new AsyncResultSender(this, isCached));
+            rpc.getHandler().post(new AsyncResultSender(this, cacheInfo));
         }
     }
 

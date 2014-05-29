@@ -17,7 +17,7 @@ class AsyncResultSender implements Runnable {
     protected EndpointImplementation rpc;
     protected Request request;
     protected List<Request> requests;
-    protected boolean isCached;
+    protected CacheInfo cacheInfo;
 
     enum Type {
         RESULT, ERROR, PROGRESS, START
@@ -50,12 +50,12 @@ class AsyncResultSender implements Runnable {
         this.type = Type.ERROR;
     }
 
-    AsyncResultSender(Request request, boolean isCached) {
+    AsyncResultSender(Request request, CacheInfo cacheInfo) {
         this.callback = request.getCallback();
         this.request = request;
         this.rpc = request.getRpc();
         this.type = Type.START;
-        this.isCached = isCached;
+        this.cacheInfo = cacheInfo;
     }
 
 
@@ -83,10 +83,10 @@ class AsyncResultSender implements Runnable {
         this.type = Type.PROGRESS;
     }
 
-    AsyncResultSender(List<Request> requests, boolean isCached) {
-        this.isCached = isCached;
+    AsyncResultSender(List<Request> requests) {
         this.requests = requests;
         this.type = Type.START;
+        this.cacheInfo=new CacheInfo(false,0L);
     }
 
     AsyncResultSender(Request request, JudoException e) {
@@ -131,7 +131,7 @@ class AsyncResultSender implements Runnable {
             switch (type) {
                 case START:
                     request.start();
-                    callback.onStart(isCached, request);
+                    callback.onStart(cacheInfo, request);
                     break;
                 case RESULT:
                     callback.onSuccess(result);
@@ -201,7 +201,7 @@ class AsyncResultSender implements Runnable {
         }else if(requests!=null && type==Type.START){
             for(Request batchRequest : requests){
                 if(batchRequest.getCallback()!=null) {
-                    batchRequest.getCallback().onStart(isCached,batchRequest);
+                    batchRequest.getCallback().onStart(cacheInfo,batchRequest);
                 }
             }
         }

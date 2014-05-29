@@ -16,6 +16,7 @@ public class CacheMethod {
         this.url = url;
         this.method = method;
         this.dynamic = true;
+        this.time = System.currentTimeMillis();
         cacheLevel = (level == ServerCacheLevel.DISK_CACHE) ? LocalCacheLevel.DISK_CACHE : LocalCacheLevel.DISK_DATA;
     }
 
@@ -33,6 +34,7 @@ public class CacheMethod {
         this.testRevision = testRevision;
         this.url = url;
         this.method = method;
+        this.time = System.currentTimeMillis();
         this.cacheLevel = level;
     }
 

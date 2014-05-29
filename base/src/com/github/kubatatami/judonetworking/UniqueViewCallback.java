@@ -26,8 +26,8 @@ public class  UniqueViewCallback<Z,T> extends Callback<T>{
     }
 
     @Override
-    public void onStart(boolean isCached, AsyncResult asyncResult) {
-        super.onStart(isCached, asyncResult);
+    public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
+        super.onStart(cacheInfo, asyncResult);
         this.asyncResult=asyncResult;
         if(viewCache.get(view)!=this) {
             asyncResult.cancel();

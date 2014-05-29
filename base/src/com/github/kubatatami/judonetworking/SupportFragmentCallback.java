@@ -24,10 +24,10 @@ public class SupportFragmentCallback<T> extends Callback<T> implements FragmentM
     }
 
     @Override
-    public final void onStart(boolean isCached, AsyncResult asyncResult) {
+    public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
         if (fragment.getActivity() != null) {
-            onSafeStart(isCached, asyncResult);
+            onSafeStart(cacheInfo, asyncResult);
         } else {
             tryCancel();
         }
@@ -77,7 +77,7 @@ public class SupportFragmentCallback<T> extends Callback<T> implements FragmentM
         }
     }
 
-    public void onSafeStart(boolean isCached, AsyncResult asyncResult) {
+    public void onSafeStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
 
     }
 

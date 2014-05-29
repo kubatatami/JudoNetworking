@@ -278,7 +278,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                             cacheObjects.put(req.getId(), new Pair<Request, Object>(req, result.object));
                             if (!req.isLocalCacheOnlyOnError()) {
                                 batches.remove(i);
-                                req.invokeStart(true);
+                                req.invokeStart(new CacheInfo(true,result.time));
                             }
 
 
@@ -292,7 +292,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                                 cacheObjects.put(req.getId(), new Pair<Request, Object>(req, result.object));
                                 if (!req.isLocalCacheOnlyOnError()) {
                                     batches.remove(i);
-                                    req.invokeStart(true);
+                                    req.invokeStart(new CacheInfo(true,result.time));
                                 }
                             }
 
@@ -389,7 +389,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
         final List<RequestResult> responses = new ArrayList<RequestResult>(batches.size());
 
         try {
-            rpc.getHandler().post(new AsyncResultSender(batches, false));
+            rpc.getHandler().post(new AsyncResultSender(batches));
             int connections = rpc.getExecutorService().getMaximumPoolSize()-(rpc.getExecutorService().getActiveCount()-1);
             connections=Math.min(connections,batches.size());
             if (connections > 1) {

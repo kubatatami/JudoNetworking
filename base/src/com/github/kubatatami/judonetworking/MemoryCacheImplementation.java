@@ -42,6 +42,7 @@ class MemoryCacheImplementation implements MemoryCache {
                         LoggerImpl.log("Cache(" + method + "): Get from memory cache object with hash:" + hash);
                     }
                     result.object = cacheObject.getObject();
+                    result.time=cacheObject.createTime;
                     result.result = true;
                     return result;
                 }
