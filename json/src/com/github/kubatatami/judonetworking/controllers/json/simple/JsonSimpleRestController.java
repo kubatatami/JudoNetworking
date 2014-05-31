@@ -53,17 +53,26 @@ public class JsonSimpleRestController extends RawRestController {
         JsonPost jsonPost = ReflectionCache.getAnnotationInherited(request.getMethod(), JsonPost.class);
         if (jsonPost!=null && jsonPost.enabled()) {
             ProtocolController.RequestInfo requestInfo = super.createRequest(url, request);
-            Map<String, Object> params = new HashMap<String, Object>();
-            int i = 0;
-            for (String name : request.getParamNames()) {
-                params.put(name,request.getArgs()[i]);
-                i++;
+            Object finalParams;
+            if(jsonPost.singleFlat()){
+                if(request.getArgs().length==1){
+                    finalParams=request.getArgs()[0];
+                }else{
+                    throw new JudoException("SingleFlat can be enabled only for method with one parameter.");
+                }
+            }else {
+                Map<String, Object> params = new HashMap<String, Object>();
+                int i = 0;
+                for (String name : request.getParamNames()) {
+                    params.put(name, request.getArgs()[i]);
+                    i++;
+                }
+                finalParams=params;
             }
-
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             OutputStreamWriter writer = new OutputStreamWriter(stream);
             try {
-                mapper.writeValue(writer, params);
+                mapper.writeValue(writer, finalParams);
                 writer.close();
             } catch (IOException ex) {
                 throw new JudoException("Can't create request", ex);
@@ -87,5 +96,6 @@ public class JsonSimpleRestController extends RawRestController {
     @Target({ElementType.METHOD, ElementType.TYPE})
     public @interface JsonPost {
         boolean enabled() default true;
+        boolean singleFlat() default false;
     }
 }
