@@ -15,6 +15,7 @@ public class ReflectionCache {
     protected final static LruCache<Class<?>, Method[]> interfaceMethodCache = new LruCache<Class<?>, Method[]> (100);
     protected final static LruCache<Class<?>, Annotation[]> interfaceAnnotationCache = new LruCache<Class<?>, Annotation[]> (100);
     protected final static LruCache<Method, Annotation[]> methodAnnotationCache = new LruCache<Method, Annotation[]>(100);
+    protected final static LruCache<Method, Annotation[][]> methodParamAnnotationCache = new LruCache<Method, Annotation[][]>(100);
     protected final static LruCache<Field, Annotation[]> fieldAnnotationCache = new LruCache<Field, Annotation[]>(100);
     protected final static LruCache<Method, Type[]> methodParamsTypeCache = new LruCache<Method, Type[]>(100);
 
@@ -54,7 +55,17 @@ public class ReflectionCache {
         return result;
     }
 
-    public static <T> T getAnnotation(Class<?> apiInterface, Class<T> annotationClass) {
+
+    public static Annotation[][] getParameterAnnotations(Method method){
+        Annotation[][] result = methodParamAnnotationCache.get(method);
+        if(result==null){
+            result=method.getParameterAnnotations();
+            methodParamAnnotationCache.put(method,result);
+        }
+        return result;
+    }
+
+    public static <T extends Annotation> T getAnnotation(Class<?> apiInterface, Class<T> annotationClass) {
         Annotation[] annotations=getAnnotations(apiInterface);
         for(Annotation annotation : annotations){
             if(annotationClass.isInstance(annotation)){
@@ -64,7 +75,7 @@ public class ReflectionCache {
         return null;
     }
 
-    public static <T> T getAnnotation(Method method, Class<T> annotationClass) {
+    public static <T extends Annotation> T getAnnotation(Method method, Class<T> annotationClass) {
         Annotation[] annotations=getAnnotations(method);
         for(Annotation annotation : annotations){
             if(annotationClass.isInstance(annotation)){
@@ -74,7 +85,7 @@ public class ReflectionCache {
         return null;
     }
 
-    public static <T> T getAnnotation(Field field, Class<T> annotationClass) {
+    public static <T extends Annotation> T getAnnotation(Field field, Class<T> annotationClass) {
         Annotation[] annotations=getAnnotations(field);
         for(Annotation annotation : annotations){
             if(annotationClass.isInstance(annotation)){
@@ -83,6 +94,15 @@ public class ReflectionCache {
         }
         return null;
     }
+
+    public static <T extends Annotation> T getAnnotationInherited(Method method, Class<T> annotationClass) {
+        T ann = ReflectionCache.getAnnotation(method,annotationClass);
+        if (ann == null) {
+            ann = ReflectionCache.getAnnotation(method.getDeclaringClass(),annotationClass);
+        }
+        return ann;
+    }
+
 
     public static Type[] getGenericParameterTypes(Method method){
         Type[] result = methodParamsTypeCache.get(method);

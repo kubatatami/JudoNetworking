@@ -4,11 +4,17 @@ import android.support.v4.util.LruCache;
 
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
+import org.apache.http.message.BasicNameValuePair;
+
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Future;
 
 class Request implements Runnable, Comparable<Request>, ProgressObserver, RequestInterface, AsyncResult {
@@ -34,7 +40,8 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
 
     public Request(Integer id, EndpointImplementation rpc, Method method, String name, RequestMethod ann,
-                   Object[] args, Type returnType, int timeout, CallbackInterface<Object> callback, Serializable additionalControllerData) {
+                   Object[] args, Type returnType, int timeout, CallbackInterface<Object> callback,
+                   Serializable additionalControllerData) {
         this.id = id;
         this.name = name;
         this.timeout = timeout;
@@ -42,11 +49,11 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         this.apiInterface=method.getDeclaringClass();
         this.rpc = rpc;
         this.ann = ann;
-        this.paramNames = ann.paramNames();
         this.args = args;
         this.returnType = returnType;
         this.callback = callback;
         this.additionalControllerData = additionalControllerData;
+        this.paramNames = ann.paramNames();
     }
 
     @Override
@@ -173,10 +180,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     LocalCache getLocalCache() {
         if (method != null) {
-            LocalCache ann = ReflectionCache.getAnnotation(method,LocalCache.class);
-            if (ann == null) {
-                ann = ReflectionCache.getAnnotation(apiInterface,LocalCache.class);
-            }
+            LocalCache ann = ReflectionCache.getAnnotationInherited(method,LocalCache.class);
             if (ann != null && !ann.enabled()) {
                 ann = null;
             }
@@ -188,10 +192,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     int getDelay() {
         if (method != null) {
-            Delay ann = ReflectionCache.getAnnotation(method,Delay.class);
-            if (ann == null) {
-                ann = ReflectionCache.getAnnotation(apiInterface,Delay.class);
-            }
+            Delay ann = ReflectionCache.getAnnotationInherited(method,Delay.class);
             if (ann != null && !ann.enabled()) {
                 ann = null;
             }
@@ -204,9 +205,6 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     ServerCache getServerCache() {
         if (method != null) {
             ServerCache ann = ReflectionCache.getAnnotation(method,ServerCache.class);
-            if (ann == null) {
-                ann = ReflectionCache.getAnnotation(apiInterface,ServerCache.class);
-            }
             if (ann != null && !ann.enabled()) {
                 ann = null;
             }
@@ -219,9 +217,6 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     SingleCall getSingleCall() {
         if (method != null) {
             SingleCall ann = ReflectionCache.getAnnotation(method,SingleCall.class);
-            if (ann == null) {
-                ann = ReflectionCache.getAnnotation(apiInterface,SingleCall.class);
-            }
             if (ann != null && !ann.enabled()) {
                 ann = null;
             }

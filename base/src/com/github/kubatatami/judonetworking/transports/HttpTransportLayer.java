@@ -4,6 +4,7 @@ import android.os.Build;
 
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.ProtocolController;
+import com.github.kubatatami.judonetworking.ReflectionCache;
 import com.github.kubatatami.judonetworking.RequestOutputStream;
 import com.github.kubatatami.judonetworking.SecurityUtils;
 import com.github.kubatatami.judonetworking.TimeStat;
@@ -179,9 +180,11 @@ public class HttpTransportLayer extends TransportLayer {
         if (httpURLConnectionModifier != null) {
             httpURLConnectionModifier.modify(urlConnection);
         }
-        if (method != null && method.isAnnotationPresent(JsonHttpMethod.class)) {
-            JsonHttpMethod httpMethod = method.getAnnotation(JsonHttpMethod.class);
-            urlConnection.setRequestMethod(httpMethod.methodType());
+        if (method != null) {
+            HttpMethod ann = ReflectionCache.getAnnotationInherited(method, HttpMethod.class);
+            if(ann!=null) {
+                urlConnection.setRequestMethod(ann.value());
+            }
         }
         if (requestInfo.customHeaders != null) {
             for (Map.Entry<String, String> entry : requestInfo.customHeaders.entrySet()) {
@@ -422,9 +425,9 @@ public class HttpTransportLayer extends TransportLayer {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
-    public static @interface JsonHttpMethod {
-        String methodType();
+    @Target({ElementType.METHOD, ElementType.TYPE})
+    public @interface HttpMethod {
+        String value();
     }
 
     class HttpURLCreatorImplementation implements HttpURLCreator {

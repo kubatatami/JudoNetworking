@@ -2,6 +2,7 @@ package com.github.kubatatami.judonetworking.controllers.raw;
 
 
 import com.github.kubatatami.judonetworking.ProtocolController;
+import com.github.kubatatami.judonetworking.ReflectionCache;
 import com.github.kubatatami.judonetworking.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.RequestInterface;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -46,7 +47,7 @@ public class RawRestController extends RawController {
     public ProtocolController.RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
         ProtocolController.RequestInfo requestInfo = new ProtocolController.RequestInfo();
         String result;
-        Rest ann = request.getMethod().getAnnotation(Rest.class);
+        Rest ann = ReflectionCache.getAnnotationInherited(request.getMethod(),Rest.class);
         if (ann != null) {
             result = ann.value();
             if (request.getName() != null) {
@@ -63,10 +64,10 @@ public class RawRestController extends RawController {
                 result = result.replaceAll("\\{" + entry.getKey() + "\\}", entry.getValue() + "");
             }
             String content = null;
-            if (request.getMethod().isAnnotationPresent(RawPost.class)) {
+            if (ReflectionCache.getAnnotationInherited(request.getMethod(), RawPost.class)!=null) {
                 int i = 0;
                 content = "";
-                for (Annotation[] annotations : request.getMethod().getParameterAnnotations()) {
+                for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
                     for (Annotation annotation : annotations) {
                         if (annotation instanceof Post) {
                             content += request.getArgs()[i].toString();
@@ -74,11 +75,11 @@ public class RawRestController extends RawController {
                     }
                     i++;
                 }
-            } else if (request.getMethod().isAnnotationPresent(FormPost.class)) {
+            } else if (ReflectionCache.getAnnotationInherited(request.getMethod(), FormPost.class)!=null) {
                 requestInfo.mimeType = "application/x-www-form-urlencoded";
                 List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
                 int i = 0;
-                for (Annotation[] annotations : request.getMethod().getParameterAnnotations()) {
+                for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
                     for (Annotation annotation : annotations) {
                         if (annotation instanceof Post) {
                             Object arg = request.getArgs()[i];
@@ -113,7 +114,7 @@ public class RawRestController extends RawController {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
+    @Target({ElementType.METHOD, ElementType.TYPE})
     public @interface Rest {
         String value() default "";
 
@@ -127,12 +128,12 @@ public class RawRestController extends RawController {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
+    @Target({ElementType.METHOD, ElementType.TYPE})
     public @interface RawPost {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
+    @Target({ElementType.METHOD, ElementType.TYPE})
     public @interface FormPost {
     }
 
