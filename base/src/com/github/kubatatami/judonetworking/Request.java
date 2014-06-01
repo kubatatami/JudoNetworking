@@ -46,7 +46,9 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         this.name = name;
         this.timeout = timeout;
         this.method = method;
-        this.apiInterface=method.getDeclaringClass();
+        if(method!=null) {
+            this.apiInterface = method.getDeclaringClass();
+        }
         this.rpc = rpc;
         this.ann = ann;
         this.args = args;
