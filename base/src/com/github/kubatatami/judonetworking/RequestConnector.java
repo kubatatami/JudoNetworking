@@ -373,19 +373,19 @@ class RequestConnector {
                 localCacheObject = rpc.getMemoryCache().get(request.getMethodId(), request.getArgs(), rpc.isTest() ? 0 : request.getLocalCacheLifeTime(), request.getLocalCacheSize());
                 if (localCacheObject.result) {
                     if (!request.isLocalCacheOnlyOnError()) {
-                        request.invokeStart(new CacheInfo(true,localCacheObject.time));
+                        request.invokeStart(new CacheInfo(true, localCacheObject.time));
                         timeStat.tickCacheTime();
                         return localCacheObject.object;
                     }
                 } else if (cacheLevel != LocalCacheLevel.MEMORY_ONLY) {
-                    CacheMethod cacheMethod = new CacheMethod(request,rpc.getTestName(), rpc.getTestRevision(), url, cacheLevel);
+                    CacheMethod cacheMethod = new CacheMethod(request, rpc.getTestName(), rpc.getTestRevision(), url, cacheLevel);
                     localCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getLocalCacheLifeTime());
                     if (localCacheObject.result) {
                         if (!rpc.isTest()) {  //we don't know when test will be stop
                             rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), localCacheObject.object, request.getLocalCacheSize());
                         }
                         if (!request.isLocalCacheOnlyOnError()) {
-                            request.invokeStart(new CacheInfo(true,localCacheObject.time));
+                            request.invokeStart(new CacheInfo(true, localCacheObject.time));
                             timeStat.tickCacheTime();
                             return localCacheObject.object;
                         }
@@ -401,7 +401,7 @@ class RequestConnector {
             }
 
             findAndCreateBase64(request);
-            request.invokeStart(new CacheInfo(false,0L));
+            request.invokeStart(new CacheInfo(false, 0L));
             RequestResult result;
             if (serverCacheObject != null && serverCacheObject.result) {
                 result = sendRequest(request, timeStat, serverCacheObject.hash, serverCacheObject.time);
@@ -430,7 +430,7 @@ class RequestConnector {
 
 
             if (rpc.isTimeProfiler()) {
-                refreshStat(request.getName(), timeStat.getMethodTime(),true);
+                refreshStat(request.getName(), timeStat.getMethodTime(), true);
             }
 
             if ((rpc.getDebugFlags() & Endpoint.TIME_DEBUG) > 0) {
@@ -458,7 +458,7 @@ class RequestConnector {
 
             return result.result;
         } catch (JudoException e) {
-            refreshErrorStat(request.getName(), request.getTimeout(),true);
+            refreshErrorStat(request.getName(), request.getTimeout(), true);
             throw e;
         }
 
@@ -488,7 +488,7 @@ class RequestConnector {
                         Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
                         boolean implemented = true;
                         try {
-                            request.invokeStart(new CacheInfo(false,0L));
+                            request.invokeStart(new CacheInfo(false, 0L));
                             try {
                                 request.getMethod().invoke(virtualServerInfo.server, args);
                             } catch (IllegalAccessException e) {
@@ -537,56 +537,40 @@ class RequestConnector {
                     progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (requests.size() - 1) * TimeStat.TICKS);
                 }
 
-                List<Callable<Object>> todo = new ArrayList<Callable<Object>>();
+                final List<Callable<Object>> todo = new ArrayList<Callable<Object>>();
 
                 for (final Request request : requests) {
 
                     final TimeStat timeStat = new TimeStat(progressObserver);
 
-                    todo.add(Executors.callable(new Runnable() {
-                        @Override
-                        public void run() {
-                            CacheResult cacheObject = null;
-                            if(request.isCancelled()){
-                                return;
-                            }
-                            request.invokeStart(new CacheInfo(false,0L));
-                            if (rpc.isCacheEnabled() && request.isServerCachable()) {
-                                CacheMethod cacheMethod = new CacheMethod(request,url, request.getServerCacheLevel());
-                                cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getServerCacheSize());
+                    CacheResult cacheObject = null;
+                    if (!request.isCancelled()) {
 
-                            }
 
-                            if (cacheObject != null && cacheObject.result) {
-                                RequestResult result = sendRequest(request, timeStat, cacheObject.hash, cacheObject.time);
-                                synchronized (results) {
-                                    if (result instanceof NoNewResult) {
-                                        results.add(new RequestSuccessResult(request.getId(), cacheObject.object));
-                                    } else if (result instanceof ErrorResult && request.useServerCacheOldOnError()) {
-                                        results.add(new RequestSuccessResult(request.getId(), cacheObject.object));
-                                    } else {
-                                        results.add(result);
-                                    }
-                                }
-                            } else {
-                                synchronized (results) {
-                                    results.add(sendRequest(request, timeStat));
-                                }
-                            }
+                        request.invokeStart(new CacheInfo(false, 0L));
+                        if (rpc.isCacheEnabled() && request.isServerCachable()) {
+                            CacheMethod cacheMethod = new CacheMethod(request, url, request.getServerCacheLevel());
+                            cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getServerCacheSize());
+
                         }
-                    }));
 
-                }
-                try {
-                    List<Future<Object>> futureList = rpc.getExecutorService().invokeAll(todo);
-                    for (Future<Object> future : futureList) {
-                        future.get();
+                        if (cacheObject != null && cacheObject.result) {
+                            RequestResult result = sendRequest(request, timeStat, cacheObject.hash, cacheObject.time);
+
+                            if (result instanceof NoNewResult) {
+                                results.add(new RequestSuccessResult(request.getId(), cacheObject.object));
+                            } else if (result instanceof ErrorResult && request.useServerCacheOldOnError()) {
+                                results.add(new RequestSuccessResult(request.getId(), cacheObject.object));
+                            } else {
+                                results.add(result);
+                            }
+                        } else {
+                            RequestResult result = sendRequest(request, timeStat);
+                            results.add(result);
+                        }
                     }
-                } catch (InterruptedException e) {
-                    throw new JudoException("Can't invoke batch tasks", e);
-                } catch (ExecutionException e) {
-                    throw new JudoException("Can't execute batch task", e);
                 }
+
             }
         }
         return results;
@@ -654,7 +638,7 @@ class RequestConnector {
             if (rpc.isTimeProfiler()) {
 
                 for (Request request : requests) {
-                    refreshStat(request.getName(), timeStat.getMethodTime() / requests.size(),false);
+                    refreshStat(request.getName(), timeStat.getMethodTime() / requests.size(), false);
                 }
                 rpc.saveStat();
             }
@@ -667,7 +651,7 @@ class RequestConnector {
             return responses;
         } catch (JudoException e) {
             for (Request request : requests) {
-                refreshErrorStat(request.getName(), request.getTimeout(),false);
+                refreshErrorStat(request.getName(), request.getTimeout(), false);
                 rpc.saveStat();
             }
             RequestProxy.addToExceptionMessage(requestsName.substring(1), e);

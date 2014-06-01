@@ -434,7 +434,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                         }
                     }
                 };
-                new Thread(waitAndMergeTask).start();
+                new Thread(waitAndMergeTask,"JudoNetworking WaitAndMergeTask").start();
 
             } else {
                 progressObserver.setMaxProgress(TimeStat.TICKS);
