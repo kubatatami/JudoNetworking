@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,7 +22,7 @@ public class BatchProgressObserver implements ProgressObserver {
     public BatchProgressObserver(EndpointImplementation rpc, RequestProxy requestProxy, List<Request> requestList) {
         this.rpc = rpc;
         this.requestProxy = requestProxy;
-        this.requestList = requestList;
+        this.requestList = new ArrayList<Request>(requestList);
     }
 
     @Override
