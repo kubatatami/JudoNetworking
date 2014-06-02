@@ -212,18 +212,12 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
     @SuppressWarnings("unchecked")
     protected Request callAsync(int id, Method m, String name, Object[] args, Type[] types, int timeout, RequestMethod ann) throws Exception {
-        Object[] newArgs = args;
+        Object[] newArgs;
         CallbackInterface<Object> callback = null;
         Type returnType = Void.class;
         if (args.length > 0 && args[args.length - 1] instanceof CallbackInterface) {
             callback = (CallbackInterface<Object>) args[args.length - 1];
             returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
-            if (args.length > 1) {
-                newArgs = new Object[args.length - 1];
-                System.arraycopy(args, 0, newArgs, 0, args.length - 1);
-            } else {
-                newArgs = null;
-            }
         } else {
             Type[] genericTypes = m.getGenericParameterTypes();
             if (genericTypes.length > 0 && genericTypes[genericTypes.length - 1] instanceof ParameterizedType) {
@@ -233,7 +227,12 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                 }
             }
         }
-
+        if (args.length > 1) {
+            newArgs = new Object[args.length - 1];
+            System.arraycopy(args, 0, newArgs, 0, args.length - 1);
+        } else {
+            newArgs = null;
+        }
 
         return new Request(id, rpc, m, name, ann, newArgs, returnType, timeout, callback, rpc.getProtocolController().getAdditionalRequestData());
     }
@@ -283,7 +282,8 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
 
                         } else if (cacheLevel != LocalCacheLevel.MEMORY_ONLY) {
-                            CacheMethod cacheMethod = new CacheMethod(req,rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
+                            CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(req.getMethod()),req.getName(),req.getMethod().getDeclaringClass().getSimpleName()
+                                    ,rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
                             result = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(req.getArgs()), req.getLocalCacheLifeTime());
                             if (result.result) {
                                 if (!rpc.isTest()) {
@@ -485,11 +485,11 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                             LocalCacheLevel cacheLevel = rpc.isTest() ? LocalCacheLevel.DISK_CACHE : request.getLocalCacheLevel();
 
                             if (cacheLevel != LocalCacheLevel.MEMORY_ONLY) {
-                                CacheMethod cacheMethod = new CacheMethod(request, rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
+                                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()),request.getName(),request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
                                 rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getLocalCacheSize());
                             }
                         } else if (rpc.isCacheEnabled() && request.isServerCachable() && (response.hash != null || response.time != null)) {
-                            CacheMethod cacheMethod = new CacheMethod(request, rpc.getUrl(), response.hash, response.time, request.getServerCacheLevel());
+                            CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()),request.getName(),request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), response.hash, response.time, request.getServerCacheLevel());
                             rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getServerCacheSize());
                         }
                     }

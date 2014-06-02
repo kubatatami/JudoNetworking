@@ -209,7 +209,7 @@ class DiskCacheImplementation implements DiskCache {
                 name += "local/";
             }
         }
-        name += method.getMethod().getDeclaringClass().getSimpleName() + "/";
+        name += method.getInterfaceName() + "/";
         name += method.getUrl().hashCode() + "/";
         name += method.getMethodId() + "/";
 

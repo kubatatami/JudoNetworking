@@ -8,20 +8,26 @@ public class CacheMethod {
     private String url;
     private boolean dynamic = false;
     private String hash;
+    private String interfaceName;
+    private int methodId;
+    private String methodName;
     private Long time;
     private LocalCacheLevel cacheLevel;
-    private RequestInterface request;
 
-    public CacheMethod(RequestInterface request, String url, ServerCacheLevel level) {
-        this.request = request;
+    public CacheMethod(int methodId, String methodName, String interfaceName, String url, ServerCacheLevel level) {
+        this.methodId = methodId;
+        this.methodName = methodName;
+        this.interfaceName = interfaceName;
         this.url = url;
         this.dynamic = true;
         this.time = System.currentTimeMillis();
         cacheLevel = (level == ServerCacheLevel.DISK_CACHE) ? LocalCacheLevel.DISK_CACHE : LocalCacheLevel.DISK_DATA;
     }
 
-    public CacheMethod(RequestInterface request, String url, String hash, Long time, ServerCacheLevel level) {
-        this.request = request;
+    public CacheMethod(int methodId, String methodName, String interfaceName, String url, String hash, Long time, ServerCacheLevel level) {
+        this.methodId = methodId;
+        this.methodName = methodName;
+        this.interfaceName = interfaceName;
         this.url = url;
         this.hash = hash;
         this.time = time;
@@ -29,13 +35,18 @@ public class CacheMethod {
         cacheLevel = (level == ServerCacheLevel.DISK_CACHE) ? LocalCacheLevel.DISK_CACHE : LocalCacheLevel.DISK_DATA;
     }
 
-    public CacheMethod(RequestInterface request, String test, int testRevision, String url, LocalCacheLevel level) {
-        this.request = request;
+    public CacheMethod(int methodId, String methodName, String interfaceName, String test, int testRevision, String url, LocalCacheLevel level) {
+        this.methodId = methodId;
+        this.methodName = methodName;
+        this.interfaceName = interfaceName;
         this.test = test;
         this.testRevision = testRevision;
         this.url = url;
         this.time = System.currentTimeMillis();
         this.cacheLevel = level;
+        if(test==null){
+            this.dynamic = true;
+        }
     }
 
     public LocalCacheLevel getCacheLevel() {
@@ -59,12 +70,12 @@ public class CacheMethod {
     }
 
     public int getMethodId() {
-        return request.getMethodId();
+        return methodId;
     }
 
     @Override
     public String toString() {
-        return request.getMethod().getName();
+        return methodName;
     }
 
     public String getHash() {
@@ -76,9 +87,7 @@ public class CacheMethod {
     }
 
 
-    public Method getMethod() {
-        return request.getMethod();
-    }
+    public String getInterfaceName(){return interfaceName;}
 
     public static int getMethodId(Method method) {
         RequestMethod requestMethod = ReflectionCache.getAnnotation(method,RequestMethod.class);
