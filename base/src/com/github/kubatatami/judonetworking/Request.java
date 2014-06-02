@@ -206,7 +206,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     ServerCache getServerCache() {
         if (method != null) {
-            ServerCache ann = ReflectionCache.getAnnotation(method,ServerCache.class);
+            ServerCache ann = ReflectionCache.getAnnotationInherited(method,ServerCache.class);
             if (ann != null && !ann.enabled()) {
                 ann = null;
             }
@@ -218,7 +218,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     SingleCall getSingleCall() {
         if (method != null) {
-            SingleCall ann = ReflectionCache.getAnnotation(method,SingleCall.class);
+            SingleCall ann = ReflectionCache.getAnnotationInherited(method,SingleCall.class);
             if (ann != null && !ann.enabled()) {
                 ann = null;
             }
@@ -362,7 +362,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         if (running) {
             running = false;
             synchronized (rpc.getSingleCallMethods()) {
-                rpc.getSingleCallMethods().remove(method);
+                rpc.getSingleCallMethods().remove(CacheMethod.getMethodId(method));
             }
             if (future != null) {
                 future.cancel(true);
