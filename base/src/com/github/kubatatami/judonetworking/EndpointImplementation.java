@@ -229,6 +229,36 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         }
 
         final RequestProxy pr = new RequestProxy(this, BatchMode.MANUAL, batch);
+        T proxy = getService(obj, pr);
+        pr.setBatchFatal(true);
+        batch.run(proxy);
+        pr.setBatchFatal(false);
+        batch.runNonFatal(proxy);
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                pr.callBatch();
+            }
+        });
+        return pr;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> AsyncResult callAsyncInBatch(final Class<T> obj, final Batch<T> batch) {
+
+        if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
+            try {
+                StackTraceElement stackTraceElement = RequestProxy.getExternalStacktrace(Thread.currentThread().getStackTrace());
+                LoggerImpl.log("Batch starts from " +
+                        stackTraceElement.getClassName() +
+                        "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+            } catch (Exception ex) {
+                LoggerImpl.log("Can't log stacktrace");
+            }
+        }
+
+        final RequestProxy pr = new RequestProxy(this, BatchMode.MANUAL, batch);
         executorService.execute(new Runnable() {
             @Override
             public void run() {
@@ -242,6 +272,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         });
         return pr;
     }
+
 
     public TokenCaller getTokenCaller() {
         return protocolController.getTokenCaller();
