@@ -133,6 +133,8 @@ class RequestConnector {
             return result;
         } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
+        }catch (Exception e) {
+            return new ErrorResult(request.getId(), new JudoException(e));
         }
 
     }
