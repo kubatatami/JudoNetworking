@@ -157,7 +157,14 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
     }
 
     public void preHoneycombAddAll(T... items) {
+        preHoneycombAddAll(false,items);
+    }
+
+    public void preHoneycombAddAll( boolean clear, T... items) {
         setNotifyOnChange(false);
+        if(clear){
+            clear();
+        }
         for(T item : items){
             add(item);
         }
