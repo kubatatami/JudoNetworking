@@ -41,9 +41,9 @@ public class RequestInputStreamEntity {
 
     private final InputStream content;
     private final long length;
+    byte[] buffer = new byte[BUFFER_SIZE];
 
     public RequestInputStreamEntity(final InputStream instream, long length) {
-        super();
         if (instream == null) {
             throw new IllegalArgumentException("Source input stream may not be null");
         }
@@ -60,7 +60,7 @@ public class RequestInputStreamEntity {
             throw new IllegalArgumentException("Output stream may not be null");
         }
         InputStream instream = this.content;
-        byte[] buffer = new byte[BUFFER_SIZE];
+
         int l;
         if (this.length < 0) {
             // consume until EOF

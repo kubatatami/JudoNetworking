@@ -1,5 +1,8 @@
 package com.github.kubatatami.judonetworking;
 
+import android.os.*;
+import android.os.Process;
+
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -10,13 +13,17 @@ import java.util.concurrent.TimeUnit;
  */
 public class JudoExecutor extends ThreadPoolExecutor{
 
-    protected int threadPriority = Thread.NORM_PRIORITY - 1;
+    protected int threadPriority = Process.THREAD_PRIORITY_BACKGROUND;
     protected ThreadFactory threadFactory =  new ThreadFactory() {
         @Override
-        public Thread newThread(Runnable r) {
-            Thread thread = new Thread(r,"JudoNetworking ConnectionPool");
-            thread.setPriority(threadPriority);
-            return thread;
+        public Thread newThread(final Runnable runnable) {
+            return new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    android.os.Process.setThreadPriority(threadPriority);
+                    runnable.run();
+                }
+            },"JudoNetworking ConnectionPool");
         }
     };
 
