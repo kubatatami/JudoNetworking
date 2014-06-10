@@ -37,11 +37,11 @@ import java.io.OutputStream;
  */
 public class RequestInputStreamEntity {
 
-    private final static int BUFFER_SIZE = 4096;
+    private final static long BUFFER_SIZE = 4096;
 
     private final InputStream content;
     private final long length;
-    byte[] buffer = new byte[BUFFER_SIZE];
+    byte[] buffer;
 
     public RequestInputStreamEntity(final InputStream instream, long length) {
         if (instream == null) {
@@ -49,6 +49,7 @@ public class RequestInputStreamEntity {
         }
         this.content = instream;
         this.length = length;
+        buffer = new byte[(int) Math.min(BUFFER_SIZE,length)];
     }
 
     public long getContentLength() {
