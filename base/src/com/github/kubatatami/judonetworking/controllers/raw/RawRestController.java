@@ -14,11 +14,13 @@ import org.apache.http.protocol.HTTP;
 
 import java.io.Serializable;
 import java.io.StringBufferInputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +49,7 @@ public class RawRestController extends RawController {
     public ProtocolController.RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
         ProtocolController.RequestInfo requestInfo = new ProtocolController.RequestInfo();
         String result;
-        Rest ann = ReflectionCache.getAnnotationInherited(request.getMethod(),Rest.class);
+        Rest ann = ReflectionCache.getAnnotationInherited(request.getMethod(), Rest.class);
         if (ann != null) {
             result = ann.value();
             if (request.getName() != null) {
@@ -56,15 +58,23 @@ public class RawRestController extends RawController {
             if (request.getArgs() != null) {
                 int i = 0;
                 for (Object arg : request.getArgs()) {
-                    result = result.replaceAll("\\{" + i + "\\}", arg + "");
+                    try {
+                        result = result.replaceAll("\\{" + i + "\\}", URLEncoder.encode(arg + "", "UTF-8"));
+                    } catch (UnsupportedEncodingException e) {
+                        result = result.replaceAll("\\{" + i + "\\}", arg + "");
+                    }
                     i++;
                 }
             }
             for (Map.Entry<String, Object> entry : ((Map<String, Object>) request.getAdditionalData()).entrySet()) {
-                result = result.replaceAll("\\{" + entry.getKey() + "\\}", entry.getValue() + "");
+                try {
+                    result = result.replaceAll("\\{" + entry.getKey() + "\\}", URLEncoder.encode(entry.getValue()+ "", "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    result = result.replaceAll("\\{" + entry.getKey() + "\\}", entry.getValue() + "");
+                }
             }
             String content = null;
-            if (ReflectionCache.getAnnotationInherited(request.getMethod(), RawPost.class)!=null) {
+            if (ReflectionCache.getAnnotationInherited(request.getMethod(), RawPost.class) != null) {
                 int i = 0;
                 content = "";
                 for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
@@ -75,7 +85,7 @@ public class RawRestController extends RawController {
                     }
                     i++;
                 }
-            } else if (ReflectionCache.getAnnotationInherited(request.getMethod(), FormPost.class)!=null) {
+            } else if (ReflectionCache.getAnnotationInherited(request.getMethod(), FormPost.class) != null) {
                 requestInfo.mimeType = "application/x-www-form-urlencoded";
                 List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
                 int i = 0;
@@ -102,7 +112,6 @@ public class RawRestController extends RawController {
         }
 
         requestInfo.url = url + (url.lastIndexOf("/") != url.length() - 1 ? "/" : "") + result;
-
 
         return requestInfo;
     }
