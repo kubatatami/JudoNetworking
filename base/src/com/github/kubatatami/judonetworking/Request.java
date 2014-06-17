@@ -244,9 +244,10 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         return getLocalCache().cacheLevel();
     }
 
-    public boolean isLocalCacheOnlyOnError() {
+
+    public OnlyOnError getLocalCacheOnlyOnErrorMode() {
         LocalCache localCache = getLocalCache();
-        return localCache != null && localCache.onlyOnError();
+        return localCache != null ? localCache.onlyOnError() : OnlyOnError.NO;
     }
 
     public boolean isServerCachable() {

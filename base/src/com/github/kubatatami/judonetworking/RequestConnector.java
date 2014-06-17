@@ -4,6 +4,7 @@ package com.github.kubatatami.judonetworking;
 import android.util.Base64;
 
 import com.github.kubatatami.judonetworking.exceptions.AuthException;
+import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.VerifyModelException;
 
@@ -374,7 +375,7 @@ class RequestConnector {
                 LocalCacheLevel cacheLevel = rpc.isTest() ? LocalCacheLevel.DISK_CACHE : request.getLocalCacheLevel();
                 localCacheObject = rpc.getMemoryCache().get(request.getMethodId(), request.getArgs(), rpc.isTest() ? 0 : request.getLocalCacheLifeTime(), request.getLocalCacheSize());
                 if (localCacheObject.result) {
-                    if (!request.isLocalCacheOnlyOnError()) {
+                    if (request.getLocalCacheOnlyOnErrorMode().equals(OnlyOnError.NO)) {
                         request.invokeStart(new CacheInfo(true, localCacheObject.time));
                         timeStat.tickCacheTime();
                         return localCacheObject.object;
@@ -386,7 +387,7 @@ class RequestConnector {
                         if (!rpc.isTest()) {  //we don't know when test will be stop
                             rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), localCacheObject.object, request.getLocalCacheSize());
                         }
-                        if (!request.isLocalCacheOnlyOnError()) {
+                        if (request.getLocalCacheOnlyOnErrorMode().equals(OnlyOnError.NO)) {
                             request.invokeStart(new CacheInfo(true, localCacheObject.time));
                             timeStat.tickCacheTime();
                             return localCacheObject.object;
@@ -417,9 +418,13 @@ class RequestConnector {
             }
 
             if (result instanceof ErrorResult) {
-                if (request.isLocalCacheOnlyOnError() && localCacheObject != null && localCacheObject.result) {
-                    timeStat.tickCacheTime();
-                    return localCacheObject.object;
+                if (localCacheObject != null && localCacheObject.result) {
+                    OnlyOnError onlyOnErrorMode=request.getLocalCacheOnlyOnErrorMode();
+                    if(onlyOnErrorMode.equals(OnlyOnError.ON_ALL_ERROR) ||
+                            (onlyOnErrorMode.equals(OnlyOnError.ON_CONNECTION_ERROR) && result.error instanceof ConnectionException)) {
+                        timeStat.tickCacheTime();
+                        return localCacheObject.object;
+                    }
                 }
             }
 

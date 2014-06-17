@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking;
 import android.os.Debug;
 import android.util.Pair;
 
+import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.Field;
@@ -275,7 +276,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                                 result.object = rpc.getClonner().clone(result.object);
                             }
                             cacheObjects.put(req.getId(), new Pair<Request, Object>(req, result.object));
-                            if (!req.isLocalCacheOnlyOnError()) {
+                            if (req.getLocalCacheOnlyOnErrorMode().equals(OnlyOnError.NO)) {
                                 batches.remove(i);
                                 req.invokeStart(new CacheInfo(true,result.time));
                             }
@@ -290,7 +291,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                                     rpc.getMemoryCache().put(req.getMethodId(), req.getArgs(), result.object, req.getLocalCacheSize());
                                 }
                                 cacheObjects.put(req.getId(), new Pair<Request, Object>(req, result.object));
-                                if (!req.isLocalCacheOnlyOnError()) {
+                                if (req.getLocalCacheOnlyOnErrorMode().equals(OnlyOnError.NO)) {
                                     batches.remove(i);
                                     req.invokeStart(new CacheInfo(true,result.time));
                                 }
@@ -329,10 +330,14 @@ class RequestProxy implements InvocationHandler, AsyncResult {
             for (int i = responses.size() - 1; i >= 0; i--) {
                 RequestResult result = responses.get(i);
                 if (cacheObjects.containsKey(result.id) && result instanceof ErrorResult) {
-                    responses.remove(result);
-                    RequestSuccessResult res = new RequestSuccessResult(cacheObjects.get(result.id).second);
-                    res.id = result.id;
-                    responses.add(res);
+                    OnlyOnError onlyOnErrorMode=cacheObjects.get(result.id).first.getLocalCacheOnlyOnErrorMode();
+                    if(onlyOnErrorMode.equals(OnlyOnError.ON_ALL_ERROR) ||
+                            (onlyOnErrorMode.equals(OnlyOnError.ON_CONNECTION_ERROR) && result.error instanceof ConnectionException)) {
+                        responses.remove(result);
+                        RequestSuccessResult res = new RequestSuccessResult(cacheObjects.get(result.id).second);
+                        res.id = result.id;
+                        responses.add(res);
+                    }
                     cacheObjects.remove(result.id);
                 } else {
                     cacheObjects.remove(result.id);

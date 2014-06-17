@@ -24,5 +24,5 @@ public @interface LocalCache {
 
     public int size() default 0;
 
-    public boolean onlyOnError() default false;
+    public OnlyOnError onlyOnError() default OnlyOnError.NO;
 }
