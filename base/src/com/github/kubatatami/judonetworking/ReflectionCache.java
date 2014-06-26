@@ -75,6 +75,15 @@ public class ReflectionCache {
         return null;
     }
 
+    protected static <T extends Annotation> T findAnnotation(Annotation[] annotations, Class<T> annotationClass){
+        for(Annotation annotation : annotations){
+            if(annotationClass.isInstance(annotation)){
+                return (T) annotation;
+            }
+        }
+        return null;
+    }
+
     public static <T extends Annotation> T getAnnotation(Method method, Class<T> annotationClass) {
         Annotation[] annotations=getAnnotations(method);
         for(Annotation annotation : annotations){

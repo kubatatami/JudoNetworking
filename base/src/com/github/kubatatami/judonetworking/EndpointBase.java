@@ -40,8 +40,6 @@ public interface EndpointBase {
      */
     public void startTest(boolean onlyInDebugMode, String name, int revision);
 
-    public void setIgnoreNullParams(boolean ignoreNullParams);
-
     /**
      *
      */

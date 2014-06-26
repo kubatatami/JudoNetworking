@@ -13,23 +13,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 class EndpointImplementation implements Endpoint, EndpointClassic {
 
@@ -61,7 +55,6 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     private long tokenExpireTimestamp = -1;
     private Map<Integer,Request> singleCallMethods = new HashMap<Integer, Request>();
     private int id = 0;
-    private boolean ignoreNullParams = false;
     private ThreadPoolSizer threadPoolSizer=new DefaultThreadPoolSizer();
     private JudoExecutor executorService = new JudoExecutor();
 
@@ -190,17 +183,33 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         return (T) getRequestConnector().call(request);
     }
 
+
+
     public void filterNullArgs(Request request){
-        if(ignoreNullParams && request.getArgs()!=null){
+        if(request.getArgs()!=null){
+            Annotation[][] paramAnnotations = ReflectionCache.getParameterAnnotations(request.getMethod());
             List<String> paramNames= new ArrayList<String>();
             List<Object> args = new ArrayList<Object>();
             Collections.addAll(paramNames, request.getParamNames());
             Collections.addAll(args, request.getArgs());
             for(int i=args.size()-1;i>=0;i--){
                 if(args.get(i)==null){
-                    args.remove(i);
-                    if(paramNames.size()>i) {
-                        paramNames.remove(i);
+                    boolean ignore=false;
+
+                    IgnoreNullParam ignoreNullParam=ReflectionCache.findAnnotation(paramAnnotations[i], IgnoreNullParam.class);
+                    if(ignoreNullParam!=null){
+                        ignore=ignoreNullParam.value();
+                    }else{
+                        ignoreNullParam=ReflectionCache.getAnnotation(request.getMethod().getDeclaringClass(), IgnoreNullParam.class);
+                        if(ignoreNullParam!=null){
+                            ignore=ignoreNullParam.value();
+                        }
+                    }
+                    if(ignore) {
+                        args.remove(i);
+                        if (paramNames.size() > i) {
+                            paramNames.remove(i);
+                        }
                     }
                 }
             }
@@ -209,9 +218,6 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         }
     }
 
-    public void setIgnoreNullParams(boolean ignoreNullParams) {
-        this.ignoreNullParams = ignoreNullParams;
-    }
 
     @Override
     @SuppressWarnings("unchecked")
