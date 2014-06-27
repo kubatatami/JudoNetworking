@@ -148,11 +148,11 @@ public class RawRestController extends RawController {
 
     @Override
     public void setApiKey(String name, String key) {
-        throw new UnsupportedOperationException();
+        customKeys.put(name, key);
     }
 
     @Override
     public void setApiKey(String key) {
-        throw new UnsupportedOperationException();
+        throw new UnsupportedOperationException("You must set key name or use addCustomKey method.");
     }
 }
