@@ -40,7 +40,7 @@ public class ObserverHelper {
     static final String convention = "Changed";
     private Context context;
 
-    private static ErrorLogger errorLogger;
+    private static ObserverErrorLogger errorLogger;
 
     private static Object dataObject;
     static Class<?> dataClass;
@@ -59,7 +59,7 @@ public class ObserverHelper {
         this.context = context;
     }
 
-    public static void setErrorLogger(ErrorLogger errorLogger) {
+    public static void setErrorLogger(ObserverErrorLogger errorLogger) {
         ObserverHelper.errorLogger = errorLogger;
     }
 

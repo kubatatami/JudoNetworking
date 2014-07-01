@@ -71,7 +71,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
-                        rpc.getErrorLogger().onError(e);
+                        rpc.getErrorLogger().onError(e,Request.this);
                     }
                 });
             }

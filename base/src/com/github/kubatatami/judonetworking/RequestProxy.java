@@ -123,12 +123,13 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
     @Override
     public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
+        Request request=null;
         try {
             RequestMethod ann = ReflectionCache.getAnnotation(m,RequestMethod.class);
             if (ann != null) {
                 String name = createMethodName(m, ann);
                 int timeout = rpc.getRequestConnector().getMethodTimeout();
-                Request request;
+
 
 
                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
@@ -201,7 +202,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
             }
         } catch (JudoException e) {
             if (rpc.getErrorLogger() != null && !(e instanceof CancelException)) {
-                rpc.getErrorLogger().onError(e);
+                rpc.getErrorLogger().onError(e,request);
             }
             throw e;
         }
@@ -460,6 +461,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
     protected void handleBatchResponse(List<Request> requests, Batch batch, List<RequestResult> responses) {
         Object[] results = new Object[requests.size()];
         JudoException ex = null;
+        Request exceptionRequest=null;
         int i = 0;
         for (Request request : requests) {
             try {
@@ -503,6 +505,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
             } catch (JudoException e) {
                 if (request.isBatchFatal()) {
                     ex = e;
+                    exceptionRequest=request;
                 }
                 request.invokeCallbackException(e);
             }
@@ -517,11 +520,12 @@ class RequestProxy implements InvocationHandler, AsyncResult {
         }
         if (ex != null) {
             final JudoException finalEx = ex;
+            final Request finalRequest = exceptionRequest;
             if (rpc.getErrorLogger() != null && !(ex instanceof CancelException)) {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
-                        rpc.getErrorLogger().onError(finalEx);
+                        rpc.getErrorLogger().onError(finalEx,finalRequest);
                     }
                 });
 
