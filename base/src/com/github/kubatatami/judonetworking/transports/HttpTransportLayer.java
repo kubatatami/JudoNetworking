@@ -125,11 +125,20 @@ public class HttpTransportLayer extends TransportLayer {
     }
 
     public void setBasicAuthentication(final String username, final String password) {
-        authKey = SecurityUtils.getBasicAuthHeader(username, password);
+        if(username == null || password == null){
+            authKey=null;
+        }else {
+            authKey = SecurityUtils.getBasicAuthHeader(username, password);
+        }
     }
 
     public void setBasicAuthentication(final String hash) {
-        authKey = "Basic " + hash;
+        if(hash == null){
+            authKey=null;
+        }else {
+            authKey = "Basic " + hash;
+        }
+
     }
 
     public void setFollowRedirection(boolean followRedirection) {
