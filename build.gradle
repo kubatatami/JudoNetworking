@@ -8,9 +8,7 @@ buildscript {
     }
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
-}
+
 
 allprojects {
     version = VERSION_NAME

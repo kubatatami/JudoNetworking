@@ -1,4 +1,4 @@
-apply plugin: 'android-library'
+apply plugin: 'com.android.library'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
@@ -90,7 +90,7 @@ afterEvaluate { project ->
     }
 
     task androidJavadocs(type: Javadoc) {
-        //source = android.sourceSets.main.allJava
+        source = android.sourceSets.main.java
     }
 
     task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
@@ -106,11 +106,11 @@ afterEvaluate { project ->
         baseName = BASE_NAME
         appendix = APPENDIX
         version = VERSION_NAME
-        //from android.sourceSets.main.allSource
+        from android.sourceSets.main.allSource
     }
 
     artifacts {
-        //archives androidJavadocsJar bug
-        //archives androidSourcesJar
+        archives androidJavadocsJar
+        archives androidSourcesJar
     }
 }
