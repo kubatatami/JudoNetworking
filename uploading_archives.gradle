@@ -90,7 +90,7 @@ afterEvaluate { project ->
     }
 
     task androidJavadocs(type: Javadoc) {
-        source = android.sourceSets.main.java
+        source = android.sourceSets.main.java.srcDirs
     }
 
     task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
@@ -106,7 +106,7 @@ afterEvaluate { project ->
         baseName = BASE_NAME
         appendix = APPENDIX
         version = VERSION_NAME
-        from android.sourceSets.main.allSource
+        from android.sourceSets.main.java.srcDirs
     }
 
     artifacts {
