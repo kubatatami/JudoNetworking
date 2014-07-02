@@ -165,7 +165,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                     request = callAsync(getNextId(), m, name, args, ReflectionCache.getGenericParameterTypes(m), timeout, ann);
                     rpc.filterNullArgs(request);
                     if (request.getSingleCall() != null) {
-                        if (rpc.getSingleCallMethods().containsKey(m)) {
+                        if (rpc.getSingleCallMethods().containsKey(CacheMethod.getMethodId(m))) {
                             SingleMode mode = request.getSingleCall().mode();
 
                             if (mode == SingleMode.CANCEL_NEW) {
@@ -174,8 +174,8 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                                 }
                                 request.cancel();
                                 return request;
-                            } else {
-                                Request oldRequest = rpc.getSingleCallMethods().get(m);
+                            }  if (mode == SingleMode.CANCEL_OLD) {
+                                Request oldRequest = rpc.getSingleCallMethods().get(CacheMethod.getMethodId(m));
                                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
                                     LoggerImpl.log("Request " + oldRequest.getName() + " rejected - SingleCall.");
                                 }
