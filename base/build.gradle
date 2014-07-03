@@ -25,7 +25,7 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:20+'
+    compile 'com.android.support:support-v4:19.+'
 }
 
 apply from: '../uploading_archives.gradle'
