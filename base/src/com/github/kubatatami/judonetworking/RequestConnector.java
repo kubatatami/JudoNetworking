@@ -544,8 +544,6 @@ class RequestConnector {
                     progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (requests.size() - 1) * TimeStat.TICKS);
                 }
 
-                final List<Callable<Object>> todo = new ArrayList<Callable<Object>>();
-
                 for (final Request request : requests) {
 
                     final TimeStat timeStat = new TimeStat(progressObserver);
@@ -554,7 +552,6 @@ class RequestConnector {
                     if (!request.isCancelled()) {
 
 
-                        request.invokeStart(new CacheInfo(false, 0L));
                         if (rpc.isCacheEnabled() && request.isServerCachable()) {
                             CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()),request.getName(),request.getMethod().getDeclaringClass().getSimpleName(), url, request.getServerCacheLevel());
                             cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getServerCacheSize());
