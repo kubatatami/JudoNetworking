@@ -230,38 +230,43 @@ public class HttpTransportLayer extends TransportLayer {
 
     protected void sendRequest(HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo,
                                TimeStat timeStat, int debugFlags) throws Exception {
+        OutputStream stream=null;
+        try {
+            if (digestAuth != null) {
+                String digestHeader = SecurityUtils.getDigestAuthHeader(digestAuth, urlConnection.getURL(), requestInfo, username, password);
+                if ((debugFlags & Endpoint.TOKEN_DEBUG) > 0) {
+                    longLog("digest", digestHeader);
+                }
+                urlConnection.addRequestProperty("Authorization", digestHeader);
+            }
 
-        if (digestAuth != null) {
-            String digestHeader = SecurityUtils.getDigestAuthHeader(digestAuth, urlConnection.getURL(), requestInfo, username, password);
-            if ((debugFlags & Endpoint.TOKEN_DEBUG) > 0) {
-                longLog("digest", digestHeader);
+            if (requestInfo.entity != null) {
+                urlConnection.setDoOutput(true);
+                if (!(urlConnection instanceof HttpsURLConnection)) {   //prevent android bug
+                    urlConnection.setFixedLengthStreamingMode((int) requestInfo.entity.getContentLength());
+                }
+                stream = requestInfo.entity.getContentLength() > 0 ?
+                        new RequestOutputStream(urlConnection.getOutputStream(), timeStat,
+                                requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
+                timeStat.tickConnectionTime();
+                if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
+                    longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
+                    requestInfo.entity.reset();
+                }
+                requestInfo.entity.writeTo(stream);
+                stream.flush();
+            } else {
+                if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
+                    longLog("Request", requestInfo.url);
+                }
+                urlConnection.getInputStream();
+                timeStat.tickConnectionTime();
+                timeStat.tickSendTime();
             }
-            urlConnection.addRequestProperty("Authorization", digestHeader);
-        }
-
-        if (requestInfo.entity != null) {
-            urlConnection.setDoOutput(true);
-            if (!(urlConnection instanceof HttpsURLConnection)) {   //prevent android bug
-                urlConnection.setFixedLengthStreamingMode((int) requestInfo.entity.getContentLength());
+        }finally {
+            if(stream!=null){
+                stream.close();
             }
-            OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
-                    new RequestOutputStream(urlConnection.getOutputStream(), timeStat,
-                            requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
-            timeStat.tickConnectionTime();
-            if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
-                requestInfo.entity.reset();
-            }
-            requestInfo.entity.writeTo(stream);
-            stream.flush();
-            stream.close();
-        } else {
-            if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                longLog("Request", requestInfo.url);
-            }
-            urlConnection.getInputStream();
-            timeStat.tickConnectionTime();
-            timeStat.tickSendTime();
         }
 
     }
@@ -308,6 +313,9 @@ public class HttpTransportLayer extends TransportLayer {
                     handleHttpException(protocolController, code, convertStreamToString(urlConnection.getErrorStream()));
                 }
             } catch (Exception ex) {
+                if(urlConnection!=null){
+                    urlConnection.disconnect();
+                }
                 if (!(ex instanceof JudoException)) {
                     throw new ConnectionException(ex);
                 } else {

@@ -460,15 +460,27 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     public Map<String, MethodStat> getStats() {
         if (stats == null) {
             if (statFile.exists() && statFile.length() < maxStatFileSize * 1024) {
-
+                FileInputStream fileStream=null;
+                ObjectInputStream os=null;
                 try {
-                    FileInputStream fileStream = new FileInputStream(statFile);
-                    ObjectInputStream os = new ObjectInputStream(fileStream);
+                    fileStream = new FileInputStream(statFile);
+                    os = new ObjectInputStream(fileStream);
                     stats = (Map<String, MethodStat>) os.readObject();
-                    os.close();
+
                 } catch (Exception e) {
                     LoggerImpl.log(e);
                     stats = Collections.synchronizedMap(new HashMap<String, MethodStat>());
+                }finally {
+                    try {
+                        if (os != null) {
+                            os.close();
+                        }
+                        if (fileStream != null) {
+                            fileStream.close();
+                        }
+                    }catch(IOException ex){
+                        ex.printStackTrace();
+                    }
                 }
             } else {
                 stats = Collections.synchronizedMap(new HashMap<String, MethodStat>());
