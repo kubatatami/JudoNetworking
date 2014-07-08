@@ -636,6 +636,7 @@ class RequestConnector {
             EndpointImplementation.checkThread();
             RequestInputStream stream = new RequestInputStream(connectionStream, timeStat, conn.getContentLength());
             responses = controller.parseResponses((List) requests, stream, conn.getHeaders());
+            EndpointImplementation.checkThread();
             timeStat.tickParseTime();
             conn.close();
             timeStat.tickEndTime();
