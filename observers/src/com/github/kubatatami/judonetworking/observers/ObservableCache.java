@@ -44,6 +44,7 @@ public class ObservableCache {
                         }catch (NoClassDefFoundError ex){}
                     }
                 }
+                df.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
