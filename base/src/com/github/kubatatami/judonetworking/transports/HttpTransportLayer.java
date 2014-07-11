@@ -267,6 +267,9 @@ public class HttpTransportLayer extends TransportLayer {
             if(stream!=null){
                 stream.close();
             }
+            if (requestInfo.entity != null) {
+                requestInfo.entity.close();
+            }
         }
 
     }
