@@ -22,4 +22,13 @@ public @interface RequestMethod {
     public boolean highPriority() default false;
 
     public boolean allowEmptyResult() default false;
+
+    public Class<? extends RequestModifier> modifier() default DefaultModifier.class;
+
+    static final class DefaultModifier implements RequestModifier {
+        @Override
+        public void modify(RequestInterface request) {
+
+        }
+    }
 }

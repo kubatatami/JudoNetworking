@@ -155,7 +155,9 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
 
                 if (!ann.async()) {
-                    request = new Request(getNextId(), rpc, m, name, ann, args, m.getReturnType(), timeout, null, rpc.getProtocolController().getAdditionalRequestData());
+                    request = new Request(getNextId(), rpc, m, name, ann, args, m.getReturnType(),
+                            timeout, null, rpc.getProtocolController().getAdditionalRequestData());
+                    ann.modifier().newInstance().modify(request);
                     rpc.filterNullArgs(request);
                     if (request.getSingleCall() != null) {
                         throw new JudoException("SingleCall is not supported on no async method.");
@@ -236,7 +238,9 @@ class RequestProxy implements InvocationHandler, AsyncResult {
             newArgs = null;
         }
 
-        return new Request(id, rpc, m, name, ann, newArgs, returnType, timeout, callback, rpc.getProtocolController().getAdditionalRequestData());
+        Request request = new Request(id, rpc, m, name, ann, newArgs, returnType, timeout, callback, rpc.getProtocolController().getAdditionalRequestData());
+        ann.modifier().newInstance().modify(request);
+        return request;
     }
 
 

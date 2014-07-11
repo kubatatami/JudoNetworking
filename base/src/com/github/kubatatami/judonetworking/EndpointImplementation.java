@@ -448,9 +448,6 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     }
 
     public static void checkThread() throws CancelException {
-        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.GINGERBREAD && Runtime.getRuntime().availableProcessors()>1) {
-            System.gc(); //concurrent gc for lower latency (experiment)
-        }
         if (Thread.currentThread().isInterrupted()) {
             throw new CancelException();
         }

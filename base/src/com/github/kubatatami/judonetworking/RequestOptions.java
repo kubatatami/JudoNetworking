@@ -50,6 +50,11 @@ public class RequestOptions implements RequestMethod {
         return allowEmptyResult;
     }
 
+    @Override
+    public Class<? extends RequestModifier> modifier() {
+        return RequestMethod.DefaultModifier.class;
+    }
+
     public boolean apiKeyRequired() {
         return isApiKeyRequired;
     }
