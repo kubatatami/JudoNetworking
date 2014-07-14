@@ -81,7 +81,7 @@ public class EnumAnnotationModule extends SimpleModule {
             Enum<?> defaultEnum=null;
             try {
 
-                for (Field field : getValueClass().getDeclaredFields()) {
+                for (Field field : ReflectionCache.getDeclaredFields(getValueClass())) {
                     if (field.isEnumConstant()) {
                         JsonProperty property = ReflectionCache.getAnnotation(field, JsonProperty.class);
                         if (property != null && property.value().equals(text)) {

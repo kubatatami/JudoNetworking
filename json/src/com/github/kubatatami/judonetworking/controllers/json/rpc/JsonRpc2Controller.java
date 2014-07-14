@@ -1,7 +1,13 @@
 package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
+import android.util.SparseArray;
+
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.github.kubatatami.judonetworking.ErrorResult;
 import com.github.kubatatami.judonetworking.ProtocolController;
 import com.github.kubatatami.judonetworking.RequestComparator;
@@ -40,8 +46,8 @@ public class JsonRpc2Controller extends JsonRpcController {
 
     protected int autoBatchTime = 0;
     protected boolean batchEnabled = false;
-    protected Comparator<RequestInterface> requestComparator = new RequestComparator();
-    protected Map<Type,JavaType> typeCache=new HashMap<Type, JavaType>();
+    protected Map<Type, JavaType> typeCache = new HashMap<Type, JavaType>();
+
     public JsonRpc2Controller() {
     }
 
@@ -69,22 +75,76 @@ public class JsonRpc2Controller extends JsonRpcController {
         return batchEnabled;
     }
 
-    protected JavaType getType(Type type){
-        JavaType javaType=typeCache.get(type);
-        if(javaType==null){
-            javaType= mapper.getTypeFactory().constructType(type);
-            typeCache.put(type,javaType);
+    protected JavaType getType(Type type) {
+        JavaType javaType = typeCache.get(type);
+        if (javaType == null) {
+            javaType = mapper.getTypeFactory().constructType(type);
+            typeCache.put(type, javaType);
         }
         return javaType;
     }
 
+    protected JsonRpcResponseModel2 readObject(ObjectReader reader, JsonParser parser, Type type, SparseArray<RequestInterface> requestMap) throws IOException {
+        JsonRpcResponseModel2 responseModel = new JsonRpcResponseModel2();
+        JsonNode result=null;
+        while (parser.nextToken() != JsonToken.END_OBJECT) {
+
+            String fieldname = parser.getCurrentName();
+            if ("jsonrpc".equals(fieldname)) {
+                parser.nextToken();
+                responseModel.jsonrpc=parser.getText();
+            }else if ("id".equals(fieldname)) {
+                parser.nextToken();
+                responseModel.id=parser.getIntValue();
+                if(requestMap!=null) {
+                    type = requestMap.get(responseModel.id).getReturnType();
+                    if (result != null) {
+                        try {
+                            responseModel.result = reader.readValue(result.traverse(), getType(type));
+                        } catch (JsonProcessingException ex) {
+                            responseModel.ex = ex;
+                        }
+                    }
+                }
+            }else if ("result".equals(fieldname)){
+                parser.nextToken();
+                if(type==null){
+                    result=parser.readValueAs(JsonNode.class);
+                }else{
+                    try {
+                        responseModel.result=reader.readValue(parser,getType(type));
+                    }catch (JsonProcessingException ex){
+                        responseModel.ex=ex;
+                    }
+                }
+            }else if ("error".equals(fieldname)){
+                responseModel.error=new JsonErrorModel();
+                while (parser.nextToken() != JsonToken.END_OBJECT) {
+                    if ("message".equals(fieldname)) {
+                        parser.nextToken();
+                        responseModel.error.message=parser.getText();
+                    }else if ("code".equals(fieldname)) {
+                        parser.nextToken();
+                        responseModel.error.code=parser.getIntValue();
+                    }
+                }
+            }
+        }
+        return responseModel;
+    }
+
+
     @Override
     public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
+        JsonParser parser = null;
         try {
             JsonRpcResponseModel2 response;
+            ObjectReader reader = mapper.reader();
+
 
             try {
-                response = mapper.readValue(stream, JsonRpcResponseModel2.class);
+                parser = factory.createParser(stream);
+                response = readObject(reader,parser,request.getReturnType(),null);
             } catch (JsonProcessingException ex) {
                 throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
             } catch (IOException ex) {
@@ -102,15 +162,12 @@ public class JsonRpc2Controller extends JsonRpcController {
             if (response.error != null) {
                 throw new ProtocolException(response.error.message, response.error.code);
             }
+            if (response.ex != null) {
+                throw new ParseException(response.ex);
+            }
             Object result = null;
             if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
-                try {
-                    result = mapper.readValue(response.result.traverse(),  getType(request.getReturnType()));
-                } catch (JsonProcessingException ex) {
-                    throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
-                } catch (IOException ex) {
-                    throw new ConnectionException(ex);
-                }
+                result=response.result;
                 if (!request.isAllowEmptyResult() && result == null) {
                     throw new ParseException("Empty result.");
                 }
@@ -118,6 +175,14 @@ public class JsonRpc2Controller extends JsonRpcController {
             return new RequestSuccessResult(request.getId(), result);
         } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
+        }finally {
+            if(parser!=null){
+                try {
+                    parser.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -144,59 +209,56 @@ public class JsonRpc2Controller extends JsonRpcController {
 
     @Override
     public List<RequestResult> parseResponses(List<RequestInterface> requests, InputStream stream, Map<String, List<String>> headers) throws JudoException {
+        JsonParser parser = null;
         try {
-            List<JsonRpcResponseModel2> responses = null;
-
-            try {
-                responses = mapper.readValue(stream, mapper.getTypeFactory().constructCollectionType(List.class, JsonRpcResponseModel2.class));
-
-            } catch (JsonProcessingException ex) {
-                throw new ParseException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support batch? Try JsonRpc2Controller.", ex);
+            ObjectReader reader = mapper.reader();
+            List<RequestResult> finalResponses = new ArrayList<RequestResult>(requests.size());
+            SparseArray<RequestInterface> requestMap=new SparseArray< RequestInterface>(requests.size());
+            for(RequestInterface requestInterface : requests){
+                requestMap.put(requestInterface.getId(), requestInterface);
             }
+            parser = factory.createParser(stream);
+            parser.nextToken();
+            while (parser.nextToken() != JsonToken.END_ARRAY) {
+                JsonRpcResponseModel2 res = readObject(reader,parser,null,requestMap);
 
-
-
-            if (responses == null) {
-                throw new ParseException("Empty server response.");
-            }
-
-            Collections.sort(responses);
-            Collections.sort(requests, requestComparator);
-
-            List<RequestResult> finalResponses = new ArrayList<RequestResult>(responses.size());
-
-
-            for (int i = 0; i < responses.size(); i++) {
-                JsonRpcResponseModel2 res = responses.get(i);
                 if (res.jsonrpc == null) {
-                    throw new ParseException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support json-com.github.kubatatami.judonetworking.controllers.json.rpc 2.0? Try JsonRpc1Controller.");
+                    throw new ParseException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support json-rpc 2.0? Try JsonRpc1Controller.");
+                } else if (res.ex != null) {
+                    finalResponses.add(new ErrorResult(res.id, new ParseException(requestMap.get(res.id).getName(), res.ex)));
                 } else if (res.error == null) {
                     Object result;
-                    try {
-                        Type type = requests.get(i).getReturnType();
+                        Type type = requestMap.get(res.id).getReturnType();
                         if (!type.equals(Void.class)) {
-                            result = mapper.readValue(res.result.traverse(), getType(requests.get(i).getReturnType()));
-                            if (!requests.get(i).isAllowEmptyResult() && result == null) {
-                                finalResponses.add(new ErrorResult(requests.get(i).getId(), new ParseException("Empty response.")));
+                            result = res.result;
+                            if (!requestMap.get(res.id).isAllowEmptyResult() && result == null) {
+                                finalResponses.add(new ErrorResult(requestMap.get(res.id).getId(), new ParseException("Empty response.")));
                             } else {
                                 finalResponses.add(new RequestSuccessResult(res.id, result));
                             }
                         } else {
                             finalResponses.add(new RequestSuccessResult(res.id, null));
                         }
-                    } catch (JsonProcessingException ex) {
-                        finalResponses.add(new ErrorResult(res.id, new ParseException(requests.get(i).getName(), ex)));
-                    }
 
                 } else {
-                    finalResponses.add(new ErrorResult(res.id, new ProtocolException(requests.get(i).getName() + ": " + res.error.message, res.error.code)));
+                    finalResponses.add(new ErrorResult(res.id, new ProtocolException(requestMap.get(res.id).getName() + ": " + res.error.message, res.error.code)));
                 }
+
             }
             return finalResponses;
+        } catch (JsonProcessingException ex) {
+            throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
         } catch (IOException ex) {
             throw new ConnectionException(ex);
+        } finally {
+            if(parser!=null){
+                try {
+                    parser.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
-
     }
 
     protected static class JsonRpcRequestModel2 extends JsonRpcRequestModel {
@@ -210,6 +272,7 @@ public class JsonRpc2Controller extends JsonRpcController {
     protected static class JsonRpcResponseModel2 extends JsonRpcResponseModel {
         JsonProtocolController.JsonErrorModel error;
         String jsonrpc;
+        JsonProcessingException ex;
     }
 
 

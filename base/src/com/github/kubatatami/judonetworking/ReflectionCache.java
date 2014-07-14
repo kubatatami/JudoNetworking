@@ -13,10 +13,11 @@ import java.lang.reflect.Type;
 public class ReflectionCache {
 
     protected final static LruCache<Class<?>, Method[]> interfaceMethodCache = new LruCache<Class<?>, Method[]> (100);
+    protected final static LruCache<Class<?>, Field[]> fieldCache = new LruCache<Class<?>, Field[]> (100);
     protected final static LruCache<Class<?>, Annotation[]> interfaceAnnotationCache = new LruCache<Class<?>, Annotation[]> (100);
     protected final static LruCache<Method, Annotation[]> methodAnnotationCache = new LruCache<Method, Annotation[]>(100);
     protected final static LruCache<Method, Annotation[][]> methodParamAnnotationCache = new LruCache<Method, Annotation[][]>(100);
-    protected final static LruCache<Field, Annotation[]> fieldAnnotationCache = new LruCache<Field, Annotation[]>(100);
+    protected final static LruCache<String, Annotation[]> fieldAnnotationCache = new LruCache<String, Annotation[]>(100);
     protected final static LruCache<Method, Type[]> methodParamsTypeCache = new LruCache<Method, Type[]>(100);
 
     public static Annotation[] getAnnotations(Class<?> apiInterface){
@@ -24,6 +25,15 @@ public class ReflectionCache {
         if(result==null){
             result=apiInterface.getAnnotations();
             interfaceAnnotationCache.put(apiInterface,result);
+        }
+        return result;
+    }
+
+    public static Field[] getDeclaredFields(Class<?> apiInterface){
+        Field[] result = fieldCache.get(apiInterface);
+        if(result==null){
+            result=apiInterface.getDeclaredFields();
+            fieldCache.put(apiInterface,result);
         }
         return result;
     }
@@ -47,10 +57,11 @@ public class ReflectionCache {
     }
 
     public static Annotation[] getAnnotations(Field field){
-        Annotation[] result = fieldAnnotationCache.get(field);
+        String value=field.getDeclaringClass().getName().concat(field.getName());
+        Annotation[] result = fieldAnnotationCache.get(value);
         if(result==null){
             result=field.getAnnotations();
-            fieldAnnotationCache.put(field,result);
+            fieldAnnotationCache.put(value,result);
         }
         return result;
     }
