@@ -53,6 +53,8 @@ public interface EndpointBase {
 
     public void setProcessingMethod(boolean enabled);
 
+    public void setUrlModifier(UrlModifier urlModifier);
+
     /**
      * No log.
      */

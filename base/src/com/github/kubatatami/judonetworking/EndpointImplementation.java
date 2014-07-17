@@ -58,7 +58,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     private int id = 0;
     private ThreadPoolSizer threadPoolSizer=new DefaultThreadPoolSizer();
     private JudoExecutor executorService = new JudoExecutor();
-
+    private UrlModifier urlModifier;
 
     public EndpointImplementation(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         init(context, protocolController, transportLayer, url);
@@ -527,7 +527,11 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     }
 
     public String getUrl() {
-        return url;
+        if(urlModifier!=null){
+            return urlModifier.createUrl(url);
+        }else {
+            return url;
+        }
     }
 
     boolean isTest() {
@@ -556,5 +560,9 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
     public void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer) {
         this.threadPoolSizer = threadPoolSizer;
+    }
+
+    public void setUrlModifier(UrlModifier urlModifier) {
+        this.urlModifier = urlModifier;
     }
 }
