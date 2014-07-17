@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 class AsyncResultSender implements Runnable {
     protected CallbackInterface<Object> callback;
@@ -12,10 +13,11 @@ class AsyncResultSender implements Runnable {
     protected JudoException e = null;
     protected int progress = 0;
     protected final Type type;
-    protected Method method;
+    protected Integer methodId;
     protected EndpointImplementation rpc;
     protected Request request;
-    protected boolean isCached;
+    protected List<Request> requests;
+    protected CacheInfo cacheInfo;
 
     enum Type {
         RESULT, ERROR, PROGRESS, START
@@ -48,12 +50,12 @@ class AsyncResultSender implements Runnable {
         this.type = Type.ERROR;
     }
 
-    AsyncResultSender(Request request,boolean isCached) {
+    AsyncResultSender(Request request, CacheInfo cacheInfo) {
         this.callback = request.getCallback();
         this.request = request;
         this.rpc = request.getRpc();
         this.type = Type.START;
-        this.isCached=isCached;
+        this.cacheInfo = cacheInfo;
     }
 
 
@@ -62,7 +64,7 @@ class AsyncResultSender implements Runnable {
         this.callback = request.getCallback();
         this.request = request;
         this.rpc = request.getRpc();
-        this.method = request.getMethod();
+        this.methodId = request.getMethodId();
         this.type = Type.RESULT;
     }
 
@@ -71,8 +73,20 @@ class AsyncResultSender implements Runnable {
         this.callback = request.getCallback();
         this.request = request;
         this.rpc = request.getRpc();
-        this.method = request.getMethod();
+        this.methodId = request.getMethodId();
         this.type = Type.PROGRESS;
+    }
+
+    AsyncResultSender(List<Request> requests, int progress) {
+        this.progress = progress;
+        this.requests = requests;
+        this.type = Type.PROGRESS;
+    }
+
+    AsyncResultSender(List<Request> requests) {
+        this.requests = requests;
+        this.type = Type.START;
+        this.cacheInfo=new CacheInfo(false,0L);
     }
 
     AsyncResultSender(Request request, JudoException e) {
@@ -80,7 +94,7 @@ class AsyncResultSender implements Runnable {
         this.callback = request.getCallback();
         this.request = request;
         this.rpc = request.getRpc();
-        this.method = request.getMethod();
+        this.methodId = request.getMethodId();
         this.type = Type.ERROR;
     }
 
@@ -111,10 +125,13 @@ class AsyncResultSender implements Runnable {
             if (request.isCancelled()) {
                 return;
             }
+            if (type == Type.RESULT || type == Type.ERROR) {
+                request.done();
+            }
             switch (type) {
                 case START:
                     request.start();
-                    callback.onStart(isCached);
+                    callback.onStart(cacheInfo, request);
                     break;
                 case RESULT:
                     callback.onSuccess(result);
@@ -138,12 +155,14 @@ class AsyncResultSender implements Runnable {
             }
             if (type == Type.RESULT || type == Type.ERROR) {
                 callback.onFinish();
-                request.done();
             }
-        } else if (requestProxy!=null && requestProxy.getBatchCallback() != null) {
+        } else if (requestProxy != null && requestProxy.getBatchCallback() != null) {
             Batch<?> transaction = requestProxy.getBatchCallback();
             if (requestProxy.isCancelled()) {
                 return;
+            }
+            if (type == Type.RESULT || type == Type.ERROR) {
+                requestProxy.done();
             }
             switch (type) {
                 case START:
@@ -172,17 +191,28 @@ class AsyncResultSender implements Runnable {
             }
             if (type == Type.RESULT || type == Type.ERROR) {
                 transaction.onFinish();
-                requestProxy.done();
+            }
+        }else if(requests!=null && type==Type.PROGRESS){
+            for(Request batchRequest : requests){
+                if(batchRequest.getCallback()!=null) {
+                    batchRequest.getCallback().onProgress(progress);
+                }
+            }
+        }else if(requests!=null && type==Type.START){
+            for(Request batchRequest : requests){
+                if(batchRequest.getCallback()!=null) {
+                    batchRequest.getCallback().onStart(cacheInfo,batchRequest);
+                }
             }
         }
-        if (method != null) {
+        if (methodId != null) {
             switch (type) {
                 case ERROR:
                 case RESULT:
                     synchronized (rpc.getSingleCallMethods()) {
-                        boolean result = rpc.getSingleCallMethods().remove(method);
+                        boolean result = rpc.getSingleCallMethods().remove(methodId)!=null;
                         if (result && (rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                            LoggerImpl.log("Request " + method.getName() + " removed from SingleCall queue.");
+                            LoggerImpl.log("Request " + request.getName() + "("+methodId+")"+" removed from SingleCall queue.");
                         }
                     }
                     break;

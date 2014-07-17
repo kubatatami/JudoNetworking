@@ -4,6 +4,7 @@ import android.os.Build;
 
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.ProtocolController;
+import com.github.kubatatami.judonetworking.ReflectionCache;
 import com.github.kubatatami.judonetworking.RequestOutputStream;
 import com.github.kubatatami.judonetworking.SecurityUtils;
 import com.github.kubatatami.judonetworking.TimeStat;
@@ -124,11 +125,20 @@ public class HttpTransportLayer extends TransportLayer {
     }
 
     public void setBasicAuthentication(final String username, final String password) {
-        authKey = SecurityUtils.getBasicAuthHeader(username, password);
+        if(username == null || password == null){
+            authKey=null;
+        }else {
+            authKey = SecurityUtils.getBasicAuthHeader(username, password);
+        }
     }
 
     public void setBasicAuthentication(final String hash) {
-        authKey = "Basic " + hash;
+        if(hash == null){
+            authKey=null;
+        }else {
+            authKey = "Basic " + hash;
+        }
+
     }
 
     public void setFollowRedirection(boolean followRedirection) {
@@ -179,9 +189,11 @@ public class HttpTransportLayer extends TransportLayer {
         if (httpURLConnectionModifier != null) {
             httpURLConnectionModifier.modify(urlConnection);
         }
-        if (method != null && method.isAnnotationPresent(JsonHttpMethod.class)) {
-            JsonHttpMethod httpMethod = method.getAnnotation(JsonHttpMethod.class);
-            urlConnection.setRequestMethod(httpMethod.methodType());
+        if (method != null) {
+            HttpMethod ann = ReflectionCache.getAnnotationInherited(method, HttpMethod.class);
+            if(ann!=null) {
+                urlConnection.setRequestMethod(ann.value());
+            }
         }
         if (requestInfo.customHeaders != null) {
             for (Map.Entry<String, String> entry : requestInfo.customHeaders.entrySet()) {
@@ -190,18 +202,18 @@ public class HttpTransportLayer extends TransportLayer {
         }
     }
 
-    protected void logRequestHeaders(int debugFlags, HttpURLConnection urlConnection) {
+    protected void logRequestHeaders(String requestName,int debugFlags, HttpURLConnection urlConnection) {
         if ((debugFlags & Endpoint.HEADERS_DEBUG) > 0) {
             String headers = "";
             for (String key : urlConnection.getRequestProperties().keySet()) {
                 headers += key + ":" + urlConnection.getRequestProperty(key) + " ";
             }
-            longLog("Request headers", headers);
+            longLog("Request headers("+requestName+")", headers);
         }
 
     }
 
-    protected void logResponseHeaders(int debugFlags, HttpURLConnection urlConnection) {
+    protected void logResponseHeaders(String requestName,int debugFlags, HttpURLConnection urlConnection) {
         if ((debugFlags & Endpoint.HEADERS_DEBUG) > 0) {
             String headers = "";
             if (urlConnection.getHeaderFields() != null) {
@@ -211,64 +223,80 @@ public class HttpTransportLayer extends TransportLayer {
                     }
                 }
             }
-            longLog("Response headers", headers);
+            longLog("Response headers("+requestName+")", headers);
         }
     }
 
 
     protected void sendRequest(HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo,
                                TimeStat timeStat, int debugFlags) throws Exception {
+        OutputStream stream=null;
+        try {
+            if (digestAuth != null) {
+                String digestHeader = SecurityUtils.getDigestAuthHeader(digestAuth, urlConnection.getURL(), requestInfo, username, password);
+                if ((debugFlags & Endpoint.TOKEN_DEBUG) > 0) {
+                    longLog("digest", digestHeader);
+                }
+                urlConnection.addRequestProperty("Authorization", digestHeader);
+            }
 
-        if (digestAuth != null) {
-            String digestHeader = SecurityUtils.getDigestAuthHeader(digestAuth, urlConnection.getURL(), requestInfo, username, password);
-            if ((debugFlags & Endpoint.TOKEN_DEBUG) > 0) {
-                longLog("digest", digestHeader);
+            if (requestInfo.entity != null) {
+                urlConnection.setDoOutput(true);
+                if (!(urlConnection instanceof HttpsURLConnection)) {   //prevent android bug
+                    urlConnection.setFixedLengthStreamingMode((int) requestInfo.entity.getContentLength());
+                }
+                stream = requestInfo.entity.getContentLength() > 0 ?
+                        new RequestOutputStream(urlConnection.getOutputStream(), timeStat,
+                                requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
+                timeStat.tickConnectionTime();
+                if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
+                    longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
+                    requestInfo.entity.reset();
+                }
+                requestInfo.entity.writeTo(stream);
+                stream.flush();
+            } else {
+                if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
+                    longLog("Request", requestInfo.url);
+                }
+                urlConnection.getInputStream();
+                timeStat.tickConnectionTime();
+                timeStat.tickSendTime();
             }
-            urlConnection.addRequestProperty("Authorization", digestHeader);
-        }
-
-        if (requestInfo.entity != null) {
-            urlConnection.setDoOutput(true);
-            if (!(urlConnection instanceof HttpsURLConnection)) {   //prevent android bug
-                urlConnection.setFixedLengthStreamingMode((int) requestInfo.entity.getContentLength());
+        }finally {
+            if(stream!=null){
+                stream.close();
             }
-            OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
-                    new RequestOutputStream(urlConnection.getOutputStream(), timeStat,
-                            requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
-            timeStat.tickConnectionTime();
-            if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
-                requestInfo.entity.reset();
+            if (requestInfo.entity != null) {
+                requestInfo.entity.close();
             }
-            requestInfo.entity.writeTo(stream);
-            stream.flush();
-            stream.close();
-        } else {
-            if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                longLog("Request", requestInfo.url);
-            }
-            urlConnection.getInputStream();
-            timeStat.tickConnectionTime();
-            timeStat.tickSendTime();
         }
 
     }
 
-    public Connection send(final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
+    public Connection send(String requestName,final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
                            int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException {
         boolean repeat = false;
         HttpURLConnection urlConnection = null;
         do {
             try {
                 urlConnection = createHttpUrlConnection(requestInfo.url);
-
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
+                }
                 initSetup(urlConnection, requestInfo, timeout, timeStat, method, cacheInfo);
-                logRequestHeaders(debugFlags, urlConnection);
+                logRequestHeaders(requestName,debugFlags, urlConnection);
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
+                }
                 sendRequest(urlConnection, requestInfo, timeStat, debugFlags);
-                logResponseHeaders(debugFlags, urlConnection);
+                if (Thread.currentThread().isInterrupted()) {
+                    return null;
+                }
+                logResponseHeaders(requestName,debugFlags, urlConnection);
 
                 if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
-                    longLog("Response code", urlConnection.getResponseCode() + "");
+                    longLog("Response code("+requestName+")", urlConnection.getResponseCode() + "");
                 }
                 return new FinalConnection(urlConnection, protocolController);
             } catch (FileNotFoundException ex) {
@@ -288,6 +316,9 @@ public class HttpTransportLayer extends TransportLayer {
                     handleHttpException(protocolController, code, convertStreamToString(urlConnection.getErrorStream()));
                 }
             } catch (Exception ex) {
+                if(urlConnection!=null){
+                    urlConnection.disconnect();
+                }
                 if (!(ex instanceof JudoException)) {
                     throw new ConnectionException(ex);
                 } else {
@@ -414,9 +445,9 @@ public class HttpTransportLayer extends TransportLayer {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
-    public static @interface JsonHttpMethod {
-        String methodType();
+    @Target({ElementType.METHOD, ElementType.TYPE})
+    public @interface HttpMethod {
+        String value();
     }
 
     class HttpURLCreatorImplementation implements HttpURLCreator {

@@ -2,6 +2,7 @@ package com.github.kubatatami.judonetworking.controllers.json.simple;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.ProtocolController;
+import com.github.kubatatami.judonetworking.ReflectionCache;
 import com.github.kubatatami.judonetworking.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.RequestInterface;
 import com.github.kubatatami.judonetworking.RequestResult;
@@ -49,24 +50,29 @@ public class JsonSimpleRestController extends RawRestController {
 
     @Override
     public RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
-        if (request.getMethod().isAnnotationPresent(JsonPost.class)) {
+        JsonPost jsonPost = ReflectionCache.getAnnotationInherited(request.getMethod(), JsonPost.class);
+        if (jsonPost!=null && jsonPost.enabled()) {
             ProtocolController.RequestInfo requestInfo = super.createRequest(url, request);
-            Map<String, Object> params = new HashMap<String, Object>();
-            int i = 0;
-            for (Annotation[] annotations : request.getMethod().getParameterAnnotations()) {
-                for (Annotation annotation : annotations) {
-                    if (annotation instanceof Post) {
-                        Object arg = request.getArgs()[i];
-                        params.put(((Post) annotation).value(), arg);
-                    }
+            Object finalParams;
+            if(jsonPost.singleFlat()){
+                if(request.getArgs().length==1){
+                    finalParams=request.getArgs()[0];
+                }else{
+                    throw new JudoException("SingleFlat can be enabled only for method with one parameter.");
                 }
-                i++;
+            }else {
+                Map<String, Object> params = new HashMap<String, Object>();
+                int i = 0;
+                for (String name : request.getParamNames()) {
+                    params.put(name, request.getArgs()[i]);
+                    i++;
+                }
+                finalParams=params;
             }
-
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             OutputStreamWriter writer = new OutputStreamWriter(stream);
             try {
-                mapper.writeValue(writer, params);
+                mapper.writeValue(writer, finalParams);
                 writer.close();
             } catch (IOException ex) {
                 throw new JudoException("Can't create request", ex);
@@ -74,6 +80,12 @@ public class JsonSimpleRestController extends RawRestController {
 
             requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(stream.toByteArray()), stream.size());
             requestInfo.mimeType = "application/json";
+
+            Rest ann = ReflectionCache.getAnnotationInherited(request.getMethod(), Rest.class);
+            if (ann.mimeType() != null) {
+                requestInfo.mimeType = ann.mimeType();
+            }
+
             return requestInfo;
         } else {
             return super.createRequest(url, request);
@@ -81,7 +93,9 @@ public class JsonSimpleRestController extends RawRestController {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
+    @Target({ElementType.METHOD, ElementType.TYPE})
     public @interface JsonPost {
+        boolean enabled() default true;
+        boolean singleFlat() default false;
     }
 }

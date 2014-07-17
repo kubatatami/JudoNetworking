@@ -21,5 +21,9 @@ public class EndpointFactory {
         return new EndpointImplementation(context, protocolController, transportLayer, url);
     }
 
+    public static EndpointClassic createEndpointClassic(Context context, ProtocolController protocolController, TransportLayer transportLayer) {
+        return new EndpointImplementation(context, protocolController, transportLayer, null);
+    }
+
 
 }

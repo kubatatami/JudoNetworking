@@ -1,10 +1,21 @@
 package com.github.kubatatami.judonetworking;
 
+import android.support.v4.util.LruCache;
+
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
+import org.apache.http.message.BasicNameValuePair;
+
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.Future;
 
 class Request implements Runnable, Comparable<Request>, ProgressObserver, RequestInterface, AsyncResult {
     private Integer id;
@@ -19,46 +30,57 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     private String[] paramNames;
     private Type returnType;
     private Method method;
+    private Class<?> apiInterface;
     private boolean batchFatal = true;
-    private Object additionalControllerData = null;
+    private Serializable additionalControllerData = null;
     private boolean cancelled, done, running;
+    private boolean isApiKeyRequired;
+    private String customUrl;
+    private Future<?> future;
+
 
     public Request(Integer id, EndpointImplementation rpc, Method method, String name, RequestMethod ann,
-                   Object[] args, Type returnType, int timeout, CallbackInterface<Object> callback, Object additionalControllerData) {
+                   Object[] args, Type returnType, int timeout, CallbackInterface<Object> callback,
+                   Serializable additionalControllerData) {
         this.id = id;
         this.name = name;
         this.timeout = timeout;
         this.method = method;
+        if(method!=null) {
+            this.apiInterface = method.getDeclaringClass();
+        }
         this.rpc = rpc;
         this.ann = ann;
-        this.paramNames = ann.paramNames();
         this.args = args;
         this.returnType = returnType;
         this.callback = callback;
         this.additionalControllerData = additionalControllerData;
+        this.paramNames = ann.paramNames();
     }
 
     @Override
     public void run() {
         try {
-            Object result = rpc.getRequestConnector().call(this);
-            invokeCallback(result);
+            if(!cancelled) {
+                Object result = rpc.getRequestConnector().call(this);
+                invokeCallback(result);
+            }
         } catch (final JudoException e) {
             invokeCallbackException(e);
-            if (rpc.getErrorLogger() != null) {
+            if (rpc.getErrorLogger() != null && !(e instanceof CancelException)) {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
-                        rpc.getErrorLogger().onError(e);
+                        rpc.getErrorLogger().onError(e,Request.this);
                     }
                 });
             }
         }
     }
 
-    public void invokeStart(boolean isCached) {
+    public void invokeStart(CacheInfo cacheInfo) {
         if (callback != null) {
-            rpc.getHandler().post(new AsyncResultSender(this,isCached));
+            rpc.getHandler().post(new AsyncResultSender(this, cacheInfo));
         }
     }
 
@@ -68,12 +90,6 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     public void invokeCallback(Object result) {
         rpc.getHandler().post(new AsyncResultSender(this, result));
-    }
-
-    public void invokeProgress(int progress) {
-        if (callback != null) {
-            rpc.getHandler().post(new AsyncResultSender(this, progress));
-        }
     }
 
     public static void invokeBatchCallbackStart(final EndpointImplementation rpc, RequestProxy requestProxy) {
@@ -118,6 +134,11 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     }
 
     @Override
+    public int getMethodId() {
+        return CacheMethod.getMethodId(method);
+    }
+
+    @Override
     public Method getMethod() {
         return method;
     }
@@ -129,11 +150,15 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     @Override
     public boolean isApiKeyRequired() {
-        ApiKeyRequired ann = method.getAnnotation(ApiKeyRequired.class);
-        if (ann == null) {
-            ann = method.getDeclaringClass().getAnnotation(ApiKeyRequired.class);
+        if (method != null) {
+            ApiKeyRequired ann = ReflectionCache.getAnnotation(method,ApiKeyRequired.class);
+            if (ann == null) {
+                ann = ReflectionCache.getAnnotation(apiInterface,ApiKeyRequired.class);
+            }
+            return ann != null && ann.enabled();
+        } else {
+            return isApiKeyRequired;
         }
-        return ann != null && ann.enabled();
     }
 
     @Override
@@ -147,7 +172,7 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     }
 
     @Override
-    public Object getAdditionalData() {
+    public Serializable getAdditionalData() {
         return additionalControllerData;
     }
 
@@ -156,33 +181,51 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
     }
 
     LocalCache getLocalCache() {
-        LocalCache ann = method.getAnnotation(LocalCache.class);
-        if (ann == null) {
-            ann = method.getDeclaringClass().getAnnotation(LocalCache.class);
+        if (method != null) {
+            LocalCache ann = ReflectionCache.getAnnotationInherited(method,LocalCache.class);
+            if (ann != null && !ann.enabled()) {
+                ann = null;
+            }
+            return ann;
+        } else {
+            return null;
         }
-        if (ann != null && !ann.enabled()) {
-            ann = null;
+    }
+
+    int getDelay() {
+        if (method != null) {
+            Delay ann = ReflectionCache.getAnnotationInherited(method,Delay.class);
+            if (ann != null && !ann.enabled()) {
+                ann = null;
+            }
+            return ann != null ? ann.value() : 0;
+        } else {
+            return 0;
         }
-        return ann;
     }
 
     ServerCache getServerCache() {
-        ServerCache ann = method.getAnnotation(ServerCache.class);
-        if (ann == null) {
-            ann = method.getDeclaringClass().getAnnotation(ServerCache.class);
+        if (method != null) {
+            ServerCache ann = ReflectionCache.getAnnotationInherited(method,ServerCache.class);
+            if (ann != null && !ann.enabled()) {
+                ann = null;
+            }
+            return ann;
+        } else {
+            return null;
         }
-        if (ann != null && !ann.enabled()) {
-            ann = null;
-        }
-        return ann;
     }
 
-    boolean isSingleCall() {
-        SingleCall ann = method.getAnnotation(SingleCall.class);
-        if (ann == null) {
-            ann = method.getDeclaringClass().getAnnotation(SingleCall.class);
+    SingleCall getSingleCall() {
+        if (method != null) {
+            SingleCall ann = ReflectionCache.getAnnotationInherited(method,SingleCall.class);
+            if (ann != null && !ann.enabled()) {
+                ann = null;
+            }
+            return ann;
+        } else {
+            return null;
         }
-        return ann != null && ann.enabled();
     }
 
     public int getLocalCacheLifeTime() {
@@ -201,9 +244,10 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         return getLocalCache().cacheLevel();
     }
 
-    public boolean isLocalCacheOnlyOnError() {
+
+    public OnlyOnError getLocalCacheOnlyOnErrorMode() {
         LocalCache localCache = getLocalCache();
-        return localCache != null && localCache.onlyOnError();
+        return localCache != null ? localCache.onlyOnError() : OnlyOnError.NO;
     }
 
     public boolean isServerCachable() {
@@ -312,9 +356,21 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
 
     @Override
     public void cancel() {
+        if(done){
+            return;
+        }
         this.cancelled = true;
+        if ((rpc.getDebugFlags() & Endpoint.CANCEL_DEBUG) > 0) {
+            LoggerImpl.log("Request " + name + " cancelled.");
+        }
         if (running) {
             running = false;
+            synchronized (rpc.getSingleCallMethods()) {
+                rpc.getSingleCallMethods().remove(CacheMethod.getMethodId(method));
+            }
+            if (future != null) {
+                future.cancel(true);
+            }
             rpc.getHandler().post(new Runnable() {
                 @Override
                 public void run() {
@@ -338,4 +394,19 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
         this.running = true;
     }
 
+    public String getCustomUrl() {
+        return customUrl;
+    }
+
+    public void setCustomUrl(String customUrl) {
+        this.customUrl = customUrl;
+    }
+
+    public void setApiKeyRequired(boolean isApiKeyRequired) {
+        this.isApiKeyRequired = isApiKeyRequired;
+    }
+
+    public void setFuture(Future<?> future) {
+        this.future = future;
+    }
 }

@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.github.kubatatami.judonetworking.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.RequestInterface;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
@@ -95,8 +96,9 @@ public abstract class JsonRpcController extends JsonProtocolController {
         }
     }
 
-    protected static class JsonRpcResponseModel extends JsonResponseModel implements Serializable, Comparable<JsonRpcResponseModel> {
+    protected static class JsonRpcResponseModel implements Serializable, Comparable<JsonRpcResponseModel> {
         Integer id;
+        public Object result;
 
         @Override
         public int compareTo(JsonRpcResponseModel another) {

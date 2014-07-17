@@ -14,8 +14,10 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.Deserializers;
 import com.fasterxml.jackson.databind.deser.Deserializers.Base;
 import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
+import com.github.kubatatami.judonetworking.ReflectionCache;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -76,13 +78,21 @@ public class EnumAnnotationModule extends SimpleModule {
         @Override
         public Enum<?> deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
             String text = jp.getText();
+            Enum<?> defaultEnum=null;
             try {
 
-                for (Field field : getValueClass().getDeclaredFields()) {
+                for (Field field : ReflectionCache.getDeclaredFields(getValueClass())) {
                     if (field.isEnumConstant()) {
-                        JsonProperty property = field.getAnnotation(JsonProperty.class);
+                        JsonProperty property = ReflectionCache.getAnnotation(field, JsonProperty.class);
                         if (property != null && property.value().equals(text)) {
                             return (Enum<?>) field.get(null);
+                        }
+                        if(ReflectionCache.getAnnotation(field,JsonDefaultEnum.class)!=null){
+                            if(defaultEnum==null) {
+                                defaultEnum = (Enum<?>) field.get(null);
+                            }else{
+                                throw new RuntimeException("It can be only one JsonDefaultEnum");
+                            }
                         }
                     }
                 }
@@ -90,7 +100,15 @@ public class EnumAnnotationModule extends SimpleModule {
 
             } catch (Exception e) {
             }
-            return (Enum<?>) mapper.readValue("\"" + text + "\"", getValueClass());
+            try {
+                return (Enum<?>) mapper.readValue("\"" + text + "\"", getValueClass());
+            }catch(InvalidFormatException e){
+                if(defaultEnum!=null){
+                    return defaultEnum;
+                }else{
+                    throw e;
+                }
+            }
         }
 
     }

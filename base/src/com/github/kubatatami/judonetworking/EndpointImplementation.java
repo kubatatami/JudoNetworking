@@ -1,6 +1,8 @@
 package com.github.kubatatami.judonetworking;
 
 import android.content.Context;
+import android.net.NetworkInfo;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 
@@ -12,27 +14,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 
-class EndpointImplementation implements Endpoint {
+class EndpointImplementation implements Endpoint, EndpointClassic {
 
-    private int maxMobileConnections = 1;
-    private int maxWifiConnections = 2;
     private RequestConnector requestConnector;
-    private TransportLayer transportLayer;
     private Handler handler = new Handler();
     private Context context;
     private boolean cacheEnabled = false;
@@ -58,28 +54,18 @@ class EndpointImplementation implements Endpoint {
     private boolean verifyResultModel = false;
     private boolean processingMethod = false;
     private long tokenExpireTimestamp = -1;
-    private List<Method> singleCallMethods = new ArrayList<Method>();
-
-
-    private ThreadPoolExecutor executorService =
-            new ThreadPoolExecutor(2, 30, 30, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
-                @Override
-                public Thread newThread(Runnable r) {
-                    Thread thread = new Thread(r);
-                    thread.setPriority(Thread.NORM_PRIORITY - 1);
-                    return thread;
-                }
-            });
-
+    private Map<Integer,Request> singleCallMethods = new HashMap<Integer, Request>();
+    private int id = 0;
+    private ThreadPoolSizer threadPoolSizer=new DefaultThreadPoolSizer();
+    private JudoExecutor executorService = new JudoExecutor();
+    private UrlModifier urlModifier;
 
     public EndpointImplementation(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         init(context, protocolController, transportLayer, url);
-
     }
 
 
     private void init(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
-        this.transportLayer = transportLayer;
         this.requestConnector = new RequestConnector(url, this, transportLayer);
         this.context = context;
         this.protocolController = protocolController;
@@ -87,13 +73,19 @@ class EndpointImplementation implements Endpoint {
         this.statFile = new File(context.getCacheDir(), "stats");
         this.memoryCache = new MemoryCacheImplementation(context);
         this.diskCache = new DiskCacheImplementation(context);
+        NetworkUtils.addNetworkStateListener(context,new NetworkUtils.NetworkStateListener() {
+            @Override
+            public void onNetworkStateChange(NetworkInfo activeNetworkInfo) {
+                setThreadPoolSize(threadPoolSizer.getThreadPoolSize(activeNetworkInfo));
+            }
+        });
     }
 
     public HashMap<Class, VirtualServerInfo> getVirtualServers() {
         return virtualServers;
     }
 
-    public ExecutorService getExecutorService() {
+    public JudoExecutor getExecutorService() {
         return executorService;
     }
 
@@ -134,18 +126,8 @@ class EndpointImplementation implements Endpoint {
         }
     }
 
-
-    @Override
-    public void setMultiBatchConnections(int maxMobileConnections, int maxWifiConnections) {
-        this.maxMobileConnections = maxMobileConnections;
-        this.maxWifiConnections = maxWifiConnections;
-        int max = Math.max(maxMobileConnections, maxWifiConnections);
-        transportLayer.setMaxConnections(max);
-        setThreadPoolSize(Math.max(maxMobileConnections, maxWifiConnections));
-    }
-
     protected void setThreadPoolSize(int size) {
-        executorService.setCorePoolSize(Math.max(2, size));
+        executorService.setMaximumPoolSize(Math.max(2, size));
     }
 
     @Override
@@ -160,7 +142,7 @@ class EndpointImplementation implements Endpoint {
 
     @SuppressWarnings("unchecked")
     public <T> T getService(Class<T> obj) {
-        return getService(obj, new RequestProxy(this, obj, protocolController.getAutoBatchTime() > 0 ? BatchMode.AUTO : BatchMode.NONE, null));
+        return getService(obj, new RequestProxy(this, protocolController.getAutoBatchTime() > 0 ? BatchMode.AUTO : BatchMode.NONE, null));
     }
 
     @SuppressWarnings("unchecked")
@@ -168,9 +150,79 @@ class EndpointImplementation implements Endpoint {
         return (T) Proxy.newProxyInstance(obj.getClassLoader(), new Class<?>[]{obj}, proxy);
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> AsyncResult sendAsyncRequest(String url, String name, CallbackInterface<T> callback, Object... args) {
+        return sendAsyncRequest(url, name, new RequestOptions(), callback, args);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> AsyncResult sendAsyncRequest(String url, String name, RequestOptions requestOptions, CallbackInterface<T> callback, Object... args) {
+        Request request = new Request(
+                ++id, this, null,
+                name, requestOptions, args,
+                ((ParameterizedType) callback.getClass().getGenericSuperclass()).getActualTypeArguments()[0], getRequestConnector().getMethodTimeout(),
+                (CallbackInterface<Object>) callback, getProtocolController().getAdditionalRequestData());
+        request.setCustomUrl(url);
+        request.setApiKeyRequired(requestOptions.apiKeyRequired());
+        filterNullArgs(request);
+        Future<?> future = executorService.submit(request);
+        request.setFuture(future);
+        return request;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T sendRequest(String url, String name, Type returnType, RequestOptions requestOptions, Object... args) throws JudoException {
+        Request request = new Request(++id, this, null, name, requestOptions, args,
+                returnType,
+                getRequestConnector().getMethodTimeout(),
+                null, getProtocolController().getAdditionalRequestData());
+        request.setCustomUrl(url);
+        request.setApiKeyRequired(requestOptions.apiKeyRequired());
+        filterNullArgs(request);
+        return (T) getRequestConnector().call(request);
+    }
+
+
+
+    public void filterNullArgs(Request request){
+        if(request.getArgs()!=null){
+            Annotation[][] paramAnnotations = ReflectionCache.getParameterAnnotations(request.getMethod());
+            List<String> paramNames= new ArrayList<String>();
+            List<Object> args = new ArrayList<Object>();
+            Collections.addAll(paramNames, request.getParamNames());
+            Collections.addAll(args, request.getArgs());
+            for(int i=args.size()-1;i>=0;i--){
+                if(args.get(i)==null){
+                    boolean ignore=false;
+
+                    IgnoreNullParam ignoreNullParam=ReflectionCache.findAnnotation(paramAnnotations[i], IgnoreNullParam.class);
+                    if(ignoreNullParam!=null){
+                        ignore=ignoreNullParam.value();
+                    }else{
+                        ignoreNullParam=ReflectionCache.getAnnotation(request.getMethod().getDeclaringClass(), IgnoreNullParam.class);
+                        if(ignoreNullParam!=null){
+                            ignore=ignoreNullParam.value();
+                        }
+                    }
+                    if(ignore) {
+                        args.remove(i);
+                        if (paramNames.size() > i) {
+                            paramNames.remove(i);
+                        }
+                    }
+                }
+            }
+            request.setArgs(args.toArray());
+            request.setParamNames(paramNames.toArray(new String[paramNames.size()]));
+        }
+    }
+
+
     @Override
     @SuppressWarnings("unchecked")
-    public <T> AsyncResult callInBatch(Class<T> obj, final Batch<T> batch) {
+    public <T> AsyncResult callInBatch(final Class<T> obj, final Batch<T> batch) {
 
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
             try {
@@ -183,24 +235,51 @@ class EndpointImplementation implements Endpoint {
             }
         }
 
-        final RequestProxy pr = new RequestProxy(this, obj, BatchMode.MANUAL, batch);
+        final RequestProxy pr = new RequestProxy(this, BatchMode.MANUAL, batch);
         T proxy = getService(obj, pr);
         pr.setBatchFatal(true);
         batch.run(proxy);
         pr.setBatchFatal(false);
         batch.runNonFatal(proxy);
-        try {
-            executorService.execute(new Runnable() {
-                @Override
-                public void run() {
-                    pr.callBatch();
-                }
-            });
-        } catch (RejectedExecutionException ex) {
-            new AsyncResultSender(this, pr, new JudoException("Request queue is full.", ex)).run();
-        }
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                pr.callBatch();
+            }
+        });
         return pr;
     }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> AsyncResult callAsyncInBatch(final Class<T> obj, final Batch<T> batch) {
+
+        if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
+            try {
+                StackTraceElement stackTraceElement = RequestProxy.getExternalStacktrace(Thread.currentThread().getStackTrace());
+                LoggerImpl.log("Batch starts from " +
+                        stackTraceElement.getClassName() +
+                        "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+            } catch (Exception ex) {
+                LoggerImpl.log("Can't log stacktrace");
+            }
+        }
+
+        final RequestProxy pr = new RequestProxy(this, BatchMode.MANUAL, batch);
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                T proxy = getService(obj, pr);
+                pr.setBatchFatal(true);
+                batch.run(proxy);
+                pr.setBatchFatal(false);
+                batch.runNonFatal(proxy);
+                pr.callBatch();
+            }
+        });
+        return pr;
+    }
+
 
     public TokenCaller getTokenCaller() {
         return protocolController.getTokenCaller();
@@ -214,18 +293,6 @@ class EndpointImplementation implements Endpoint {
         return requestConnector;
     }
 
-
-    public int getMaxMobileConnections() {
-        return maxMobileConnections;
-    }
-
-    public int getMaxWifiConnections() {
-        return maxWifiConnections;
-    }
-
-    public int getMaxConnections() {
-        return NetworkUtils.isWifi(context) ? getMaxWifiConnections() : getMaxMobileConnections();
-    }
 
     @Override
     public void setBatchTimeoutMode(BatchTimeoutMode mode) {
@@ -380,20 +447,37 @@ class EndpointImplementation implements Endpoint {
         return timeProfiler;
     }
 
+    public static void checkThread() throws CancelException {
+        if (Thread.currentThread().isInterrupted()) {
+            throw new CancelException();
+        }
+    }
 
     @SuppressWarnings("unchecked")
     public Map<String, MethodStat> getStats() {
         if (stats == null) {
             if (statFile.exists() && statFile.length() < maxStatFileSize * 1024) {
-
+                FileInputStream fileStream=null;
+                ObjectInputStream os=null;
                 try {
-                    FileInputStream fileStream = new FileInputStream(statFile);
-                    ObjectInputStream os = new ObjectInputStream(fileStream);
+                    fileStream = new FileInputStream(statFile);
+                    os = new ObjectInputStream(fileStream);
                     stats = (Map<String, MethodStat>) os.readObject();
-                    os.close();
+
                 } catch (Exception e) {
                     LoggerImpl.log(e);
                     stats = Collections.synchronizedMap(new HashMap<String, MethodStat>());
+                }finally {
+                    try {
+                        if (os != null) {
+                            os.close();
+                        }
+                        if (fileStream != null) {
+                            fileStream.close();
+                        }
+                    }catch(IOException ex){
+                        ex.printStackTrace();
+                    }
                 }
             } else {
                 stats = Collections.synchronizedMap(new HashMap<String, MethodStat>());
@@ -443,7 +527,11 @@ class EndpointImplementation implements Endpoint {
     }
 
     public String getUrl() {
-        return url;
+        if(urlModifier!=null){
+            return urlModifier.createUrl(url);
+        }else {
+            return url;
+        }
     }
 
     boolean isTest() {
@@ -458,7 +546,23 @@ class EndpointImplementation implements Endpoint {
         return percentLoss;
     }
 
-    public List<Method> getSingleCallMethods() {
+    public Map<Integer,Request> getSingleCallMethods() {
         return singleCallMethods;
+    }
+
+    public int getThreadPriority() {
+        return executorService.getThreadPriority();
+    }
+
+    public void setThreadPriority(int threadPriority) {
+        executorService.setThreadPriority(threadPriority);
+    }
+
+    public void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer) {
+        this.threadPoolSizer = threadPoolSizer;
+    }
+
+    public void setUrlModifier(UrlModifier urlModifier) {
+        this.urlModifier = urlModifier;
     }
 }

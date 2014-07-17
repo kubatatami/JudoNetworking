@@ -1,6 +1,6 @@
 package com.github.kubatatami.judonetworking.exceptions;
 
-public class HttpException extends JudoException {
+public class HttpException extends ConnectionException {
     private int code;
 
     public HttpException(String detailMessage, int code) {
