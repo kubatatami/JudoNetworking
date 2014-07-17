@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * To change this template use File | Settings | File Templates.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD,ElementType.TYPE})
 public @interface LocalCache {
 
     public boolean enabled() default true;
@@ -24,5 +24,5 @@ public @interface LocalCache {
 
     public int size() default 0;
 
-    public boolean onlyOnError() default false;
+    public OnlyOnError onlyOnError() default OnlyOnError.NO;
 }

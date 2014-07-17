@@ -1,5 +1,8 @@
 package com.github.kubatatami.judonetworking.controllers.raw;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
 import com.github.kubatatami.judonetworking.ErrorResult;
 import com.github.kubatatami.judonetworking.ProtocolController;
 import com.github.kubatatami.judonetworking.RequestInterface;
@@ -12,7 +15,9 @@ import com.github.kubatatami.judonetworking.exceptions.ParseException;
 import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
@@ -35,19 +40,19 @@ public abstract class RawController extends ProtocolController {
     }
 
     public static RequestResult parseResponse(RequestInterface request, InputStream stream) {
-        if (request.getReturnType().equals(String.class)) {
+        Class<?> returnType = (Class<?>) request.getReturnType();
+        if (String.class.equals(returnType)) {
             return new RequestSuccessResult(request.getId(), convertStreamToString(stream));
-        } else if (request.getReturnType().equals(Byte[].class)) {
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-            int nRead;
-            byte[] data = new byte[16384];
+        } else if (Byte[].class.equals(returnType) || byte[].class.equals(returnType)) {
             try {
-                while ((nRead = stream.read(data, 0, data.length)) != -1) {
-                    buffer.write(data, 0, nRead);
-                }
-                buffer.flush();
-                return new RequestSuccessResult(request.getId(), buffer.toByteArray());
+                return new RequestSuccessResult(request.getId(), getByteArray(stream));
+            } catch (Exception e) {
+                return new ErrorResult(request.getId(), new ConnectionException(e));
+            }
+        } else if (Bitmap.class.equals(returnType)) {
+            try {
+                Bitmap bitmap = BitmapFactory.decodeStream(stream);
+                return new RequestSuccessResult(request.getId(), bitmap);
             } catch (Exception e) {
                 return new ErrorResult(request.getId(), new ConnectionException(e));
             }
@@ -64,5 +69,16 @@ public abstract class RawController extends ProtocolController {
         }
     }
 
+    protected static byte[] getByteArray(InputStream stream) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+        int nRead;
+        byte[] data = new byte[16384];
+        while ((nRead = stream.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, nRead);
+        }
+        buffer.flush();
+        return buffer.toByteArray();
+    }
 
 }

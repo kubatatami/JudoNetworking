@@ -40,7 +40,7 @@ public class ObserverHelper {
     static final String convention = "Changed";
     private Context context;
 
-    private static ErrorLogger errorLogger;
+    private static ObserverErrorLogger errorLogger;
 
     private static Object dataObject;
     static Class<?> dataClass;
@@ -59,7 +59,7 @@ public class ObserverHelper {
         this.context = context;
     }
 
-    public static void setErrorLogger(ErrorLogger errorLogger) {
+    public static void setErrorLogger(ObserverErrorLogger errorLogger) {
         ObserverHelper.errorLogger = errorLogger;
     }
 
@@ -151,7 +151,7 @@ public class ObserverHelper {
 
                             }
                         } catch (Exception e) {
-                            throw new RuntimeException(e);
+                            ExceptionHandler.throwRuntimeException(e);
                         }
                     }
                 };
@@ -168,7 +168,7 @@ public class ObserverHelper {
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            ExceptionHandler.throwRuntimeException(e);
         }
     }
 
@@ -312,6 +312,9 @@ public class ObserverHelper {
     }
 
     private Object getFieldOrMethodValue(String fieldName, Object object) throws IllegalAccessException {
+        if(object==null){
+            return null;
+        }
         String parts[] = fieldName.split(splitter);
         Class<?> clazz;
         int i = 0;
@@ -329,7 +332,7 @@ public class ObserverHelper {
                             return method.invoke(object).toString();
                         }
                     } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        ExceptionHandler.throwRuntimeException(e);
                     }
                 }
             }

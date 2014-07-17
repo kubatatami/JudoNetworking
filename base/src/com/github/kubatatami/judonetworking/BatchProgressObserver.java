@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,7 +22,7 @@ public class BatchProgressObserver implements ProgressObserver {
     public BatchProgressObserver(EndpointImplementation rpc, RequestProxy requestProxy, List<Request> requestList) {
         this.rpc = rpc;
         this.requestProxy = requestProxy;
-        this.requestList = requestList;
+        this.requestList = new ArrayList<Request>(requestList);
     }
 
     @Override
@@ -32,7 +33,7 @@ public class BatchProgressObserver implements ProgressObserver {
     }
 
     @Override
-    public void progressTick() {
+    public synchronized void progressTick() {
         progressTick(1.0f);
     }
 
@@ -48,16 +49,14 @@ public class BatchProgressObserver implements ProgressObserver {
     }
 
 
-    public void publishProgress() {
+    public synchronized void publishProgress() {
         int percentProgress = (int) (progress * 100 / max);
         if (lastProgress < percentProgress) {
             lastProgress = percentProgress;
             if (requestProxy.getBatchCallback() != null && progress > 0) {
                 Request.invokeBatchCallbackProgress(rpc, requestProxy, percentProgress);
             }
-            for (Request request : requestList) {
-                request.invokeProgress(percentProgress);
-            }
+            rpc.getHandler().post(new AsyncResultSender(requestList, percentProgress));
         }
     }
 

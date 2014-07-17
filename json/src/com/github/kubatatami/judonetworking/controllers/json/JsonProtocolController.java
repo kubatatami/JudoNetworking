@@ -4,6 +4,7 @@ package com.github.kubatatami.judonetworking.controllers.json;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,10 +25,12 @@ import java.io.Serializable;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class JsonProtocolController extends ProtocolController {
-    protected ObjectMapper mapper = new ObjectMapper();
+    protected ObjectMapper mapper;
+    protected JsonFactory factory;
 
     protected JsonProtocolController() {
         mapper = getMapperInstance();
+        factory = mapper.getFactory();
     }
 
     public static ObjectMapper getMapperInstance() {

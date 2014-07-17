@@ -3,6 +3,8 @@ package com.github.kubatatami.judonetworking.observers;
 import android.content.Context;
 import android.support.v4.util.LruCache;
 
+import com.github.kubatatami.judonetworking.ReflectionCache;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -42,6 +44,7 @@ public class ObservableCache {
                         }catch (NoClassDefFoundError ex){}
                     }
                 }
+                df.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -67,8 +70,8 @@ public class ObservableCache {
 
     protected static List<DataObserverMethod> getMethods(Class<?> clazz) {
         List<DataObserverMethod> methodList = new ArrayList<DataObserverMethod>();
-        for (final Method method : clazz.getMethods()) {
-            DataObserver ann = method.getAnnotation(DataObserver.class);
+        for (final Method method : ReflectionCache.getMethods(clazz)) {
+            DataObserver ann = ReflectionCache.getAnnotation(method, DataObserver.class);
             if (ann != null) {
                 Field field = getDataObserverField(method, ann);
                 if (field != null) {

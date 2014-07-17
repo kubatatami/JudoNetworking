@@ -55,7 +55,7 @@ class LoggerImpl {
         LoggerImpl.level = level;
     }
 
-    public static void longLog(String tag, String str) {
+    public static synchronized void longLog(String tag, String str) {
         LoggerImpl.log(tag + ":");
         int i;
         for (i = 0; i < str.length() - 256; i += 256) {

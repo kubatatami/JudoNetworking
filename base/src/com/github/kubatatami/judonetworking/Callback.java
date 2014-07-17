@@ -11,7 +11,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 public class Callback<T> implements CallbackInterface<T> {
 
     @Override
-    public void onStart(boolean isCached) {
+    public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
 
     }
 

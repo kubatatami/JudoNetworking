@@ -17,8 +17,8 @@ import java.util.Map;
  */
 class MemoryCacheImplementation implements MemoryCache {
     private int debugFlags;
-    private Map<Method, LruCache<Integer, CacheObject>> cache
-            = Collections.synchronizedMap(new HashMap<Method, LruCache<Integer, CacheObject>>());
+    private Map<Integer, LruCache<Integer, CacheObject>> cache
+            = Collections.synchronizedMap(new HashMap<Integer, LruCache<Integer, CacheObject>>());
 
 
     protected Context context;
@@ -28,17 +28,21 @@ class MemoryCacheImplementation implements MemoryCache {
     }
 
     @Override
-    public CacheResult get(Method method, Object params[], int cacheLifeTime, int cacheSize) {
+    public CacheResult get(int methodId, Object params[], int cacheLifeTime, int cacheSize) {
         CacheResult result = new CacheResult();
         Integer hash = Arrays.deepHashCode(params);
-        if (cache.containsKey(method)) {
-            CacheObject cacheObject = cache.get(method).get(hash);
+        if (cache.containsKey(methodId)) {
+            if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
+                LoggerImpl.log("Search for " + methodId + " with hash:" + hash);
+            }
+            CacheObject cacheObject = cache.get(methodId).get(hash);
             if (cacheObject != null) {
                 if (cacheLifeTime == 0 || System.currentTimeMillis() - cacheObject.createTime < cacheLifeTime) {
                     if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
-                        LoggerImpl.log("Cache(" + method + "): Get from memory cache.");
+                        LoggerImpl.log("Cache(" + methodId + "): Get from memory cache object with hash:" + hash);
                     }
                     result.object = cacheObject.getObject();
+                    result.time=cacheObject.createTime;
                     result.result = true;
                     return result;
                 }
@@ -49,39 +53,49 @@ class MemoryCacheImplementation implements MemoryCache {
     }
 
     @Override
-    public void put(Method method, Object params[], Object object, int cacheSize) {
-        if (!cache.containsKey(method)) {
-            cache.put(method, new LruCache<Integer, CacheObject>(cacheSize != 0 ? cacheSize : Integer.MAX_VALUE));
+    public void put(int methodId, Object params[], Object object, int cacheSize) {
+        if (!cache.containsKey(methodId)) {
+            cache.put(methodId, new LruCache<Integer, CacheObject>(cacheSize != 0 ? cacheSize : Integer.MAX_VALUE));
         }
         Integer hash = Arrays.deepHashCode(params);
-        cache.get(method).put(hash, new CacheObject(System.currentTimeMillis(), object));
+        cache.get(methodId).put(hash, new CacheObject(System.currentTimeMillis(), object));
         if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
-            LoggerImpl.log("Cache(" + method + "): Saved in memory cache.");
+            LoggerImpl.log("Cache(" + methodId + "): Saved in memory cache with hash:" + hash);
         }
     }
 
 
     @Override
     public void clearCache() {
-        cache = Collections.synchronizedMap(new HashMap<Method, LruCache<Integer, CacheObject>>());
+        cache = Collections.synchronizedMap(new HashMap<Integer, LruCache<Integer, CacheObject>>());
 
     }
 
     @Override
     public void clearCache(Method method) {
-        if (cache.containsKey(method)) {
-            cache.remove(method);
-        }
-
-
+        int hash=CacheMethod.getMethodId(method);
+        clearCache(hash);
     }
 
     @Override
     public void clearCache(Method method, Object... params) {
-        if (cache.containsKey(method)) {
-            Integer hash = Arrays.deepHashCode(params);
-            if (cache.get(method).get(hash) != null) {
-                cache.get(method).remove(hash);
+        int hash=CacheMethod.getMethodId(method);
+        clearCache(hash,params);
+    }
+
+    @Override
+    public void clearCache(int methodId) {
+        if (cache.containsKey(methodId)) {
+            cache.remove(methodId);
+        }
+    }
+
+    @Override
+    public void clearCache(int methodId, Object... params) {
+        if (cache.containsKey(methodId)) {
+            Integer paramHash = Arrays.deepHashCode(params);
+            if (cache.get(methodId).get(paramHash) != null) {
+                cache.get(methodId).remove(paramHash);
             }
         }
     }

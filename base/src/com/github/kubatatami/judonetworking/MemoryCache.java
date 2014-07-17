@@ -12,15 +12,19 @@ import java.lang.reflect.Method;
 public interface MemoryCache {
 
 
-    public CacheResult get(Method method, Object params[], int cacheLifeTime, int cacheSize);
+    public CacheResult get(int methodId, Object params[], int cacheLifeTime, int cacheSize);
 
-    public void put(Method method, Object params[], Object object, int cacheSize);
+    public void put(int methodId, Object params[], Object object, int cacheSize);
 
     public void clearCache();
 
     public void clearCache(Method method);
 
     public void clearCache(Method method, Object... params);
+
+    public void clearCache(int methodId);
+
+    public void clearCache(int methodId, Object... params);
 
     public int getDebugFlags();
 

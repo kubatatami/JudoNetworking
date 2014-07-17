@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.observers;
 
 import android.content.Context;
+import android.os.Build;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -8,6 +9,8 @@ import android.widget.Filter;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -57,7 +60,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
             mOriginalField = ArrayAdapter.class.getDeclaredField("mOriginalValues");
             mOriginalField.setAccessible(true);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            ExceptionHandler.throwRuntimeException(e);
         }
     }
 
@@ -109,7 +112,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
                     }
 
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    ExceptionHandler.throwRuntimeException(e);
                 }
                 return results;
             }
@@ -140,4 +143,37 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
 
     }
 
+    public void preHoneycombAddAll(Collection<? extends T> collection) {
+        preHoneycombAddAll(collection,false);
+    }
+
+    public void preHoneycombAddAll(T... items) {
+        preHoneycombAddAll(false,items);
+    }
+
+    public void preHoneycombAddAll(boolean clear, T... items) {
+        preHoneycombAddAll(Arrays.asList(items),clear);
+    }
+
+    public void preHoneycombAddAll(Collection<? extends T> collection, boolean clear) {
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.HONEYCOMB) {
+            setNotifyOnChange(false);
+            if (clear) {
+                clear();
+            }
+            for (T item : collection) {
+                add(item);
+            }
+            notifyDataSetChanged();
+        }else{
+            if (clear) {
+                setNotifyOnChange(false);
+                clear();
+            }
+            addAll(collection);
+            if (clear) {
+                notifyDataSetChanged();
+            }
+        }
+    }
 }

@@ -16,6 +16,7 @@ import java.util.Set;
 public class NetworkUtils {
 
     protected static Set<NetworkStateListener> networkStateListeners = new HashSet<NetworkStateListener>();
+    protected static ConnectivityManager connectManager;
 
     protected NetworkUtils() {
     }
@@ -23,8 +24,11 @@ public class NetworkUtils {
     protected static BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            ConnectivityManager connectivityManager
+                    = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
             for (NetworkStateListener networkStateListener : networkStateListeners) {
-                networkStateListener.onNetworkStateChange(isNetworkAvailable(context));
+                networkStateListener.onNetworkStateChange(activeNetworkInfo);
             }
         }
     };
@@ -38,7 +42,9 @@ public class NetworkUtils {
 
 
     public static boolean isWifi(Context context) {
-        final ConnectivityManager connectManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectManager == null) {
+            connectManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        }
         final NetworkInfo wifi = connectManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         return wifi != null && wifi.getState() == NetworkInfo.State.CONNECTED;
     }
@@ -61,7 +67,7 @@ public class NetworkUtils {
 
     public static interface NetworkStateListener {
 
-        public void onNetworkStateChange(boolean networkAvailable);
+        public void onNetworkStateChange(NetworkInfo activeNetworkInfo);
 
     }
 
