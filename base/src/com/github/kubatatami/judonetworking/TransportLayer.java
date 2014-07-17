@@ -17,7 +17,7 @@ import java.util.Scanner;
  */
 public abstract class TransportLayer {
 
-    public abstract Connection send(ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
+    public abstract Connection send(String requestName, ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
                                     int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException;
 
     public abstract void setMaxConnections(int max);

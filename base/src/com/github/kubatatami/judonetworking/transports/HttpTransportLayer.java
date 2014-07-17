@@ -202,18 +202,18 @@ public class HttpTransportLayer extends TransportLayer {
         }
     }
 
-    protected void logRequestHeaders(int debugFlags, HttpURLConnection urlConnection) {
+    protected void logRequestHeaders(String requestName,int debugFlags, HttpURLConnection urlConnection) {
         if ((debugFlags & Endpoint.HEADERS_DEBUG) > 0) {
             String headers = "";
             for (String key : urlConnection.getRequestProperties().keySet()) {
                 headers += key + ":" + urlConnection.getRequestProperty(key) + " ";
             }
-            longLog("Request headers", headers);
+            longLog("Request headers("+requestName+")", headers);
         }
 
     }
 
-    protected void logResponseHeaders(int debugFlags, HttpURLConnection urlConnection) {
+    protected void logResponseHeaders(String requestName,int debugFlags, HttpURLConnection urlConnection) {
         if ((debugFlags & Endpoint.HEADERS_DEBUG) > 0) {
             String headers = "";
             if (urlConnection.getHeaderFields() != null) {
@@ -223,7 +223,7 @@ public class HttpTransportLayer extends TransportLayer {
                     }
                 }
             }
-            longLog("Response headers", headers);
+            longLog("Response headers("+requestName+")", headers);
         }
     }
 
@@ -274,7 +274,7 @@ public class HttpTransportLayer extends TransportLayer {
 
     }
 
-    public Connection send(final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
+    public Connection send(String requestName,final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
                            int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException {
         boolean repeat = false;
         HttpURLConnection urlConnection = null;
@@ -285,7 +285,7 @@ public class HttpTransportLayer extends TransportLayer {
                     return null;
                 }
                 initSetup(urlConnection, requestInfo, timeout, timeStat, method, cacheInfo);
-                logRequestHeaders(debugFlags, urlConnection);
+                logRequestHeaders(requestName,debugFlags, urlConnection);
                 if (Thread.currentThread().isInterrupted()) {
                     return null;
                 }
@@ -293,10 +293,10 @@ public class HttpTransportLayer extends TransportLayer {
                 if (Thread.currentThread().isInterrupted()) {
                     return null;
                 }
-                logResponseHeaders(debugFlags, urlConnection);
+                logResponseHeaders(requestName,debugFlags, urlConnection);
 
                 if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
-                    longLog("Response code", urlConnection.getResponseCode() + "");
+                    longLog("Response code("+requestName+")", urlConnection.getResponseCode() + "");
                 }
                 return new FinalConnection(urlConnection, protocolController);
             } catch (FileNotFoundException ex) {

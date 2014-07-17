@@ -79,7 +79,7 @@ class RequestConnector {
                         return new ErrorResult(request.getId(), new AuthException("Can't obtain api token", ex));
                     }
                 }
-                TransportLayer.Connection conn = transportLayer.send(controller, requestInfo, request.getTimeout(), timeStat,
+                TransportLayer.Connection conn = transportLayer.send(request.getName(), controller, requestInfo, request.getTimeout(), timeStat,
                         rpc.getDebugFlags(), request.getMethod(), new TransportLayer.CacheInfo(hash, time));
                 EndpointImplementation.checkThread();
                 if (!conn.isNewestAvailable()) {
@@ -94,7 +94,7 @@ class RequestConnector {
                 if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
 
                     String resStr = convertStreamToString(conn.getStream());
-                    longLog("Response(" + resStr.length() + "B)", resStr);
+                    longLog("Response body(" + request.getName() + ", " + resStr.length() + " Bytes)", resStr);
                     connectionStream = new ByteArrayInputStream(resStr.getBytes());
                 }
                 RequestInputStream stream = new RequestInputStream(connectionStream, timeStat, conn.getContentLength());
@@ -134,7 +134,7 @@ class RequestConnector {
             return result;
         } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
-        }catch (Exception e) {
+        } catch (Exception e) {
             return new ErrorResult(request.getId(), new JudoException(e));
         }
 
@@ -381,7 +381,7 @@ class RequestConnector {
                         return localCacheObject.object;
                     }
                 } else if (cacheLevel != LocalCacheLevel.MEMORY_ONLY) {
-                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()),request.getName(),request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), url, cacheLevel);
+                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), url, cacheLevel);
                     localCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getLocalCacheLifeTime());
                     if (localCacheObject.result) {
                         if (!rpc.isTest()) {  //we don't know when test will be stop
@@ -398,7 +398,7 @@ class RequestConnector {
             }
 
             if (rpc.isCacheEnabled() && request.isServerCachable()) {
-                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()),request.getName(),request.getMethod().getDeclaringClass().getSimpleName(), url, request.getServerCacheLevel());
+                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), url, request.getServerCacheLevel());
                 serverCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
 
             }
@@ -419,8 +419,8 @@ class RequestConnector {
 
             if (result instanceof ErrorResult) {
                 if (localCacheObject != null && localCacheObject.result) {
-                    OnlyOnError onlyOnErrorMode=request.getLocalCacheOnlyOnErrorMode();
-                    if(onlyOnErrorMode.equals(OnlyOnError.ON_ALL_ERROR) ||
+                    OnlyOnError onlyOnErrorMode = request.getLocalCacheOnlyOnErrorMode();
+                    if (onlyOnErrorMode.equals(OnlyOnError.ON_ALL_ERROR) ||
                             (onlyOnErrorMode.equals(OnlyOnError.ON_CONNECTION_ERROR) && result.error instanceof ConnectionException)) {
                         timeStat.tickCacheTime();
                         return localCacheObject.object;
@@ -452,13 +452,13 @@ class RequestConnector {
                 LocalCacheLevel cacheLevel = rpc.isTest() ? LocalCacheLevel.DISK_CACHE : request.getLocalCacheLevel();
                 if (cacheLevel != LocalCacheLevel.MEMORY_ONLY) {
 
-                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()),request.getName(),request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), url, cacheLevel);
+                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), url, cacheLevel);
                     rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getLocalCacheSize());
                 }
 
 
             } else if (rpc.isCacheEnabled() && request.isServerCachable() && (result.hash != null || result.time != null)) {
-                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()),request.getName(),request.getMethod().getDeclaringClass().getSimpleName(), url, request.getServerCacheLevel());
+                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), url, request.getServerCacheLevel());
                 rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getServerCacheSize());
             }
 
@@ -553,7 +553,7 @@ class RequestConnector {
 
 
                         if (rpc.isCacheEnabled() && request.isServerCachable()) {
-                            CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()),request.getName(),request.getMethod().getDeclaringClass().getSimpleName(), url, request.getServerCacheLevel());
+                            CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), url, request.getServerCacheLevel());
                             cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getServerCacheSize());
 
                         }
@@ -624,13 +624,13 @@ class RequestConnector {
                     throw new AuthException("Can't obtain api token", ex);
                 }
             }
-            TransportLayer.Connection conn = transportLayer.send(controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null, null);
+            TransportLayer.Connection conn = transportLayer.send(requestsName, controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null, null);
             EndpointImplementation.checkThread();
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
 
                 String resStr = convertStreamToString(conn.getStream());
-                longLog("Response body(" + resStr.length() + " Bytes)", resStr);
+                longLog("Response body(" + requestsName + ", " + resStr.length() + " Bytes)", resStr);
                 connectionStream = new ByteArrayInputStream(resStr.getBytes());
             }
             EndpointImplementation.checkThread();
