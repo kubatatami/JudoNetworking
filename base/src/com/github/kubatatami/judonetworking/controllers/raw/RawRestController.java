@@ -12,8 +12,10 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 
+import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 import java.io.StringBufferInputStream;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;
@@ -101,10 +103,10 @@ public class RawRestController extends RawController {
                 content = URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8).replaceAll("\\+", "%20");
             }
             if (content != null) {
-                if (ann.mimeType() != null) {
+                if (!ann.mimeType().equals("")) {
                     requestInfo.mimeType = ann.mimeType();
                 }
-                requestInfo.entity = new RequestInputStreamEntity(new StringBufferInputStream(content), content.length());
+                requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content.getBytes()), content.length());
 
             }
         } else {
