@@ -29,9 +29,9 @@ class RequestProxy implements InvocationHandler, AsyncResult {
     protected final List<Request> batchRequests = new ArrayList<Request>();
     protected BatchMode mode = BatchMode.NONE;
     protected boolean cancelled, done, running;
-    protected Batch<?> batchCallback;
+    protected BatchInterface<?> batchCallback;
 
-    public RequestProxy(EndpointImplementation rpc, BatchMode mode, Batch<?> batchCallback) {
+    public RequestProxy(EndpointImplementation rpc, BatchMode mode, BatchInterface<?> batchCallback) {
         this.rpc = rpc;
         this.mode = mode;
         this.batchCallback = batchCallback;
@@ -462,7 +462,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
     }
 
-    protected void handleBatchResponse(List<Request> requests, Batch batch, List<RequestResult> responses) {
+    protected void handleBatchResponse(List<Request> requests, BatchInterface batch, List<RequestResult> responses) {
         Object[] results = new Object[requests.size()];
         JudoException ex = null;
         Request exceptionRequest=null;
@@ -591,7 +591,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
         this.running = true;
     }
 
-    public Batch<?> getBatchCallback() {
+    public BatchInterface<?> getBatchCallback() {
         return batchCallback;
     }
 

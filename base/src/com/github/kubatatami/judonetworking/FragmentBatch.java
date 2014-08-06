@@ -10,36 +10,62 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
- * Date: 23.04.2013
- * Time: 11:40
+ * Date: 11.02.2013
+ * Time: 22:48
  */
 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-public class FragmentCallback<T> extends Callback<T> implements FragmentManager.OnBackStackChangedListener {
+public abstract class FragmentBatch<T> implements BatchInterface<T>, FragmentManager.OnBackStackChangedListener{
+
 
     private final Fragment fragment;
     private AsyncResult asyncResult;
     private FragmentManager manager;
 
-    public FragmentCallback(Fragment fragment) {
+    public FragmentBatch(Fragment fragment) {
         this.fragment = fragment;
         this.manager = fragment.getFragmentManager();
         manager.addOnBackStackChangedListener(this);
     }
 
+
     @Override
-    public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
+    public void onBackStackChanged() {
+        if (fragment.getActivity() == null) {
+            tryCancel();
+        }
+    }
+
+    protected void tryCancel() {
+        if (asyncResult != null) {
+            asyncResult.cancel();
+            manager.removeOnBackStackChangedListener(this);
+        }
+    }
+
+
+    @Override
+    public final void onStart(AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
         if (fragment.getActivity() != null) {
-            onSafeStart(cacheInfo, asyncResult);
+            onSafeStart(asyncResult);
         } else {
             tryCancel();
         }
     }
 
     @Override
-    public final void onSuccess(T result) {
+    public void run(final T api) {
+
+    }
+
+    @Override
+    public void runNonFatal(final T api) {
+    }
+
+    @Override
+    public final void onSuccess(Object[] results) {
         if (fragment.getActivity() != null) {
-            onSafeSuccess(result);
+            onSafeSuccess(results);
         } else {
             tryCancel();
         }
@@ -73,38 +99,27 @@ public class FragmentCallback<T> extends Callback<T> implements FragmentManager.
         manager.removeOnBackStackChangedListener(this);
     }
 
-    protected void tryCancel() {
-        if (asyncResult != null) {
-            asyncResult.cancel();
-            manager.removeOnBackStackChangedListener(this);
-        }
-    }
 
-    public void onSafeStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
+    public void onSafeStart(AsyncResult asyncResult) {
 
     }
 
-    public void onSafeProgress(int progress) {
 
+    public void onSafeSuccess(Object[] results) {
     }
 
-    public void onSafeSuccess(T result) {
-
-    }
-
-    public void onSafeFinish() {
-
-    }
 
     public void onSafeError(JudoException e) {
 
     }
 
 
-    @Override
-    public void onBackStackChanged() {
-        if (fragment.getActivity() == null) {
-            tryCancel();
-        }
+    public void onSafeProgress(int progress) {
+
+    }
+
+
+    public void onSafeFinish() {
+
     }
 }

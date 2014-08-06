@@ -55,7 +55,7 @@ public interface Endpoint extends EndpointBase {
      * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
-    public <T> AsyncResult callInBatch(Class<T> apiInterface, Batch<T> batch);
+    public <T> AsyncResult callInBatch(Class<T> apiInterface, BatchInterface<T> batch);
 
     /**
      * Create batch request.
@@ -64,7 +64,7 @@ public interface Endpoint extends EndpointBase {
      * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
-    public <T> AsyncResult callAsyncInBatch(final Class<T> apiInterface, final Batch<T> batch);
+    public <T> AsyncResult callAsyncInBatch(final Class<T> apiInterface, final BatchInterface<T> batch);
 
     /**
      * @param mode

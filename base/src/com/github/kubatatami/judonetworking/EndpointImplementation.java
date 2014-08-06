@@ -222,7 +222,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> AsyncResult callInBatch(final Class<T> obj, final Batch<T> batch) {
+    public <T> AsyncResult callInBatch(final Class<T> obj, final BatchInterface<T> batch) {
 
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
             try {
@@ -252,7 +252,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> AsyncResult callAsyncInBatch(final Class<T> obj, final Batch<T> batch) {
+    public <T> AsyncResult callAsyncInBatch(final Class<T> obj, final BatchInterface<T> batch) {
 
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
             try {

@@ -157,7 +157,7 @@ class AsyncResultSender implements Runnable {
                 callback.onFinish();
             }
         } else if (requestProxy != null && requestProxy.getBatchCallback() != null) {
-            Batch<?> transaction = requestProxy.getBatchCallback();
+            BatchInterface<?> transaction = requestProxy.getBatchCallback();
             if (requestProxy.isCancelled()) {
                 return;
             }
@@ -167,7 +167,7 @@ class AsyncResultSender implements Runnable {
             switch (type) {
                 case START:
                     requestProxy.start();
-                    transaction.onStart();
+                    transaction.onStart(requestProxy);
                     break;
                 case RESULT:
                     transaction.onSuccess(results);
