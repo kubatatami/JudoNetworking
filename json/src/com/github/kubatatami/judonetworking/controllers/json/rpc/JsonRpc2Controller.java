@@ -120,6 +120,7 @@ public class JsonRpc2Controller extends JsonRpcController {
             }else if ("error".equals(fieldname)){
                 responseModel.error=new JsonErrorModel();
                 while (parser.nextToken() != JsonToken.END_OBJECT) {
+                    fieldname = parser.getCurrentName();
                     if ("message".equals(fieldname)) {
                         parser.nextToken();
                         responseModel.error.message=parser.getText();
