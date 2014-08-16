@@ -23,7 +23,9 @@ public class FragmentCallback<T> extends Callback<T> implements FragmentManager.
     public FragmentCallback(Fragment fragment) {
         this.fragment = fragment;
         this.manager = fragment.getFragmentManager();
-        manager.addOnBackStackChangedListener(this);
+        if(manager!=null) {
+            manager.addOnBackStackChangedListener(this);
+        }
     }
 
     @Override
@@ -70,13 +72,17 @@ public class FragmentCallback<T> extends Callback<T> implements FragmentManager.
         } else {
             tryCancel();
         }
-        manager.removeOnBackStackChangedListener(this);
+        if(manager!=null) {
+            manager.removeOnBackStackChangedListener(this);
+        }
     }
 
     protected void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
-            manager.removeOnBackStackChangedListener(this);
+            if(manager!=null) {
+                manager.removeOnBackStackChangedListener(this);
+            }
         }
     }
 

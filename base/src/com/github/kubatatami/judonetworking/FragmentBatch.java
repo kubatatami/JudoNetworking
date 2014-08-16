@@ -24,7 +24,9 @@ public abstract class FragmentBatch<T> implements BatchInterface<T>, FragmentMan
     public FragmentBatch(Fragment fragment) {
         this.fragment = fragment;
         this.manager = fragment.getFragmentManager();
-        manager.addOnBackStackChangedListener(this);
+        if(manager!=null) {
+            manager.addOnBackStackChangedListener(this);
+        }
     }
 
 
@@ -38,7 +40,9 @@ public abstract class FragmentBatch<T> implements BatchInterface<T>, FragmentMan
     protected void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
-            manager.removeOnBackStackChangedListener(this);
+            if(manager!=null) {
+                manager.removeOnBackStackChangedListener(this);
+            }
         }
     }
 
@@ -96,7 +100,9 @@ public abstract class FragmentBatch<T> implements BatchInterface<T>, FragmentMan
         } else {
             tryCancel();
         }
-        manager.removeOnBackStackChangedListener(this);
+        if(manager!=null) {
+            manager.removeOnBackStackChangedListener(this);
+        }
     }
 
 

@@ -21,7 +21,9 @@ public abstract class SupportFragmentBatch<T> implements BatchInterface<T>, Frag
     public SupportFragmentBatch(Fragment fragment) {
         this.fragment = fragment;
         this.manager = fragment.getFragmentManager();
-        manager.addOnBackStackChangedListener(this);
+        if(manager!=null) {
+            manager.addOnBackStackChangedListener(this);
+        }
     }
 
 
@@ -35,7 +37,9 @@ public abstract class SupportFragmentBatch<T> implements BatchInterface<T>, Frag
     protected void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
-            manager.removeOnBackStackChangedListener(this);
+            if(manager!=null) {
+                manager.removeOnBackStackChangedListener(this);
+            }
         }
     }
 
@@ -93,7 +97,9 @@ public abstract class SupportFragmentBatch<T> implements BatchInterface<T>, Frag
         } else {
             tryCancel();
         }
-        manager.removeOnBackStackChangedListener(this);
+        if(manager!=null) {
+            manager.removeOnBackStackChangedListener(this);
+        }
     }
 
 
