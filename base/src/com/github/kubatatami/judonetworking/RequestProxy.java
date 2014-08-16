@@ -67,8 +67,8 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
 
     public static String createMethodName(Method method, RequestMethod ann) {
-        NamePrefix namePrefix = ReflectionCache.getAnnotation(method.getDeclaringClass(),NamePrefix.class);
-        NameSuffix nameSuffix = ReflectionCache.getAnnotation(method.getDeclaringClass(),NameSuffix.class);
+        NamePrefix namePrefix = ReflectionCache.getAnnotation(method.getDeclaringClass(), NamePrefix.class);
+        NameSuffix nameSuffix = ReflectionCache.getAnnotation(method.getDeclaringClass(), NameSuffix.class);
         String name;
         if (ann != null && !("".equals(ann.name()))) {
             name = ann.name();
@@ -123,13 +123,12 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
     @Override
     public Object invoke(Object proxy, Method m, Object[] args) throws Throwable {
-        Request request=null;
+        Request request = null;
         try {
-            RequestMethod ann = ReflectionCache.getAnnotation(m,RequestMethod.class);
+            RequestMethod ann = ReflectionCache.getAnnotation(m, RequestMethod.class);
             if (ann != null) {
                 String name = createMethodName(m, ann);
                 int timeout = rpc.getRequestConnector().getMethodTimeout();
-
 
 
                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
@@ -176,7 +175,8 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                                 }
                                 request.cancel();
                                 return request;
-                            }  if (mode == SingleMode.CANCEL_OLD) {
+                            }
+                            if (mode == SingleMode.CANCEL_OLD) {
                                 Request oldRequest = rpc.getSingleCallMethods().get(CacheMethod.getMethodId(m));
                                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
                                     LoggerImpl.log("Request " + oldRequest.getName() + " rejected - SingleCall.");
@@ -202,9 +202,15 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                     throw new JudoException("No @RequestMethod on " + m.getName());
                 }
             }
-        } catch (JudoException e) {
+        } catch (final JudoException e) {
             if (rpc.getErrorLogger() != null && !(e instanceof CancelException)) {
-                rpc.getErrorLogger().onError(e,request);
+                final Request finalRequest = request;
+                rpc.getHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        rpc.getErrorLogger().onError(e, finalRequest);
+                    }
+                });
             }
             throw e;
         }
@@ -248,7 +254,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
         List<Request> batches;
         synchronized (batchRequests) {
             for (int i = batchRequests.size() - 1; i >= 0; i--) {
-                if (batchRequests.get(i).isCancelled()){
+                if (batchRequests.get(i).isCancelled()) {
                     batchRequests.remove(i);
                 }
             }
@@ -283,13 +289,13 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                             cacheObjects.put(req.getId(), new Pair<Request, Object>(req, result.object));
                             if (req.getLocalCacheOnlyOnErrorMode().equals(OnlyOnError.NO)) {
                                 batches.remove(i);
-                                req.invokeStart(new CacheInfo(true,result.time));
+                                req.invokeStart(new CacheInfo(true, result.time));
                             }
 
 
                         } else if (cacheLevel != LocalCacheLevel.MEMORY_ONLY) {
-                            CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(req.getMethod()),req.getName(),req.getMethod().getDeclaringClass().getSimpleName()
-                                    ,rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
+                            CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(req.getMethod()), req.getName(), req.getMethod().getDeclaringClass().getSimpleName()
+                                    , rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
                             result = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(req.getArgs()), req.getLocalCacheLifeTime());
                             if (result.result) {
                                 if (!rpc.isTest()) {
@@ -298,7 +304,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                                 cacheObjects.put(req.getId(), new Pair<Request, Object>(req, result.object));
                                 if (req.getLocalCacheOnlyOnErrorMode().equals(OnlyOnError.NO)) {
                                     batches.remove(i);
-                                    req.invokeStart(new CacheInfo(true,result.time));
+                                    req.invokeStart(new CacheInfo(true, result.time));
                                 }
                             }
 
@@ -335,8 +341,8 @@ class RequestProxy implements InvocationHandler, AsyncResult {
             for (int i = responses.size() - 1; i >= 0; i--) {
                 RequestResult result = responses.get(i);
                 if (cacheObjects.containsKey(result.id) && result instanceof ErrorResult) {
-                    OnlyOnError onlyOnErrorMode=cacheObjects.get(result.id).first.getLocalCacheOnlyOnErrorMode();
-                    if(onlyOnErrorMode.equals(OnlyOnError.ON_ALL_ERROR) ||
+                    OnlyOnError onlyOnErrorMode = cacheObjects.get(result.id).first.getLocalCacheOnlyOnErrorMode();
+                    if (onlyOnErrorMode.equals(OnlyOnError.ON_ALL_ERROR) ||
                             (onlyOnErrorMode.equals(OnlyOnError.ON_CONNECTION_ERROR) && result.error instanceof ConnectionException)) {
                         responses.remove(result);
                         RequestSuccessResult res = new RequestSuccessResult(cacheObjects.get(result.id).second);
@@ -356,6 +362,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                 batches.add(pairs.getValue().first);
             }
         }
+        //TODO change to map implementation
         Collections.sort(batches, new Comparator<Request>() {
             @Override
             public int compare(Request lhs, Request rhs) {
@@ -400,8 +407,8 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
         try {
             rpc.getHandler().post(new AsyncResultSender(batches));
-            int connections = rpc.getExecutorService().getMaximumPoolSize()-(rpc.getExecutorService().getActiveCount()-1);
-            connections=Math.min(connections,batches.size());
+            int connections = rpc.getExecutorService().getMaximumPoolSize() - (rpc.getExecutorService().getActiveCount() - 1);
+            connections = Math.min(connections, batches.size());
             if (connections > 1) {
 
                 List<List<Request>> requestParts = assignRequestsToConnections(batches, connections);
@@ -444,7 +451,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                         }
                     }
                 };
-                new Thread(waitAndMergeTask,"JudoNetworking WaitAndMergeTask").start();
+                new Thread(waitAndMergeTask, "JudoNetworking WaitAndMergeTask").start();
 
             } else {
                 progressObserver.setMaxProgress(TimeStat.TICKS);
@@ -465,7 +472,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
     protected void handleBatchResponse(List<Request> requests, BatchInterface batch, List<RequestResult> responses) {
         Object[] results = new Object[requests.size()];
         JudoException ex = null;
-        Request exceptionRequest=null;
+        Request exceptionRequest = null;
         int i = 0;
         for (Request request : requests) {
             try {
@@ -496,11 +503,11 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                             LocalCacheLevel cacheLevel = rpc.isTest() ? LocalCacheLevel.DISK_CACHE : request.getLocalCacheLevel();
 
                             if (cacheLevel != LocalCacheLevel.MEMORY_ONLY) {
-                                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()),request.getName(),request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
+                                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
                                 rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getLocalCacheSize());
                             }
                         } else if (rpc.isCacheEnabled() && request.isServerCachable() && (response.hash != null || response.time != null)) {
-                            CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()),request.getName(),request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), response.hash, response.time, request.getServerCacheLevel());
+                            CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), response.hash, response.time, request.getServerCacheLevel());
                             rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getServerCacheSize());
                         }
                     }
@@ -509,7 +516,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
             } catch (JudoException e) {
                 if (request.isBatchFatal()) {
                     ex = e;
-                    exceptionRequest=request;
+                    exceptionRequest = request;
                 }
                 request.invokeCallbackException(e);
             }
@@ -529,7 +536,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
-                        rpc.getErrorLogger().onError(finalEx,finalRequest);
+                        rpc.getErrorLogger().onError(finalEx, finalRequest);
                     }
                 });
 
