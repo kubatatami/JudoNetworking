@@ -102,7 +102,8 @@ class AsyncResultSender implements Runnable {
         Method handleMethod = null;
         for (; callbackClass != null; callbackClass = callbackClass.getSuperclass()) {
             for (Method method : callbackClass.getMethods()) {
-                if (method.isAnnotationPresent(HandleException.class)) {
+                HandleException handleException = method.getAnnotation(HandleException.class);
+                if (handleException!=null && handleException.enabled()) {
                     if (method.getParameterTypes().length != 1) {
                         throw new RuntimeException("Method " + method.getName() + " annotated HandleException must have one parameter.");
                     }
