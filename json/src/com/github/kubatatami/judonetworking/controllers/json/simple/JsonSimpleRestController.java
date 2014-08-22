@@ -82,7 +82,7 @@ public class JsonSimpleRestController extends RawRestController {
             requestInfo.mimeType = "application/json";
 
             Rest ann = ReflectionCache.getAnnotationInherited(request.getMethod(), Rest.class);
-            if (ann.mimeType() != null) {
+            if (ann!=null && ann.mimeType() != null) {
                 requestInfo.mimeType = ann.mimeType();
             }
 
