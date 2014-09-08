@@ -5,6 +5,7 @@ import android.util.Pair;
 
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.exceptions.ParseException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
@@ -476,14 +477,20 @@ class RequestProxy implements InvocationHandler, AsyncResult {
         int i = 0;
         for (Request request : requests) {
             try {
-                RequestResult response = responses.get(i);
+                RequestResult response = null;
 
-                if (response.cacheObject != null) {
+                if(i<responses.size()) {
+                    response = responses.get(i);
+                }
+
+                if (response!=null && response.cacheObject != null) {
                     results[i] = response.cacheObject;
                 } else {
 
-
-                    if (response.error != null) {
+                    if(requests.size()!=responses.size()){
+                        throw new ParseException("Wrong server response. Expect " + requests.size() + " batch responses, get " + responses.size());
+                    }
+                    else if (response.error != null) {
                         throw response.error;
                     }
 
