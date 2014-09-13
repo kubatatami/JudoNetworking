@@ -125,7 +125,7 @@ public class JsonRpc2Controller extends JsonRpcController {
                         responseModel.error.message=parser.getText();
                     }else if ("code".equals(fieldname)) {
                         parser.nextToken();
-                        responseModel.error.code=parser.getIntValue();
+                        responseModel.error.code=parser.getValueAsInt();
                     }
                 }
             }
