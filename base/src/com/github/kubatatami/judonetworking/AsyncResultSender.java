@@ -139,7 +139,7 @@ class AsyncResultSender implements Runnable {
                     break;
                 case ERROR:
                     Method handleMethod = findHandleMethod(callback.getClass(), e.getClass());
-                    logError(e);
+                    logError(request.getName(),e);
                     if (handleMethod != null) {
                         try {
                             handleMethod.invoke(callback, e);
@@ -175,7 +175,7 @@ class AsyncResultSender implements Runnable {
                     break;
                 case ERROR:
                     Method handleMethod = findHandleMethod(transaction.getClass(), e.getClass());
-                    logError(e);
+                    logError("Batch",e);
                     if (handleMethod != null) {
                         try {
                             handleMethod.invoke(transaction, e);
@@ -221,8 +221,11 @@ class AsyncResultSender implements Runnable {
         }
     }
 
-    protected void logError(Exception ex) {
+    protected void logError(String requestName, Exception ex) {
         if ((rpc.getDebugFlags() & Endpoint.ERROR_DEBUG) > 0) {
+            if(requestName!=null){
+                LoggerImpl.log("Error on: " + requestName);
+            }
             LoggerImpl.log(ex);
         }
     }
