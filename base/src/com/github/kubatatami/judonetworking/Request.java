@@ -67,11 +67,13 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
             }
         } catch (final JudoException e) {
             invokeCallbackException(e);
-            if (rpc.getErrorLogger() != null && !(e instanceof CancelException)) {
+            if (rpc.getErrorLoggers().size() != 0 && !(e instanceof CancelException)) {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
-                        rpc.getErrorLogger().onError(e,Request.this);
+                        for(ErrorLogger errorLogger : rpc.getErrorLoggers()) {
+                            errorLogger.onError(e, Request.this);
+                        }
                     }
                 });
             }

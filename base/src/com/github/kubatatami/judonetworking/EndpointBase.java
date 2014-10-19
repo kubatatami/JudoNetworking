@@ -27,7 +27,10 @@ public interface EndpointBase {
      */
     public void setDelay(int delay);
 
-    public void setErrorLogger(ErrorLogger logger);
+    public void addErrorLogger(ErrorLogger logger);
+
+    public void removeErrorLogger(ErrorLogger logger);
+
 
     public void setPercentLoss(float percentLoss);
 

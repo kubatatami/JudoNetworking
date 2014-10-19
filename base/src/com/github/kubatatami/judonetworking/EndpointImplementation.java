@@ -22,8 +22,10 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 class EndpointImplementation implements Endpoint, EndpointClassic {
@@ -42,7 +44,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     private File statFile;
     private float percentLoss;
     private int maxStatFileSize = 50; //KB
-    private ErrorLogger errorLogger;
+    private Set<ErrorLogger> errorLoggers = new HashSet<ErrorLogger>();
     private Clonner clonner = new ClonnerImplementation();
     private boolean test = false;
     private String testName = null;
@@ -305,8 +307,13 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     }
 
     @Override
-    public void setErrorLogger(ErrorLogger logger) {
-        this.errorLogger = logger;
+    public void addErrorLogger(ErrorLogger logger) {
+        errorLoggers.add(logger);
+    }
+
+    @Override
+    public void removeErrorLogger(ErrorLogger logger) {
+        errorLoggers.remove(logger);
     }
 
     @Override
@@ -514,8 +521,8 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         return context;
     }
 
-    public ErrorLogger getErrorLogger() {
-        return errorLogger;
+    public Set<ErrorLogger> getErrorLoggers() {
+        return errorLoggers;
     }
 
     public Clonner getClonner() {
