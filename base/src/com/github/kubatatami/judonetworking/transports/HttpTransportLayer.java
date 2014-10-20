@@ -301,8 +301,10 @@ public class HttpTransportLayer extends TransportLayer {
                 return new FinalConnection(urlConnection, protocolController);
             } catch (FileNotFoundException ex) {
                 int code;
+                String message;
                 try {
                     code = urlConnection.getResponseCode();
+                    message = urlConnection.getResponseMessage();
                 } catch (IOException e) {
                     throw new ConnectionException(e);
                 }
@@ -310,16 +312,40 @@ public class HttpTransportLayer extends TransportLayer {
                     digestAuth = SecurityUtils.handleDigestAuth(urlConnection, code);
                     repeat = (digestAuth != null);
                     if (!repeat) {
-                        handleHttpException(protocolController, code, convertStreamToString(urlConnection.getErrorStream()));
+                        handleHttpException(protocolController, code, message);
                     }
                 } else {
-                    handleHttpException(protocolController, code, convertStreamToString(urlConnection.getErrorStream()));
+                    handleHttpException(protocolController, code, message);
                 }
             } catch (Exception ex) {
                 if(urlConnection!=null){
                     urlConnection.disconnect();
                 }
-                if (!(ex instanceof JudoException)) {
+                //fix http://stackoverflow.com/a/21534175
+                if(urlConnection!=null && ex instanceof IOException){
+                    int code;
+                    String message;
+                    try {
+                        code = urlConnection.getResponseCode();
+                        message = urlConnection.getResponseMessage();
+                    } catch (IOException e) {
+                        throw new ConnectionException(ex);
+                    }
+                    if(code>0){
+                        if (!repeat && username != null) {
+                            digestAuth = SecurityUtils.handleDigestAuth(urlConnection, code);
+                            repeat = (digestAuth != null);
+                            if (!repeat) {
+                                handleHttpException(protocolController, code, message);
+                            }
+                        } else {
+                            handleHttpException(protocolController, code, message);
+                        }
+                    }else{
+                        throw new ConnectionException(ex);
+                    }
+                }
+                else if (!(ex instanceof JudoException)) {
                     throw new ConnectionException(ex);
                 } else {
                     throw (JudoException) ex;
