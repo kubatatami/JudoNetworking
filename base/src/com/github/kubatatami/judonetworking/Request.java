@@ -1,20 +1,11 @@
 package com.github.kubatatami.judonetworking;
 
-import android.support.v4.util.LruCache;
-
+import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-import org.apache.http.message.BasicNameValuePair;
-
 import java.io.Serializable;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Future;
 
 class Request implements Runnable, Comparable<Request>, ProgressObserver, RequestInterface, AsyncResult {

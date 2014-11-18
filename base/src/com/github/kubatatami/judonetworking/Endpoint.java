@@ -123,6 +123,6 @@ public interface Endpoint extends EndpointBase {
 
     public MemoryCache getMemoryCache();
 
-    public void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer);
+    public void setConnectionsSizer(ConnectionsSizer connectionsSizer);
 
 }

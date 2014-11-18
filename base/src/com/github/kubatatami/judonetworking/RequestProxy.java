@@ -1,8 +1,8 @@
 package com.github.kubatatami.judonetworking;
 
-import android.os.Debug;
 import android.util.Pair;
 
+import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
@@ -410,8 +410,8 @@ class RequestProxy implements InvocationHandler, AsyncResult {
 
         try {
             rpc.getHandler().post(new AsyncResultSender(batches));
-            int connections = rpc.getExecutorService().getMaximumPoolSize() - (rpc.getExecutorService().getActiveCount() - 1);
-            connections = Math.min(connections, batches.size());
+            int connections = rpc.getBestConnectionsSize()-(rpc.getExecutorService().getActiveCount()-1);
+            connections = Math.max(Math.min(connections, batches.size()),1);
             if (connections > 1) {
 
                 List<List<Request>> requestParts = assignRequestsToConnections(batches, connections);

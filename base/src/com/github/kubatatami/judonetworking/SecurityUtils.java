@@ -105,15 +105,13 @@ public class SecurityUtils {
         return "";
     }
 
-    public static DigestAuth handleDigestAuth(HttpURLConnection urlConnection, int responseCode) {
+    public static DigestAuth handleDigestAuth(String wwwAuthenticateHeader, int responseCode) {
         DigestAuth result = null;
         if (responseCode == 401) {
-
-            String digestResponse = urlConnection.getHeaderField("WWW-Authenticate");
-            if (digestResponse != null && digestResponse.indexOf("Digest") == 0) {
+            if (wwwAuthenticateHeader != null && wwwAuthenticateHeader.indexOf("Digest") == 0) {
                 result = new DigestAuth();
 
-                for (String item : digestResponse.substring(7).replaceAll(",", "").split(" ")) {
+                for (String item : wwwAuthenticateHeader.substring(7).replaceAll(",", "").split(" ")) {
                     String name = item.split("=")[0];
                     String value = item.split("=")[1].replaceAll("\"", "");
                     if (name.equals("realm")) {

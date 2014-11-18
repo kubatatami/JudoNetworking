@@ -8,9 +8,8 @@ public interface EndpointBase {
     /**
      * @param connectionTimeout
      * @param methodTimeout
-     * @param reconnectionAttempts
      */
-    public void setTimeouts(int connectionTimeout, int methodTimeout, int reconnectionAttempts);
+    public void setTimeouts(int connectionTimeout, int methodTimeout);
 
     /**
      * @param alwaysMainThread
@@ -104,7 +103,12 @@ public interface EndpointBase {
     public static final int CANCEL_DEBUG = 256;
 
     /**
+     * Log cancellations
+     */
+    public static final int THREAD_DEBUG = 512;
+
+    /**
      * Log everything.
      */
-    public static final int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG | TOKEN_DEBUG | ERROR_DEBUG | CANCEL_DEBUG;
+    public static final int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG | TOKEN_DEBUG | ERROR_DEBUG | CANCEL_DEBUG | THREAD_DEBUG;
 }

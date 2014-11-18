@@ -10,7 +10,7 @@ import java.net.URL;
 /**
  * Created by Kuba on 09/09/14.
  */
-public class OkHttpCreator implements HttpTransportLayer.HttpURLCreator {
+public class OkHttpCreator implements HttpUrlConnectionTransportLayer.HttpURLCreator {
 
     protected OkHttpClient client = new OkHttpClient();
     protected OkUrlFactory factory = new OkUrlFactory(client);
