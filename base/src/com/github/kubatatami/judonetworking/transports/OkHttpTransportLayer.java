@@ -1,31 +1,26 @@
 package com.github.kubatatami.judonetworking.transports;
 
 import com.github.kubatatami.judonetworking.Endpoint;
-import com.github.kubatatami.judonetworking.JudoExecutor;
-import com.github.kubatatami.judonetworking.ProtocolController;
-import com.github.kubatatami.judonetworking.ReflectionCache;
-import com.github.kubatatami.judonetworking.RequestOutputStream;
-import com.github.kubatatami.judonetworking.SecurityUtils;
-import com.github.kubatatami.judonetworking.TimeStat;
-import com.github.kubatatami.judonetworking.TransportLayer;
+import com.github.kubatatami.judonetworking.internals.executors.JudoExecutor;
+import com.github.kubatatami.judonetworking.controllers.ProtocolController;
+import com.github.kubatatami.judonetworking.internals.utils.ReflectionCache;
+import com.github.kubatatami.judonetworking.internals.streams.RequestOutputStream;
+import com.github.kubatatami.judonetworking.utils.SecurityUtils;
+import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.squareup.okhttp.Call;
-import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
-import java.net.ConnectException;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.Date;
@@ -33,8 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import javax.net.ssl.HttpsURLConnection;
 
 import okio.BufferedSink;
 

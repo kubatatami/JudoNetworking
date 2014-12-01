@@ -5,8 +5,8 @@ import android.net.NetworkInfo;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.github.kubatatami.judonetworking.Callback;
-import com.github.kubatatami.judonetworking.NetworkUtils;
+import com.github.kubatatami.judonetworking.callbacks.Callback;
+import com.github.kubatatami.judonetworking.utils.NetworkUtils;
 
 import java.util.ArrayList;
 import java.util.List;

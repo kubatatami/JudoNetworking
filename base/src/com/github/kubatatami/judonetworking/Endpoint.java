@@ -1,6 +1,13 @@
 package com.github.kubatatami.judonetworking;
 
 
+import com.github.kubatatami.judonetworking.batches.BatchInterface;
+import com.github.kubatatami.judonetworking.caches.DiskCache;
+import com.github.kubatatami.judonetworking.caches.MemoryCache;
+import com.github.kubatatami.judonetworking.clonners.Clonner;
+import com.github.kubatatami.judonetworking.internals.AsyncResult;
+import com.github.kubatatami.judonetworking.threads.ThreadPoolSizer;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -123,6 +130,26 @@ public interface Endpoint extends EndpointBase {
 
     public MemoryCache getMemoryCache();
 
-    public void setConnectionsSizer(ConnectionsSizer connectionsSizer);
+    public void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer);
 
+    /**
+     * Created with IntelliJ IDEA.
+     * User: jbogacki
+     * Date: 04.03.2013
+     * Time: 21:21
+     */
+    public enum BatchTimeoutMode {
+        TIMEOUTS_SUM, LONGEST_TIMEOUT
+    }
+
+    /**
+     * Created with IntelliJ IDEA.
+     * User: jbogacki
+     * Date: 28.05.2013
+     * Time: 14:50
+     * To change this template use File | Settings | File Templates.
+     */
+    public enum CacheMode {
+        NORMAL, CLONE
+    }
 }

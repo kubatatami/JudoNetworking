@@ -1,6 +1,6 @@
 package com.github.kubatatami.judonetworking.observers;
 
-import com.github.kubatatami.judonetworking.Callback;
+import com.github.kubatatami.judonetworking.callbacks.Callback;
 
 public class ObservableWrapperCallback<T> extends Callback<T> {
 

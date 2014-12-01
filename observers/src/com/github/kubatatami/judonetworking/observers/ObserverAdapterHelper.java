@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.github.kubatatami.judonetworking.ReflectionCache;
+import com.github.kubatatami.judonetworking.internals.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.Constructor;

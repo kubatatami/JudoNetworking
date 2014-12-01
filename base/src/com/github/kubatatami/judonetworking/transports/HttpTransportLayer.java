@@ -1,8 +1,7 @@
 package com.github.kubatatami.judonetworking.transports;
 
-import com.github.kubatatami.judonetworking.ProtocolController;
-import com.github.kubatatami.judonetworking.SecurityUtils;
-import com.github.kubatatami.judonetworking.TransportLayer;
+import com.github.kubatatami.judonetworking.controllers.ProtocolController;
+import com.github.kubatatami.judonetworking.utils.SecurityUtils;
 import com.github.kubatatami.judonetworking.exceptions.HttpException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 

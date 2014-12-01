@@ -1,16 +1,13 @@
 package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
-import android.util.SparseArray;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.github.kubatatami.judonetworking.ErrorResult;
-import com.github.kubatatami.judonetworking.RequestInterface;
-import com.github.kubatatami.judonetworking.RequestResult;
-import com.github.kubatatami.judonetworking.RequestSuccessResult;
+import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
+import com.github.kubatatami.judonetworking.internals.RequestInterface;
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
@@ -18,7 +15,6 @@ import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;

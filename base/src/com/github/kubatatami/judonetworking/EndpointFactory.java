@@ -2,6 +2,10 @@ package com.github.kubatatami.judonetworking;
 
 import android.content.Context;
 
+import com.github.kubatatami.judonetworking.controllers.ProtocolController;
+import com.github.kubatatami.judonetworking.internals.EndpointImplementation;
+import com.github.kubatatami.judonetworking.transports.TransportLayer;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki

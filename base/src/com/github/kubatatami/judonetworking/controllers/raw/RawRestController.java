@@ -1,10 +1,10 @@
 package com.github.kubatatami.judonetworking.controllers.raw;
 
 
-import com.github.kubatatami.judonetworking.ProtocolController;
-import com.github.kubatatami.judonetworking.ReflectionCache;
-import com.github.kubatatami.judonetworking.RequestInputStreamEntity;
-import com.github.kubatatami.judonetworking.RequestInterface;
+import com.github.kubatatami.judonetworking.controllers.ProtocolController;
+import com.github.kubatatami.judonetworking.internals.utils.ReflectionCache;
+import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
+import com.github.kubatatami.judonetworking.internals.RequestInterface;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import org.apache.http.NameValuePair;
@@ -17,8 +17,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.Serializable;
-import java.io.StringBufferInputStream;
-import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.ElementType;

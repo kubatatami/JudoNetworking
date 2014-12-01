@@ -1,5 +1,9 @@
 package com.github.kubatatami.judonetworking;
 
+import com.github.kubatatami.judonetworking.callbacks.CallbackInterface;
+import com.github.kubatatami.judonetworking.internals.AsyncResult;
+import com.github.kubatatami.judonetworking.internals.RequestOptions;
+
 /**
  * Created by Kuba on 08/04/14.
  */

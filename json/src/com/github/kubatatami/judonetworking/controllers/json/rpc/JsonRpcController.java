@@ -1,8 +1,7 @@
 package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.kubatatami.judonetworking.RequestInputStreamEntity;
-import com.github.kubatatami.judonetworking.RequestInterface;
+import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
+import com.github.kubatatami.judonetworking.internals.RequestInterface;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 

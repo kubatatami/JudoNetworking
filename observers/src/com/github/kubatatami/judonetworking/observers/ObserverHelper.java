@@ -13,7 +13,6 @@ import android.widget.Adapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.github.kubatatami.judonetworking.ErrorLogger;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.Method;

@@ -1,5 +1,8 @@
 package com.github.kubatatami.judonetworking;
 
+import com.github.kubatatami.judonetworking.controllers.ProtocolController;
+import com.github.kubatatami.judonetworking.logs.ErrorLogger;
+
 /**
  * Created by Kuba on 09/04/14.
  */
@@ -20,6 +23,8 @@ public interface EndpointBase {
      * @param flags
      */
     public void setDebugFlags(int flags);
+
+    public int getDebugFlags();
 
     /**
      * @param delay
@@ -110,5 +115,16 @@ public interface EndpointBase {
     /**
      * Log everything.
      */
-    public static final int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG | TOKEN_DEBUG | ERROR_DEBUG | CANCEL_DEBUG | THREAD_DEBUG;
+    public static final int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG | TOKEN_DEBUG | ERROR_DEBUG | CANCEL_DEBUG;
+
+    public static final int INTERNAL_DEBUG = FULL_DEBUG | THREAD_DEBUG;
+
+    /**
+     * Created by Kuba on 17/07/14.
+     */
+    interface UrlModifier {
+
+        public String createUrl(String url);
+
+    }
 }

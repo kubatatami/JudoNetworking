@@ -2,11 +2,11 @@ package com.github.kubatatami.judonetworking.controllers.json;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.kubatatami.judonetworking.ErrorResult;
-import com.github.kubatatami.judonetworking.ProtocolController;
-import com.github.kubatatami.judonetworking.RequestInterface;
-import com.github.kubatatami.judonetworking.RequestResult;
-import com.github.kubatatami.judonetworking.RequestSuccessResult;
+import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
+import com.github.kubatatami.judonetworking.controllers.ProtocolController;
+import com.github.kubatatami.judonetworking.internals.RequestInterface;
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;

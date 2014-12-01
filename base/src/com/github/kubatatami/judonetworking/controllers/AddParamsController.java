@@ -1,7 +1,6 @@
 package com.github.kubatatami.judonetworking.controllers;
 
-import com.github.kubatatami.judonetworking.ProtocolController;
-import com.github.kubatatami.judonetworking.RequestInterface;
+import com.github.kubatatami.judonetworking.internals.RequestInterface;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.Array;

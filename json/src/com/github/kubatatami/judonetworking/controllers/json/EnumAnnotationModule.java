@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
-import com.github.kubatatami.judonetworking.ReflectionCache;
+import com.github.kubatatami.judonetworking.internals.utils.ReflectionCache;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
