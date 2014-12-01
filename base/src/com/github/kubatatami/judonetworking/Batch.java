@@ -11,7 +11,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 public abstract class Batch<T> implements BatchInterface<T> {
 
     @Override
-    public void onStart() {
+    public void onStart(AsyncResult asyncResult) {
 
     }
 

@@ -22,8 +22,6 @@ public abstract class TransportLayer {
 
     public abstract void setMaxConnections(int max);
 
-    public abstract void setReconnections(int reconnections);
-
     public abstract void setConnectTimeout(int connectTimeout);
 
     public abstract void setMethodTimeout(int methodTimeout);

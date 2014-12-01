@@ -26,6 +26,8 @@ android {
 
 dependencies {
     compile 'com.android.support:support-v4:19.+'
+    compile 'com.squareup.okhttp:okhttp:2.0.0'
+    compile 'com.squareup.okhttp:okhttp-urlconnection:2.0.0'
 }
 
 apply from: '../uploading_archives.gradle'

@@ -20,6 +20,15 @@ public class ReflectionCache {
     protected final static LruCache<String, Annotation[]> fieldAnnotationCache = new LruCache<String, Annotation[]>(100);
     protected final static LruCache<Method, Type[]> methodParamsTypeCache = new LruCache<Method, Type[]>(100);
 
+    public static void clearCache(){
+        interfaceAnnotationCache.evictAll();
+        fieldCache.evictAll();
+        methodAnnotationCache.evictAll();
+        methodParamAnnotationCache.evictAll();
+        fieldAnnotationCache.evictAll();
+        methodParamsTypeCache.evictAll();
+    }
+
     public static Annotation[] getAnnotations(Class<?> apiInterface){
         Annotation[] result = interfaceAnnotationCache.get(apiInterface);
         if(result==null){

@@ -13,6 +13,9 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.Serializable;
 import java.io.StringBufferInputStream;
 import java.io.StringReader;
@@ -75,18 +78,19 @@ public class RawRestController extends RawController {
                     result = result.replaceAll("\\{" + entry.getKey() + "\\}", entry.getValue() + "");
                 }
             }
-            String content = null;
             if (ReflectionCache.getAnnotationInherited(request.getMethod(), RawPost.class) != null) {
                 int i = 0;
-                content = "";
+                String stringContent = "";
                 for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
                     for (Annotation annotation : annotations) {
                         if (annotation instanceof Post) {
-                            content += request.getArgs()[i].toString();
+                            stringContent += request.getArgs()[i].toString();
                         }
                     }
                     i++;
                 }
+                byte[] content=stringContent.getBytes();
+                requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content), content.length);
             } else if (ReflectionCache.getAnnotationInherited(request.getMethod(), FormPost.class) != null) {
                 requestInfo.mimeType = "application/x-www-form-urlencoded";
                 List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
@@ -100,14 +104,33 @@ public class RawRestController extends RawController {
                     }
                     i++;
                 }
-                content = URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8).replaceAll("\\+", "%20");
-            }
-            if (content != null) {
-                if (!ann.mimeType().equals("")) {
-                    requestInfo.mimeType = ann.mimeType();
+                byte[] content = URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8).replaceAll("\\+", "%20").getBytes();
+                requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content), content.length);
+            } else if (ReflectionCache.getAnnotationInherited(request.getMethod(), FilePost.class) != null) {
+                requestInfo.mimeType = "multipart/form-data";
+                int i = 0;
+                File file=null;
+                for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
+                    for (Annotation annotation : annotations) {
+                        if (annotation instanceof Post && request.getArgs()[i] instanceof File) {
+                            file = (File) request.getArgs()[i];
+                            break;
+                        }
+                    }
+                    i++;
                 }
-                requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content.getBytes()), content.length());
-
+                if(file!=null) {
+                    try {
+                        requestInfo.entity = new RequestInputStreamEntity(new FileInputStream(file), file.length());
+                    } catch (FileNotFoundException e) {
+                        throw new JudoException("File is not exist.", e);
+                    }
+                }else{
+                    throw new JudoException("No file param.");
+                }
+            }
+            if (!ann.mimeType().equals("")) {
+                requestInfo.mimeType = ann.mimeType();
             }
         } else {
             result = request.getName();
@@ -146,6 +169,11 @@ public class RawRestController extends RawController {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     public @interface FormPost {
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.METHOD, ElementType.TYPE})
+    public @interface FilePost {
     }
 
     @Override

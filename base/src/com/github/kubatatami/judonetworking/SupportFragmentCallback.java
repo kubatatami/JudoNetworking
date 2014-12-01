@@ -20,7 +20,9 @@ public class SupportFragmentCallback<T> extends Callback<T> implements FragmentM
     public SupportFragmentCallback(Fragment fragment) {
         this.fragment = fragment;
         this.manager = fragment.getFragmentManager();
-        manager.addOnBackStackChangedListener(this);
+        if(manager!=null) {
+            manager.addOnBackStackChangedListener(this);
+        }
     }
 
     @Override
@@ -67,13 +69,17 @@ public class SupportFragmentCallback<T> extends Callback<T> implements FragmentM
         } else {
             tryCancel();
         }
-        manager.removeOnBackStackChangedListener(this);
+        if(manager!=null) {
+            manager.removeOnBackStackChangedListener(this);
+        }
     }
 
     protected void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
-            manager.removeOnBackStackChangedListener(this);
+            if(manager!=null) {
+                manager.removeOnBackStackChangedListener(this);
+            }
         }
     }
 

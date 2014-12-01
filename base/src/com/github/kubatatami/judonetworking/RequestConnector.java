@@ -4,6 +4,7 @@ package com.github.kubatatami.judonetworking;
 import android.util.Base64;
 
 import com.github.kubatatami.judonetworking.exceptions.AuthException;
+import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.VerifyModelException;
@@ -19,10 +20,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 class RequestConnector {
 
@@ -697,10 +694,6 @@ class RequestConnector {
         stat.errors++;
         stat.requestCount++;
         rpc.saveStat();
-    }
-
-    public void setReconnections(int reconnections) {
-        transportLayer.setReconnections(reconnections);
     }
 
     public void setConnectTimeout(int connectTimeout) {

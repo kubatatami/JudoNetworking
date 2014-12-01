@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.controllers.json.simple;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.ErrorResult;
 import com.github.kubatatami.judonetworking.RequestInterface;
@@ -37,8 +38,15 @@ public abstract class JsonSimpleBaseController extends JsonProtocolController {
             Object res = null;
             try {
                 InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
+
                 if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
-                    res = mapper.readValue(inputStreamReader, mapper.getTypeFactory().constructType(request.getReturnType()));
+                    try {
+                        res = mapper.readValue(inputStreamReader, mapper.getTypeFactory().constructType(request.getReturnType()));
+                    }catch (JsonMappingException ex){
+                        if(!ex.getMessage().toLowerCase().contains("no content") || !request.isAllowEmptyResult()){
+                            throw ex;
+                        }
+                    }
                 }
                 inputStreamReader.close();
 

@@ -1,20 +1,11 @@
 package com.github.kubatatami.judonetworking;
 
-import android.support.v4.util.LruCache;
-
+import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-import org.apache.http.message.BasicNameValuePair;
-
 import java.io.Serializable;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Future;
 
 class Request implements Runnable, Comparable<Request>, ProgressObserver, RequestInterface, AsyncResult {
@@ -67,11 +58,13 @@ class Request implements Runnable, Comparable<Request>, ProgressObserver, Reques
             }
         } catch (final JudoException e) {
             invokeCallbackException(e);
-            if (rpc.getErrorLogger() != null && !(e instanceof CancelException)) {
+            if (rpc.getErrorLoggers().size() != 0 && !(e instanceof CancelException)) {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
-                        rpc.getErrorLogger().onError(e,Request.this);
+                        for(ErrorLogger errorLogger : rpc.getErrorLoggers()) {
+                            errorLogger.onError(e, Request.this);
+                        }
                     }
                 });
             }

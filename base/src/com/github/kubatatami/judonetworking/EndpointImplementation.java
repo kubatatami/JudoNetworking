@@ -2,10 +2,10 @@ package com.github.kubatatami.judonetworking;
 
 import android.content.Context;
 import android.net.NetworkInfo;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.io.File;
@@ -22,8 +22,10 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 class EndpointImplementation implements Endpoint, EndpointClassic {
@@ -42,7 +44,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     private File statFile;
     private float percentLoss;
     private int maxStatFileSize = 50; //KB
-    private ErrorLogger errorLogger;
+    private Set<ErrorLogger> errorLoggers = new HashSet<ErrorLogger>();
     private Clonner clonner = new ClonnerImplementation();
     private boolean test = false;
     private String testName = null;
@@ -56,8 +58,8 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     private long tokenExpireTimestamp = -1;
     private Map<Integer,Request> singleCallMethods = new HashMap<Integer, Request>();
     private int id = 0;
-    private ThreadPoolSizer threadPoolSizer=new DefaultThreadPoolSizer();
-    private JudoExecutor executorService = new JudoExecutor();
+    private ConnectionsSizer connectionsSizer =new DefaultConnectionsSizer();
+    private JudoExecutor executorService = new JudoExecutor(this);
     private UrlModifier urlModifier;
 
     public EndpointImplementation(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
@@ -73,12 +75,6 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         this.statFile = new File(context.getCacheDir(), "stats");
         this.memoryCache = new MemoryCacheImplementation(context);
         this.diskCache = new DiskCacheImplementation(context);
-        NetworkUtils.addNetworkStateListener(context,new NetworkUtils.NetworkStateListener() {
-            @Override
-            public void onNetworkStateChange(NetworkInfo activeNetworkInfo) {
-                setThreadPoolSize(threadPoolSizer.getThreadPoolSize(activeNetworkInfo));
-            }
-        });
     }
 
     public HashMap<Class, VirtualServerInfo> getVirtualServers() {
@@ -111,10 +107,9 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     }
 
     @Override
-    public void setTimeouts(int connectionTimeout, int methodTimeout, int reconnectionAttempts) {
+    public void setTimeouts(int connectionTimeout, int methodTimeout) {
         requestConnector.setConnectTimeout(connectionTimeout);
         requestConnector.setMethodTimeout(methodTimeout);
-        requestConnector.setReconnections(reconnectionAttempts);
     }
 
     @Override
@@ -124,10 +119,6 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         } else {
             handler = new Handler();
         }
-    }
-
-    protected void setThreadPoolSize(int size) {
-        executorService.setMaximumPoolSize(Math.max(2, size));
     }
 
     @Override
@@ -222,7 +213,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> AsyncResult callInBatch(final Class<T> obj, final Batch<T> batch) {
+    public <T> AsyncResult callInBatch(final Class<T> obj, final BatchInterface<T> batch) {
 
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
             try {
@@ -252,7 +243,7 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> AsyncResult callAsyncInBatch(final Class<T> obj, final Batch<T> batch) {
+    public <T> AsyncResult callAsyncInBatch(final Class<T> obj, final BatchInterface<T> batch) {
 
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
             try {
@@ -305,8 +296,13 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
     }
 
     @Override
-    public void setErrorLogger(ErrorLogger logger) {
-        this.errorLogger = logger;
+    public void addErrorLogger(ErrorLogger logger) {
+        errorLoggers.add(logger);
+    }
+
+    @Override
+    public void removeErrorLogger(ErrorLogger logger) {
+        errorLoggers.remove(logger);
     }
 
     @Override
@@ -514,8 +510,8 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         return context;
     }
 
-    public ErrorLogger getErrorLogger() {
-        return errorLogger;
+    public Set<ErrorLogger> getErrorLoggers() {
+        return errorLoggers;
     }
 
     public Clonner getClonner() {
@@ -558,8 +554,12 @@ class EndpointImplementation implements Endpoint, EndpointClassic {
         executorService.setThreadPriority(threadPriority);
     }
 
-    public void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer) {
-        this.threadPoolSizer = threadPoolSizer;
+    public void setConnectionsSizer(ConnectionsSizer connectionsSizer) {
+        this.connectionsSizer = connectionsSizer;
+    }
+
+    public int getBestConnectionsSize() {
+        return this.connectionsSizer.getThreadPoolSize(NetworkUtils.getActiveNetworkInfo(context));
     }
 
     public void setUrlModifier(UrlModifier urlModifier) {
