@@ -24,19 +24,22 @@ public class NetworkUtils {
     protected static BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            ConnectivityManager connectivityManager
-                    = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+            NetworkInfo activeNetworkInfo = getActiveNetworkInfo(context);
             for (NetworkStateListener networkStateListener : networkStateListeners) {
                 networkStateListener.onNetworkStateChange(activeNetworkInfo);
             }
         }
     };
 
+    public static NetworkInfo getActiveNetworkInfo(Context context) {
+        if (connectManager == null) {
+            connectManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        }
+        return connectManager.getActiveNetworkInfo();
+    }
+
     public static boolean isNetworkAvailable(Context context) {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        NetworkInfo activeNetworkInfo =  getActiveNetworkInfo(context);
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 

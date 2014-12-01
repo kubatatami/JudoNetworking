@@ -238,21 +238,29 @@ public class ObservableWrapper<T> extends Callback<T> {
     }
 
     public void notifyObservers() {
-        if (object != null || allowNull) {
-            Runnable runnable = new Runnable() {
-                @Override
-                public void run() {
-                    for (int i = observers.size() - 1; i >= 0; i--) {
-                        observers.get(i).update(object);
-                    }
-                }
-            };
+        notifyObservers(null);
+    }
 
-            if (Looper.getMainLooper().getThread().equals(Thread.currentThread()) || !notifyInUiThread) {
-                runnable.run();
-            } else {
-                handler.post(runnable);
+    public void notifyObservers(ObservableTransaction transaction) {
+        if(transaction==null){
+            if (object != null || allowNull) {
+                Runnable runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        for (int i = observers.size() - 1; i >= 0; i--) {
+                            observers.get(i).update(object);
+                        }
+                    }
+                };
+
+                if (Looper.getMainLooper().getThread().equals(Thread.currentThread()) || !notifyInUiThread) {
+                    runnable.run();
+                } else {
+                    handler.post(runnable);
+                }
             }
+        }else{
+            transaction.add(this, object);
         }
     }
 

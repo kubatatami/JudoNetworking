@@ -43,6 +43,9 @@ class BatchTask implements Runnable {
 
     public void execute() {
         future = rpc.getExecutorService().submit(this);
+        for(Request request : requests){
+            request.setFuture(future);
+        }
     }
 
     public void join() throws JudoException {

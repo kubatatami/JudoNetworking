@@ -10,7 +10,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  */
 public interface BatchInterface<T> {
 
-    public void onStart();
+    public void onStart(AsyncResult asyncResult);
 
     public void run(final T api);
 

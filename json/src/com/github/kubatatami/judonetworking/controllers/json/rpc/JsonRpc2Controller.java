@@ -108,11 +108,10 @@ public class JsonRpc2Controller extends JsonRpcController {
                 }
             }else if ("result".equals(fieldname)){
                 parser.nextToken();
-                if(type==null){
-                    result=parser.readValueAs(JsonNode.class);
-                }else{
+                result=parser.readValueAs(JsonNode.class);
+                if(type!=null){
                     try {
-                        responseModel.result=reader.readValue(parser,getType(type));
+                        responseModel.result=reader.readValue(result.traverse(),getType(type));
                     }catch (JsonProcessingException ex){
                         responseModel.ex=ex;
                     }
@@ -120,12 +119,13 @@ public class JsonRpc2Controller extends JsonRpcController {
             }else if ("error".equals(fieldname)){
                 responseModel.error=new JsonErrorModel();
                 while (parser.nextToken() != JsonToken.END_OBJECT) {
+                    fieldname = parser.getCurrentName();
                     if ("message".equals(fieldname)) {
                         parser.nextToken();
                         responseModel.error.message=parser.getText();
                     }else if ("code".equals(fieldname)) {
                         parser.nextToken();
-                        responseModel.error.code=parser.getIntValue();
+                        responseModel.error.code=parser.getValueAsInt();
                     }
                 }
             }

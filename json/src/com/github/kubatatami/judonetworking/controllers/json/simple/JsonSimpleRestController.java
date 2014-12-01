@@ -10,6 +10,7 @@ import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolControl
 import com.github.kubatatami.judonetworking.controllers.raw.RawRestController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -63,8 +64,12 @@ public class JsonSimpleRestController extends RawRestController {
             }else {
                 Map<String, Object> params = new HashMap<String, Object>();
                 int i = 0;
-                for (String name : request.getParamNames()) {
-                    params.put(name, request.getArgs()[i]);
+                for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
+                    for (Annotation annotation : annotations) {
+                        if (annotation instanceof Post) {
+                            params.put(((Post) annotation).value(), request.getArgs()[i]);
+                        }
+                    }
                     i++;
                 }
                 finalParams=params;
@@ -82,7 +87,7 @@ public class JsonSimpleRestController extends RawRestController {
             requestInfo.mimeType = "application/json";
 
             Rest ann = ReflectionCache.getAnnotationInherited(request.getMethod(), Rest.class);
-            if (ann.mimeType() != null) {
+            if (ann!=null && ann.mimeType() != null) {
                 requestInfo.mimeType = ann.mimeType();
             }
 

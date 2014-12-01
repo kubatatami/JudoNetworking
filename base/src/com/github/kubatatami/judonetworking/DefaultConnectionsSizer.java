@@ -7,14 +7,14 @@ import android.telephony.TelephonyManager;
 /**
  * Created by Kuba on 26/05/14.
  */
-class DefaultThreadPoolSizer implements ThreadPoolSizer {
+class DefaultConnectionsSizer implements ConnectionsSizer {
 
-    public static final int DEFAULT_THREAD_COUNT = 2;
+    public static final int DEFAULT_CONNECTIONS = 2;
 
     @Override
     public int getThreadPoolSize(NetworkInfo info) {
         if (info == null || !info.isConnectedOrConnecting()) {
-            return DEFAULT_THREAD_COUNT;
+            return DEFAULT_CONNECTIONS;
         }
         switch (info.getType()) {
             case ConnectivityManager.TYPE_WIFI:
@@ -37,10 +37,10 @@ class DefaultThreadPoolSizer implements ThreadPoolSizer {
                     case TelephonyManager.NETWORK_TYPE_EDGE:
                         return 1;
                     default:
-                        return DEFAULT_THREAD_COUNT;
+                        return DEFAULT_CONNECTIONS;
                 }
             default:
-                return DEFAULT_THREAD_COUNT;
+                return DEFAULT_CONNECTIONS;
         }
     }
 }

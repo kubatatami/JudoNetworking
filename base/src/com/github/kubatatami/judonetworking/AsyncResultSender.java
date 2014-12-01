@@ -102,7 +102,8 @@ class AsyncResultSender implements Runnable {
         Method handleMethod = null;
         for (; callbackClass != null; callbackClass = callbackClass.getSuperclass()) {
             for (Method method : callbackClass.getMethods()) {
-                if (method.isAnnotationPresent(HandleException.class)) {
+                HandleException handleException = method.getAnnotation(HandleException.class);
+                if (handleException!=null && handleException.enabled()) {
                     if (method.getParameterTypes().length != 1) {
                         throw new RuntimeException("Method " + method.getName() + " annotated HandleException must have one parameter.");
                     }
@@ -138,7 +139,7 @@ class AsyncResultSender implements Runnable {
                     break;
                 case ERROR:
                     Method handleMethod = findHandleMethod(callback.getClass(), e.getClass());
-                    logError(e);
+                    logError(request.getName(),e);
                     if (handleMethod != null) {
                         try {
                             handleMethod.invoke(callback, e);
@@ -157,7 +158,7 @@ class AsyncResultSender implements Runnable {
                 callback.onFinish();
             }
         } else if (requestProxy != null && requestProxy.getBatchCallback() != null) {
-            Batch<?> transaction = requestProxy.getBatchCallback();
+            BatchInterface<?> transaction = requestProxy.getBatchCallback();
             if (requestProxy.isCancelled()) {
                 return;
             }
@@ -167,14 +168,14 @@ class AsyncResultSender implements Runnable {
             switch (type) {
                 case START:
                     requestProxy.start();
-                    transaction.onStart();
+                    transaction.onStart(requestProxy);
                     break;
                 case RESULT:
                     transaction.onSuccess(results);
                     break;
                 case ERROR:
                     Method handleMethod = findHandleMethod(transaction.getClass(), e.getClass());
-                    logError(e);
+                    logError("Batch",e);
                     if (handleMethod != null) {
                         try {
                             handleMethod.invoke(transaction, e);
@@ -220,8 +221,11 @@ class AsyncResultSender implements Runnable {
         }
     }
 
-    protected void logError(Exception ex) {
+    protected void logError(String requestName, Exception ex) {
         if ((rpc.getDebugFlags() & Endpoint.ERROR_DEBUG) > 0) {
+            if(requestName!=null){
+                LoggerImpl.log("Error on: " + requestName);
+            }
             LoggerImpl.log(ex);
         }
     }

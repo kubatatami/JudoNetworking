@@ -11,6 +11,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +22,7 @@ import java.util.Map;
  * Time: 10:15
  * To change this template use File | Settings | File Templates.
  */
-public class ObserverAdapter<T> extends ArrayAdapter<T> {
+public class ObserverAdapter<T> extends ArrayAdapter<T> implements Iterable<T> {
 
     protected int[] resource;
     protected ObserverAdapterHelper adapterHelper;
@@ -137,6 +138,29 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
         this.filterInterface = filterInterface;
     }
 
+    @Override
+    public Iterator<T> iterator() {
+        return new Iterator<T>() {
+            int i=0;
+            @Override
+            public boolean hasNext() {
+                return i+1<getCount();
+            }
+
+            @Override
+            public T next() {
+                T next = getItem(i);
+                i++;
+                return next;
+            }
+
+            @Override
+            public void remove() {
+                ObserverAdapter.this.remove(getItem(i));
+            }
+        };
+    }
+
     public interface FilterInterface<T> {
 
         public boolean filter(CharSequence constraint, T item);
@@ -176,4 +200,5 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> {
             }
         }
     }
+
 }
