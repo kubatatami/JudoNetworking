@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.internals;
+package com.github.kubatatami.judonetworking.internals.requests;
 
 import com.github.kubatatami.judonetworking.annotations.RequestMethod;
 

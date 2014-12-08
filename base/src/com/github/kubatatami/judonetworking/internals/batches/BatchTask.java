@@ -1,6 +1,9 @@
-package com.github.kubatatami.judonetworking.internals;
+package com.github.kubatatami.judonetworking.internals.batches;
 
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.internals.EndpointImplementation;
+import com.github.kubatatami.judonetworking.internals.ProgressObserver;
+import com.github.kubatatami.judonetworking.internals.requests.Request;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 
 import java.util.ArrayList;
@@ -9,7 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Future;
 
-class BatchTask implements Runnable {
+public class BatchTask implements Runnable {
     private final Integer timeout;
     private final List<Request> requests;
     private List<RequestResult> response = null;

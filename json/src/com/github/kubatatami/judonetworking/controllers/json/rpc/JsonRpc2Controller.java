@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
-import com.github.kubatatami.judonetworking.internals.RequestInterface;
+import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;

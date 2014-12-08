@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.internals;
+package com.github.kubatatami.judonetworking.internals.requests;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;

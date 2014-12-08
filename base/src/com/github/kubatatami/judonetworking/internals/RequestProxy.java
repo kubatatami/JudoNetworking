@@ -2,6 +2,7 @@ package com.github.kubatatami.judonetworking.internals;
 
 import android.util.Pair;
 
+import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.annotations.NamePrefix;
@@ -14,8 +15,11 @@ import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
+import com.github.kubatatami.judonetworking.internals.batches.BatchProgressObserver;
+import com.github.kubatatami.judonetworking.internals.batches.BatchTask;
 import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
 import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
+import com.github.kubatatami.judonetworking.internals.requests.Request;
 import com.github.kubatatami.judonetworking.internals.results.CacheResult;
 import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
@@ -39,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-class RequestProxy implements InvocationHandler, AsyncResult {
+public class RequestProxy implements InvocationHandler, AsyncResult {
 
     protected final EndpointImplementation rpc;
     protected int id = 0;
@@ -300,7 +304,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
             if (rpc.isCacheEnabled()) {
                 for (int i = batches.size() - 1; i >= 0; i--) {
                     Request req = batches.get(i);
-                    if (req.isLocalCachable() || rpc.isTest()) {
+                    if (req.isLocalCacheable() || rpc.isTest()) {
                         CacheResult result = rpc.getMemoryCache().get(req.getMethodId(), req.getArgs(), rpc.isTest() ? 0 : req.getLocalCacheLifeTime(), req.getLocalCacheSize());
                         LocalCache.CacheLevel cacheLevel = rpc.isTest() ? LocalCache.CacheLevel.DISK_CACHE : req.getLocalCacheLevel();
                         if (result.result) {
@@ -399,7 +403,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
         handleBatchResponse(batches, batchCallback, responses);
     }
 
-    protected List<List<Request>> assignRequestsToConnections(List<Request> list, final int partsNo) {
+    public List<List<Request>> assignRequestsToConnections(List<Request> list, final int partsNo) {
         if (rpc.isTimeProfiler()) {
             return BatchTask.timeAssignRequests(list, partsNo);
         } else {
@@ -422,7 +426,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
         return timeout;
     }
 
-    protected void sendBatchRequest(final List<Request> batches, BatchProgressObserver progressObserver,
+    public void sendBatchRequest(final List<Request> batches, BatchProgressObserver progressObserver,
                                     final Map<Integer, Pair<Request, Object>> cacheObjects) {
         final List<RequestResult> responses = Collections.synchronizedList(new ArrayList<RequestResult>(batches.size()));
 
@@ -538,7 +542,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                             RequestConnector.processingMethod(response.result);
                         }
                         results[i] = response.result;
-                        if ((rpc.isCacheEnabled() && request.isLocalCachable()) || rpc.isTest()) {
+                        if ((rpc.isCacheEnabled() && request.isLocalCacheable()) || rpc.isTest()) {
                             rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), results[i], request.getLocalCacheSize());
                             if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
                                 results[i] = rpc.getClonner().clone(results[i]);
@@ -549,7 +553,7 @@ class RequestProxy implements InvocationHandler, AsyncResult {
                                 CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
                                 rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getLocalCacheSize());
                             }
-                        } else if (rpc.isCacheEnabled() && request.isServerCachable() && (response.hash != null || response.time != null)) {
+                        } else if (rpc.isCacheEnabled() && request.isServerCacheable() && (response.hash != null || response.time != null)) {
                             CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), response.hash, response.time, request.getServerCacheLevel());
                             rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getServerCacheSize());
                         }

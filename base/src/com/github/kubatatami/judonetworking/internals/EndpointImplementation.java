@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.EndpointClassic;
 import com.github.kubatatami.judonetworking.annotations.IgnoreNullParam;
@@ -19,6 +20,8 @@ import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.executors.JudoExecutor;
+import com.github.kubatatami.judonetworking.internals.requests.Request;
+import com.github.kubatatami.judonetworking.internals.requests.RequestOptions;
 import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
 import com.github.kubatatami.judonetworking.internals.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.internals.virtuals.VirtualServerInfo;

@@ -1,6 +1,6 @@
 package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
-import com.github.kubatatami.judonetworking.internals.RequestInterface;
+import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.controllers.json.simple.JsonSimplePostController;
 

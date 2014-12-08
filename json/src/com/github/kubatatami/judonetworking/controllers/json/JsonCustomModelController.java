@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.internals.RequestInterface;
+import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.controllers.ProtocolControllerWrapper;

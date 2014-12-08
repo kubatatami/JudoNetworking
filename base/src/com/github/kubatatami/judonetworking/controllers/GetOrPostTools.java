@@ -1,6 +1,6 @@
 package com.github.kubatatami.judonetworking.controllers;
 
-import com.github.kubatatami.judonetworking.internals.RequestInterface;
+import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import org.apache.http.NameValuePair;

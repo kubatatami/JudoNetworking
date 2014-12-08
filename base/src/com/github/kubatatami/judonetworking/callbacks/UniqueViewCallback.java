@@ -2,7 +2,7 @@ package com.github.kubatatami.judonetworking.callbacks;
 
 import android.view.View;
 
-import com.github.kubatatami.judonetworking.internals.AsyncResult;
+import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
 
 import java.util.HashMap;

@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.internals;
+package com.github.kubatatami.judonetworking;
 
 /**
  * Created by Kuba on 05/04/14.

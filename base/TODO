@@ -1,3 +1,6 @@
+-rozbicie klasy RequestProxy na faktyczne MethodProxy i klase obslugujaca Batche
+-rozbicie klasy RequestConnector na klase(klasy narzędziowe) oraz klasy od single oraz batch requests
+
 -usuniecie metody z obiektu request, wyciagniecie potrzebnych informacji do obiektu serializable (nazwa, hashcode, adnotacje)
 -warstwa abstrakcji na parametry z adnotacji i classic (wprowadzenie w classic pozostałych możliwości(poza virtualservers i batch)
 -call in batch niezalezne od obiektu rpc, mozliwe wywolania z kilku serwerow

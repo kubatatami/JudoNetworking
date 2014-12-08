@@ -1,6 +1,6 @@
 package com.github.kubatatami.judonetworking.batches;
 
-import com.github.kubatatami.judonetworking.internals.AsyncResult;
+import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**

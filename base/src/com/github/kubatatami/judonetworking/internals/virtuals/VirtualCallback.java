@@ -2,7 +2,7 @@ package com.github.kubatatami.judonetworking.internals.virtuals;
 
 import com.github.kubatatami.judonetworking.callbacks.CallbackInterface;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
-import com.github.kubatatami.judonetworking.internals.AsyncResult;
+import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
 import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;

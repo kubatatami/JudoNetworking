@@ -1,6 +1,6 @@
 package com.github.kubatatami.judonetworking.annotations;
 
-import com.github.kubatatami.judonetworking.internals.RequestInterface;
+import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

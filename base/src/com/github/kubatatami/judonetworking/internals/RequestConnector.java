@@ -17,6 +17,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.VerifyModelException;
 import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
 import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
+import com.github.kubatatami.judonetworking.internals.requests.Request;
 import com.github.kubatatami.judonetworking.internals.results.CacheResult;
 import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
 import com.github.kubatatami.judonetworking.internals.results.NoNewResult;
@@ -390,7 +391,7 @@ public class RequestConnector {
             TimeStat timeStat = new TimeStat(request);
 
 
-            if ((rpc.isCacheEnabled() && request.isLocalCachable()) || rpc.isTest()) {
+            if ((rpc.isCacheEnabled() && request.isLocalCacheable()) || rpc.isTest()) {
                 LocalCache.CacheLevel cacheLevel = rpc.isTest() ? LocalCache.CacheLevel.DISK_CACHE : request.getLocalCacheLevel();
                 localCacheObject = rpc.getMemoryCache().get(request.getMethodId(), request.getArgs(), rpc.isTest() ? 0 : request.getLocalCacheLifeTime(), request.getLocalCacheSize());
                 if (localCacheObject.result) {
@@ -416,7 +417,7 @@ public class RequestConnector {
                 }
             }
 
-            if (rpc.isCacheEnabled() && request.isServerCachable()) {
+            if (rpc.isCacheEnabled() && request.isServerCacheable()) {
                 CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), url, request.getServerCacheLevel());
                 serverCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
 
@@ -456,14 +457,14 @@ public class RequestConnector {
 
 
             if (rpc.isTimeProfiler()) {
-                refreshStat(request.getName(), timeStat.getMethodTime(), true);
+                refreshStat(request.getName(), timeStat.getMethodTime());
             }
 
             if ((rpc.getDebugFlags() & Endpoint.TIME_DEBUG) > 0) {
                 timeStat.logTime("End single request(" + request.getName() + "):");
             }
 
-            if ((rpc.isCacheEnabled() && request.isLocalCachable()) || rpc.isTest()) {
+            if ((rpc.isCacheEnabled() && request.isLocalCacheable()) || rpc.isTest()) {
                 rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), result.result, request.getLocalCacheSize());
                 if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
                     result.result = rpc.getClonner().clone(result.result);
@@ -476,7 +477,7 @@ public class RequestConnector {
                 }
 
 
-            } else if (rpc.isCacheEnabled() && request.isServerCachable() && (result.hash != null || result.time != null)) {
+            } else if (rpc.isCacheEnabled() && request.isServerCacheable() && (result.hash != null || result.time != null)) {
                 CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), url, request.getServerCacheLevel());
                 rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getServerCacheSize());
             }
@@ -484,7 +485,7 @@ public class RequestConnector {
 
             return result.result;
         } catch (JudoException e) {
-            refreshErrorStat(request.getName(), request.getTimeout(), true);
+            refreshErrorStat(request.getName(), request.getTimeout());
             throw e;
         }
 
@@ -571,7 +572,7 @@ public class RequestConnector {
                     if (!request.isCancelled()) {
 
 
-                        if (rpc.isCacheEnabled() && request.isServerCachable()) {
+                        if (rpc.isCacheEnabled() && request.isServerCacheable()) {
                             CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), url, request.getServerCacheLevel());
                             cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getServerCacheSize());
 
@@ -662,7 +663,7 @@ public class RequestConnector {
             if (rpc.isTimeProfiler()) {
 
                 for (Request request : requests) {
-                    refreshStat(request.getName(), timeStat.getMethodTime() / requests.size(), false);
+                    refreshStat(request.getName(), timeStat.getMethodTime() / requests.size());
                 }
                 rpc.saveStat();
             }
@@ -675,7 +676,7 @@ public class RequestConnector {
             return responses;
         } catch (JudoException e) {
             for (Request request : requests) {
-                refreshErrorStat(request.getName(), request.getTimeout(), false);
+                refreshErrorStat(request.getName(), request.getTimeout());
                 rpc.saveStat();
             }
             RequestProxy.addToExceptionMessage(requestsName.substring(1), e);
@@ -703,14 +704,14 @@ public class RequestConnector {
         return stat;
     }
 
-    private void refreshStat(String method, long time, boolean save) {
+    private void refreshStat(String method, long time) {
         MethodStat stat = getStat(method);
         stat.avgTime = ((stat.avgTime * stat.requestCount) + time) / (stat.requestCount + 1);
         stat.requestCount++;
         rpc.saveStat();
     }
 
-    private void refreshErrorStat(String method, long timeout, boolean save) {
+    private void refreshErrorStat(String method, long timeout) {
         MethodStat stat = getStat(method);
         stat.avgTime = ((stat.avgTime * stat.requestCount) + timeout) / (stat.requestCount + 1);
         stat.errors++;

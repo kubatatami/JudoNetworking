@@ -5,7 +5,7 @@ import com.github.kubatatami.judonetworking.batches.BatchInterface;
 import com.github.kubatatami.judonetworking.caches.DiskCache;
 import com.github.kubatatami.judonetworking.caches.MemoryCache;
 import com.github.kubatatami.judonetworking.clonners.Clonner;
-import com.github.kubatatami.judonetworking.internals.AsyncResult;
+import com.github.kubatatami.judonetworking.internals.EndpointBase;
 import com.github.kubatatami.judonetworking.threads.ThreadPoolSizer;
 
 /**

@@ -3,7 +3,7 @@ package com.github.kubatatami.judonetworking.controllers.json.simple;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
-import com.github.kubatatami.judonetworking.internals.RequestInterface;
+import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.io.ByteArrayInputStream;

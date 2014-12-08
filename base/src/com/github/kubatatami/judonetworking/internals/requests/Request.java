@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.internals;
+package com.github.kubatatami.judonetworking.internals.requests;
 
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.annotations.ApiKeyRequired;
@@ -10,6 +10,11 @@ import com.github.kubatatami.judonetworking.annotations.SingleCall;
 import com.github.kubatatami.judonetworking.callbacks.CallbackInterface;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.AsyncResult;
+import com.github.kubatatami.judonetworking.internals.AsyncResultSender;
+import com.github.kubatatami.judonetworking.internals.EndpointImplementation;
+import com.github.kubatatami.judonetworking.internals.ProgressObserver;
+import com.github.kubatatami.judonetworking.internals.RequestProxy;
 import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
 import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
 import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
@@ -239,7 +244,7 @@ public class Request implements Runnable, Comparable<Request>, ProgressObserver,
         return getLocalCache().lifeTime();
     }
 
-    public boolean isLocalCachable() {
+    public boolean isLocalCacheable() {
         return getLocalCache() != null;
     }
 
@@ -257,7 +262,7 @@ public class Request implements Runnable, Comparable<Request>, ProgressObserver,
         return localCache != null ? localCache.onlyOnError() : LocalCache.OnlyOnError.NO;
     }
 
-    public boolean isServerCachable() {
+    public boolean isServerCacheable() {
         return getServerCache() != null;
     }
 
@@ -339,11 +344,11 @@ public class Request implements Runnable, Comparable<Request>, ProgressObserver,
         return callback;
     }
 
-    boolean isBatchFatal() {
+    public boolean isBatchFatal() {
         return batchFatal;
     }
 
-    void setBatchFatal(boolean batchFatal) {
+    public void setBatchFatal(boolean batchFatal) {
         this.batchFatal = batchFatal;
     }
 
@@ -415,5 +420,15 @@ public class Request implements Runnable, Comparable<Request>, ProgressObserver,
 
     public void setFuture(Future<?> future) {
         this.future = future;
+    }
+
+    /**
+     * Created by Kuba on 19/02/14.
+     */
+    public static class Comparator implements java.util.Comparator<RequestInterface> {
+        @Override
+        public int compare(RequestInterface lhs, RequestInterface rhs) {
+            return lhs.getId().compareTo(rhs.getId());
+        }
     }
 }

@@ -1,5 +1,10 @@
-package com.github.kubatatami.judonetworking.internals;
+package com.github.kubatatami.judonetworking.internals.batches;
 
+import com.github.kubatatami.judonetworking.internals.AsyncResultSender;
+import com.github.kubatatami.judonetworking.internals.EndpointImplementation;
+import com.github.kubatatami.judonetworking.internals.ProgressObserver;
+import com.github.kubatatami.judonetworking.internals.RequestProxy;
+import com.github.kubatatami.judonetworking.internals.requests.Request;
 import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 
 import java.util.ArrayList;

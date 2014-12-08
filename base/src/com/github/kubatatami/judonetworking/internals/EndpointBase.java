@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking;
+package com.github.kubatatami.judonetworking.internals;
 
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.logs.ErrorLogger;

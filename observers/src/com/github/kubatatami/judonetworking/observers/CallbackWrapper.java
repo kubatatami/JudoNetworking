@@ -1,6 +1,6 @@
 package com.github.kubatatami.judonetworking.observers;
 
-import com.github.kubatatami.judonetworking.internals.AsyncResult;
+import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.callbacks.CallbackInterface;
