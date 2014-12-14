@@ -1,7 +1,7 @@
 package com.github.kubatatami.judonetworking.callbacks;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
+import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**
@@ -10,30 +10,16 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  * Date: 07.01.2013
  * Time: 10:55
  */
-public class Callback<T> implements CallbackInterface<T> {
+public interface Callback<T> {
 
-    @Override
-    public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
+    public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult);
 
-    }
+    public void onProgress(int progress);
 
-    @Override
-    public void onSuccess(T result) {
-    }
+    public void onSuccess(T result);
 
-    @Override
-    public void onError(JudoException e) {
+    public void onError(JudoException e);
 
-    }
-
-    @Override
-    public void onFinish() {
-
-    }
-
-    @Override
-    public void onProgress(int progress) {
-    }
-
+    public void onFinish();
 
 }

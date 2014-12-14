@@ -1,24 +1,25 @@
 package com.github.kubatatami.judonetworking.internals.requests;
 
 import com.github.kubatatami.judonetworking.Endpoint;
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.annotations.ApiKeyRequired;
 import com.github.kubatatami.judonetworking.annotations.Delay;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.annotations.RequestMethod;
 import com.github.kubatatami.judonetworking.annotations.ServerCache;
 import com.github.kubatatami.judonetworking.annotations.SingleCall;
-import com.github.kubatatami.judonetworking.callbacks.CallbackInterface;
+import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.internals.AsyncResultSender;
-import com.github.kubatatami.judonetworking.internals.EndpointImplementation;
+import com.github.kubatatami.judonetworking.internals.EndpointImpl;
 import com.github.kubatatami.judonetworking.internals.ProgressObserver;
 import com.github.kubatatami.judonetworking.internals.RequestProxy;
-import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
+import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
 import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
-import com.github.kubatatami.judonetworking.internals.utils.ReflectionCache;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.logs.ErrorLogger;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 
@@ -27,10 +28,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.concurrent.Future;
 
-public class Request implements Runnable, Comparable<Request>, ProgressObserver, RequestInterface, AsyncResult {
+public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressObserver, Request, AsyncResult {
     private Integer id;
-    private final EndpointImplementation rpc;
-    private CallbackInterface<Object> callback;
+    private final EndpointImpl rpc;
+    private Callback<Object> callback;
     private final String name;
     private final int timeout;
     private RequestMethod ann;
@@ -49,9 +50,9 @@ public class Request implements Runnable, Comparable<Request>, ProgressObserver,
     private Future<?> future;
 
 
-    public Request(Integer id, EndpointImplementation rpc, Method method, String name, RequestMethod ann,
-                   Object[] args, Type returnType, int timeout, CallbackInterface<Object> callback,
-                   Serializable additionalControllerData) {
+    public RequestImpl(Integer id, EndpointImpl rpc, Method method, String name, RequestMethod ann,
+                       Object[] args, Type returnType, int timeout, Callback<Object> callback,
+                       Serializable additionalControllerData) {
         this.id = id;
         this.name = name;
         this.timeout = timeout;
@@ -82,7 +83,7 @@ public class Request implements Runnable, Comparable<Request>, ProgressObserver,
                     @Override
                     public void run() {
                         for(ErrorLogger errorLogger : rpc.getErrorLoggers()) {
-                            errorLogger.onError(e, Request.this);
+                            errorLogger.onError(e, RequestImpl.this);
                         }
                     }
                 });
@@ -104,19 +105,19 @@ public class Request implements Runnable, Comparable<Request>, ProgressObserver,
         rpc.getHandler().post(new AsyncResultSender(this, result));
     }
 
-    public static void invokeBatchCallbackStart(final EndpointImplementation rpc, RequestProxy requestProxy) {
+    public static void invokeBatchCallbackStart(final EndpointImpl rpc, RequestProxy requestProxy) {
         rpc.getHandler().post(new AsyncResultSender(rpc, requestProxy));
     }
 
-    public static void invokeBatchCallbackProgress(final EndpointImplementation rpc, RequestProxy requestProxy, int progress) {
+    public static void invokeBatchCallbackProgress(final EndpointImpl rpc, RequestProxy requestProxy, int progress) {
         rpc.getHandler().post(new AsyncResultSender(rpc, requestProxy, progress));
     }
 
-    public static void invokeBatchCallbackException(final EndpointImplementation rpc, RequestProxy requestProxy, final JudoException e) {
+    public static void invokeBatchCallbackException(final EndpointImpl rpc, RequestProxy requestProxy, final JudoException e) {
         rpc.getHandler().post(new AsyncResultSender(rpc, requestProxy, e));
     }
 
-    public static void invokeBatchCallback(EndpointImplementation rpc, RequestProxy requestProxy, Object[] results) {
+    public static void invokeBatchCallback(EndpointImpl rpc, RequestProxy requestProxy, Object[] results) {
         rpc.getHandler().post(new AsyncResultSender(rpc, requestProxy, results));
     }
 
@@ -287,7 +288,7 @@ public class Request implements Runnable, Comparable<Request>, ProgressObserver,
     }
 
     @Override
-    public int compareTo(Request another) {
+    public int compareTo(RequestImpl another) {
         if (ann.highPriority() && !another.isHighPriority()) {
             return -1;
         } else if (!ann.highPriority() && another.isHighPriority()) {
@@ -326,7 +327,7 @@ public class Request implements Runnable, Comparable<Request>, ProgressObserver,
         }
     }
 
-    public EndpointImplementation getRpc() {
+    public EndpointImpl getRpc() {
         return rpc;
     }
 
@@ -340,7 +341,7 @@ public class Request implements Runnable, Comparable<Request>, ProgressObserver,
         return max;
     }
 
-    public CallbackInterface<Object> getCallback() {
+    public Callback<Object> getCallback() {
         return callback;
     }
 
@@ -425,9 +426,9 @@ public class Request implements Runnable, Comparable<Request>, ProgressObserver,
     /**
      * Created by Kuba on 19/02/14.
      */
-    public static class Comparator implements java.util.Comparator<RequestInterface> {
+    public static class Comparator implements java.util.Comparator<Request> {
         @Override
-        public int compare(RequestInterface lhs, RequestInterface rhs) {
+        public int compare(Request lhs, Request rhs) {
             return lhs.getId().compareTo(rhs.getId());
         }
     }

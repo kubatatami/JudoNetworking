@@ -2,6 +2,7 @@ package com.github.kubatatami.judonetworking.callbacks;
 
 import android.widget.ArrayAdapter;
 
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -12,18 +13,18 @@ import java.util.List;
  * Date: 02.04.2013
  * Time: 09:57
  */
-public class AdapterSortCallback<T extends Comparable<T>> extends Callback<List<T>> {
+public class AdapterSortCallback<T extends Comparable<T>> extends DefaultCallback<List<T>> {
 
-    private final ArrayAdapter<T> adapter;
+    private final WeakReference<ArrayAdapter<T>> adapter;
     private final Comparator<T> comparator;
 
     public AdapterSortCallback(ArrayAdapter<T> adapter) {
-        this.adapter = adapter;
+        this.adapter = new WeakReference<>(adapter);
         comparator = null;
     }
 
     public AdapterSortCallback(ArrayAdapter<T> adapter, Comparator<T> comparator) {
-        this.adapter = adapter;
+        this.adapter = new WeakReference<>(adapter);
         this.comparator = comparator;
     }
 
@@ -33,20 +34,22 @@ public class AdapterSortCallback<T extends Comparable<T>> extends Callback<List<
 
     @Override
     public void onSuccess(List<T> result) {
-        adapter.clear();
-        if (comparator != null) {
-            Collections.sort(result, comparator);
-        } else {
-            Collections.sort(result);
-        }
-
-        adapter.setNotifyOnChange(false);
-        for (T object : result) {
-            if (filter(object)) {
-                adapter.add(object);
+        ArrayAdapter<T> adapter=this.adapter.get();
+        if(adapter!=null) {
+            adapter.clear();
+            if (comparator != null) {
+                Collections.sort(result, comparator);
+            } else {
+                Collections.sort(result);
             }
-        }
-        adapter.notifyDataSetChanged();
 
+            adapter.setNotifyOnChange(false);
+            for (T object : result) {
+                if (filter(object)) {
+                    adapter.add(object);
+                }
+            }
+            adapter.notifyDataSetChanged();
+        }
     }
 }

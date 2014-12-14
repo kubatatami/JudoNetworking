@@ -1,14 +1,14 @@
 package com.github.kubatatami.judonetworking.internals.virtuals;
 
-import com.github.kubatatami.judonetworking.callbacks.CallbackInterface;
+import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
+import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 
-public class VirtualCallback implements CallbackInterface {
+public class VirtualCallback implements Callback {
     private int id;
     private RequestResult result;
 

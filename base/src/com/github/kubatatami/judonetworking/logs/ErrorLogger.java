@@ -1,6 +1,6 @@
 package com.github.kubatatami.judonetworking.logs;
 
-import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**
@@ -12,6 +12,6 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  */
 public interface ErrorLogger {
 
-    public void onError(JudoException e, RequestInterface request);
+    public void onError(JudoException e, Request request);
 
 }

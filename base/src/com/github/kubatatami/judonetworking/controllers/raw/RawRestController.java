@@ -1,10 +1,10 @@
 package com.github.kubatatami.judonetworking.controllers.raw;
 
 
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.internals.utils.ReflectionCache;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
-import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import org.apache.http.NameValuePair;
@@ -49,7 +49,7 @@ public class RawRestController extends RawController {
     }
 
     @Override
-    public ProtocolController.RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
+    public ProtocolController.RequestInfo createRequest(String url, Request request) throws JudoException {
         ProtocolController.RequestInfo requestInfo = new ProtocolController.RequestInfo();
         String result;
         Rest ann = ReflectionCache.getAnnotationInherited(request.getMethod(), Rest.class);

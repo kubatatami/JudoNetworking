@@ -1,19 +1,19 @@
 package com.github.kubatatami.judonetworking.observers;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
+import com.github.kubatatami.judonetworking.callbacks.DefaultCallback;
+import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
-import com.github.kubatatami.judonetworking.callbacks.CallbackInterface;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**
  * Created by Kuba on 17/03/14.
  */
-public class CallbackWrapper<T> extends Callback<T> {
+public class CallbackWrapper<T> extends DefaultCallback<T> {
 
-    protected CallbackInterface<T> baseCallback;
+    protected Callback<T> baseCallback;
 
-    public CallbackWrapper(CallbackInterface<T> baseCallback) {
+    public CallbackWrapper(Callback<T> baseCallback) {
         this.baseCallback = baseCallback;
     }
 

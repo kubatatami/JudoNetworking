@@ -1,7 +1,7 @@
 package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
-import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
@@ -24,7 +24,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
 
 
     @Override
-    public RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
+    public RequestInfo createRequest(String url, Request request) throws JudoException {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url;
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -41,7 +41,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
     }
 
 
-    public Object createRequestObject(RequestInterface request) throws IOException {
+    public Object createRequestObject(Request request) throws IOException {
         Object finalArgs;
         ApiKey apiKeyModel = (ApiKey) request.getAdditionalData();
         if (!request.isApiKeyRequired()) {

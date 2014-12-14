@@ -1,6 +1,6 @@
 package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
-import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.controllers.json.simple.JsonSimplePostController;
 
@@ -18,7 +18,7 @@ import java.util.Map;
 public class JsonRpcPostController extends JsonSimplePostController {
 
     @Override
-    public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
+    public RequestResult parseResponse(Request request, InputStream stream, Map<String, List<String>> headers) {
         return JsonRpcGetOrPostTools.parseResponse(mapper, request, stream);
     }
 

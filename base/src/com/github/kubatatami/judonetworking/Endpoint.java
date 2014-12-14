@@ -1,7 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
 
-import com.github.kubatatami.judonetworking.batches.BatchInterface;
+import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.caches.DiskCache;
 import com.github.kubatatami.judonetworking.caches.MemoryCache;
 import com.github.kubatatami.judonetworking.clonners.Clonner;
@@ -62,7 +62,7 @@ public interface Endpoint extends EndpointBase {
      * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
-    public <T> AsyncResult callInBatch(Class<T> apiInterface, BatchInterface<T> batch);
+    public <T> AsyncResult callInBatch(Class<T> apiInterface, Batch<T> batch);
 
     /**
      * Create batch request.
@@ -71,7 +71,7 @@ public interface Endpoint extends EndpointBase {
      * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
-    public <T> AsyncResult callAsyncInBatch(final Class<T> apiInterface, final BatchInterface<T> batch);
+    public <T> AsyncResult callAsyncInBatch(final Class<T> apiInterface, final Batch<T> batch);
 
     /**
      * @param mode

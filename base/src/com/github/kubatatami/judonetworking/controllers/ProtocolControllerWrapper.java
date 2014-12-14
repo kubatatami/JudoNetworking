@@ -1,6 +1,6 @@
 package com.github.kubatatami.judonetworking.controllers;
 
-import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
@@ -21,12 +21,12 @@ public class ProtocolControllerWrapper extends ProtocolController {
     }
 
     @Override
-    public RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
+    public RequestInfo createRequest(String url, Request request) throws JudoException {
         return baseController.createRequest(url, request);
     }
 
     @Override
-    public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
+    public RequestResult parseResponse(Request request, InputStream stream, Map<String, List<String>> headers) {
         return baseController.parseResponse(request, stream, headers);
     }
 
@@ -51,12 +51,12 @@ public class ProtocolControllerWrapper extends ProtocolController {
     }
 
     @Override
-    public RequestInfo createRequests(String url, List<RequestInterface> requests) throws JudoException {
+    public RequestInfo createRequests(String url, List<Request> requests) throws JudoException {
         return baseController.createRequests(url, requests);
     }
 
     @Override
-    public List<RequestResult> parseResponses(List<RequestInterface> requests, InputStream stream, Map<String, List<String>> headers) throws JudoException {
+    public List<RequestResult> parseResponses(List<Request> requests, InputStream stream, Map<String, List<String>> headers) throws JudoException {
         return baseController.parseResponses(requests, stream, headers);
     }
 

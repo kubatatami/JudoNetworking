@@ -1,10 +1,10 @@
 package com.github.kubatatami.judonetworking.controllers.json.simple;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.internals.utils.ReflectionCache;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
-import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.controllers.raw.RawRestController;
@@ -45,12 +45,12 @@ public class JsonSimpleRestController extends RawRestController {
     }
 
     @Override
-    public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
+    public RequestResult parseResponse(Request request, InputStream stream, Map<String, List<String>> headers) {
         return JsonSimpleBaseController.parseResponse(mapper, request, stream);
     }
 
     @Override
-    public RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
+    public RequestInfo createRequest(String url, Request request) throws JudoException {
         JsonPost jsonPost = ReflectionCache.getAnnotationInherited(request.getMethod(), JsonPost.class);
         if (jsonPost!=null && jsonPost.enabled()) {
             ProtocolController.RequestInfo requestInfo = super.createRequest(url, request);

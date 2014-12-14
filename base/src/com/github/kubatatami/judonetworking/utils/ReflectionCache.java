@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.internals.utils;
+package com.github.kubatatami.judonetworking.utils;
 
 import android.support.v4.util.LruCache;
 

@@ -12,7 +12,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  * Date: 11.02.2013
  * Time: 22:48
  */
-public abstract class SupportFragmentBatch<T> implements BatchInterface<T>, FragmentManager.OnBackStackChangedListener{
+public abstract class SupportFragmentBatch<T> implements Batch<T>, FragmentManager.OnBackStackChangedListener{
 
 
     private final Fragment fragment;

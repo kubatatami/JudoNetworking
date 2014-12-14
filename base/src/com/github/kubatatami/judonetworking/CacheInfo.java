@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.internals.cache;
+package com.github.kubatatami.judonetworking;
 
 import java.io.Serializable;
 

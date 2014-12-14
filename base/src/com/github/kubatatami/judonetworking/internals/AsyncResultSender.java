@@ -2,18 +2,18 @@ package com.github.kubatatami.judonetworking.internals;
 
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.annotations.HandleException;
-import com.github.kubatatami.judonetworking.batches.BatchInterface;
-import com.github.kubatatami.judonetworking.callbacks.CallbackInterface;
+import com.github.kubatatami.judonetworking.batches.Batch;
+import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
-import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
-import com.github.kubatatami.judonetworking.internals.requests.Request;
+import com.github.kubatatami.judonetworking.CacheInfo;
+import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 
 import java.lang.reflect.Method;
 import java.util.List;
 
 public class AsyncResultSender implements Runnable {
-    protected CallbackInterface<Object> callback;
+    protected Callback<Object> callback;
     protected RequestProxy requestProxy;
     protected Object result = null;
     protected Object[] results = null;
@@ -21,43 +21,43 @@ public class AsyncResultSender implements Runnable {
     protected int progress = 0;
     protected final Type type;
     protected Integer methodId;
-    protected EndpointImplementation rpc;
-    protected Request request;
-    protected List<Request> requests;
+    protected EndpointImpl rpc;
+    protected RequestImpl request;
+    protected List<RequestImpl> requests;
     protected CacheInfo cacheInfo;
 
     enum Type {
         RESULT, ERROR, PROGRESS, START
     }
 
-    public AsyncResultSender(EndpointImplementation rpc, RequestProxy requestProxy) {
+    public AsyncResultSender(EndpointImpl rpc, RequestProxy requestProxy) {
         this.requestProxy = requestProxy;
         this.rpc = rpc;
         this.type = Type.START;
     }
 
-    public AsyncResultSender(EndpointImplementation rpc, RequestProxy requestProxy, Object results[]) {
+    public AsyncResultSender(EndpointImpl rpc, RequestProxy requestProxy, Object results[]) {
         this.results = results;
         this.requestProxy = requestProxy;
         this.rpc = rpc;
         this.type = Type.RESULT;
     }
 
-    public AsyncResultSender(EndpointImplementation rpc, RequestProxy requestProxy, int progress) {
+    public AsyncResultSender(EndpointImpl rpc, RequestProxy requestProxy, int progress) {
         this.progress = progress;
         this.requestProxy = requestProxy;
         this.rpc = rpc;
         this.type = Type.PROGRESS;
     }
 
-    public AsyncResultSender(EndpointImplementation rpc, RequestProxy requestProxy, JudoException e) {
+    public AsyncResultSender(EndpointImpl rpc, RequestProxy requestProxy, JudoException e) {
         this.e = e;
         this.requestProxy = requestProxy;
         this.rpc = rpc;
         this.type = Type.ERROR;
     }
 
-    public AsyncResultSender(Request request, CacheInfo cacheInfo) {
+    public AsyncResultSender(RequestImpl request, CacheInfo cacheInfo) {
         this.callback = request.getCallback();
         this.request = request;
         this.rpc = request.getRpc();
@@ -66,7 +66,7 @@ public class AsyncResultSender implements Runnable {
     }
 
 
-    public AsyncResultSender(Request request, Object result) {
+    public AsyncResultSender(RequestImpl request, Object result) {
         this.result = result;
         this.callback = request.getCallback();
         this.request = request;
@@ -75,7 +75,7 @@ public class AsyncResultSender implements Runnable {
         this.type = Type.RESULT;
     }
 
-    public AsyncResultSender(Request request, int progress) {
+    public AsyncResultSender(RequestImpl request, int progress) {
         this.progress = progress;
         this.callback = request.getCallback();
         this.request = request;
@@ -84,19 +84,19 @@ public class AsyncResultSender implements Runnable {
         this.type = Type.PROGRESS;
     }
 
-    public AsyncResultSender(List<Request> requests, int progress) {
+    public AsyncResultSender(List<RequestImpl> requests, int progress) {
         this.progress = progress;
         this.requests = requests;
         this.type = Type.PROGRESS;
     }
 
-    public AsyncResultSender(List<Request> requests) {
+    public AsyncResultSender(List<RequestImpl> requests) {
         this.requests = requests;
         this.type = Type.START;
         this.cacheInfo=new CacheInfo(false,0L);
     }
 
-    public AsyncResultSender(Request request, JudoException e) {
+    public AsyncResultSender(RequestImpl request, JudoException e) {
         this.e = e;
         this.callback = request.getCallback();
         this.request = request;
@@ -165,7 +165,7 @@ public class AsyncResultSender implements Runnable {
                 callback.onFinish();
             }
         } else if (requestProxy != null && requestProxy.getBatchCallback() != null) {
-            BatchInterface<?> transaction = requestProxy.getBatchCallback();
+            Batch<?> transaction = requestProxy.getBatchCallback();
             if (requestProxy.isCancelled()) {
                 return;
             }
@@ -201,13 +201,13 @@ public class AsyncResultSender implements Runnable {
                 transaction.onFinish();
             }
         }else if(requests!=null && type==Type.PROGRESS){
-            for(Request batchRequest : requests){
+            for(RequestImpl batchRequest : requests){
                 if(batchRequest.getCallback()!=null) {
                     batchRequest.getCallback().onProgress(progress);
                 }
             }
         }else if(requests!=null && type==Type.START){
-            for(Request batchRequest : requests){
+            for(RequestImpl batchRequest : requests){
                 if(batchRequest.getCallback()!=null) {
                     batchRequest.getCallback().onStart(cacheInfo,batchRequest);
                 }

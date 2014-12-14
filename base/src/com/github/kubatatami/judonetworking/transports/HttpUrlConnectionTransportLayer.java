@@ -4,7 +4,7 @@ import android.os.Build;
 
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.internals.utils.ReflectionCache;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.internals.streams.RequestOutputStream;
 import com.github.kubatatami.judonetworking.utils.SecurityUtils;
 import com.github.kubatatami.judonetworking.internals.stats.TimeStat;

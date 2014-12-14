@@ -8,22 +8,22 @@ import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.EndpointClassic;
 import com.github.kubatatami.judonetworking.annotations.IgnoreNullParam;
-import com.github.kubatatami.judonetworking.batches.BatchInterface;
+import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.caches.DefaultDiskCache;
 import com.github.kubatatami.judonetworking.caches.DefaultMemoryCache;
 import com.github.kubatatami.judonetworking.caches.DiskCache;
 import com.github.kubatatami.judonetworking.caches.MemoryCache;
-import com.github.kubatatami.judonetworking.callbacks.CallbackInterface;
+import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.clonners.Clonner;
 import com.github.kubatatami.judonetworking.clonners.DefaultClonner;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.executors.JudoExecutor;
-import com.github.kubatatami.judonetworking.internals.requests.Request;
+import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.internals.requests.RequestOptions;
 import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
-import com.github.kubatatami.judonetworking.internals.utils.ReflectionCache;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.internals.virtuals.VirtualServerInfo;
 import com.github.kubatatami.judonetworking.logs.ErrorLogger;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
@@ -52,7 +52,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-public class EndpointImplementation implements Endpoint, EndpointClassic {
+public class EndpointImpl implements Endpoint, EndpointClassic {
 
     private RequestConnector requestConnector;
     private Handler handler = new Handler();
@@ -80,13 +80,13 @@ public class EndpointImplementation implements Endpoint, EndpointClassic {
     private boolean verifyResultModel = false;
     private boolean processingMethod = false;
     private long tokenExpireTimestamp = -1;
-    private Map<Integer,Request> singleCallMethods = new HashMap<Integer, Request>();
+    private Map<Integer,RequestImpl> singleCallMethods = new HashMap<Integer, RequestImpl>();
     private int id = 0;
     private ThreadPoolSizer threadPoolSizer =new DefaultThreadPoolSizer();
     private JudoExecutor executorService = new JudoExecutor(this);
     private UrlModifier urlModifier;
 
-    public EndpointImplementation(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
+    public EndpointImpl(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         init(context, protocolController, transportLayer, url);
     }
 
@@ -167,18 +167,18 @@ public class EndpointImplementation implements Endpoint, EndpointClassic {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> AsyncResult sendAsyncRequest(String url, String name, CallbackInterface<T> callback, Object... args) {
+    public <T> AsyncResult sendAsyncRequest(String url, String name, Callback<T> callback, Object... args) {
         return sendAsyncRequest(url, name, new RequestOptions(), callback, args);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> AsyncResult sendAsyncRequest(String url, String name, RequestOptions requestOptions, CallbackInterface<T> callback, Object... args) {
-        Request request = new Request(
+    public <T> AsyncResult sendAsyncRequest(String url, String name, RequestOptions requestOptions, Callback<T> callback, Object... args) {
+        RequestImpl request = new RequestImpl(
                 ++id, this, null,
                 name, requestOptions, args,
                 ((ParameterizedType) callback.getClass().getGenericSuperclass()).getActualTypeArguments()[0], getRequestConnector().getMethodTimeout(),
-                (CallbackInterface<Object>) callback, getProtocolController().getAdditionalRequestData());
+                (Callback<Object>) callback, getProtocolController().getAdditionalRequestData());
         request.setCustomUrl(url);
         request.setApiKeyRequired(requestOptions.apiKeyRequired());
         filterNullArgs(request);
@@ -189,7 +189,7 @@ public class EndpointImplementation implements Endpoint, EndpointClassic {
 
     @SuppressWarnings("unchecked")
     public <T> T sendRequest(String url, String name, Type returnType, RequestOptions requestOptions, Object... args) throws JudoException {
-        Request request = new Request(++id, this, null, name, requestOptions, args,
+        RequestImpl request = new RequestImpl(++id, this, null, name, requestOptions, args,
                 returnType,
                 getRequestConnector().getMethodTimeout(),
                 null, getProtocolController().getAdditionalRequestData());
@@ -201,7 +201,7 @@ public class EndpointImplementation implements Endpoint, EndpointClassic {
 
 
 
-    public void filterNullArgs(Request request){
+    public void filterNullArgs(RequestImpl request){
         if(request.getArgs()!=null){
             Annotation[][] paramAnnotations = ReflectionCache.getParameterAnnotations(request.getMethod());
             List<String> paramNames= new ArrayList<String>();
@@ -237,7 +237,7 @@ public class EndpointImplementation implements Endpoint, EndpointClassic {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> AsyncResult callInBatch(final Class<T> obj, final BatchInterface<T> batch) {
+    public <T> AsyncResult callInBatch(final Class<T> obj, final Batch<T> batch) {
 
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
             try {
@@ -267,7 +267,7 @@ public class EndpointImplementation implements Endpoint, EndpointClassic {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> AsyncResult callAsyncInBatch(final Class<T> obj, final BatchInterface<T> batch) {
+    public <T> AsyncResult callAsyncInBatch(final Class<T> obj, final Batch<T> batch) {
 
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
             try {
@@ -566,7 +566,7 @@ public class EndpointImplementation implements Endpoint, EndpointClassic {
         return percentLoss;
     }
 
-    public Map<Integer,Request> getSingleCallMethods() {
+    public Map<Integer,RequestImpl> getSingleCallMethods() {
         return singleCallMethods;
     }
 

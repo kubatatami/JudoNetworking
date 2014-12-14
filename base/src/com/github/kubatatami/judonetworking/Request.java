@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.internals.requests;
+package com.github.kubatatami.judonetworking;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -10,7 +10,7 @@ import java.lang.reflect.Type;
  * Time: 12:56
  * To change this template use File | Settings | File Templates.
  */
-public interface RequestInterface {
+public interface Request {
 
     public Integer getId();
 

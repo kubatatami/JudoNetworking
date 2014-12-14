@@ -15,7 +15,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  * Time: 22:48
  */
 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-public abstract class FragmentBatch<T> implements BatchInterface<T>, FragmentManager.OnBackStackChangedListener{
+public abstract class FragmentBatch<T> implements Batch<T>, FragmentManager.OnBackStackChangedListener{
 
 
     private final Fragment fragment;

@@ -1,7 +1,9 @@
 package com.github.kubatatami.judonetworking.callbacks;
 
+import android.support.v4.app.Fragment;
 import android.widget.ArrayAdapter;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 /**
@@ -10,17 +12,17 @@ import java.util.List;
  * Date: 14.03.2013
  * Time: 13:56
  */
-public class AdapterCallback<T> extends Callback<List<T>> {
+public class AdapterCallback<T> extends DefaultCallback<List<T>> {
 
-    private final ArrayAdapter<T> adapter;
+    private final WeakReference<ArrayAdapter<T>> adapter;
     private boolean clear = true;
 
     public AdapterCallback(ArrayAdapter<T> adapter) {
-        this.adapter = adapter;
+        this.adapter = new WeakReference<>(adapter);
     }
 
     public AdapterCallback(ArrayAdapter<T> adapter, boolean clear) {
-        this.adapter = adapter;
+        this.adapter = new WeakReference<>(adapter);
         this.clear = clear;
     }
 
@@ -30,16 +32,19 @@ public class AdapterCallback<T> extends Callback<List<T>> {
 
     @Override
     public void onSuccess(List<T> result) {
-        if (clear) {
-            adapter.clear();
-        }
-
-        adapter.setNotifyOnChange(false);
-        for (T object : result) {
-            if (filter(object)) {
-                adapter.add(object);
+        ArrayAdapter<T> adapter=this.adapter.get();
+        if(adapter!=null) {
+            if (clear) {
+                adapter.clear();
             }
+
+            adapter.setNotifyOnChange(false);
+            for (T object : result) {
+                if (filter(object)) {
+                    adapter.add(object);
+                }
+            }
+            adapter.notifyDataSetChanged();
         }
-        adapter.notifyDataSetChanged();
     }
 }

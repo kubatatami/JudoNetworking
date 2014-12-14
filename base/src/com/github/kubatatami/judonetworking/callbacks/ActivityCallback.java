@@ -1,7 +1,8 @@
 package com.github.kubatatami.judonetworking.callbacks;
 
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.os.Build;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
@@ -10,29 +11,20 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import java.lang.ref.WeakReference;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jbogacki
- * Date: 23.04.2013
- * Time: 11:40
+ * Created by Kuba on 13/12/14.
  */
-public class SupportFragmentCallback<T> extends DefaultCallback<T> implements FragmentManager.OnBackStackChangedListener {
-
-    private final WeakReference<Fragment> fragment;
+public class ActivityCallback<T> extends DefaultCallback<T>  {
+    private final WeakReference<Activity> activity;
     private AsyncResult asyncResult;
-    private FragmentManager manager;
 
-    public SupportFragmentCallback(Fragment fragment) {
-        this.fragment = new WeakReference<Fragment>(fragment);
-        this.manager = fragment.getFragmentManager();
-        if(manager!=null) {
-            manager.addOnBackStackChangedListener(this);
-        }
+    public ActivityCallback(Activity activity) {
+        this.activity = new WeakReference<>(activity);
     }
 
     @Override
     public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
-        if (fragment.get()!=null && fragment.get().getActivity() != null) {
+        if (isActive()) {
             onSafeStart(cacheInfo, asyncResult);
         } else {
             tryCancel();
@@ -41,7 +33,7 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
 
     @Override
     public final void onSuccess(T result) {
-        if (fragment.get()!=null && fragment.get().getActivity() != null) {
+        if (isActive()) {
             onSafeSuccess(result);
         } else {
             tryCancel();
@@ -50,7 +42,7 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
 
     @Override
     public final void onError(JudoException e) {
-        if (fragment.get()!=null && fragment.get().getActivity() != null) {
+        if (isActive()) {
             onSafeError(e);
         } else {
             tryCancel();
@@ -59,7 +51,7 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
 
     @Override
     public final void onProgress(int progress) {
-        if (fragment.get()!=null && fragment.get().getActivity() != null) {
+        if (isActive()) {
             onSafeProgress(progress);
         } else {
             tryCancel();
@@ -68,22 +60,25 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
 
     @Override
     public final void onFinish() {
-        if (fragment.get()!=null && fragment.get().getActivity() != null) {
+        if (isActive()) {
             onSafeFinish();
         } else {
             tryCancel();
-        }
-        if(manager!=null) {
-            manager.removeOnBackStackChangedListener(this);
         }
     }
 
     protected void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
-            if(manager!=null) {
-                manager.removeOnBackStackChangedListener(this);
-            }
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
+    protected boolean isActive(){
+        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.JELLY_BEAN_MR1){
+            return activity.get() != null && !activity.get().isDestroyed();
+        }else {
+            return activity.get() != null && !activity.get().isFinishing();
         }
     }
 
@@ -105,13 +100,5 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
 
     public void onSafeError(JudoException e) {
 
-    }
-
-
-    @Override
-    public void onBackStackChanged() {
-        if (fragment.get()!=null && fragment.get().getActivity() == null) {
-            tryCancel();
-        }
     }
 }

@@ -3,7 +3,7 @@ package com.github.kubatatami.judonetworking.callbacks;
 import android.view.View;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
+import com.github.kubatatami.judonetworking.CacheInfo;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * Created by Kuba on 23/05/14.
  */
-public class  UniqueViewCallback<Z,T> extends Callback<T> {
+public class  UniqueViewCallback<Z,T> extends DefaultCallback<T> {
 
     protected static final Map<View, UniqueViewCallback> viewCache = new HashMap<View, UniqueViewCallback>();
     protected final View view;

@@ -9,37 +9,20 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  * Date: 11.02.2013
  * Time: 22:48
  */
-public abstract class Batch<T> implements BatchInterface<T> {
+public interface Batch<T> {
 
-    @Override
-    public void onStart(AsyncResult asyncResult) {
+    public void onStart(AsyncResult asyncResult);
 
-    }
+    public void run(final T api);
 
-    @Override
-    public void run(final T api) {
+    public void runNonFatal(final T api);
 
-    }
+    public void onProgress(int progress);
 
-    @Override
-    public void runNonFatal(final T api) {
-    }
+    public void onError(JudoException e);
 
-    @Override
-    public void onSuccess(Object[] results) {
-    }
+    public void onSuccess(Object[] results);
 
-    @Override
-    public void onError(JudoException e) {
+    public void onFinish();
 
-    }
-
-    @Override
-    public void onProgress(int progress) {
-    }
-
-    @Override
-    public void onFinish() {
-
-    }
 }

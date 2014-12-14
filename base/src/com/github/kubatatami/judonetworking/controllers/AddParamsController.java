@@ -1,6 +1,6 @@
 package com.github.kubatatami.judonetworking.controllers;
 
-import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.Array;
@@ -28,7 +28,7 @@ public class AddParamsController extends ProtocolControllerWrapper {
     }
 
     @Override
-    public RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
+    public RequestInfo createRequest(String url, Request request) throws JudoException {
         String[] newParamNames = concatenate(request.getParamNames(), paramNames);
         Object[] newArgs = concatenate(request.getArgs(), additionalParams);
         request.setArgs(newArgs);

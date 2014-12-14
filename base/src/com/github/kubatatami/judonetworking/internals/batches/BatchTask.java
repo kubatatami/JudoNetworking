@@ -1,9 +1,9 @@
 package com.github.kubatatami.judonetworking.internals.batches;
 
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
-import com.github.kubatatami.judonetworking.internals.EndpointImplementation;
+import com.github.kubatatami.judonetworking.internals.EndpointImpl;
 import com.github.kubatatami.judonetworking.internals.ProgressObserver;
-import com.github.kubatatami.judonetworking.internals.requests.Request;
+import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 
 import java.util.ArrayList;
@@ -14,14 +14,14 @@ import java.util.concurrent.Future;
 
 public class BatchTask implements Runnable {
     private final Integer timeout;
-    private final List<Request> requests;
+    private final List<RequestImpl> requests;
     private List<RequestResult> response = null;
     private JudoException ex = null;
-    private final EndpointImplementation rpc;
+    private final EndpointImpl rpc;
     private ProgressObserver progressObserver;
     private Future future;
 
-    public BatchTask(EndpointImplementation rpc, ProgressObserver progressObserver, Integer timeout, List<Request> requests) {
+    public BatchTask(EndpointImpl rpc, ProgressObserver progressObserver, Integer timeout, List<RequestImpl> requests) {
         this.rpc = rpc;
         this.progressObserver = progressObserver;
         this.timeout = timeout;
@@ -47,7 +47,7 @@ public class BatchTask implements Runnable {
 
     public void execute() {
         future = rpc.getExecutorService().submit(this);
-        for(Request request : requests){
+        for(RequestImpl request : requests){
             request.setFuture(future);
         }
     }
@@ -61,14 +61,14 @@ public class BatchTask implements Runnable {
     }
 
 
-    public static List<List<Request>> timeAssignRequests(List<Request> list, final int partsNo) {
-        List<List<Request>> parts = new ArrayList<List<Request>>(partsNo);
+    public static List<List<RequestImpl>> timeAssignRequests(List<RequestImpl> list, final int partsNo) {
+        List<List<RequestImpl>> parts = new ArrayList<List<RequestImpl>>(partsNo);
         long[] weights = new long[partsNo];
         for (int i = 0; i < partsNo; i++) {
-            parts.add(new ArrayList<Request>());
+            parts.add(new ArrayList<RequestImpl>());
         }
         Collections.sort(list);
-        for (Request req : list) {
+        for (RequestImpl req : list) {
             int i = getSmallestPart(weights);
             weights[i] += req.getWeight();
             parts.get(i).add(req);
@@ -77,16 +77,16 @@ public class BatchTask implements Runnable {
         return parts;
     }
 
-    public static List<List<Request>> simpleAssignRequests(List<Request> list, final int partsNo) {
+    public static List<List<RequestImpl>> simpleAssignRequests(List<RequestImpl> list, final int partsNo) {
         int i;
-        List<List<Request>> parts = new ArrayList<List<Request>>(partsNo);
+        List<List<RequestImpl>> parts = new ArrayList<List<RequestImpl>>(partsNo);
         for (i = 0; i < partsNo; i++) {
-            parts.add(new ArrayList<Request>());
+            parts.add(new ArrayList<RequestImpl>());
         }
 
-        Collections.sort(list, new Comparator<Request>() {
+        Collections.sort(list, new Comparator<RequestImpl>() {
             @Override
-            public int compare(Request lhs, Request rhs) {
+            public int compare(RequestImpl lhs, RequestImpl rhs) {
                 if (lhs.isHighPriority() && !rhs.isHighPriority()) {
                     return -1;
                 } else if (!lhs.isHighPriority() && rhs.isHighPriority()) {
@@ -98,7 +98,7 @@ public class BatchTask implements Runnable {
         });
 
         i = 0;
-        for (Request elem : list) {
+        for (RequestImpl elem : list) {
             parts.get(i).add(elem);
             i++;
             if (i == partsNo) {

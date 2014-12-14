@@ -6,8 +6,10 @@ import android.app.FragmentManager;
 import android.os.Build;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
+import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+
+import java.lang.ref.WeakReference;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,14 +18,14 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  * Time: 11:40
  */
 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-public class FragmentCallback<T> extends Callback<T> implements FragmentManager.OnBackStackChangedListener {
+public class FragmentCallback<T> extends DefaultCallback<T> implements FragmentManager.OnBackStackChangedListener {
 
-    private final Fragment fragment;
+    private final WeakReference<Fragment> fragment;
     private AsyncResult asyncResult;
     private FragmentManager manager;
 
     public FragmentCallback(Fragment fragment) {
-        this.fragment = fragment;
+        this.fragment = new WeakReference<>(fragment);
         this.manager = fragment.getFragmentManager();
         if(manager!=null) {
             manager.addOnBackStackChangedListener(this);
@@ -33,7 +35,7 @@ public class FragmentCallback<T> extends Callback<T> implements FragmentManager.
     @Override
     public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
-        if (fragment.getActivity() != null) {
+        if (fragment.get()!=null && fragment.get().getActivity() != null) {
             onSafeStart(cacheInfo, asyncResult);
         } else {
             tryCancel();
@@ -42,7 +44,7 @@ public class FragmentCallback<T> extends Callback<T> implements FragmentManager.
 
     @Override
     public final void onSuccess(T result) {
-        if (fragment.getActivity() != null) {
+        if (fragment.get()!=null && fragment.get().getActivity() != null) {
             onSafeSuccess(result);
         } else {
             tryCancel();
@@ -51,7 +53,7 @@ public class FragmentCallback<T> extends Callback<T> implements FragmentManager.
 
     @Override
     public final void onError(JudoException e) {
-        if (fragment.getActivity() != null) {
+        if (fragment.get()!=null && fragment.get().getActivity() != null) {
             onSafeError(e);
         } else {
             tryCancel();
@@ -60,7 +62,7 @@ public class FragmentCallback<T> extends Callback<T> implements FragmentManager.
 
     @Override
     public final void onProgress(int progress) {
-        if (fragment.getActivity() != null) {
+        if (fragment.get()!=null && fragment.get().getActivity() != null) {
             onSafeProgress(progress);
         } else {
             tryCancel();
@@ -69,7 +71,7 @@ public class FragmentCallback<T> extends Callback<T> implements FragmentManager.
 
     @Override
     public final void onFinish() {
-        if (fragment.getActivity() != null) {
+        if (fragment.get()!=null && fragment.get().getActivity() != null) {
             onSafeFinish();
         } else {
             tryCancel();
@@ -111,7 +113,7 @@ public class FragmentCallback<T> extends Callback<T> implements FragmentManager.
 
     @Override
     public void onBackStackChanged() {
-        if (fragment.getActivity() == null) {
+        if (fragment.get()!=null && fragment.get().getActivity() == null) {
             tryCancel();
         }
     }

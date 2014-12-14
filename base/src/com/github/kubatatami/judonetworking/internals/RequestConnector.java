@@ -15,9 +15,9 @@ import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.VerifyModelException;
-import com.github.kubatatami.judonetworking.internals.cache.CacheInfo;
+import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
-import com.github.kubatatami.judonetworking.internals.requests.Request;
+import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.internals.results.CacheResult;
 import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
 import com.github.kubatatami.judonetworking.internals.results.NoNewResult;
@@ -26,7 +26,7 @@ import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResu
 import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
 import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStream;
-import com.github.kubatatami.judonetworking.internals.utils.ReflectionCache;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.internals.virtuals.VirtualCallback;
 import com.github.kubatatami.judonetworking.internals.virtuals.VirtualServerInfo;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
@@ -47,11 +47,11 @@ import java.util.Scanner;
 public class RequestConnector {
 
     private final String url;
-    private final EndpointImplementation rpc;
+    private final EndpointImpl rpc;
     private final TransportLayer transportLayer;
     private final Random randomGenerator = new Random();
 
-    public RequestConnector(String url, EndpointImplementation rpc, TransportLayer transportLayer) {
+    public RequestConnector(String url, EndpointImpl rpc, TransportLayer transportLayer) {
         this.url = url;
         this.rpc = rpc;
         this.transportLayer = transportLayer;
@@ -66,15 +66,15 @@ public class RequestConnector {
         return s.hasNext() ? s.next() : "";
     }
 
-    private RequestResult sendRequest(Request request, TimeStat timeStat) {
+    private RequestResult sendRequest(RequestImpl request, TimeStat timeStat) {
         return sendRequest(request, timeStat, null, null, false);
     }
 
-    private RequestResult sendRequest(Request request, TimeStat timeStat, String hash, Long time) {
+    private RequestResult sendRequest(RequestImpl request, TimeStat timeStat, String hash, Long time) {
         return sendRequest(request, timeStat, hash, time, false);
     }
 
-    private RequestResult sendRequest(Request request, TimeStat timeStat, String hash, Long time, boolean ignoreTokenError) {
+    private RequestResult sendRequest(RequestImpl request, TimeStat timeStat, String hash, Long time, boolean ignoreTokenError) {
         try {
             RequestResult result;
             long currentTokenExpireTimestamp;
@@ -89,7 +89,7 @@ public class RequestConnector {
                         request);
                 timeStat.tickCreateTime();
                 lossCheck();
-                EndpointImplementation.checkThread();
+                EndpointImpl.checkThread();
                 delay(request.getDelay());
                 currentTokenExpireTimestamp = rpc.getTokenExpireTimestamp();
                 if (rpc.getTokenCaller() != null && request.isApiKeyRequired() && !ignoreTokenError && !checkTokenExpireTimestamp(currentTokenExpireTimestamp)) {
@@ -101,7 +101,7 @@ public class RequestConnector {
                 }
                 TransportLayer.Connection conn = transportLayer.send(request.getName(), controller, requestInfo, request.getTimeout(), timeStat,
                         rpc.getDebugFlags(), request.getMethod(), new TransportLayer.CacheInfo(hash, time));
-                EndpointImplementation.checkThread();
+                EndpointImpl.checkThread();
                 if (!conn.isNewestAvailable()) {
                     if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
                         JudoLogger.log("No new data for method " + request.getName());
@@ -118,9 +118,9 @@ public class RequestConnector {
                     connectionStream = new ByteArrayInputStream(resStr.getBytes());
                 }
                 RequestInputStream stream = new RequestInputStream(connectionStream, timeStat, conn.getContentLength());
-                EndpointImplementation.checkThread();
+                EndpointImpl.checkThread();
                 result = controller.parseResponse(request, stream, conn.getHeaders());
-                EndpointImplementation.checkThread();
+                EndpointImpl.checkThread();
                 if (result instanceof RequestSuccessResult) {
                     result.hash = conn.getHash();
                     result.time = conn.getDate();
@@ -214,7 +214,7 @@ public class RequestConnector {
 
     }
 
-    public static void verifyResult(Request request, RequestResult result) throws VerifyModelException {
+    public static void verifyResult(RequestImpl request, RequestResult result) throws VerifyModelException {
         if (result instanceof RequestSuccessResult && !request.getReturnType().equals(Void.class)) {
 
 
@@ -301,7 +301,7 @@ public class RequestConnector {
     }
 
 
-    private Object handleVirtualServerRequest(Request request, TimeStat timeStat) throws JudoException {
+    private Object handleVirtualServerRequest(RequestImpl request, TimeStat timeStat) throws JudoException {
         try {
             if (request.getMethod() != null) {
                 VirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(request.getMethod().getDeclaringClass());
@@ -363,7 +363,7 @@ public class RequestConnector {
         return null;
     }
 
-    protected void findAndCreateBase64(Request request) {
+    protected void findAndCreateBase64(RequestImpl request) {
         if (request.getArgs() != null) {
             int i = 0;
             if (request.getMethod() != null) {
@@ -383,7 +383,7 @@ public class RequestConnector {
     }
 
     @SuppressWarnings("unchecked")
-    public Object call(Request request) throws JudoException {
+    public Object call(RequestImpl request) throws JudoException {
         try {
 
             CacheResult localCacheObject = null;
@@ -491,7 +491,7 @@ public class RequestConnector {
 
     }
 
-    public List<RequestResult> callBatch(List<Request> requests, ProgressObserver progressObserver, Integer timeout) throws JudoException {
+    public List<RequestResult> callBatch(List<RequestImpl> requests, ProgressObserver progressObserver, Integer timeout) throws JudoException {
         final List<RequestResult> results = new ArrayList<RequestResult>(requests.size());
 
 
@@ -500,7 +500,7 @@ public class RequestConnector {
 
             if (rpc.getProtocolController().isBatchSupported()) {
 
-                List<Request> copyRequest = new ArrayList<Request>(requests);
+                List<RequestImpl> copyRequest = new ArrayList<RequestImpl>(requests);
                 VirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(requests.get(0).getMethod().getDeclaringClass());
                 if (virtualServerInfo != null) {
 
@@ -509,7 +509,7 @@ public class RequestConnector {
                     int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
 
                     for (int i = copyRequest.size() - 1; i >= 0; i--) {
-                        Request request = copyRequest.get(i);
+                        RequestImpl request = copyRequest.get(i);
 
                         VirtualCallback callback = new VirtualCallback(request.getId());
                         Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
@@ -547,7 +547,7 @@ public class RequestConnector {
                     }
                 }
                 String requestsName = "";
-                for (Request request : requests) {
+                for (RequestImpl request : requests) {
                     requestsName += " " + request.getName();
                     findAndCreateBase64(request);
                 }
@@ -556,7 +556,7 @@ public class RequestConnector {
                 }
             } else {
 
-                for (Request request : requests) {
+                for (RequestImpl request : requests) {
                     findAndCreateBase64(request);
                 }
 
@@ -564,7 +564,7 @@ public class RequestConnector {
                     progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (requests.size() - 1) * TimeStat.TICKS);
                 }
 
-                for (final Request request : requests) {
+                for (final RequestImpl request : requests) {
 
                     final TimeStat timeStat = new TimeStat(progressObserver);
 
@@ -612,7 +612,7 @@ public class RequestConnector {
         }
     }
 
-    public List<RequestResult> callRealBatch(List<Request> requests, ProgressObserver progressObserver, Integer timeout, String requestsName) throws JudoException {
+    public List<RequestResult> callRealBatch(List<RequestImpl> requests, ProgressObserver progressObserver, Integer timeout, String requestsName) throws JudoException {
 
         try {
 
@@ -625,13 +625,13 @@ public class RequestConnector {
             timeStat.tickCreateTime();
             lossCheck();
             int maxDelay = 0;
-            for (Request request : requests) {
+            for (RequestImpl request : requests) {
                 maxDelay = Math.max(maxDelay, request.getDelay());
             }
-            EndpointImplementation.checkThread();
+            EndpointImpl.checkThread();
             delay(maxDelay);
             boolean isApiRequired = false;
-            for (Request request : requests) {
+            for (RequestImpl request : requests) {
                 if (request.isApiKeyRequired()) {
                     isApiRequired = true;
                 }
@@ -645,7 +645,7 @@ public class RequestConnector {
                 }
             }
             TransportLayer.Connection conn = transportLayer.send(requestsName, controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null, null);
-            EndpointImplementation.checkThread();
+            EndpointImpl.checkThread();
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
 
@@ -653,16 +653,16 @@ public class RequestConnector {
                 longLog("Response body(" + requestsName + ", " + resStr.length() + " Bytes)", resStr);
                 connectionStream = new ByteArrayInputStream(resStr.getBytes());
             }
-            EndpointImplementation.checkThread();
+            EndpointImpl.checkThread();
             RequestInputStream stream = new RequestInputStream(connectionStream, timeStat, conn.getContentLength());
             responses = controller.parseResponses((List) requests, stream, conn.getHeaders());
-            EndpointImplementation.checkThread();
+            EndpointImpl.checkThread();
             timeStat.tickParseTime();
             conn.close();
             timeStat.tickEndTime();
             if (rpc.isTimeProfiler()) {
 
-                for (Request request : requests) {
+                for (RequestImpl request : requests) {
                     refreshStat(request.getName(), timeStat.getMethodTime() / requests.size());
                 }
                 rpc.saveStat();
@@ -675,7 +675,7 @@ public class RequestConnector {
 
             return responses;
         } catch (JudoException e) {
-            for (Request request : requests) {
+            for (RequestImpl request : requests) {
                 refreshErrorStat(request.getName(), request.getTimeout());
                 rpc.saveStat();
             }

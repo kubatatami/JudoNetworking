@@ -8,10 +8,10 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
-import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
@@ -79,7 +79,7 @@ public class JsonRpc2Controller extends JsonRpcController {
         return javaType;
     }
 
-    protected JsonRpcResponseModel2 readObject(ObjectReader reader, JsonParser parser, Type type, SparseArray<RequestInterface> requestMap) throws IOException {
+    protected JsonRpcResponseModel2 readObject(ObjectReader reader, JsonParser parser, Type type, SparseArray<Request> requestMap) throws IOException {
         JsonRpcResponseModel2 responseModel = new JsonRpcResponseModel2();
         JsonNode result=null;
         while (parser.nextToken() != JsonToken.END_OBJECT) {
@@ -130,7 +130,7 @@ public class JsonRpc2Controller extends JsonRpcController {
 
 
     @Override
-    public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
+    public RequestResult parseResponse(Request request, InputStream stream, Map<String, List<String>> headers) {
         JsonParser parser = null;
         try {
             JsonRpcResponseModel2 response;
@@ -182,13 +182,13 @@ public class JsonRpc2Controller extends JsonRpcController {
     }
 
     @Override
-    public ProtocolController.RequestInfo createRequests(String url, List<RequestInterface> requests) throws JudoException {
+    public ProtocolController.RequestInfo createRequests(String url, List<Request> requests) throws JudoException {
         try {
             int i = 0;
             ProtocolController.RequestInfo requestInfo = new ProtocolController.RequestInfo();
             requestInfo.url = url;
             Object[] requestsJson = new Object[requests.size()];
-            for (RequestInterface request : requests) {
+            for (Request request : requests) {
                 requestsJson[i] = createRequestObject(request);
                 i++;
             }
@@ -203,13 +203,13 @@ public class JsonRpc2Controller extends JsonRpcController {
     }
 
     @Override
-    public List<RequestResult> parseResponses(List<RequestInterface> requests, InputStream stream, Map<String, List<String>> headers) throws JudoException {
+    public List<RequestResult> parseResponses(List<Request> requests, InputStream stream, Map<String, List<String>> headers) throws JudoException {
         JsonParser parser = null;
         try {
             ObjectReader reader = mapper.reader();
             List<RequestResult> finalResponses = new ArrayList<RequestResult>(requests.size());
-            SparseArray<RequestInterface> requestMap=new SparseArray< RequestInterface>(requests.size());
-            for(RequestInterface requestInterface : requests){
+            SparseArray<Request> requestMap=new SparseArray<Request>(requests.size());
+            for(Request requestInterface : requests){
                 requestMap.put(requestInterface.getId(), requestInterface);
             }
             parser = factory.createParser(stream);

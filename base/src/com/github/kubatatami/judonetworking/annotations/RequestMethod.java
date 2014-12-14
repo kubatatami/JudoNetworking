@@ -1,6 +1,6 @@
 package com.github.kubatatami.judonetworking.annotations;
 
-import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
+import com.github.kubatatami.judonetworking.Request;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -29,7 +29,7 @@ public @interface RequestMethod {
 
     static final class DefaultModifier implements Modifier {
         @Override
-        public void modify(RequestInterface request) {
+        public void modify(Request request) {
 
         }
     }
@@ -39,7 +39,7 @@ public @interface RequestMethod {
      */
     public interface Modifier {
 
-        public void modify(RequestInterface request);
+        public void modify(Request request);
 
     }
 }

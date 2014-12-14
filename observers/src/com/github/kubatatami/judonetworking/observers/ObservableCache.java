@@ -3,7 +3,7 @@ package com.github.kubatatami.judonetworking.observers;
 import android.content.Context;
 import android.support.v4.util.LruCache;
 
-import com.github.kubatatami.judonetworking.internals.utils.ReflectionCache;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

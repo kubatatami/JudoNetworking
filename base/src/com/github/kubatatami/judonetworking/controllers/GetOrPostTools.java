@@ -1,6 +1,6 @@
 package com.github.kubatatami.judonetworking.controllers;
 
-import com.github.kubatatami.judonetworking.internals.requests.RequestInterface;
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import org.apache.http.NameValuePair;
@@ -23,7 +23,7 @@ public class GetOrPostTools {
     private GetOrPostTools() {
     }
 
-    public static String createRequest(RequestInterface request, String apiKey, String apiKeyName) throws JudoException {
+    public static String createRequest(Request request, String apiKey, String apiKeyName) throws JudoException {
         List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
         int i = 0;
         if (apiKeyName != null && request.isApiKeyRequired()) {
