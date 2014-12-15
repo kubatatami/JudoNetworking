@@ -18,14 +18,14 @@ import java.lang.ref.WeakReference;
 public class SupportFragmentCallback<T> extends DefaultCallback<T> implements FragmentManager.OnBackStackChangedListener {
 
     private final WeakReference<Fragment> fragment;
+    private final WeakReference<FragmentManager> manager;
     private AsyncResult asyncResult;
-    private FragmentManager manager;
 
     public SupportFragmentCallback(Fragment fragment) {
-        this.fragment = new WeakReference<Fragment>(fragment);
-        this.manager = fragment.getFragmentManager();
-        if(manager!=null) {
-            manager.addOnBackStackChangedListener(this);
+        this.fragment = new WeakReference<>(fragment);
+        this.manager = new WeakReference<>(fragment.getFragmentManager());
+        if(manager.get()!=null) {
+            manager.get().addOnBackStackChangedListener(this);
         }
     }
 
@@ -73,16 +73,16 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
         } else {
             tryCancel();
         }
-        if(manager!=null) {
-            manager.removeOnBackStackChangedListener(this);
+        if(manager.get()!=null) {
+            manager.get().removeOnBackStackChangedListener(this);
         }
     }
 
     protected void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
-            if(manager!=null) {
-                manager.removeOnBackStackChangedListener(this);
+            if(manager.get()!=null) {
+                manager.get().removeOnBackStackChangedListener(this);
             }
         }
     }

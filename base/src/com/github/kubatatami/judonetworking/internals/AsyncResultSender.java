@@ -199,6 +199,8 @@ public class AsyncResultSender implements Runnable {
             }
             if (type == Type.RESULT || type == Type.ERROR) {
                 transaction.onFinish();
+                requestProxy.clearBatchCallback();
+
             }
         }else if(requests!=null && type==Type.PROGRESS){
             for(RequestImpl batchRequest : requests){

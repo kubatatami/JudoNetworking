@@ -627,6 +627,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                     @Override
                     public void run() {
                         batchCallback.onFinish();
+                        clearBatchCallback();
                     }
                 });
             }
@@ -651,4 +652,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         return batchCallback;
     }
 
+    public void clearBatchCallback() {
+        batchCallback=null;
+    }
 }
