@@ -109,7 +109,8 @@ public class JsonCustomModelController<T> extends ProtocolControllerWrapper {
                     throw new ParseException("Data field is required.");
                 }
 
-                if ((status != null && !status) || errorMessage != null || errorCode != null) {
+
+                if ((status != null && !status) || ( status == null && (errorMessage != null || errorCode != null))) {
                     throw new ProtocolException(errorMessage != null ? errorMessage : "", errorCode != null ? errorCode : 0);
                 }
 
