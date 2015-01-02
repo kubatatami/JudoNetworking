@@ -1,5 +1,9 @@
+-boolean w konst. callbackow czy cancelowac
+-opcjonalnie - jesli rozpoczety request, podpinanie callbacka
+
 -rozbicie klasy RequestProxy na faktyczne MethodProxy i klase obslugujaca Batche
 -rozbicie klasy RequestConnector na klase(klasy narzędziowe) oraz klasy od single oraz batch requests
+
 
 -usuniecie metody z obiektu request, wyciagniecie potrzebnych informacji do obiektu serializable (nazwa, hashcode, adnotacje)
 -warstwa abstrakcji na parametry z adnotacji i classic (wprowadzenie w classic pozostałych możliwości(poza virtualservers i batch)
