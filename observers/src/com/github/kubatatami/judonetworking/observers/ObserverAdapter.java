@@ -144,7 +144,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> implements Iterable<T> {
             int i=0;
             @Override
             public boolean hasNext() {
-                return i+1<getCount();
+                return i<getCount();
             }
 
             @Override
