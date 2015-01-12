@@ -13,6 +13,8 @@ import java.lang.ref.WeakReference;
 /**
  * Created by Kuba on 13/12/14.
  */
+
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 public class ActivityCallback<T> extends DefaultCallback<T>  {
     private final WeakReference<Activity> activity;
     private AsyncResult asyncResult;
@@ -73,13 +75,9 @@ public class ActivityCallback<T> extends DefaultCallback<T>  {
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
+
     protected boolean isActive(){
-        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.JELLY_BEAN_MR1){
-            return activity.get() != null && !activity.get().isDestroyed();
-        }else {
-            return activity.get() != null && !activity.get().isFinishing();
-        }
+        return activity.get() != null && !activity.get().isFinishing();
     }
 
     public void onSafeStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
