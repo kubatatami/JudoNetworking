@@ -226,12 +226,12 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 }
             }
         } catch (final JudoException e) {
-            if (rpc.getErrorLoggers().size() ==0 && !(e instanceof CancelException)) {
+            if (rpc.getErrorLoggers().size() == 0 && !(e instanceof CancelException)) {
                 final RequestImpl finalRequest = request;
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
-                        for(ErrorLogger errorLogger : rpc.getErrorLoggers()) {
+                        for (ErrorLogger errorLogger : rpc.getErrorLoggers()) {
                             errorLogger.onError(e, finalRequest);
                         }
                     }
@@ -427,13 +427,13 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     }
 
     public void sendBatchRequest(final List<RequestImpl> batches, BatchProgressObserver progressObserver,
-                                    final Map<Integer, Pair<RequestImpl, Object>> cacheObjects) {
+                                 final Map<Integer, Pair<RequestImpl, Object>> cacheObjects) {
         final List<RequestResult> responses = Collections.synchronizedList(new ArrayList<RequestResult>(batches.size()));
 
         try {
             rpc.getHandler().post(new AsyncResultSender(batches));
-            int connections = rpc.getBestConnectionsSize()-(rpc.getExecutorService().getActiveCount()-1);
-            connections = Math.max(Math.min(connections, batches.size()),1);
+            int connections = rpc.getBestConnectionsSize() - (rpc.getExecutorService().getActiveCount() - 1);
+            connections = Math.max(Math.min(connections, batches.size()), 1);
             if (connections > 1) {
 
                 List<List<RequestImpl>> requestParts = assignRequestsToConnections(batches, connections);
@@ -499,75 +499,84 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         JudoException ex = null;
         RequestImpl exceptionRequest = null;
         int i = 0;
-        for (RequestImpl request : requests) {
-            try {
-                RequestResult response = null;
-
-                if(i<responses.size()) {
-                    response = responses.get(i);
-                }
-
-                if (response!=null && response.cacheObject != null) {
-                    results[i] = response.cacheObject;
-                } else {
-
-                    if(requests.size()!=responses.size()){
-                        StringBuilder requestNameBuilder = new StringBuilder();
-                        StringBuilder responseNameBuilder = new StringBuilder();
-                        for(RequestImpl req : requests){
-                            requestNameBuilder.append(req.getName());
-                            requestNameBuilder.append("\n");
-                        }
-                        for(RequestResult res : responses){
-                            String resultString=res.result.toString();
-                            resultString=resultString.length()>30? resultString.substring(0,29) : resultString;
-                            responseNameBuilder.append(resultString);
-                            responseNameBuilder.append("\n");
-                        }
-                        throw new ParseException("Wrong server response. Expect " + requests.size() +
-                                " batch responses, get " + responses.size()
-                                + "\nRequests:\n"+requestNameBuilder.toString()
-                                + "\nResponse:\n"+responseNameBuilder.toString()
-                        );
-                    }
-                    else if (response.error != null) {
-                        throw response.error;
-                    }
-
-                    if (request.getReturnType() != Void.class) {
-                        if (rpc.isVerifyResultModel()) {
-                            RequestConnector.verifyResult(request, response);
-                        }
-                        if (rpc.isProcessingMethod()) {
-                            RequestConnector.processingMethod(response.result);
-                        }
-                        results[i] = response.result;
-                        if ((rpc.isCacheEnabled() && request.isLocalCacheable()) || rpc.isTest()) {
-                            rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), results[i], request.getLocalCacheSize());
-                            if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
-                                results[i] = rpc.getClonner().clone(results[i]);
-                            }
-                            LocalCache.CacheLevel cacheLevel = rpc.isTest() ? LocalCache.CacheLevel.DISK_CACHE : request.getLocalCacheLevel();
-
-                            if (cacheLevel != LocalCache.CacheLevel.MEMORY_ONLY) {
-                                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
-                                rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getLocalCacheSize());
-                            }
-                        } else if (rpc.isCacheEnabled() && request.isServerCacheable() && (response.hash != null || response.time != null)) {
-                            CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), response.hash, response.time, request.getServerCacheLevel());
-                            rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getServerCacheSize());
-                        }
-                    }
-                }
-                request.invokeCallback(results[i]);
-            } catch (JudoException e) {
-                if (request.isBatchFatal()) {
-                    ex = e;
-                    exceptionRequest = request;
-                }
-                request.invokeCallbackException(e);
+        if (requests.size() != responses.size()) {
+            StringBuilder requestNameBuilder = new StringBuilder();
+            StringBuilder responseNameBuilder = new StringBuilder();
+            for (RequestImpl req : requests) {
+                requestNameBuilder.append(req.getName());
+                requestNameBuilder.append("\n");
             }
-            i++;
+            for (RequestResult res : responses) {
+                String resultString;
+                if(res.result!=null){
+                    resultString = res.result.toString();
+                }else if(res.error!=null){
+                    resultString = res.error.toString();
+                }else{
+                    resultString = "NO RESPONSE";
+                }
+                resultString = resultString.length() > 30 ? resultString.substring(0, 29) : resultString;
+                responseNameBuilder.append(resultString);
+                responseNameBuilder.append("\n");
+            }
+
+            ex = new ParseException("Wrong server response. Expect " + requests.size() +
+                    " batch responses, get " + responses.size()
+                    + "\nRequests:\n" + requestNameBuilder.toString()
+                    + "\nResponse:\n" + responseNameBuilder.toString()
+            );
+        }else {
+            for (RequestImpl request : requests) {
+                try {
+                    RequestResult response = null;
+
+                    if (i < responses.size()) {
+                        response = responses.get(i);
+                    }
+
+                    if (response != null && response.cacheObject != null) {
+                        results[i] = response.cacheObject;
+                    } else {
+
+                        if (response.error != null) {
+                            throw response.error;
+                        }
+
+                        if (request.getReturnType() != Void.class) {
+                            if (rpc.isVerifyResultModel()) {
+                                RequestConnector.verifyResult(request, response);
+                            }
+                            if (rpc.isProcessingMethod()) {
+                                RequestConnector.processingMethod(response.result);
+                            }
+                            results[i] = response.result;
+                            if ((rpc.isCacheEnabled() && request.isLocalCacheable()) || rpc.isTest()) {
+                                rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), results[i], request.getLocalCacheSize());
+                                if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
+                                    results[i] = rpc.getClonner().clone(results[i]);
+                                }
+                                LocalCache.CacheLevel cacheLevel = rpc.isTest() ? LocalCache.CacheLevel.DISK_CACHE : request.getLocalCacheLevel();
+
+                                if (cacheLevel != LocalCache.CacheLevel.MEMORY_ONLY) {
+                                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
+                                    rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getLocalCacheSize());
+                                }
+                            } else if (rpc.isCacheEnabled() && request.isServerCacheable() && (response.hash != null || response.time != null)) {
+                                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), response.hash, response.time, request.getServerCacheLevel());
+                                rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getServerCacheSize());
+                            }
+                        }
+                    }
+                    request.invokeCallback(results[i]);
+                } catch (JudoException e) {
+                    if (request.isBatchFatal()) {
+                        ex = e;
+                        exceptionRequest = request;
+                    }
+                    request.invokeCallbackException(e);
+                }
+                i++;
+            }
         }
         if (batch != null) {
             if (ex == null) {
@@ -583,7 +592,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
-                        for(ErrorLogger errorLogger : rpc.getErrorLoggers()) {
+                        for (ErrorLogger errorLogger : rpc.getErrorLoggers()) {
                             errorLogger.onError(finalEx, finalRequest);
                         }
                     }
@@ -653,6 +662,6 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     }
 
     public void clearBatchCallback() {
-        batchCallback=null;
+        batchCallback = null;
     }
 }
