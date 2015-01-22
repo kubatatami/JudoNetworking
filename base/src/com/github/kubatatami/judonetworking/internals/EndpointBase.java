@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking.internals;
 
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.logs.ErrorLogger;
 
@@ -34,6 +35,8 @@ public interface EndpointBase {
     public void addErrorLogger(ErrorLogger logger);
 
     public void removeErrorLogger(ErrorLogger logger);
+
+    public void setOnRequestEventListener(OnRequestEventListener listener);
 
 
     public void setPercentLoss(float percentLoss);
@@ -125,6 +128,13 @@ public interface EndpointBase {
     interface UrlModifier {
 
         public String createUrl(String url);
+
+    }
+
+    interface OnRequestEventListener{
+
+        public void onStart(Request request, int requestsCount);
+        public void onStop(Request request, int requestsCount);
 
     }
 }

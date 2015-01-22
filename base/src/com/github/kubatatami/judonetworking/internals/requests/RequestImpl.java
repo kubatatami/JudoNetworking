@@ -381,6 +381,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
             synchronized (rpc.getSingleCallMethods()) {
                 rpc.getSingleCallMethods().remove(CacheMethod.getMethodId(method));
             }
+
             if (future != null) {
                 future.cancel(true);
             }
@@ -388,6 +389,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
                 @Override
                 public void run() {
                     callback.onFinish();
+                    rpc.stopRequest(RequestImpl.this);
                 }
             });
         }

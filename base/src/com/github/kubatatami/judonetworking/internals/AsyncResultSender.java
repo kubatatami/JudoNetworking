@@ -225,6 +225,12 @@ public class AsyncResultSender implements Runnable {
                             JudoLogger.log("Request " + request.getName() + "(" + methodId + ")" + " removed from SingleCall queue.");
                         }
                     }
+                    rpc.getHandler().post(new Runnable() {
+                        @Override
+                        public void run() {
+                            rpc.stopRequest(request);
+                        }
+                    });
                     break;
             }
         }

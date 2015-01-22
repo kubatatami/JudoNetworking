@@ -7,6 +7,7 @@ import android.os.Looper;
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.EndpointClassic;
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.annotations.IgnoreNullParam;
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.caches.DefaultDiskCache;
@@ -80,11 +81,13 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     private boolean verifyResultModel = false;
     private boolean processingMethod = false;
     private long tokenExpireTimestamp = -1;
-    private Map<Integer,RequestImpl> singleCallMethods = new HashMap<Integer, RequestImpl>();
+    private Map<Integer, RequestImpl> singleCallMethods = new HashMap<Integer, RequestImpl>();
     private int id = 0;
-    private ThreadPoolSizer threadPoolSizer =new DefaultThreadPoolSizer();
+    private ThreadPoolSizer threadPoolSizer = new DefaultThreadPoolSizer();
     private JudoExecutor executorService = new JudoExecutor(this);
     private UrlModifier urlModifier;
+    private OnRequestEventListener onRequestEventListener;
+    private int requestCount = 0;
 
     public EndpointImpl(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         init(context, protocolController, transportLayer, url);
@@ -200,28 +203,27 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
 
-
-    public void filterNullArgs(RequestImpl request){
-        if(request.getArgs()!=null){
+    public void filterNullArgs(RequestImpl request) {
+        if (request.getArgs() != null) {
             Annotation[][] paramAnnotations = ReflectionCache.getParameterAnnotations(request.getMethod());
-            List<String> paramNames= new ArrayList<String>();
+            List<String> paramNames = new ArrayList<String>();
             List<Object> args = new ArrayList<Object>();
             Collections.addAll(paramNames, request.getParamNames());
             Collections.addAll(args, request.getArgs());
-            for(int i=args.size()-1;i>=0;i--){
-                if(args.get(i)==null){
-                    boolean ignore=false;
+            for (int i = args.size() - 1; i >= 0; i--) {
+                if (args.get(i) == null) {
+                    boolean ignore = false;
 
-                    IgnoreNullParam ignoreNullParam=ReflectionCache.findAnnotation(paramAnnotations[i], IgnoreNullParam.class);
-                    if(ignoreNullParam!=null){
-                        ignore=ignoreNullParam.value();
-                    }else{
-                        ignoreNullParam=ReflectionCache.getAnnotation(request.getMethod().getDeclaringClass(), IgnoreNullParam.class);
-                        if(ignoreNullParam!=null){
-                            ignore=ignoreNullParam.value();
+                    IgnoreNullParam ignoreNullParam = ReflectionCache.findAnnotation(paramAnnotations[i], IgnoreNullParam.class);
+                    if (ignoreNullParam != null) {
+                        ignore = ignoreNullParam.value();
+                    } else {
+                        ignoreNullParam = ReflectionCache.getAnnotation(request.getMethod().getDeclaringClass(), IgnoreNullParam.class);
+                        if (ignoreNullParam != null) {
+                            ignore = ignoreNullParam.value();
                         }
                     }
-                    if(ignore) {
+                    if (ignore) {
                         args.remove(i);
                         if (paramNames.size() > i) {
                             paramNames.remove(i);
@@ -327,6 +329,25 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @Override
     public void removeErrorLogger(ErrorLogger logger) {
         errorLoggers.remove(logger);
+    }
+
+    public void startRequest(Request request) {
+        requestCount++;
+        if (onRequestEventListener != null) {
+            onRequestEventListener.onStart(request, requestCount);
+        }
+    }
+
+    public void stopRequest(Request request) {
+        requestCount--;
+        if (onRequestEventListener != null) {
+            onRequestEventListener.onStop(request, requestCount);
+        }
+    }
+
+    @Override
+    public void setOnRequestEventListener(OnRequestEventListener onRequestEventListener) {
+        this.onRequestEventListener = onRequestEventListener;
     }
 
     @Override
@@ -477,8 +498,8 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     public Map<String, MethodStat> getStats() {
         if (stats == null) {
             if (statFile.exists() && statFile.length() < maxStatFileSize * 1024) {
-                FileInputStream fileStream=null;
-                ObjectInputStream os=null;
+                FileInputStream fileStream = null;
+                ObjectInputStream os = null;
                 try {
                     fileStream = new FileInputStream(statFile);
                     os = new ObjectInputStream(fileStream);
@@ -487,7 +508,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
                 } catch (Exception e) {
                     JudoLogger.log(e);
                     stats = Collections.synchronizedMap(new HashMap<String, MethodStat>());
-                }finally {
+                } finally {
                     try {
                         if (os != null) {
                             os.close();
@@ -495,7 +516,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
                         if (fileStream != null) {
                             fileStream.close();
                         }
-                    }catch(IOException ex){
+                    } catch (IOException ex) {
                         ex.printStackTrace();
                     }
                 }
@@ -547,9 +568,9 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     public String getUrl() {
-        if(urlModifier!=null){
+        if (urlModifier != null) {
             return urlModifier.createUrl(url);
-        }else {
+        } else {
             return url;
         }
     }
@@ -566,7 +587,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         return percentLoss;
     }
 
-    public Map<Integer,RequestImpl> getSingleCallMethods() {
+    public Map<Integer, RequestImpl> getSingleCallMethods() {
         return singleCallMethods;
     }
 
