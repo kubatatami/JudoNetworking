@@ -29,7 +29,7 @@ public class JudoExecutor extends ThreadPoolExecutor{
                 JudoLogger.log("Create thread " + count);
             }
 
-            return new ConnectionThread(runnable,threadPriority,count);
+            return new ConnectionThread(runnable,threadPriority,count, endpoint);
         }
     };
 
@@ -46,6 +46,8 @@ public class JudoExecutor extends ThreadPoolExecutor{
     @Override
     protected void beforeExecute(Thread t, Runnable r) {
         super.beforeExecute(t, r);
+        JudoExecutor.ConnectionThread connectionThread = (JudoExecutor.ConnectionThread) t;
+        connectionThread.resetCanceled();
         if ((endpoint.getDebugFlags() & Endpoint.THREAD_DEBUG) > 0) {
             JudoLogger.log("Before execute thread " + t.getName() + ":" + toString());
         }
@@ -99,10 +101,12 @@ public class JudoExecutor extends ThreadPoolExecutor{
         int threadPriority;
         Canceller canceller;
         boolean canceled;
+        Endpoint endpoint;
 
-        public ConnectionThread(Runnable runnable, int threadPriority, int count) {
+        public ConnectionThread(Runnable runnable, int threadPriority, int count, Endpoint endpoint) {
             super("JudoNetworking ConnectionPool " + count);
             this.runnable = runnable;
+            this.endpoint = endpoint;
             this.threadPriority = threadPriority;
 
         }
@@ -113,8 +117,13 @@ public class JudoExecutor extends ThreadPoolExecutor{
             runnable.run();
         }
 
+
+
         @Override
         public void interrupt() {
+            if((endpoint.getDebugFlags() & Endpoint.THREAD_DEBUG) > 0){
+                JudoLogger.log("Interrupt task on: " + getName());
+            }
             canceled=true;
             super.interrupt();
             if(canceller!=null){

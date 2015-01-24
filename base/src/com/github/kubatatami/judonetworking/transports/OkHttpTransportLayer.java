@@ -10,7 +10,9 @@ import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Call;
+import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -21,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.net.Proxy;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.Date;
@@ -39,9 +42,28 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
     protected OkHttpConnectionModifier okHttpConnectionModifier;
     protected OkHttpClient baseClient = new OkHttpClient();
 
+
+    public OkHttpTransportLayer() {
+        baseClient.setAuthenticator(new Authenticator() {
+            @Override
+            public Request authenticate(Proxy proxy, Response response) throws IOException {
+                if(authKey!=null) {
+                    return response.request().newBuilder().header("Authorization", authKey).build();
+                }else{
+                    return null;
+                }
+            }
+
+            @Override
+            public Request authenticateProxy(Proxy proxy, Response response) throws IOException {
+                return null;
+            }
+        });
+    }
+
     protected void initSetup(OkHttpClient client, Request.Builder builder, ProtocolController.RequestInfo requestInfo,
                              int timeout, TimeStat timeStat, CacheInfo cacheInfo) throws Exception {
-
+        client.setFollowRedirects(followRedirection);
         client.setFollowSslRedirects(followRedirection);
         if (cacheInfo != null) {
             if (cacheInfo.hash != null) {
@@ -144,7 +166,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                 JudoExecutor.ConnectionThread thread = (JudoExecutor.ConnectionThread) Thread.currentThread();
                 if (thread.isCanceled()) {
                     thread.resetCanceled();
-                    throw new CancelException();
+                    throw new CancelException(thread.getName());
                 } else {
                     throw ex;
                 }
