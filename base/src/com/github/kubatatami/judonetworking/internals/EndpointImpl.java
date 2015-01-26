@@ -69,7 +69,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     private File statFile;
     private float percentLoss;
     private int maxStatFileSize = 50; //KB
-    private Set<ErrorLogger> errorLoggers = new HashSet<ErrorLogger>();
+    private Set<ErrorLogger> errorLoggers = new HashSet<>();
     private Clonner clonner = new DefaultClonner();
     private boolean test = false;
     private String testName = null;
@@ -77,11 +77,11 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     private int delay = 0;
     private String url;
     private ProtocolController protocolController;
-    private HashMap<Class, VirtualServerInfo> virtualServers = new HashMap<Class, VirtualServerInfo>();
+    private HashMap<Class, VirtualServerInfo> virtualServers = new HashMap<>();
     private boolean verifyResultModel = false;
     private boolean processingMethod = false;
     private long tokenExpireTimestamp = -1;
-    private Map<Integer, RequestImpl> singleCallMethods = new HashMap<Integer, RequestImpl>();
+    private Map<Integer, RequestImpl> singleCallMethods = new HashMap<>();
     private int id = 0;
     private ThreadPoolSizer threadPoolSizer = new DefaultThreadPoolSizer();
     private JudoExecutor executorService = new JudoExecutor(this);
@@ -206,8 +206,8 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     public void filterNullArgs(RequestImpl request) {
         if (request.getArgs() != null) {
             Annotation[][] paramAnnotations = ReflectionCache.getParameterAnnotations(request.getMethod());
-            List<String> paramNames = new ArrayList<String>();
-            List<Object> args = new ArrayList<Object>();
+            List<String> paramNames = new ArrayList<>();
+            List<Object> args = new ArrayList<>();
             Collections.addAll(paramNames, request.getParamNames());
             Collections.addAll(args, request.getArgs());
             for (int i = args.size() - 1; i >= 0; i--) {

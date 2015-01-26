@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class  UniqueViewCallback<Z,T> extends DefaultCallback<T> {
 
-    protected static final Map<View, UniqueViewCallback> viewCache = new HashMap<View, UniqueViewCallback>();
+    protected static final Map<View, UniqueViewCallback> viewCache = new HashMap<>();
     protected final View view;
     protected AsyncResult asyncResult;
     protected Z object;

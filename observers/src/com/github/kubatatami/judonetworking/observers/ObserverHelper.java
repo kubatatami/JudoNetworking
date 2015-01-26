@@ -30,9 +30,9 @@ import java.util.regex.Pattern;
  * Time: 22:23
  */
 public class ObserverHelper {
-    private List<Pair<ObservableWrapper, WrapObserver>> dataObservers = new ArrayList<Pair<ObservableWrapper, WrapObserver>>();
-    private List<Pair<Adapter, DataSetObserver>> dataAdapters = new ArrayList<Pair<Adapter, DataSetObserver>>();
-    private Map<View, Pair<ObservableWrapper, WrapObserver>> viewObservers = new HashMap<View, Pair<ObservableWrapper, WrapObserver>>();
+    private List<Pair<ObservableWrapper, WrapObserver>> dataObservers = new ArrayList<>();
+    private List<Pair<Adapter, DataSetObserver>> dataAdapters = new ArrayList<>();
+    private Map<View, Pair<ObservableWrapper, WrapObserver>> viewObservers = new HashMap<>();
 
     private static final String splitter = "\\.";
     private static final Pattern pattern = Pattern.compile("\\[[^\\]]*\\]");
@@ -158,7 +158,7 @@ public class ObserverHelper {
                 if (results.size() > 0) {
                     for (ObservableWrapper result : results) {
                         result.addObserver(observer);
-                        viewObservers.put(view, new Pair<ObservableWrapper, WrapObserver>(result, observer));
+                        viewObservers.put(view, new Pair<>(result, observer));
                     }
                 } else if (view instanceof TextView && tag.matches("\\[.*\\]")) {
                     TextView textView = (TextView) view;
@@ -198,7 +198,7 @@ public class ObserverHelper {
     }
 
     private List<ObservableWrapper> findObservablesByTag(String tag) throws Exception {
-        List<ObservableWrapper> list = new ArrayList<ObservableWrapper>();
+        List<ObservableWrapper> list = new ArrayList<>();
         if (tag.matches("\\[.*\\]")) {
 
             if (ObserverHelper.dataClass == null) {
@@ -253,7 +253,7 @@ public class ObserverHelper {
                     };
 
                     wrapper.addObserver(observer, observerMethod.dataObserver.onStartup());
-                    dataObservers.add(new Pair<ObservableWrapper, WrapObserver>(wrapper, observer));
+                    dataObservers.add(new Pair<>(wrapper, observer));
                 } else if (wrapperOrAdapter instanceof Adapter) {
                     final Adapter adapter = (Adapter) wrapperOrAdapter;
                     DataSetObserver dataSetObserver = new DataSetObserver() {
@@ -261,7 +261,7 @@ public class ObserverHelper {
                         public void onChanged() {
                             Object param;
                             if (observerMethod.method.getParameterTypes()[0].isAssignableFrom(List.class)) {
-                                List<Object> list = new ArrayList<Object>();
+                                List<Object> list = new ArrayList<>();
                                 for (int i = 0; i < adapter.getCount(); i++) {
                                     list.add(adapter.getItem(i));
                                 }
@@ -291,7 +291,7 @@ public class ObserverHelper {
                     if (observerMethod.dataObserver.onStartup()) {
                         dataSetObserver.onChanged();
                     }
-                    dataAdapters.add(new Pair<Adapter, DataSetObserver>(adapter, dataSetObserver));
+                    dataAdapters.add(new Pair<>(adapter, dataSetObserver));
                 }
             } catch (IllegalAccessException e) {
                 e.printStackTrace();

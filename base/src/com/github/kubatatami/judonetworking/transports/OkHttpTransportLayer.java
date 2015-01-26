@@ -240,7 +240,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                     }
 
                     public Map<String, List<String>> getHeaders() {
-                        Map<String, List<String>> map = new HashMap<String, List<String>>();
+                        Map<String, List<String>> map = new HashMap<>();
                         for (String name : response.headers().names()) {
                             map.put(name, response.headers(name));
                         }
@@ -324,7 +324,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
     }
 
     static class  OkHttpBuilder extends Request.Builder{
-        Map<String,String> headers=new HashMap<String, String>();
+        Map<String,String> headers=new HashMap<>();
 
         @Override
         public Request.Builder addHeader(String name, String value) {

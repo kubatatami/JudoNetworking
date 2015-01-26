@@ -24,7 +24,7 @@ public class GetOrPostTools {
     }
 
     public static String createRequest(Request request, String apiKey, String apiKeyName) throws JudoException {
-        List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+        List<NameValuePair> nameValuePairs = new ArrayList<>();
         int i = 0;
         if (apiKeyName != null && request.isApiKeyRequired()) {
             nameValuePairs.add(new BasicNameValuePair(apiKeyName, apiKey));

@@ -62,7 +62,7 @@ public class BatchTask implements Runnable {
 
 
     public static List<List<RequestImpl>> timeAssignRequests(List<RequestImpl> list, final int partsNo) {
-        List<List<RequestImpl>> parts = new ArrayList<List<RequestImpl>>(partsNo);
+        List<List<RequestImpl>> parts = new ArrayList<>(partsNo);
         long[] weights = new long[partsNo];
         for (int i = 0; i < partsNo; i++) {
             parts.add(new ArrayList<RequestImpl>());
@@ -79,7 +79,7 @@ public class BatchTask implements Runnable {
 
     public static List<List<RequestImpl>> simpleAssignRequests(List<RequestImpl> list, final int partsNo) {
         int i;
-        List<List<RequestImpl>> parts = new ArrayList<List<RequestImpl>>(partsNo);
+        List<List<RequestImpl>> parts = new ArrayList<>(partsNo);
         for (i = 0; i < partsNo; i++) {
             parts.add(new ArrayList<RequestImpl>());
         }

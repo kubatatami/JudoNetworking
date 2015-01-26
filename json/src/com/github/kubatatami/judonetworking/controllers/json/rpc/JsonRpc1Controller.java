@@ -39,15 +39,19 @@ public class JsonRpc1Controller extends JsonRpcController {
         while (parser.nextToken() != JsonToken.END_OBJECT) {
 
             String fieldname = parser.getCurrentName();
-            if ("id".equals(fieldname)) {
-                parser.nextToken();
-                responseModel.id=parser.getIntValue();
-            }else if ("result".equals(fieldname)){
-                parser.nextToken();
-                responseModel.result=reader.readValue(parser,mapper.getTypeFactory().constructType(type));
-            }else if ("error".equals(fieldname)){
-                parser.nextToken();
-                responseModel.error=parser.getText();
+            switch (fieldname) {
+                case "id":
+                    parser.nextToken();
+                    responseModel.id = parser.getIntValue();
+                    break;
+                case "result":
+                    parser.nextToken();
+                    responseModel.result = reader.readValue(parser, mapper.getTypeFactory().constructType(type));
+                    break;
+                case "error":
+                    parser.nextToken();
+                    responseModel.error = parser.getText();
+                    break;
             }
         }
         return responseModel;

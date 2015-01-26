@@ -17,8 +17,8 @@ import dalvik.system.DexFile;
  * Created by Kuba on 16/02/14.
  */
 public class ObservableCache {
-    protected final static LruCache<Class<?>, List<DataObserverMethod>> dataObserverMethodsCache = new LruCache<Class<?>, List<DataObserverMethod>>(100);
-    protected final static LruCache<Class<?>, LruCache<String, Field>> fieldsCache = new LruCache<Class<?>, LruCache<String, Field>>(100);
+    protected final static LruCache<Class<?>, List<DataObserverMethod>> dataObserverMethodsCache = new LruCache<>(100);
+    protected final static LruCache<Class<?>, LruCache<String, Field>> fieldsCache = new LruCache<>(100);
 
     protected static class PreloadRunnable implements Runnable {
 
@@ -69,7 +69,7 @@ public class ObservableCache {
     }
 
     protected static List<DataObserverMethod> getMethods(Class<?> clazz) {
-        List<DataObserverMethod> methodList = new ArrayList<DataObserverMethod>();
+        List<DataObserverMethod> methodList = new ArrayList<>();
         for (final Method method : ReflectionCache.getMethods(clazz)) {
             DataObserver ann = ReflectionCache.getAnnotation(method, DataObserver.class);
             if (ann != null) {
@@ -119,7 +119,7 @@ public class ObservableCache {
     protected static Field getField(String fieldName, Class<?> objectClass) {
         LruCache<String, Field> fields = fieldsCache.get(objectClass);
         if (fields == null) {
-            fields = new LruCache<String, Field>(10);
+            fields = new LruCache<>(10);
             fieldsCache.put(objectClass, fields);
         }
         Field field = fields.get(fieldName);

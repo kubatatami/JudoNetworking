@@ -49,7 +49,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     protected int id = 0;
     protected boolean batchEnabled = false;
     protected boolean batchFatal = true;
-    protected final List<RequestImpl> batchRequests = new ArrayList<RequestImpl>();
+    protected final List<RequestImpl> batchRequests = new ArrayList<>();
     protected EndpointImpl.BatchMode mode = EndpointImpl.BatchMode.NONE;
     protected boolean cancelled, done, running;
     protected Batch<?> batchCallback;
@@ -289,7 +289,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
 
             if (mode.equals(EndpointImpl.BatchMode.AUTO)) {
                 synchronized (batchRequests) {
-                    batches = new ArrayList<RequestImpl>(batchRequests.size());
+                    batches = new ArrayList<>(batchRequests.size());
                     batches.addAll(batchRequests);
                     batchRequests.clear();
                     this.batchEnabled = false;
@@ -301,7 +301,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
 
             RequestImpl.invokeBatchCallbackStart(rpc, this);
 
-            Map<Integer, Pair<RequestImpl, Object>> cacheObjects = new HashMap<Integer, Pair<RequestImpl, Object>>();
+            Map<Integer, Pair<RequestImpl, Object>> cacheObjects = new HashMap<>();
             if (rpc.isCacheEnabled()) {
                 for (int i = batches.size() - 1; i >= 0; i--) {
                     RequestImpl req = batches.get(i);
@@ -312,7 +312,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                             if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
                                 result.object = rpc.getClonner().clone(result.object);
                             }
-                            cacheObjects.put(req.getId(), new Pair<RequestImpl, Object>(req, result.object));
+                            cacheObjects.put(req.getId(), new Pair<>(req, result.object));
                             if (req.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                                 batches.remove(i);
                                 req.invokeStart(new CacheInfo(true, result.time));
@@ -327,7 +327,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                                 if (!rpc.isTest()) {
                                     rpc.getMemoryCache().put(req.getMethodId(), req.getArgs(), result.object, req.getLocalCacheSize());
                                 }
-                                cacheObjects.put(req.getId(), new Pair<RequestImpl, Object>(req, result.object));
+                                cacheObjects.put(req.getId(), new Pair<>(req, result.object));
                                 if (req.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                                     batches.remove(i);
                                     req.invokeStart(new CacheInfo(true, result.time));
@@ -346,7 +346,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 sendBatchRequest(batches, batchProgressObserver, cacheObjects);
 
             } else {
-                responses = new ArrayList<RequestResult>();
+                responses = new ArrayList<>();
                 batchProgressObserver.setMaxProgress(1);
                 batchProgressObserver.progressTick(1);
                 receiveResponse(batches, responses, cacheObjects);
@@ -439,7 +439,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
 
                 List<List<RequestImpl>> requestParts = assignRequestsToConnections(batches, connections);
 
-                final List<BatchTask> tasks = new ArrayList<BatchTask>(connections);
+                final List<BatchTask> tasks = new ArrayList<>(connections);
 
                 progressObserver.setMaxProgress((requestParts.size() + cacheObjects.size()) * TimeStat.TICKS);
                 if (cacheObjects.size() > 0) {

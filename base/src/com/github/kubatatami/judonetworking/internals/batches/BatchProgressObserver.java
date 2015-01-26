@@ -29,7 +29,7 @@ public class BatchProgressObserver implements ProgressObserver {
     public BatchProgressObserver(EndpointImpl rpc, RequestProxy requestProxy, List<RequestImpl> requestList) {
         this.rpc = rpc;
         this.requestProxy = requestProxy;
-        this.requestList = new ArrayList<RequestImpl>(requestList);
+        this.requestList = new ArrayList<>(requestList);
     }
 
     @Override

@@ -12,13 +12,13 @@ import java.lang.reflect.Type;
  */
 public class ReflectionCache {
 
-    protected final static LruCache<Class<?>, Method[]> interfaceMethodCache = new LruCache<Class<?>, Method[]> (100);
-    protected final static LruCache<Class<?>, Field[]> fieldCache = new LruCache<Class<?>, Field[]> (100);
-    protected final static LruCache<Class<?>, Annotation[]> interfaceAnnotationCache = new LruCache<Class<?>, Annotation[]> (100);
-    protected final static LruCache<Method, Annotation[]> methodAnnotationCache = new LruCache<Method, Annotation[]>(100);
-    protected final static LruCache<Method, Annotation[][]> methodParamAnnotationCache = new LruCache<Method, Annotation[][]>(100);
-    protected final static LruCache<String, Annotation[]> fieldAnnotationCache = new LruCache<String, Annotation[]>(100);
-    protected final static LruCache<Method, Type[]> methodParamsTypeCache = new LruCache<Method, Type[]>(100);
+    protected final static LruCache<Class<?>, Method[]> interfaceMethodCache = new LruCache<>(100);
+    protected final static LruCache<Class<?>, Field[]> fieldCache = new LruCache<>(100);
+    protected final static LruCache<Class<?>, Annotation[]> interfaceAnnotationCache = new LruCache<>(100);
+    protected final static LruCache<Method, Annotation[]> methodAnnotationCache = new LruCache<>(100);
+    protected final static LruCache<Method, Annotation[][]> methodParamAnnotationCache = new LruCache<>(100);
+    protected final static LruCache<String, Annotation[]> fieldAnnotationCache = new LruCache<>(100);
+    protected final static LruCache<Method, Type[]> methodParamsTypeCache = new LruCache<>(100);
 
     public static void clearCache(){
         interfaceAnnotationCache.evictAll();

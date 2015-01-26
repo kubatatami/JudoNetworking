@@ -33,7 +33,7 @@ public class TimeStat{
     }
 
     public TimeStat(ProgressObserver request) {
-        this.requests = new ArrayList<ProgressObserver>();
+        this.requests = new ArrayList<>();
         requests.add(request);
         time = System.currentTimeMillis();
         startTime = time;

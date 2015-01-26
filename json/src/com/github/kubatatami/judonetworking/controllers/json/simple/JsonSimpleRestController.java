@@ -62,7 +62,7 @@ public class JsonSimpleRestController extends RawRestController {
                     throw new JudoException("SingleFlat can be enabled only for method with one parameter.");
                 }
             }else {
-                Map<String, Object> params = new HashMap<String, Object>();
+                Map<String, Object> params = new HashMap<>();
                 int i = 0;
                 for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
                     for (Annotation annotation : annotations) {

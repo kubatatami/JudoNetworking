@@ -119,7 +119,7 @@ public class ObserverAdapterHelper {
 
             if (convertView == null) {
                 convertView = layoutInflater.inflate(layout, parent, false);
-                dataSources = new ArrayList<Pair<View, DataSourceOrTarget>>();
+                dataSources = new ArrayList<>();
                 if (item != null) {
                     findViewTag(convertView, dataSources, item.getClass());
                 }
@@ -135,7 +135,15 @@ public class ObserverAdapterHelper {
                         HolderView viewById = ReflectionCache.getAnnotation(field, HolderView.class);
                         if (viewById != null) {
                             field.setAccessible(true);
-                            field.set(holder, convertView.findViewById(viewById.value()));
+                            int res;
+                            if(viewById.value()!=0){
+                                res=viewById.value();
+                            }else if(!viewById.resName().equals("")){
+                                res = context.getResources().getIdentifier(viewById.resName(), "id", context.getPackageName());
+                            }else{
+                                res = context.getResources().getIdentifier(field.getName(), "id", context.getPackageName());
+                            }
+                            field.set(holder, convertView.findViewById(res));
                         }
                         HolderCallback holderCallback = ReflectionCache.getAnnotation(field, HolderCallback.class);
                         if (holderCallback != null) {
@@ -188,7 +196,7 @@ public class ObserverAdapterHelper {
                 if (dataSourceOrTarget.isSource() && !(view instanceof TextView)) {
                     throw new JudoException("Method which returns value must be link with TextView");
                 }
-                data.add(new Pair<View, DataSourceOrTarget>(view, dataSourceOrTarget));
+                data.add(new Pair<>(view, dataSourceOrTarget));
             }
         }
 
@@ -197,7 +205,7 @@ public class ObserverAdapterHelper {
     private DataSourceOrTarget getDataSource(String fieldName, Class<?> clazz) {
         int i = 0;
         Field field;
-        List<Field> fields = new ArrayList<Field>();
+        List<Field> fields = new ArrayList<>();
         String parts[] = fieldName.split(splitter);
         for (String part : parts) {
             i++;

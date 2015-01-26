@@ -41,7 +41,7 @@ public class JsonRpc2Controller extends JsonRpcController {
 
     protected int autoBatchTime = 0;
     protected boolean batchEnabled = false;
-    protected Map<Type, JavaType> typeCache = new HashMap<Type, JavaType>();
+    protected Map<Type, JavaType> typeCache = new HashMap<>();
 
     public JsonRpc2Controller() {
     }
@@ -85,44 +85,49 @@ public class JsonRpc2Controller extends JsonRpcController {
         while (parser.nextToken() != JsonToken.END_OBJECT) {
 
             String fieldname = parser.getCurrentName();
-            if ("jsonrpc".equals(fieldname)) {
-                parser.nextToken();
-                responseModel.jsonrpc=parser.getText();
-            }else if ("id".equals(fieldname)) {
-                parser.nextToken();
-                responseModel.id=parser.getIntValue();
-                if(requestMap!=null) {
-                    type = requestMap.get(responseModel.id).getReturnType();
-                    if (result != null) {
+            switch (fieldname) {
+                case "jsonrpc":
+                    parser.nextToken();
+                    responseModel.jsonrpc = parser.getText();
+                    break;
+                case "id":
+                    parser.nextToken();
+                    responseModel.id = parser.getIntValue();
+                    if (requestMap != null) {
+                        type = requestMap.get(responseModel.id).getReturnType();
+                        if (result != null) {
+                            try {
+                                responseModel.result = reader.readValue(result.traverse(), getType(type));
+                            } catch (JsonProcessingException ex) {
+                                responseModel.ex = ex;
+                            }
+                        }
+                    }
+                    break;
+                case "result":
+                    parser.nextToken();
+                    result = parser.readValueAs(JsonNode.class);
+                    if (type != null) {
                         try {
                             responseModel.result = reader.readValue(result.traverse(), getType(type));
                         } catch (JsonProcessingException ex) {
                             responseModel.ex = ex;
                         }
                     }
-                }
-            }else if ("result".equals(fieldname)){
-                parser.nextToken();
-                result=parser.readValueAs(JsonNode.class);
-                if(type!=null){
-                    try {
-                        responseModel.result=reader.readValue(result.traverse(),getType(type));
-                    }catch (JsonProcessingException ex){
-                        responseModel.ex=ex;
+                    break;
+                case "error":
+                    responseModel.error = new JsonErrorModel();
+                    while (parser.nextToken() != JsonToken.END_OBJECT) {
+                        fieldname = parser.getCurrentName();
+                        if ("message".equals(fieldname)) {
+                            parser.nextToken();
+                            responseModel.error.message = parser.getText();
+                        } else if ("code".equals(fieldname)) {
+                            parser.nextToken();
+                            responseModel.error.code = parser.getValueAsInt();
+                        }
                     }
-                }
-            }else if ("error".equals(fieldname)){
-                responseModel.error=new JsonErrorModel();
-                while (parser.nextToken() != JsonToken.END_OBJECT) {
-                    fieldname = parser.getCurrentName();
-                    if ("message".equals(fieldname)) {
-                        parser.nextToken();
-                        responseModel.error.message=parser.getText();
-                    }else if ("code".equals(fieldname)) {
-                        parser.nextToken();
-                        responseModel.error.code=parser.getValueAsInt();
-                    }
-                }
+                    break;
             }
         }
         return responseModel;
@@ -207,8 +212,8 @@ public class JsonRpc2Controller extends JsonRpcController {
         JsonParser parser = null;
         try {
             ObjectReader reader = mapper.reader();
-            List<RequestResult> finalResponses = new ArrayList<RequestResult>(requests.size());
-            SparseArray<Request> requestMap=new SparseArray<Request>(requests.size());
+            List<RequestResult> finalResponses = new ArrayList<>(requests.size());
+            SparseArray<Request> requestMap=new SparseArray<>(requests.size());
             for(Request requestInterface : requests){
                 requestMap.put(requestInterface.getId(), requestInterface);
             }

@@ -15,5 +15,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface HolderView {
-    int value();
+    int value() default 0;
+    String resName() default "";
 }

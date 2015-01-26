@@ -492,7 +492,7 @@ public class RequestConnector {
     }
 
     public List<RequestResult> callBatch(List<RequestImpl> requests, ProgressObserver progressObserver, Integer timeout) throws JudoException {
-        final List<RequestResult> results = new ArrayList<RequestResult>(requests.size());
+        final List<RequestResult> results = new ArrayList<>(requests.size());
 
 
         if (requests.size() > 0) {
@@ -500,7 +500,7 @@ public class RequestConnector {
 
             if (rpc.getProtocolController().isBatchSupported()) {
 
-                List<RequestImpl> copyRequest = new ArrayList<RequestImpl>(requests);
+                List<RequestImpl> copyRequest = new ArrayList<>(requests);
                 VirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(requests.get(0).getMethod().getDeclaringClass());
                 if (virtualServerInfo != null) {
 

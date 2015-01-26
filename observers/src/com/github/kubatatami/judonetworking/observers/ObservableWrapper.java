@@ -16,7 +16,7 @@ import java.util.TimerTask;
 public class ObservableWrapper<T> extends DefaultCallback<T> {
     protected T object = null;
     protected final Handler handler = new Handler(Looper.getMainLooper());
-    protected final List<WrapObserver<T>> observers = new ArrayList<WrapObserver<T>>();
+    protected final List<WrapObserver<T>> observers = new ArrayList<>();
     protected ObservableWrapperListener<T> listener = null;
     protected boolean notifyInUiThread = true;
     protected long dataSetTime = 0;

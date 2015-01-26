@@ -15,7 +15,7 @@ import java.util.Set;
  */
 public class NetworkUtils {
 
-    protected static Set<NetworkStateListener> networkStateListeners = new HashSet<NetworkStateListener>();
+    protected static Set<NetworkStateListener> networkStateListeners = new HashSet<>();
     protected static ConnectivityManager connectManager;
 
     protected NetworkUtils() {

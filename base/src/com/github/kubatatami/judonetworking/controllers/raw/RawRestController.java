@@ -38,7 +38,7 @@ import java.util.Map;
  */
 public class RawRestController extends RawController {
 
-    protected HashMap<String, Object> customKeys = new HashMap<String, Object>();
+    protected HashMap<String, Object> customKeys = new HashMap<>();
 
     public void addCustomKey(String name, Object value) {
         customKeys.put(name, value);
@@ -91,7 +91,7 @@ public class RawRestController extends RawController {
                 requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content), content.length);
             } else if (ReflectionCache.getAnnotationInherited(request.getMethod(), FormPost.class) != null) {
                 requestInfo.mimeType = "application/x-www-form-urlencoded";
-                List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+                List<NameValuePair> nameValuePairs = new ArrayList<>();
                 int i = 0;
                 for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
                     for (Annotation annotation : annotations) {

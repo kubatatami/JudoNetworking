@@ -115,16 +115,22 @@ public class SecurityUtils {
                 for (String item : wwwAuthenticateHeader.substring(7).replaceAll(",", "").split(" ")) {
                     String name = item.split("=")[0];
                     String value = item.split("=")[1].replaceAll("\"", "");
-                    if (name.equals("realm")) {
-                        result.realm = value;
-                    } else if (name.equals("nonce")) {
-                        result.nonce = value;
-                    } else if (name.equals("qop")) {
-                        result.qop = value;
-                    } else if (name.equals("opaque")) {
-                        result.opaque = value;
-                    } else if (name.equals("algorithm")) {
-                        result.algorithm = value;
+                    switch (name) {
+                        case "realm":
+                            result.realm = value;
+                            break;
+                        case "nonce":
+                            result.nonce = value;
+                            break;
+                        case "qop":
+                            result.qop = value;
+                            break;
+                        case "opaque":
+                            result.opaque = value;
+                            break;
+                        case "algorithm":
+                            result.algorithm = value;
+                            break;
                     }
                 }
             }

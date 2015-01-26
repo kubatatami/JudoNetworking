@@ -36,7 +36,7 @@ public class JsonSimpleController extends JsonSimpleBaseController {
             url += "/";
         }
         url += request.getName();
-        Map<String, Object> req = new HashMap<String, Object>(request.getArgs().length);
+        Map<String, Object> req = new HashMap<>(request.getArgs().length);
         int i = 0;
         for (String paramName : request.getParamNames()) {
             req.put(paramName, request.getArgs()[i]);
