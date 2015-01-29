@@ -38,14 +38,23 @@ import java.util.Map;
  */
 public class RawRestController extends RawController {
 
-    protected HashMap<String, Object> customKeys = new HashMap<>();
+    protected HashMap<String, Object> customGetKeys = new HashMap<>();
+    protected HashMap<String, Object> customPostKeys = new HashMap<>();
 
-    public void addCustomKey(String name, Object value) {
-        customKeys.put(name, value);
+    public void addCustomGetKey(String name, Object value) {
+        customGetKeys.put(name, value);
     }
 
-    public void removeCustomKey(String name) {
-        customKeys.remove(name);
+    public void removeCustomGetKey(String name) {
+        customGetKeys.remove(name);
+    }
+
+    public void addCustomPostKey(String name, Object value) {
+        customPostKeys.put(name, value);
+    }
+
+    public void removeCustomPostKey(String name) {
+        customPostKeys.remove(name);
     }
 
     @Override
@@ -69,9 +78,10 @@ public class RawRestController extends RawController {
                     i++;
                 }
             }
-            for (Map.Entry<String, Object> entry : ((Map<String, Object>) request.getAdditionalData()).entrySet()) {
+            AdditionalRequestData additionalRequestData = (AdditionalRequestData) request.getAdditionalData();
+            for (Map.Entry<String, Object> entry : additionalRequestData.getCustomGetKeys().entrySet()) {
                 try {
-                    result = result.replaceAll("\\{" + entry.getKey() + "\\}", URLEncoder.encode(entry.getValue()+ "", "UTF-8"));
+                    result = result.replaceAll("\\{" + entry.getKey() + "\\}", URLEncoder.encode(entry.getValue() + "", "UTF-8"));
                 } catch (UnsupportedEncodingException e) {
                     result = result.replaceAll("\\{" + entry.getKey() + "\\}", entry.getValue() + "");
                 }
@@ -86,28 +96,45 @@ public class RawRestController extends RawController {
                         }
                     }
                     i++;
+
                 }
-                byte[] content=stringContent.getBytes();
+                byte[] content = stringContent.getBytes();
                 requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content), content.length);
             } else if (ReflectionCache.getAnnotationInherited(request.getMethod(), FormPost.class) != null) {
                 requestInfo.mimeType = "application/x-www-form-urlencoded";
+                List<NameValuePair> noEncodeNameValuePairs = new ArrayList<>();
                 List<NameValuePair> nameValuePairs = new ArrayList<>();
                 int i = 0;
                 for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
                     for (Annotation annotation : annotations) {
                         if (annotation instanceof Post) {
-                            Object arg = request.getArgs()[i];
-                            nameValuePairs.add(new BasicNameValuePair(((Post) annotation).value(), arg == null ? "" : arg.toString()));
+                            addFormPostParam(nameValuePairs, ((Post) annotation).value(), request.getArgs()[i]);
+                        }
+                        else if (annotation instanceof AdditionalPostParam) {
+                            AdditionalPostParam additionalPostParam = (AdditionalPostParam) annotation;
+                            if(additionalPostParam.urlEncode()) {
+                                nameValuePairs.addAll((java.util.Collection<? extends NameValuePair>) request.getArgs()[i]);
+                            }else{
+                                noEncodeNameValuePairs.addAll((java.util.Collection<? extends NameValuePair>) request.getArgs()[i]);
+                            }
                         }
                     }
                     i++;
+
                 }
-                byte[] content = URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8).replaceAll("\\+", "%20").getBytes();
+                for (Map.Entry<String, Object> entry : additionalRequestData.getCustomPostKeys().entrySet()) {
+                    addFormPostParam(nameValuePairs, entry.getKey(), entry.getValue());
+                }
+                String formRequest = URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8).replaceAll("\\+", "%20");
+                for(NameValuePair nameValuePair : noEncodeNameValuePairs){
+                    formRequest+="&"+nameValuePair.getName()+"="+nameValuePair.getValue();
+                }
+                byte[] content = formRequest.getBytes();
                 requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content), content.length);
             } else if (ReflectionCache.getAnnotationInherited(request.getMethod(), FilePost.class) != null) {
                 requestInfo.mimeType = "multipart/form-data";
                 int i = 0;
-                File file=null;
+                File file = null;
                 for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
                     for (Annotation annotation : annotations) {
                         if (annotation instanceof Post && request.getArgs()[i] instanceof File) {
@@ -117,13 +144,13 @@ public class RawRestController extends RawController {
                     }
                     i++;
                 }
-                if(file!=null) {
+                if (file != null) {
                     try {
                         requestInfo.entity = new RequestInputStreamEntity(new FileInputStream(file), file.length());
                     } catch (FileNotFoundException e) {
                         throw new JudoException("File is not exist.", e);
                     }
-                }else{
+                } else {
                     throw new JudoException("No file param.");
                 }
             }
@@ -139,10 +166,41 @@ public class RawRestController extends RawController {
         return requestInfo;
     }
 
+    protected void addFormPostParam(List<NameValuePair> nameValuePairs, String name, Object arg) {
+        if (arg != null && arg instanceof Map<?, ?>) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) arg).entrySet()) {
+                nameValuePairs.add(new BasicNameValuePair(name + "[" + entry.getKey().toString() + "]", entry.getValue() == null ? "" : entry.getValue().toString()));
+            }
+        } else if (arg != null && (arg instanceof List<?> || arg.getClass().isArray())) {
+            for (Object obj : (Iterable<?>) arg) {
+                nameValuePairs.add(new BasicNameValuePair(name + "[]", obj == null ? "" : obj.toString()));
+            }
+        } else {
+            nameValuePairs.add(new BasicNameValuePair(name, arg == null ? "" : arg.toString()));
+        }
+    }
+
+    protected static class AdditionalRequestData implements Serializable{
+        protected HashMap<String, Object> customGetKeys;
+        protected HashMap<String, Object> customPostKeys;
+
+        AdditionalRequestData(HashMap<String, Object> customGetKeys, HashMap<String, Object> customPostKeys) {
+            this.customGetKeys = new HashMap<>(customGetKeys);
+            this.customPostKeys = new HashMap<>(customPostKeys);
+        }
+
+        public HashMap<String, Object> getCustomGetKeys() {
+            return customGetKeys;
+        }
+
+        public HashMap<String, Object> getCustomPostKeys() {
+            return customPostKeys;
+        }
+    }
 
     @Override
     public Serializable getAdditionalRequestData() {
-        return customKeys;
+        return new AdditionalRequestData(customGetKeys,customPostKeys);
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -157,6 +215,12 @@ public class RawRestController extends RawController {
     @Target(ElementType.PARAMETER)
     public @interface Post {
         String value() default "";
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface AdditionalPostParam {
+        boolean urlEncode() default true;
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -176,7 +240,7 @@ public class RawRestController extends RawController {
 
     @Override
     public void setApiKey(String name, String key) {
-        customKeys.put(name, key);
+        customGetKeys.put(name, key);
     }
 
     @Override
