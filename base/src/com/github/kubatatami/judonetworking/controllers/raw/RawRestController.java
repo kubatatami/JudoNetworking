@@ -49,12 +49,20 @@ public class RawRestController extends RawController {
         customGetKeys.remove(name);
     }
 
+    public Object getCustomGetKey(String name) {
+        return customGetKeys.get(name);
+    }
+
     public void addCustomPostKey(String name, Object value) {
         customPostKeys.put(name, value);
     }
 
     public void removeCustomPostKey(String name) {
         customPostKeys.remove(name);
+    }
+
+    public Object getCustomPostKey(String name) {
+        return customPostKeys.get(name);
     }
 
     @Override
@@ -109,12 +117,11 @@ public class RawRestController extends RawController {
                     for (Annotation annotation : annotations) {
                         if (annotation instanceof Post) {
                             addFormPostParam(nameValuePairs, ((Post) annotation).value(), request.getArgs()[i]);
-                        }
-                        else if (annotation instanceof AdditionalPostParam) {
+                        } else if (annotation instanceof AdditionalPostParam) {
                             AdditionalPostParam additionalPostParam = (AdditionalPostParam) annotation;
-                            if(additionalPostParam.urlEncode()) {
+                            if (additionalPostParam.urlEncode()) {
                                 nameValuePairs.addAll((java.util.Collection<? extends NameValuePair>) request.getArgs()[i]);
-                            }else{
+                            } else {
                                 noEncodeNameValuePairs.addAll((java.util.Collection<? extends NameValuePair>) request.getArgs()[i]);
                             }
                         }
@@ -126,8 +133,8 @@ public class RawRestController extends RawController {
                     addFormPostParam(nameValuePairs, entry.getKey(), entry.getValue());
                 }
                 String formRequest = URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8).replaceAll("\\+", "%20");
-                for(NameValuePair nameValuePair : noEncodeNameValuePairs){
-                    formRequest+="&"+nameValuePair.getName()+"="+nameValuePair.getValue();
+                for (NameValuePair nameValuePair : noEncodeNameValuePairs) {
+                    formRequest += "&" + nameValuePair.getName() + "=" + nameValuePair.getValue();
                 }
                 byte[] content = formRequest.getBytes();
                 requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content), content.length);
@@ -180,7 +187,7 @@ public class RawRestController extends RawController {
         }
     }
 
-    protected static class AdditionalRequestData implements Serializable{
+    protected static class AdditionalRequestData implements Serializable {
         protected HashMap<String, Object> customGetKeys;
         protected HashMap<String, Object> customPostKeys;
 
@@ -200,7 +207,7 @@ public class RawRestController extends RawController {
 
     @Override
     public Serializable getAdditionalRequestData() {
-        return new AdditionalRequestData(customGetKeys,customPostKeys);
+        return new AdditionalRequestData(customGetKeys, customPostKeys);
     }
 
     @Retention(RetentionPolicy.RUNTIME)
