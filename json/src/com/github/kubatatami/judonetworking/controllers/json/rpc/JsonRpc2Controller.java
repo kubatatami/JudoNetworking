@@ -84,50 +84,52 @@ public class JsonRpc2Controller extends JsonRpcController {
         JsonNode result=null;
         while (parser.nextToken() != JsonToken.END_OBJECT) {
 
-            String fieldname = parser.getCurrentName();
-            switch (fieldname) {
-                case "jsonrpc":
-                    parser.nextToken();
-                    responseModel.jsonrpc = parser.getText();
-                    break;
-                case "id":
-                    parser.nextToken();
-                    responseModel.id = parser.getIntValue();
-                    if (requestMap != null) {
-                        type = requestMap.get(responseModel.id).getReturnType();
-                        if (result != null) {
+            String fieldName = parser.getCurrentName();
+            if(fieldName!=null) {
+                switch (fieldName) {
+                    case "jsonrpc":
+                        parser.nextToken();
+                        responseModel.jsonrpc = parser.getText();
+                        break;
+                    case "id":
+                        parser.nextToken();
+                        responseModel.id = parser.getIntValue();
+                        if (requestMap != null) {
+                            type = requestMap.get(responseModel.id).getReturnType();
+                            if (result != null) {
+                                try {
+                                    responseModel.result = reader.readValue(result.traverse(), getType(type));
+                                } catch (JsonProcessingException ex) {
+                                    responseModel.ex = ex;
+                                }
+                            }
+                        }
+                        break;
+                    case "result":
+                        parser.nextToken();
+                        result = parser.readValueAs(JsonNode.class);
+                        if (type != null) {
                             try {
                                 responseModel.result = reader.readValue(result.traverse(), getType(type));
                             } catch (JsonProcessingException ex) {
                                 responseModel.ex = ex;
                             }
                         }
-                    }
-                    break;
-                case "result":
-                    parser.nextToken();
-                    result = parser.readValueAs(JsonNode.class);
-                    if (type != null) {
-                        try {
-                            responseModel.result = reader.readValue(result.traverse(), getType(type));
-                        } catch (JsonProcessingException ex) {
-                            responseModel.ex = ex;
+                        break;
+                    case "error":
+                        responseModel.error = new JsonErrorModel();
+                        while (parser.nextToken() != JsonToken.END_OBJECT) {
+                            fieldName = parser.getCurrentName();
+                            if ("message".equals(fieldName)) {
+                                parser.nextToken();
+                                responseModel.error.message = parser.getText();
+                            } else if ("code".equals(fieldName)) {
+                                parser.nextToken();
+                                responseModel.error.code = parser.getValueAsInt();
+                            }
                         }
-                    }
-                    break;
-                case "error":
-                    responseModel.error = new JsonErrorModel();
-                    while (parser.nextToken() != JsonToken.END_OBJECT) {
-                        fieldname = parser.getCurrentName();
-                        if ("message".equals(fieldname)) {
-                            parser.nextToken();
-                            responseModel.error.message = parser.getText();
-                        } else if ("code".equals(fieldname)) {
-                            parser.nextToken();
-                            responseModel.error.code = parser.getValueAsInt();
-                        }
-                    }
-                    break;
+                        break;
+                }
             }
         }
         return responseModel;

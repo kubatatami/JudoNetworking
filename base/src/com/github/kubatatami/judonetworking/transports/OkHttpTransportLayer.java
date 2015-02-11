@@ -310,7 +310,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
     @Override
     public void setMaxConnections(int max) {
-        System.setProperty("http.maxConnections", max + "");
+        baseClient.getDispatcher().setMaxRequests(max);
     }
 
     public void setOkHttpConnectionModifier(OkHttpConnectionModifier okHttpConnectionModifier) {
