@@ -5,6 +5,7 @@ import android.util.SparseArray;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -107,7 +108,8 @@ public class JsonRpc2Controller extends JsonRpcController {
                         break;
                     case "result":
                         parser.nextToken();
-                        result = parser.readValueAs(JsonNode.class);
+
+                        result = parser.readValueAsTree();
                         if (type != null) {
                             try {
                                 responseModel.result = reader.readValue(result.traverse(), getType(type));

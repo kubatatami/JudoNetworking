@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking.utils;
 
+import android.os.*;
+import android.os.Process;
 import android.support.v4.util.LruCache;
 
 import java.lang.annotation.Annotation;
@@ -146,6 +148,7 @@ public class ReflectionCache {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
                 getAnnotations(apiInterface);
                 for(Method method: apiInterface.getMethods()){
                     getAnnotations(method);

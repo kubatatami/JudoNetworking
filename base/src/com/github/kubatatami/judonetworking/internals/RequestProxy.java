@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking.internals;
 
+import android.os.*;
 import android.util.Pair;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
@@ -457,6 +458,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 Runnable waitAndMergeTask = new Runnable() {
                     @Override
                     public void run() {
+                        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
                         try {
                             for (BatchTask task : tasks) {
                                 task.join();
