@@ -471,6 +471,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                             Collections.sort(responses);
                             receiveResponse(batches, responses, cacheObjects);
                         } catch (final JudoException e) {
+                            responses.clear();
                             for (RequestImpl request : batches) {
                                 responses.add(new ErrorResult(request.getId(), e));
                             }
@@ -518,7 +519,6 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 }else{
                     resultString = "NO RESPONSE";
                 }
-                resultString = resultString.length() > 30 ? resultString.substring(0, 29) : resultString;
                 responseNameBuilder.append(resultString);
                 responseNameBuilder.append("\n");
             }
