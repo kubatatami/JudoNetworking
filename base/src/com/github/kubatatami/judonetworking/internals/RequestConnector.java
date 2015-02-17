@@ -689,7 +689,7 @@ public class RequestConnector {
         float percentLoss = rpc.getPercentLoss();
         float random = randomGenerator.nextFloat();
         if (percentLoss != 0 && random < percentLoss) {
-            throw new JudoException("Random package lost.");
+            throw new ConnectionException("Random package lost.");
         }
     }
 
