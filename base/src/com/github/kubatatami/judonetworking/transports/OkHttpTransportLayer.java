@@ -147,27 +147,33 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
             }
 
             final Call call = client.newCall(builder.method(methodName, requestBody).build());
-            JudoExecutor.ConnectionThread connectionThread = (JudoExecutor.ConnectionThread) Thread.currentThread();
-            connectionThread.setCanceller(new JudoExecutor.ConnectionThread.Canceller() {
-                @Override
-                public void cancel() {
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            call.cancel();
-                        }
-                    }).start();
-                }
-            });
+            if(Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
+                JudoExecutor.ConnectionThread connectionThread = (JudoExecutor.ConnectionThread) Thread.currentThread();
+                connectionThread.setCanceller(new JudoExecutor.ConnectionThread.Canceller() {
+                    @Override
+                    public void cancel() {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                call.cancel();
+                            }
+                        }).start();
+                    }
+                });
+            }
             Response response;
             try {
                 response = call.execute();
             } catch (IOException ex) {
-                JudoExecutor.ConnectionThread thread = (JudoExecutor.ConnectionThread) Thread.currentThread();
-                if (thread.isCanceled()) {
-                    thread.resetCanceled();
-                    throw new CancelException(thread.getName());
-                } else {
+                if(Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
+                    JudoExecutor.ConnectionThread thread = (JudoExecutor.ConnectionThread) Thread.currentThread();
+                    if (thread.isCanceled()) {
+                        thread.resetCanceled();
+                        throw new CancelException(thread.getName());
+                    } else {
+                        throw ex;
+                    }
+                }else{
                     throw ex;
                 }
             }
