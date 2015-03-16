@@ -191,7 +191,7 @@ public class RawRestController extends RawController {
         protected HashMap<String, Object> customGetKeys;
         protected HashMap<String, Object> customPostKeys;
 
-        AdditionalRequestData(HashMap<String, Object> customGetKeys, HashMap<String, Object> customPostKeys) {
+        protected AdditionalRequestData(HashMap<String, Object> customGetKeys, HashMap<String, Object> customPostKeys) {
             this.customGetKeys = new HashMap<>(customGetKeys);
             this.customPostKeys = new HashMap<>(customPostKeys);
         }
