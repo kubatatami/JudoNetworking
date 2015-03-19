@@ -132,6 +132,8 @@ public interface Endpoint extends EndpointBase {
 
     public void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer);
 
+    public void setUrl(String url);
+
     /**
      * Created with IntelliJ IDEA.
      * User: jbogacki

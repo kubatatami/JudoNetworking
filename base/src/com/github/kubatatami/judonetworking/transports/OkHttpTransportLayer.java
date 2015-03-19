@@ -233,12 +233,20 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
                     @Override
                     public InputStream getStream() throws ConnectionException {
-                        return response.body().byteStream();
+                        try {
+                            return response.body().byteStream();
+                        } catch (IOException e) {
+                            throw new ConnectionException(e);
+                        }
                     }
 
                     @Override
                     public int getContentLength() {
-                        return (int) response.body().contentLength();
+                        try {
+                            return (int) response.body().contentLength();
+                        } catch (IOException e) {
+                            throw new ConnectionException(e);
+                        }
                     }
 
                     public boolean isNewestAvailable() throws ConnectionException {

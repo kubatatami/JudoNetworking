@@ -46,13 +46,11 @@ import java.util.Scanner;
 
 public class RequestConnector {
 
-    private final String url;
     private final EndpointImpl rpc;
     private final TransportLayer transportLayer;
     private final Random randomGenerator = new Random();
 
-    public RequestConnector(String url, EndpointImpl rpc, TransportLayer transportLayer) {
-        this.url = url;
+    public RequestConnector(EndpointImpl rpc, TransportLayer transportLayer) {
         this.rpc = rpc;
         this.transportLayer = transportLayer;
     }
@@ -85,7 +83,7 @@ public class RequestConnector {
                 result = new RequestSuccessResult(request.getId(), virtualObject);
             } else {
                 ProtocolController.RequestInfo requestInfo = controller.createRequest(
-                        request.getCustomUrl() == null ? url : request.getCustomUrl(),
+                        request.getCustomUrl() == null ? rpc.getUrl() : request.getCustomUrl(),
                         request);
                 timeStat.tickCreateTime();
                 lossCheck();
@@ -401,7 +399,7 @@ public class RequestConnector {
                         return localCacheObject.object;
                     }
                 } else if (cacheLevel != LocalCache.CacheLevel.MEMORY_ONLY) {
-                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), url, cacheLevel);
+                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
                     localCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getLocalCacheLifeTime());
                     if (localCacheObject.result) {
                         if (!rpc.isTest()) {  //we don't know when test will be stop
@@ -418,7 +416,7 @@ public class RequestConnector {
             }
 
             if (rpc.isCacheEnabled() && request.isServerCacheable()) {
-                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), url, request.getServerCacheLevel());
+                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), request.getServerCacheLevel());
                 serverCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
 
             }
@@ -472,13 +470,13 @@ public class RequestConnector {
                 LocalCache.CacheLevel cacheLevel = rpc.isTest() ? LocalCache.CacheLevel.DISK_CACHE : request.getLocalCacheLevel();
                 if (cacheLevel != LocalCache.CacheLevel.MEMORY_ONLY) {
 
-                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), url, cacheLevel);
+                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
                     rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getLocalCacheSize());
                 }
 
 
             } else if (rpc.isCacheEnabled() && request.isServerCacheable() && (result.hash != null || result.time != null)) {
-                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), url, request.getServerCacheLevel());
+                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), request.getServerCacheLevel());
                 rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getServerCacheSize());
             }
 
@@ -573,7 +571,7 @@ public class RequestConnector {
 
 
                         if (rpc.isCacheEnabled() && request.isServerCacheable()) {
-                            CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), url, request.getServerCacheLevel());
+                            CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), request.getServerCacheLevel());
                             cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getServerCacheSize());
 
                         }
@@ -621,7 +619,7 @@ public class RequestConnector {
             TimeStat timeStat = new TimeStat(progressObserver);
 
 
-            ProtocolController.RequestInfo requestInfo = controller.createRequests(url, (List) requests);
+            ProtocolController.RequestInfo requestInfo = controller.createRequests(rpc.getUrl(), (List) requests);
             timeStat.tickCreateTime();
             lossCheck();
             int maxDelay = 0;

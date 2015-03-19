@@ -95,7 +95,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
 
     private void init(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
-        this.requestConnector = new RequestConnector(url, this, transportLayer);
+        this.requestConnector = new RequestConnector(this, transportLayer);
         this.context = context;
         this.protocolController = protocolController;
         this.url = url;
@@ -613,5 +613,10 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     static enum BatchMode {
         NONE, MANUAL, AUTO
+    }
+
+    @Override
+    public void setUrl(String url) {
+        this.url = url;
     }
 }
