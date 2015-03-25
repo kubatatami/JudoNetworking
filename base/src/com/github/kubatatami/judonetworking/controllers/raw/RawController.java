@@ -3,11 +3,11 @@ package com.github.kubatatami.judonetworking.controllers.raw;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-import com.github.kubatatami.judonetworking.ErrorResult;
-import com.github.kubatatami.judonetworking.ProtocolController;
-import com.github.kubatatami.judonetworking.RequestInterface;
-import com.github.kubatatami.judonetworking.RequestResult;
-import com.github.kubatatami.judonetworking.RequestSuccessResult;
+import com.github.kubatatami.judonetworking.Request;
+import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
+import com.github.kubatatami.judonetworking.controllers.ProtocolController;
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.HttpException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -17,7 +17,6 @@ import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
@@ -32,14 +31,14 @@ public abstract class RawController extends ProtocolController {
 
 
     @Override
-    public abstract RequestInfo createRequest(String url, RequestInterface request) throws JudoException;
+    public abstract RequestInfo createRequest(String url, Request request) throws JudoException;
 
     @Override
-    public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
+    public RequestResult parseResponse(Request request, InputStream stream, Map<String, List<String>> headers) {
         return parseResponse(request, stream);
     }
 
-    public static RequestResult parseResponse(RequestInterface request, InputStream stream) {
+    public static RequestResult parseResponse(Request request, InputStream stream) {
         Class<?> returnType = (Class<?>) request.getReturnType();
         if (String.class.equals(returnType)) {
             return new RequestSuccessResult(request.getId(), convertStreamToString(stream));

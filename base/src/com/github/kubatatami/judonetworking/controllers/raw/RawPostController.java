@@ -1,7 +1,7 @@
 package com.github.kubatatami.judonetworking.controllers.raw;
 
-import com.github.kubatatami.judonetworking.RequestInputStreamEntity;
-import com.github.kubatatami.judonetworking.RequestInterface;
+import com.github.kubatatami.judonetworking.Request;
+import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.controllers.GetOrPostTools;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
@@ -18,7 +18,7 @@ public class RawPostController extends RawController {
 
 
     @Override
-    public RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
+    public RequestInfo createRequest(String url, Request request) throws JudoException {
         ApiKey apiKeyModel = (ApiKey) request.getAdditionalData();
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url + request.getName();

@@ -1,8 +1,7 @@
 package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.github.kubatatami.judonetworking.RequestInputStreamEntity;
-import com.github.kubatatami.judonetworking.RequestInterface;
+import com.github.kubatatami.judonetworking.Request;
+import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
@@ -25,7 +24,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
 
 
     @Override
-    public RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
+    public RequestInfo createRequest(String url, Request request) throws JudoException {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.url = url;
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -42,7 +41,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
     }
 
 
-    public Object createRequestObject(RequestInterface request) throws IOException {
+    public Object createRequestObject(Request request) throws IOException {
         Object finalArgs;
         ApiKey apiKeyModel = (ApiKey) request.getAdditionalData();
         if (!request.isApiKeyRequired()) {
@@ -51,7 +50,7 @@ public abstract class JsonRpcController extends JsonProtocolController {
         }
         if (request.getParamNames().length > 0 && request.getArgs() != null || apiKeyModel.apiKeyName != null) {
             int i = 0;
-            Map<String, Object> paramObjects = new HashMap<String, Object>();
+            Map<String, Object> paramObjects = new HashMap<>();
             for (String param : request.getParamNames()) {
                 paramObjects.put(param, request.getArgs()[i]);
                 i++;

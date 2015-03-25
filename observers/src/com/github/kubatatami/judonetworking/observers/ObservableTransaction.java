@@ -14,7 +14,7 @@ import java.util.Set;
 public class ObservableTransaction {
 
     protected List<Pair<ObservableWrapper, Object>> wrapperObjectList =
-            new ArrayList<Pair<ObservableWrapper, Object>>();
+            new ArrayList<>();
 
     <T> void add(ObservableWrapper<T> observableWrapper, T value){
         wrapperObjectList.add(new Pair<ObservableWrapper, Object>(observableWrapper, value));

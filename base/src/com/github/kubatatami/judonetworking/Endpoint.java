@@ -1,6 +1,13 @@
 package com.github.kubatatami.judonetworking;
 
 
+import com.github.kubatatami.judonetworking.batches.Batch;
+import com.github.kubatatami.judonetworking.caches.DiskCache;
+import com.github.kubatatami.judonetworking.caches.MemoryCache;
+import com.github.kubatatami.judonetworking.clonners.Clonner;
+import com.github.kubatatami.judonetworking.internals.EndpointBase;
+import com.github.kubatatami.judonetworking.threads.ThreadPoolSizer;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -55,7 +62,7 @@ public interface Endpoint extends EndpointBase {
      * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
-    public <T> AsyncResult callInBatch(Class<T> apiInterface, BatchInterface<T> batch);
+    public <T> AsyncResult callInBatch(Class<T> apiInterface, Batch<T> batch);
 
     /**
      * Create batch request.
@@ -64,7 +71,7 @@ public interface Endpoint extends EndpointBase {
      * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
-    public <T> AsyncResult callAsyncInBatch(final Class<T> apiInterface, final BatchInterface<T> batch);
+    public <T> AsyncResult callAsyncInBatch(final Class<T> apiInterface, final Batch<T> batch);
 
     /**
      * @param mode
@@ -123,6 +130,28 @@ public interface Endpoint extends EndpointBase {
 
     public MemoryCache getMemoryCache();
 
-    public void setConnectionsSizer(ConnectionsSizer connectionsSizer);
+    public void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer);
 
+    public void setUrl(String url);
+
+    /**
+     * Created with IntelliJ IDEA.
+     * User: jbogacki
+     * Date: 04.03.2013
+     * Time: 21:21
+     */
+    public enum BatchTimeoutMode {
+        TIMEOUTS_SUM, LONGEST_TIMEOUT
+    }
+
+    /**
+     * Created with IntelliJ IDEA.
+     * User: jbogacki
+     * Date: 28.05.2013
+     * Time: 14:50
+     * To change this template use File | Settings | File Templates.
+     */
+    public enum CacheMode {
+        NORMAL, CLONE
+    }
 }

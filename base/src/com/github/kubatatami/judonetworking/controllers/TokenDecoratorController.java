@@ -1,14 +1,7 @@
 package com.github.kubatatami.judonetworking.controllers;
 
 import com.github.kubatatami.judonetworking.Endpoint;
-import com.github.kubatatami.judonetworking.ProtocolController;
-import com.github.kubatatami.judonetworking.RequestInterface;
-import com.github.kubatatami.judonetworking.RequestResult;
-import com.github.kubatatami.judonetworking.TokenCaller;
-import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-import java.io.InputStream;
-import java.io.Serializable;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -17,13 +10,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Kuba on 24/02/14.
  */
-public class TokenDecoratorController<T, Z> extends ProtocolController {
+public class TokenDecoratorController<T, Z> extends ProtocolControllerWrapper {
 
     protected String login;
     protected String password;
@@ -47,6 +38,7 @@ public class TokenDecoratorController<T, Z> extends ProtocolController {
 
 
     public TokenDecoratorController(ProtocolController baseController, String keyName, int tokenLifetime) {
+        super(baseController);
         this.baseController = baseController;
         this.keyName = keyName;
         this.tokenLifetime = tokenLifetime;
@@ -122,57 +114,6 @@ public class TokenDecoratorController<T, Z> extends ProtocolController {
     public void setLoginAndPassword(String login, String password) {
         this.login = login;
         this.password = password;
-    }
-
-
-    @Override
-    public void setApiKey(String name, String key) {
-        baseController.setApiKey(name, key);
-    }
-
-    @Override
-    public void setApiKey(String key) {
-        baseController.setApiKey(key);
-    }
-
-    @Override
-    public int getAutoBatchTime() {
-        return baseController.getAutoBatchTime();
-    }
-
-    @Override
-    public RequestInfo createRequest(String url, RequestInterface request) throws JudoException {
-        return baseController.createRequest(url, request);
-    }
-
-    @Override
-    public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
-        return baseController.parseResponse(request, stream, headers);
-    }
-
-    @Override
-    public boolean isBatchSupported() {
-        return baseController.isBatchSupported();
-    }
-
-    @Override
-    public RequestInfo createRequests(String url, List<RequestInterface> requests) throws JudoException {
-        return baseController.createRequests(url, requests);
-    }
-
-    @Override
-    public List<RequestResult> parseResponses(List<RequestInterface> requests, InputStream stream, Map<String, List<String>> headers) throws JudoException {
-        return baseController.parseResponses(requests, stream, headers);
-    }
-
-    @Override
-    public void parseError(int code, String resp) throws JudoException {
-        baseController.parseError(code, resp);
-    }
-
-    @Override
-    public Serializable getAdditionalRequestData() {
-        return baseController.getAdditionalRequestData();
     }
 
     public ProtocolController getBaseController() {
