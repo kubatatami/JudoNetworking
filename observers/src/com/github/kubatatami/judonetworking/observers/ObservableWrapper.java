@@ -5,18 +5,18 @@ import android.net.NetworkInfo;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.github.kubatatami.judonetworking.Callback;
-import com.github.kubatatami.judonetworking.NetworkUtils;
+import com.github.kubatatami.judonetworking.callbacks.DefaultCallback;
+import com.github.kubatatami.judonetworking.utils.NetworkUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class ObservableWrapper<T> extends Callback<T> {
+public class ObservableWrapper<T> extends DefaultCallback<T> {
     protected T object = null;
     protected final Handler handler = new Handler(Looper.getMainLooper());
-    protected final List<WrapObserver<T>> observers = new ArrayList<WrapObserver<T>>();
+    protected final List<WrapObserver<T>> observers = new ArrayList<>();
     protected ObservableWrapperListener<T> listener = null;
     protected boolean notifyInUiThread = true;
     protected long dataSetTime = 0;

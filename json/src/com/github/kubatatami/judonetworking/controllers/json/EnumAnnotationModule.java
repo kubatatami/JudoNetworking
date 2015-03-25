@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking.controllers.json;
 
+import android.support.v4.util.LruCache;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -17,10 +19,12 @@ import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
-import com.github.kubatatami.judonetworking.ReflectionCache;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
 public class EnumAnnotationModule extends SimpleModule {
 
@@ -70,6 +74,8 @@ public class EnumAnnotationModule extends SimpleModule {
 
     public static class EnumAnnotationDeserializer extends StdScalarDeserializer<Enum<?>> {
 
+        LruCache<Field, String> propertyValueCache = new LruCache<>(100);
+
         protected EnumAnnotationDeserializer(Class<Enum<?>> clazz) {
             super(clazz);
 
@@ -78,19 +84,26 @@ public class EnumAnnotationModule extends SimpleModule {
         @Override
         public Enum<?> deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
             String text = jp.getText();
-            Enum<?> defaultEnum=null;
+            Enum<?> defaultEnum = null;
             try {
 
                 for (Field field : ReflectionCache.getDeclaredFields(getValueClass())) {
                     if (field.isEnumConstant()) {
-                        JsonProperty property = ReflectionCache.getAnnotation(field, JsonProperty.class);
-                        if (property != null && property.value().equals(text)) {
+                        String value=propertyValueCache.get(field);
+                        if(value==null) {
+                            JsonProperty property = ReflectionCache.getAnnotation(field, JsonProperty.class);
+                            if (property != null) {
+                                value = property.value();
+                                propertyValueCache.put(field, value);
+                            }
+                        }
+                        if(text.equals(value)) {
                             return (Enum<?>) field.get(null);
                         }
-                        if(ReflectionCache.getAnnotation(field,JsonDefaultEnum.class)!=null){
-                            if(defaultEnum==null) {
+                        if (ReflectionCache.getAnnotation(field, JsonDefaultEnum.class) != null) {
+                            if (defaultEnum == null) {
                                 defaultEnum = (Enum<?>) field.get(null);
-                            }else{
+                            } else {
                                 throw new RuntimeException("It can be only one JsonDefaultEnum");
                             }
                         }
@@ -102,10 +115,10 @@ public class EnumAnnotationModule extends SimpleModule {
             }
             try {
                 return (Enum<?>) mapper.readValue("\"" + text + "\"", getValueClass());
-            }catch(InvalidFormatException e){
-                if(defaultEnum!=null){
+            } catch (InvalidFormatException e) {
+                if (defaultEnum != null) {
                     return defaultEnum;
-                }else{
+                } else {
                     throw e;
                 }
             }

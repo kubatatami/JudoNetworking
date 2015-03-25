@@ -1,16 +1,13 @@
 package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
-import android.util.SparseArray;
-
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.github.kubatatami.judonetworking.ErrorResult;
-import com.github.kubatatami.judonetworking.RequestInterface;
-import com.github.kubatatami.judonetworking.RequestResult;
-import com.github.kubatatami.judonetworking.RequestSuccessResult;
+import com.github.kubatatami.judonetworking.Request;
+import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
@@ -18,7 +15,6 @@ import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
@@ -43,15 +39,19 @@ public class JsonRpc1Controller extends JsonRpcController {
         while (parser.nextToken() != JsonToken.END_OBJECT) {
 
             String fieldname = parser.getCurrentName();
-            if ("id".equals(fieldname)) {
-                parser.nextToken();
-                responseModel.id=parser.getIntValue();
-            }else if ("result".equals(fieldname)){
-                parser.nextToken();
-                responseModel.result=reader.readValue(parser,mapper.getTypeFactory().constructType(type));
-            }else if ("error".equals(fieldname)){
-                parser.nextToken();
-                responseModel.error=parser.getText();
+            switch (fieldname) {
+                case "id":
+                    parser.nextToken();
+                    responseModel.id = parser.getIntValue();
+                    break;
+                case "result":
+                    parser.nextToken();
+                    responseModel.result = reader.readValue(parser, mapper.getTypeFactory().constructType(type));
+                    break;
+                case "error":
+                    parser.nextToken();
+                    responseModel.error = parser.getText();
+                    break;
             }
         }
         return responseModel;
@@ -59,7 +59,7 @@ public class JsonRpc1Controller extends JsonRpcController {
 
 
         @Override
-    public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
+    public RequestResult parseResponse(Request request, InputStream stream, Map<String, List<String>> headers) {
         JsonParser parser = null;
         ObjectReader reader = mapper.reader();
         try {

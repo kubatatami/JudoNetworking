@@ -2,10 +2,10 @@ package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.kubatatami.judonetworking.ErrorResult;
-import com.github.kubatatami.judonetworking.RequestInterface;
-import com.github.kubatatami.judonetworking.RequestResult;
-import com.github.kubatatami.judonetworking.RequestSuccessResult;
+import com.github.kubatatami.judonetworking.Request;
+import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -26,7 +26,7 @@ public abstract class JsonRpcGetOrPostTools {
         public JsonProtocolController.JsonErrorModel error;
     }
 
-    public static RequestResult parseResponse(ObjectMapper mapper, RequestInterface request, InputStream stream) {
+    public static RequestResult parseResponse(ObjectMapper mapper, Request request, InputStream stream) {
         try {
 
             JsonGetOrPostResponseModel response;

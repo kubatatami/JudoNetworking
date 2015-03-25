@@ -5,16 +5,16 @@ import android.util.SparseArray;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
-import com.github.kubatatami.judonetworking.ErrorResult;
-import com.github.kubatatami.judonetworking.ProtocolController;
-import com.github.kubatatami.judonetworking.RequestComparator;
-import com.github.kubatatami.judonetworking.RequestInputStreamEntity;
-import com.github.kubatatami.judonetworking.RequestInterface;
-import com.github.kubatatami.judonetworking.RequestResult;
-import com.github.kubatatami.judonetworking.RequestSuccessResult;
+import com.github.kubatatami.judonetworking.Request;
+import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
+import com.github.kubatatami.judonetworking.controllers.ProtocolController;
+import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -25,12 +25,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +42,7 @@ public class JsonRpc2Controller extends JsonRpcController {
 
     protected int autoBatchTime = 0;
     protected boolean batchEnabled = false;
-    protected Map<Type, JavaType> typeCache = new HashMap<Type, JavaType>();
+    protected Map<Type, JavaType> typeCache = new HashMap<>();
 
     public JsonRpc2Controller() {
     }
@@ -84,49 +80,57 @@ public class JsonRpc2Controller extends JsonRpcController {
         return javaType;
     }
 
-    protected JsonRpcResponseModel2 readObject(ObjectReader reader, JsonParser parser, Type type, SparseArray<RequestInterface> requestMap) throws IOException {
+    protected JsonRpcResponseModel2 readObject(ObjectReader reader, JsonParser parser, Type type, SparseArray<Request> requestMap) throws IOException {
         JsonRpcResponseModel2 responseModel = new JsonRpcResponseModel2();
         JsonNode result=null;
         while (parser.nextToken() != JsonToken.END_OBJECT) {
 
-            String fieldname = parser.getCurrentName();
-            if ("jsonrpc".equals(fieldname)) {
-                parser.nextToken();
-                responseModel.jsonrpc=parser.getText();
-            }else if ("id".equals(fieldname)) {
-                parser.nextToken();
-                responseModel.id=parser.getIntValue();
-                if(requestMap!=null) {
-                    type = requestMap.get(responseModel.id).getReturnType();
-                    if (result != null) {
-                        try {
-                            responseModel.result = reader.readValue(result.traverse(), getType(type));
-                        } catch (JsonProcessingException ex) {
-                            responseModel.ex = ex;
+            String fieldName = parser.getCurrentName();
+            if(fieldName!=null) {
+                switch (fieldName) {
+                    case "jsonrpc":
+                        parser.nextToken();
+                        responseModel.jsonrpc = parser.getText();
+                        break;
+                    case "id":
+                        parser.nextToken();
+                        responseModel.id = parser.getIntValue();
+                        if (requestMap != null) {
+                            type = requestMap.get(responseModel.id).getReturnType();
+                            if (result != null) {
+                                try {
+                                    responseModel.result = reader.readValue(result.traverse(), getType(type));
+                                } catch (JsonProcessingException ex) {
+                                    responseModel.ex = ex;
+                                }
+                            }
                         }
-                    }
-                }
-            }else if ("result".equals(fieldname)){
-                parser.nextToken();
-                result=parser.readValueAs(JsonNode.class);
-                if(type!=null){
-                    try {
-                        responseModel.result=reader.readValue(result.traverse(),getType(type));
-                    }catch (JsonProcessingException ex){
-                        responseModel.ex=ex;
-                    }
-                }
-            }else if ("error".equals(fieldname)){
-                responseModel.error=new JsonErrorModel();
-                while (parser.nextToken() != JsonToken.END_OBJECT) {
-                    fieldname = parser.getCurrentName();
-                    if ("message".equals(fieldname)) {
+                        break;
+                    case "result":
                         parser.nextToken();
-                        responseModel.error.message=parser.getText();
-                    }else if ("code".equals(fieldname)) {
-                        parser.nextToken();
-                        responseModel.error.code=parser.getValueAsInt();
-                    }
+
+                        result = parser.readValueAsTree();
+                        if (type != null) {
+                            try {
+                                responseModel.result = reader.readValue(result.traverse(), getType(type));
+                            } catch (JsonProcessingException ex) {
+                                responseModel.ex = ex;
+                            }
+                        }
+                        break;
+                    case "error":
+                        responseModel.error = new JsonErrorModel();
+                        while (parser.nextToken() != JsonToken.END_OBJECT) {
+                            fieldName = parser.getCurrentName();
+                            if ("message".equals(fieldName)) {
+                                parser.nextToken();
+                                responseModel.error.message = parser.getText();
+                            } else if ("code".equals(fieldName)) {
+                                parser.nextToken();
+                                responseModel.error.code = parser.getValueAsInt();
+                            }
+                        }
+                        break;
                 }
             }
         }
@@ -135,7 +139,7 @@ public class JsonRpc2Controller extends JsonRpcController {
 
 
     @Override
-    public RequestResult parseResponse(RequestInterface request, InputStream stream, Map<String, List<String>> headers) {
+    public RequestResult parseResponse(Request request, InputStream stream, Map<String, List<String>> headers) {
         JsonParser parser = null;
         try {
             JsonRpcResponseModel2 response;
@@ -187,13 +191,13 @@ public class JsonRpc2Controller extends JsonRpcController {
     }
 
     @Override
-    public ProtocolController.RequestInfo createRequests(String url, List<RequestInterface> requests) throws JudoException {
+    public ProtocolController.RequestInfo createRequests(String url, List<Request> requests) throws JudoException {
         try {
             int i = 0;
             ProtocolController.RequestInfo requestInfo = new ProtocolController.RequestInfo();
             requestInfo.url = url;
             Object[] requestsJson = new Object[requests.size()];
-            for (RequestInterface request : requests) {
+            for (Request request : requests) {
                 requestsJson[i] = createRequestObject(request);
                 i++;
             }
@@ -208,13 +212,13 @@ public class JsonRpc2Controller extends JsonRpcController {
     }
 
     @Override
-    public List<RequestResult> parseResponses(List<RequestInterface> requests, InputStream stream, Map<String, List<String>> headers) throws JudoException {
+    public List<RequestResult> parseResponses(List<Request> requests, InputStream stream, Map<String, List<String>> headers) throws JudoException {
         JsonParser parser = null;
         try {
             ObjectReader reader = mapper.reader();
-            List<RequestResult> finalResponses = new ArrayList<RequestResult>(requests.size());
-            SparseArray<RequestInterface> requestMap=new SparseArray< RequestInterface>(requests.size());
-            for(RequestInterface requestInterface : requests){
+            List<RequestResult> finalResponses = new ArrayList<>(requests.size());
+            SparseArray<Request> requestMap=new SparseArray<>(requests.size());
+            for(Request requestInterface : requests){
                 requestMap.put(requestInterface.getId(), requestInterface);
             }
             parser = factory.createParser(stream);

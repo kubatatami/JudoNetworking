@@ -1,31 +1,29 @@
 package com.github.kubatatami.judonetworking.transports;
 
 import com.github.kubatatami.judonetworking.Endpoint;
-import com.github.kubatatami.judonetworking.JudoExecutor;
-import com.github.kubatatami.judonetworking.ProtocolController;
-import com.github.kubatatami.judonetworking.ReflectionCache;
-import com.github.kubatatami.judonetworking.RequestOutputStream;
-import com.github.kubatatami.judonetworking.SecurityUtils;
-import com.github.kubatatami.judonetworking.TimeStat;
-import com.github.kubatatami.judonetworking.TransportLayer;
+import com.github.kubatatami.judonetworking.internals.executors.JudoExecutor;
+import com.github.kubatatami.judonetworking.controllers.ProtocolController;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
+import com.github.kubatatami.judonetworking.internals.streams.RequestOutputStream;
+import com.github.kubatatami.judonetworking.utils.SecurityUtils;
+import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Call;
-import com.squareup.okhttp.ConnectionPool;
+import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
-import java.net.ConnectException;
-import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.Date;
@@ -33,8 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
-import javax.net.ssl.HttpsURLConnection;
 
 import okio.BufferedSink;
 
@@ -46,9 +42,28 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
     protected OkHttpConnectionModifier okHttpConnectionModifier;
     protected OkHttpClient baseClient = new OkHttpClient();
 
+
+    public OkHttpTransportLayer() {
+        baseClient.setAuthenticator(new Authenticator() {
+            @Override
+            public Request authenticate(Proxy proxy, Response response) throws IOException {
+                if(authKey!=null) {
+                    return response.request().newBuilder().header("Authorization", authKey).build();
+                }else{
+                    return null;
+                }
+            }
+
+            @Override
+            public Request authenticateProxy(Proxy proxy, Response response) throws IOException {
+                return null;
+            }
+        });
+    }
+
     protected void initSetup(OkHttpClient client, Request.Builder builder, ProtocolController.RequestInfo requestInfo,
                              int timeout, TimeStat timeStat, CacheInfo cacheInfo) throws Exception {
-
+        client.setFollowRedirects(followRedirection);
         client.setFollowSslRedirects(followRedirection);
         if (cacheInfo != null) {
             if (cacheInfo.hash != null) {
@@ -132,27 +147,33 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
             }
 
             final Call call = client.newCall(builder.method(methodName, requestBody).build());
-            JudoExecutor.ConnectionThread connectionThread = (JudoExecutor.ConnectionThread) Thread.currentThread();
-            connectionThread.setCanceller(new JudoExecutor.ConnectionThread.Canceller() {
-                @Override
-                public void cancel() {
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            call.cancel();
-                        }
-                    }).start();
-                }
-            });
+            if(Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
+                JudoExecutor.ConnectionThread connectionThread = (JudoExecutor.ConnectionThread) Thread.currentThread();
+                connectionThread.setCanceller(new JudoExecutor.ConnectionThread.Canceller() {
+                    @Override
+                    public void cancel() {
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                call.cancel();
+                            }
+                        }).start();
+                    }
+                });
+            }
             Response response;
             try {
                 response = call.execute();
             } catch (IOException ex) {
-                JudoExecutor.ConnectionThread thread = (JudoExecutor.ConnectionThread) Thread.currentThread();
-                if (thread.isCanceled()) {
-                    thread.resetCanceled();
-                    throw new CancelException();
-                } else {
+                if(Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
+                    JudoExecutor.ConnectionThread thread = (JudoExecutor.ConnectionThread) Thread.currentThread();
+                    if (thread.isCanceled()) {
+                        thread.resetCanceled();
+                        throw new CancelException(thread.getName());
+                    } else {
+                        throw ex;
+                    }
+                }else{
                     throw ex;
                 }
             }
@@ -212,12 +233,20 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
                     @Override
                     public InputStream getStream() throws ConnectionException {
-                        return response.body().byteStream();
+                        try {
+                            return response.body().byteStream();
+                        } catch (IOException e) {
+                            throw new ConnectionException(e);
+                        }
                     }
 
                     @Override
                     public int getContentLength() {
-                        return (int) response.body().contentLength();
+                        try {
+                            return (int) response.body().contentLength();
+                        } catch (IOException e) {
+                            throw new ConnectionException(e);
+                        }
                     }
 
                     public boolean isNewestAvailable() throws ConnectionException {
@@ -225,7 +254,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                     }
 
                     public Map<String, List<String>> getHeaders() {
-                        Map<String, List<String>> map = new HashMap<String, List<String>>();
+                        Map<String, List<String>> map = new HashMap<>();
                         for (String name : response.headers().names()) {
                             map.put(name, response.headers(name));
                         }
@@ -295,7 +324,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
     @Override
     public void setMaxConnections(int max) {
-        System.setProperty("http.maxConnections", max + "");
+        baseClient.getDispatcher().setMaxRequests(max);
     }
 
     public void setOkHttpConnectionModifier(OkHttpConnectionModifier okHttpConnectionModifier) {
@@ -309,7 +338,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
     }
 
     static class  OkHttpBuilder extends Request.Builder{
-        Map<String,String> headers=new HashMap<String, String>();
+        Map<String,String> headers=new HashMap<>();
 
         @Override
         public Request.Builder addHeader(String name, String value) {

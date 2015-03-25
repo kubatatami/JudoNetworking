@@ -48,7 +48,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> implements Iterable<T> {
     }
 
     public ObserverAdapter(Context context, Map<?, T> objects, int... resource) {
-        super(context, 0, new ArrayList<T>(objects.values()));
+        super(context, 0, new ArrayList<>(objects.values()));
         this.resource = resource;
         init(context);
     }
@@ -102,7 +102,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> implements Iterable<T> {
                         results.values = mOriginals;
                         results.count = mOriginals.size();
                     } else {
-                        List<T> newValues = new ArrayList<T>();
+                        List<T> newValues = new ArrayList<>();
                         for (T value : mOriginals) {
                             if (filterInterface.filter(constraint, value)) {
                                 newValues.add(value);
@@ -144,7 +144,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> implements Iterable<T> {
             int i=0;
             @Override
             public boolean hasNext() {
-                return i+1<getCount();
+                return i<getCount();
             }
 
             @Override
