@@ -10,16 +10,8 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  * Date: 07.01.2013
  * Time: 10:55
  */
-public interface Callback<T> {
+public interface Callback<T>  extends BaseCallback<T>{
 
     public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult);
-
-    public void onProgress(int progress);
-
-    public void onSuccess(T result);
-
-    public void onError(JudoException e);
-
-    public void onFinish();
 
 }
