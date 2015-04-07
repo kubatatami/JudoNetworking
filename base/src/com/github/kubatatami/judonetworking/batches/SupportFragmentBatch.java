@@ -4,6 +4,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
+import com.github.kubatatami.judonetworking.callbacks.MergeCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.ref.WeakReference;
@@ -14,7 +15,7 @@ import java.lang.ref.WeakReference;
  * Date: 11.02.2013
  * Time: 22:48
  */
-public abstract class SupportFragmentBatch<T> implements Batch<T>, FragmentManager.OnBackStackChangedListener{
+public abstract class SupportFragmentBatch<T> extends DefaultBatch<T> implements FragmentManager.OnBackStackChangedListener{
 
 
     private final WeakReference<Fragment> fragment;
@@ -22,9 +23,14 @@ public abstract class SupportFragmentBatch<T> implements Batch<T>, FragmentManag
     private AsyncResult asyncResult;
 
     public SupportFragmentBatch(Fragment fragment) {
+        this(null, fragment);
+    }
+
+    protected SupportFragmentBatch(MergeCallback mergeCallback, Fragment fragment) {
+        super(mergeCallback);
         this.fragment = new WeakReference<>(fragment);
         this.manager = new WeakReference<>(fragment.getFragmentManager());
-        if(manager.get()!=null) {
+        if (manager.get() != null) {
             manager.get().addOnBackStackChangedListener(this);
         }
     }
@@ -49,6 +55,7 @@ public abstract class SupportFragmentBatch<T> implements Batch<T>, FragmentManag
 
     @Override
     public final void onStart(AsyncResult asyncResult) {
+        super.onStart(asyncResult);
         this.asyncResult = asyncResult;
         if (isActive()) {
             onSafeStart(asyncResult);
@@ -68,6 +75,7 @@ public abstract class SupportFragmentBatch<T> implements Batch<T>, FragmentManag
 
     @Override
     public final void onSuccess(Object[] results) {
+        super.onSuccess(results);
         if (isActive()) {
             onSafeSuccess(results);
         } else {
@@ -77,6 +85,7 @@ public abstract class SupportFragmentBatch<T> implements Batch<T>, FragmentManag
 
     @Override
     public final void onError(JudoException e) {
+        super.onError(e);
         if (isActive()) {
             onSafeError(e);
         } else {
@@ -86,6 +95,7 @@ public abstract class SupportFragmentBatch<T> implements Batch<T>, FragmentManag
 
     @Override
     public final void onProgress(int progress) {
+        super.onProgress(progress);
         if (isActive()) {
             onSafeProgress(progress);
         } else {

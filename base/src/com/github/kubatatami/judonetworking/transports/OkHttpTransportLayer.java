@@ -127,6 +127,11 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                                         requestInfo.entity.getContentLength()) : sink.outputStream();
                         requestInfo.entity.writeTo(stream);
                     }
+
+                    @Override
+                    public long contentLength() throws IOException {
+                        return requestInfo.entity.getContentLength();
+                    }
                 };
             }
             if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {

@@ -80,6 +80,8 @@ public class RequestInputStreamEntity {
                 remaining -= l;
             }
         }
+        outstream.flush();
+        outstream.close();
     }
 
     // non-javadoc, see interface HttpEntity

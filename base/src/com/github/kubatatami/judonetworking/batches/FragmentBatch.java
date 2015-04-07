@@ -6,6 +6,7 @@ import android.app.FragmentManager;
 import android.os.Build;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
+import com.github.kubatatami.judonetworking.callbacks.MergeCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.ref.WeakReference;
@@ -17,7 +18,7 @@ import java.lang.ref.WeakReference;
  * Time: 22:48
  */
 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-public abstract class FragmentBatch<T> implements Batch<T>, FragmentManager.OnBackStackChangedListener{
+public abstract class FragmentBatch<T> extends DefaultBatch<T> implements FragmentManager.OnBackStackChangedListener {
 
 
     private final WeakReference<Fragment> fragment;
@@ -25,13 +26,17 @@ public abstract class FragmentBatch<T> implements Batch<T>, FragmentManager.OnBa
     private AsyncResult asyncResult;
 
     public FragmentBatch(Fragment fragment) {
+        this(null, fragment);
+    }
+
+    protected FragmentBatch(MergeCallback mergeCallback, Fragment fragment) {
+        super(mergeCallback);
         this.fragment = new WeakReference<>(fragment);
         this.manager = new WeakReference<>(fragment.getFragmentManager());
-        if(manager.get()!=null) {
+        if (manager.get() != null) {
             manager.get().addOnBackStackChangedListener(this);
         }
     }
-
 
     @Override
     public void onBackStackChanged() {
@@ -43,7 +48,7 @@ public abstract class FragmentBatch<T> implements Batch<T>, FragmentManager.OnBa
     protected void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
-            if(manager.get()!=null) {
+            if (manager.get() != null) {
                 manager.get().removeOnBackStackChangedListener(this);
             }
         }
@@ -52,6 +57,7 @@ public abstract class FragmentBatch<T> implements Batch<T>, FragmentManager.OnBa
 
     @Override
     public final void onStart(AsyncResult asyncResult) {
+        super.onStart(asyncResult);
         this.asyncResult = asyncResult;
         if (isActive()) {
             onSafeStart(asyncResult);
@@ -71,6 +77,7 @@ public abstract class FragmentBatch<T> implements Batch<T>, FragmentManager.OnBa
 
     @Override
     public final void onSuccess(Object[] results) {
+        super.onSuccess(results);
         if (isActive()) {
             onSafeSuccess(results);
         } else {
@@ -80,6 +87,7 @@ public abstract class FragmentBatch<T> implements Batch<T>, FragmentManager.OnBa
 
     @Override
     public final void onError(JudoException e) {
+        super.onError(e);
         if (isActive()) {
             onSafeError(e);
         } else {
@@ -89,6 +97,7 @@ public abstract class FragmentBatch<T> implements Batch<T>, FragmentManager.OnBa
 
     @Override
     public final void onProgress(int progress) {
+        super.onProgress(progress);
         if (isActive()) {
             onSafeProgress(progress);
         } else {
@@ -103,13 +112,13 @@ public abstract class FragmentBatch<T> implements Batch<T>, FragmentManager.OnBa
         } else {
             tryCancel();
         }
-        if(manager.get()!=null) {
+        if (manager.get() != null) {
             manager.get().removeOnBackStackChangedListener(this);
         }
     }
 
-    protected boolean isActive(){
-        return fragment.get()!=null && fragment.get().getActivity() != null;
+    protected boolean isActive() {
+        return fragment.get() != null && fragment.get().getActivity() != null;
     }
 
     public void onSafeStart(AsyncResult asyncResult) {

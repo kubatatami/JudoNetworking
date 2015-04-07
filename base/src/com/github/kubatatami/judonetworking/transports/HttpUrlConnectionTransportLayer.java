@@ -215,7 +215,6 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                     requestInfo.entity.reset();
                 }
                 requestInfo.entity.writeTo(stream);
-                stream.flush();
             } else {
                 if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
                     longLog("Request", requestInfo.url);
@@ -225,9 +224,6 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                 timeStat.tickSendTime();
             }
         }finally {
-            if(stream!=null){
-                stream.close();
-            }
             if (requestInfo.entity != null) {
                 requestInfo.entity.close();
             }

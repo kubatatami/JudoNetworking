@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.batches;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
+import com.github.kubatatami.judonetworking.callbacks.MergeCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**
@@ -11,9 +12,20 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  */
 public abstract class DefaultBatch<T> implements Batch<T> {
 
+    MergeCallback mergeCallback;
+
+    public DefaultBatch() {
+    }
+
+    public DefaultBatch(MergeCallback mergeCallback) {
+        this.mergeCallback = mergeCallback;
+    }
+
     @Override
     public void onStart(AsyncResult asyncResult) {
-
+        if(mergeCallback !=null){
+            mergeCallback.addStart(asyncResult);
+        }
     }
 
     @Override
@@ -27,15 +39,23 @@ public abstract class DefaultBatch<T> implements Batch<T> {
 
     @Override
     public void onSuccess(Object[] results) {
+        if(mergeCallback !=null){
+            mergeCallback.addSuccess();
+        }
     }
 
     @Override
     public void onError(JudoException e) {
-
+        if(mergeCallback !=null){
+            mergeCallback.addError(e);
+        }
     }
 
     @Override
     public void onProgress(int progress) {
+        if(mergeCallback !=null){
+            mergeCallback.addProgress(this,progress);
+        }
     }
 
     @Override
