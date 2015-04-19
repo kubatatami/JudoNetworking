@@ -179,12 +179,16 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
     }
 
     public boolean set(T object, boolean notify) {
+        return set(object,notify,System.currentTimeMillis());
+    }
+
+    public boolean set(T object, boolean notify, long dataSetTime) {
 
         if (setOnlyWhenDifferentHash && this.object != null && object!=null && object.hashCode() == this.object.hashCode()) {
            return false;
         }
 
-        dataSetTime = System.currentTimeMillis();
+        this.dataSetTime = dataSetTime;
         this.object = object;
 
 
