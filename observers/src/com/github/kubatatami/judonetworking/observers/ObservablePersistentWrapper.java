@@ -23,6 +23,7 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
 
     protected Context context;
     protected String persistentKey;
+    protected boolean loadAsync=false;
 
     public ObservablePersistentWrapper(Context context, String persistentKey) {
         this.context = context.getApplicationContext();
@@ -72,6 +73,54 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
         loadData();
     }
 
+    public ObservablePersistentWrapper(String persistentKey, boolean loadAsync) {
+        this.persistentKey = persistentKey;
+        this.loadAsync = loadAsync;
+        loadData();
+    }
+
+    public ObservablePersistentWrapper(boolean notifyInUiThread, String persistentKey, boolean loadAsync) {
+        super(notifyInUiThread);
+        this.persistentKey = persistentKey;
+        this.loadAsync = loadAsync;
+        loadData();
+    }
+
+    public ObservablePersistentWrapper(long updateTime, String persistentKey, boolean loadAsync) {
+        super(updateTime);
+        this.persistentKey = persistentKey;
+        this.loadAsync = loadAsync;
+        loadData();
+    }
+
+    public ObservablePersistentWrapper(boolean notifyInUiThread, long updateTime, String persistentKey, boolean loadAsync) {
+        super(notifyInUiThread, updateTime);
+        this.persistentKey = persistentKey;
+        this.loadAsync = loadAsync;
+        loadData();
+    }
+
+    public ObservablePersistentWrapper(boolean notifyInUiThread, boolean allowNull, String persistentKey, boolean loadAsync) {
+        super(notifyInUiThread, allowNull);
+        this.persistentKey = persistentKey;
+        this.loadAsync = loadAsync;
+        loadData();
+    }
+
+    public ObservablePersistentWrapper(long updateTime, boolean allowNull, String persistentKey, boolean loadAsync) {
+        super(updateTime, allowNull);
+        this.persistentKey = persistentKey;
+        this.loadAsync = loadAsync;
+        loadData();
+    }
+
+    public ObservablePersistentWrapper(boolean notifyInUiThread, long updateTime, boolean allowNull, String persistentKey, boolean loadAsync) {
+        super(notifyInUiThread, updateTime, allowNull);
+        this.persistentKey = persistentKey;
+        this.loadAsync = loadAsync;
+        loadData();
+    }
+
     protected File getPersistentFile() {
         File dir = new File(context.getCacheDir() + "/ObservablePersistentWrapper/");
         dir.mkdirs();
@@ -79,30 +128,42 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
     }
 
     protected void loadData() {
+        if(loadAsync){
+            loadDataAsync();
+        }else{
+            loadDataSync();
+        }
+    }
+
+    protected void loadDataSync() {
+        FileInputStream fileStream = null;
+        ObjectInputStream os = null;
+        try {
+            fileStream = new FileInputStream(getPersistentFile());
+            os = new ObjectInputStream(fileStream);
+            PersistentData<T> persistentData = (PersistentData<T>) os.readObject();
+            set(persistentData.object, true, persistentData.dataSetTime);
+        } catch (Exception e) {
+            JudoLogger.log(e);
+        } finally {
+            try {
+                if (os != null) {
+                    os.close();
+                }
+                if (fileStream != null) {
+                    fileStream.close();
+                }
+            } catch (IOException ex) {
+                JudoLogger.log(ex);
+            }
+        }
+    }
+
+    protected void loadDataAsync() {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                FileInputStream fileStream = null;
-                ObjectInputStream os = null;
-                try {
-                    fileStream = new FileInputStream(getPersistentFile());
-                    os = new ObjectInputStream(fileStream);
-                    PersistentData<T> persistentData = (PersistentData<T>) os.readObject();
-                    set(persistentData.object, true, persistentData.dataSetTime);
-                } catch (Exception e) {
-                    JudoLogger.log(e);
-                } finally {
-                    try {
-                        if (os != null) {
-                            os.close();
-                        }
-                        if (fileStream != null) {
-                            fileStream.close();
-                        }
-                    } catch (IOException ex) {
-                        JudoLogger.log(ex);
-                    }
-                }
+                loadDataSync();
             }
         }).start();
     }
