@@ -232,7 +232,7 @@ public class ObserverHelper {
                         @Override
                         public void update(Object data) {
                             try {
-                                if (data != null || wrapper.isAllowNull()) {
+                                if (data != null || wrapper.isNotifyOnNull()) {
                                     observerMethod.method.invoke(object, data);
                                 }
                             } catch (Exception e) {

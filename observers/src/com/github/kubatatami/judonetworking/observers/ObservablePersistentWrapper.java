@@ -25,9 +25,33 @@ import java.util.concurrent.ThreadFactory;
  */
 public class ObservablePersistentWrapper<T extends Serializable> extends ObservableWrapper<T> {
 
+    protected static Level defaultLevel = Level.DATA;
+
     protected Context context;
     protected String persistentKey;
-    protected boolean loadAsync=false;
+    protected boolean loadAsync = false;
+    protected Level level = defaultLevel;
+
+    public ObservablePersistentWrapper(Context context, String persistentKey) {
+        this.context = context;
+        this.persistentKey = persistentKey;
+        loadData();
+    }
+
+    public ObservablePersistentWrapper(Context context, String persistentKey, boolean loadAsync) {
+        this.context = context;
+        this.persistentKey = persistentKey;
+        this.loadAsync = loadAsync;
+        loadData();
+    }
+
+    public ObservablePersistentWrapper(Context context, String persistentKey, boolean loadAsync, Level level) {
+        this.context = context;
+        this.persistentKey = persistentKey;
+        this.loadAsync = loadAsync;
+        this.level = level;
+        loadData();
+    }
 
     protected static Executor executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
         @Override
@@ -39,116 +63,20 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
     });
 
 
-    public ObservablePersistentWrapper(Context context, String persistentKey) {
-        this.context = context.getApplicationContext();
-        this.persistentKey = persistentKey;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(boolean notifyInUiThread, Context context, String persistentKey) {
-        super(notifyInUiThread);
-        this.context = context.getApplicationContext();
-        this.persistentKey = persistentKey;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(long updateTime, Context context, String persistentKey) {
-        super(updateTime);
-        this.context = context.getApplicationContext();
-        this.persistentKey = persistentKey;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(boolean notifyInUiThread, long updateTime, Context context, String persistentKey) {
-        super(notifyInUiThread, updateTime);
-        this.context = context.getApplicationContext();
-        this.persistentKey = persistentKey;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(boolean notifyInUiThread, boolean allowNull, Context context, String persistentKey) {
-        super(notifyInUiThread, allowNull);
-        this.context = context.getApplicationContext();
-        this.persistentKey = persistentKey;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(long updateTime, boolean allowNull, Context context, String persistentKey) {
-        super(updateTime, allowNull);
-        this.context = context.getApplicationContext();
-        this.persistentKey = persistentKey;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(boolean notifyInUiThread, long updateTime, boolean allowNull, Context context, String persistentKey) {
-        super(notifyInUiThread, updateTime, allowNull);
-        this.context = context.getApplicationContext();
-        this.persistentKey = persistentKey;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(String persistentKey, boolean loadAsync) {
-        this.persistentKey = persistentKey;
-        this.loadAsync = loadAsync;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(boolean notifyInUiThread, String persistentKey, boolean loadAsync) {
-        super(notifyInUiThread);
-        this.persistentKey = persistentKey;
-        this.loadAsync = loadAsync;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(long updateTime, String persistentKey, boolean loadAsync) {
-        super(updateTime);
-        this.persistentKey = persistentKey;
-        this.loadAsync = loadAsync;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(boolean notifyInUiThread, long updateTime, String persistentKey, boolean loadAsync) {
-        super(notifyInUiThread, updateTime);
-        this.persistentKey = persistentKey;
-        this.loadAsync = loadAsync;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(boolean notifyInUiThread, boolean allowNull, String persistentKey, boolean loadAsync) {
-        super(notifyInUiThread, allowNull);
-        this.persistentKey = persistentKey;
-        this.loadAsync = loadAsync;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(long updateTime, boolean allowNull, String persistentKey, boolean loadAsync) {
-        super(updateTime, allowNull);
-        this.persistentKey = persistentKey;
-        this.loadAsync = loadAsync;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(boolean notifyInUiThread, long updateTime, boolean allowNull, String persistentKey, boolean loadAsync) {
-        super(notifyInUiThread, updateTime, allowNull);
-        this.persistentKey = persistentKey;
-        this.loadAsync = loadAsync;
-        loadData();
-    }
-
-    protected static File getPersistentDir(Context context) {
-        File dir = new File(context.getCacheDir() + "/ObservablePersistentWrapper/");
+    protected static File getPersistentDir(Level level, Context context) {
+        File dir = new File((level.equals(Level.CACHE) ? context.getCacheDir() : context.getFilesDir()) + "/ObservablePersistentWrapper/");
         dir.mkdirs();
         return dir;
     }
 
     protected File getPersistentFile() {
-        return new File(getPersistentDir(context), persistentKey);
+        return new File(getPersistentDir(level, context), persistentKey);
     }
 
     protected void loadData() {
-        if(loadAsync){
+        if (loadAsync) {
             loadDataAsync();
-        }else{
+        } else {
             loadDataSync();
         }
     }
@@ -156,23 +84,26 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
     protected void loadDataSync() {
         FileInputStream fileStream = null;
         ObjectInputStream os = null;
-        try {
-            fileStream = new FileInputStream(getPersistentFile());
-            os = new ObjectInputStream(fileStream);
-            PersistentData<T> persistentData = (PersistentData<T>) os.readObject();
-            set(persistentData.object, true, persistentData.dataSetTime);
-        } catch (Exception e) {
-            JudoLogger.log(e);
-        } finally {
+        File file = getPersistentFile();
+        if (file.exists()) {
             try {
-                if (os != null) {
-                    os.close();
+                fileStream = new FileInputStream(getPersistentFile());
+                os = new ObjectInputStream(fileStream);
+                PersistentData<T> persistentData = (PersistentData<T>) os.readObject();
+                set(persistentData.object, true, persistentData.dataSetTime);
+            } catch (Exception e) {
+                JudoLogger.log(e);
+            } finally {
+                try {
+                    if (os != null) {
+                        os.close();
+                    }
+                    if (fileStream != null) {
+                        fileStream.close();
+                    }
+                } catch (IOException ex) {
+                    JudoLogger.log(ex);
                 }
-                if (fileStream != null) {
-                    fileStream.close();
-                }
-            } catch (IOException ex) {
-                JudoLogger.log(ex);
             }
         }
     }
@@ -209,17 +140,29 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
         return result;
     }
 
-    public static void removeAllDataSync(Context context){
-        for(File file: getPersistentDir(context).listFiles()) file.delete();
+    public static void removeAllDataSync(Context context) {
+        removeAllDataSync(defaultLevel, context);
     }
 
     public static void removeAllDataAsync(final Context context) {
+        removeAllDataAsync(defaultLevel, context);
+    }
+
+    public static void removeAllDataSync(Level level, Context context) {
+        for (File file : getPersistentDir(level, context).listFiles()) file.delete();
+    }
+
+    public static void removeAllDataAsync(final Level level, final Context context) {
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                removeAllDataSync(context);
+                removeAllDataSync(level, context);
             }
         });
+    }
+
+    protected enum Level {
+        CACHE, DATA
     }
 
     protected static class PersistentData<T> implements Serializable {
@@ -233,5 +176,7 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
             this.dataSetTime = dataSetTime;
             this.object = object;
         }
+
+
     }
 }
