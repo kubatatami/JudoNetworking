@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.observers;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 
 import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
@@ -15,6 +16,9 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Created by Kuba on 18/04/15.
@@ -24,6 +28,16 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
     protected Context context;
     protected String persistentKey;
     protected boolean loadAsync=false;
+
+    protected static Executor executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+        @Override
+        public Thread newThread(@NonNull Runnable r) {
+            Thread thread = new Thread(r);
+            thread.setPriority(Thread.MIN_PRIORITY);
+            return thread;
+        }
+    });
+
 
     public ObservablePersistentWrapper(Context context, String persistentKey) {
         this.context = context.getApplicationContext();
@@ -121,10 +135,14 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
         loadData();
     }
 
-    protected File getPersistentFile() {
+    protected static File getPersistentDir(Context context) {
         File dir = new File(context.getCacheDir() + "/ObservablePersistentWrapper/");
         dir.mkdirs();
-        return new File(dir, persistentKey);
+        return dir;
+    }
+
+    protected File getPersistentFile() {
+        return new File(getPersistentDir(context), persistentKey);
     }
 
     protected void loadData() {
@@ -160,16 +178,16 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
     }
 
     protected void loadDataAsync() {
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
                 loadDataSync();
             }
-        }).start();
+        });
     }
 
     protected void saveData(final T object) {
-        new Thread(new Runnable() {
+        executor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -181,7 +199,7 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
                     JudoLogger.log(e);
                 }
             }
-        }).start();
+        });
     }
 
     @Override
@@ -191,6 +209,18 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
         return result;
     }
 
+    public static void removeAllDataSync(Context context){
+        for(File file: getPersistentDir(context).listFiles()) file.delete();
+    }
+
+    public static void removeAllDataAsync(final Context context) {
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                removeAllDataSync(context);
+            }
+        });
+    }
 
     protected static class PersistentData<T> implements Serializable {
         public long dataSetTime;
