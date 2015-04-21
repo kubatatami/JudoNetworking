@@ -59,6 +59,9 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         }
     };
 
+    public boolean isLoaded(){
+        return true;
+    }
 
     public void addObserver(WrapObserver<T> observer) {
         addObserver(observer, true);

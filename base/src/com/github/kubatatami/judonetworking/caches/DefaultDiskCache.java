@@ -8,11 +8,14 @@ import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
@@ -49,7 +52,7 @@ public class DefaultDiskCache implements DiskCache {
             if (cacheSize > 0) {
                 trimToSize(dir, cacheSize);
             }
-            ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(file));
+            ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
             os.writeObject(new CacheResult(object, true, method.getTime(), method.getHash()));
             os.flush();
             os.close();
@@ -137,7 +140,7 @@ public class DefaultDiskCache implements DiskCache {
     private CacheResult loadObject(CacheMethod method, String hash, int cacheLifeTime) {
         CacheResult result;
         ObjectInputStream os = null;
-        FileInputStream fileStream;
+        InputStream fileStream;
         File file = new File(getCacheDir(method), hash + "");
 
         if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
@@ -147,7 +150,7 @@ public class DefaultDiskCache implements DiskCache {
         if (file.exists()) {
             if (cacheLifeTime == 0 || System.currentTimeMillis() - file.lastModified() < cacheLifeTime) {
                 try {
-                    fileStream = new FileInputStream(file);
+                    fileStream = new BufferedInputStream(new FileInputStream(file));
                     os = new ObjectInputStream(fileStream);
                     result = (CacheResult) os.readObject();
                     if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {

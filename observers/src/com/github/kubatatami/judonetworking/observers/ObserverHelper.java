@@ -252,7 +252,7 @@ public class ObserverHelper {
                         }
                     };
 
-                    wrapper.addObserver(observer, observerMethod.dataObserver.onStartup());
+                    wrapper.addObserver(observer, observerMethod.dataObserver.onStartup() && wrapper.isLoaded());
                     dataObservers.add(new Pair<>(wrapper, observer));
                 } else if (wrapperOrAdapter instanceof Adapter) {
                     final Adapter adapter = (Adapter) wrapperOrAdapter;

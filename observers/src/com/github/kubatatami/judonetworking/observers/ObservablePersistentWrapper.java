@@ -6,19 +6,27 @@ import android.support.annotation.NonNull;
 import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Kuba on 18/04/15.
@@ -27,33 +35,10 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
 
     protected static Level defaultLevel = Level.DATA;
 
-    protected Context context;
-    protected String persistentKey;
-    protected boolean loadAsync = false;
-    protected Level level = defaultLevel;
 
-    public ObservablePersistentWrapper(Context context, String persistentKey) {
-        this.context = context;
-        this.persistentKey = persistentKey;
-        loadData();
-    }
+    protected static LinkedBlockingDeque<Runnable> queue = new LinkedBlockingDeque<>();
 
-    public ObservablePersistentWrapper(Context context, String persistentKey, boolean loadAsync) {
-        this.context = context;
-        this.persistentKey = persistentKey;
-        this.loadAsync = loadAsync;
-        loadData();
-    }
-
-    public ObservablePersistentWrapper(Context context, String persistentKey, boolean loadAsync, Level level) {
-        this.context = context;
-        this.persistentKey = persistentKey;
-        this.loadAsync = loadAsync;
-        this.level = level;
-        loadData();
-    }
-
-    protected static Executor executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
+    protected static Executor executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, queue, new ThreadFactory() {
         @Override
         public Thread newThread(@NonNull Runnable r) {
             Thread thread = new Thread(r);
@@ -62,6 +47,31 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
         }
     });
 
+
+    protected Context context;
+    protected String persistentKey;
+    protected Level level = defaultLevel;
+    protected boolean loaded;
+    protected Semaphore semaphore = new Semaphore(1, true);
+    protected Runnable loadingRunnable = new Runnable() {
+        @Override
+        public void run() {
+            loadDataSync();
+        }
+    };
+
+    public ObservablePersistentWrapper(Context context, String persistentKey) {
+        this.context = context;
+        this.persistentKey = persistentKey;
+        loadDataAsync();
+    }
+
+    public ObservablePersistentWrapper(Context context, String persistentKey, Level level) {
+        this.context = context;
+        this.persistentKey = persistentKey;
+        this.level = level;
+        loadDataAsync();
+    }
 
     protected static File getPersistentDir(Level level, Context context) {
         File dir = new File((level.equals(Level.CACHE) ? context.getCacheDir() : context.getFilesDir()) + "/ObservablePersistentWrapper/");
@@ -73,21 +83,34 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
         return new File(getPersistentDir(level, context), persistentKey);
     }
 
-    protected void loadData() {
-        if (loadAsync) {
-            loadDataAsync();
-        } else {
-            loadDataSync();
+    @Override
+    public synchronized T get() {
+        try {
+            long time = System.currentTimeMillis();
+            if (queue.contains(loadingRunnable)) {
+                queue.removeFirstOccurrence(loadingRunnable);
+                queue.addFirst(loadingRunnable);
+            }
+            semaphore.acquire();
+            T result = super.get();
+            semaphore.release();
+            time = System.currentTimeMillis() - time;
+            if (time > 0) {
+                JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " waiting:" + time + "ms");
+            }
+            return result;
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
     protected void loadDataSync() {
-        FileInputStream fileStream = null;
+        InputStream fileStream = null;
         ObjectInputStream os = null;
         File file = getPersistentFile();
         if (file.exists()) {
             try {
-                fileStream = new FileInputStream(getPersistentFile());
+                fileStream = new BufferedInputStream(new FileInputStream(getPersistentFile()));
                 os = new ObjectInputStream(fileStream);
                 PersistentData<T> persistentData = (PersistentData<T>) os.readObject();
                 set(persistentData.object, true, persistentData.dataSetTime);
@@ -97,8 +120,7 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
                 try {
                     if (os != null) {
                         os.close();
-                    }
-                    if (fileStream != null) {
+                    }if (fileStream != null) {
                         fileStream.close();
                     }
                 } catch (IOException ex) {
@@ -106,28 +128,48 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
                 }
             }
         }
+        loaded=true;
+        semaphore.release();
+    }
+
+    @Override
+    public boolean isLoaded() {
+        return loaded;
     }
 
     protected void loadDataAsync() {
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                loadDataSync();
-            }
-        });
+        try {
+            semaphore.acquire();
+            executor.execute(loadingRunnable);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     protected void saveData(final T object) {
         executor.execute(new Runnable() {
             @Override
             public void run() {
+                OutputStream fileStream = null;
+                ObjectOutputStream os = null;
                 try {
-                    ObjectOutputStream os = new ObjectOutputStream(new FileOutputStream(getPersistentFile()));
-                    os.writeObject(new PersistentData<>(updateTime, object));
+                    fileStream =new BufferedOutputStream( new FileOutputStream(getPersistentFile()));
+                    os = new ObjectOutputStream(fileStream);
+                    os.writeObject(new PersistentData<>(dataSetTime, object));
                     os.flush();
-                    os.close();
                 } catch (IOException e) {
                     JudoLogger.log(e);
+                } finally {
+                    try {
+                        if (os != null) {
+                            os.close();
+                        }
+                        if (fileStream != null) {
+                            fileStream.close();
+                        }
+                    } catch (IOException ex) {
+                        JudoLogger.log(ex);
+                    }
                 }
             }
         });
