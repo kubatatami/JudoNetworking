@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.observers;
 
 import android.content.Context;
+import android.os.Parcel;
 import android.support.annotation.NonNull;
 
 import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
@@ -8,6 +9,7 @@ import com.github.kubatatami.judonetworking.logs.JudoLogger;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -16,6 +18,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,14 +34,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Kuba on 18/04/15.
  */
-public class ObservablePersistentWrapper<T extends Serializable> extends ObservableWrapper<T> {
+public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T> {
 
     protected static Level defaultLevel = Level.DATA;
 
 
     protected static LinkedBlockingDeque<Runnable> queue = new LinkedBlockingDeque<>();
 
-    protected static Executor executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, queue, new ThreadFactory() {
+    protected static ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, queue, new ThreadFactory() {
         @Override
         public Thread newThread(@NonNull Runnable r) {
             Thread thread = new Thread(r);
@@ -104,32 +107,41 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
         }
     }
 
+    protected abstract PersistentData<T> loadObject(byte[] array) throws Exception;
+    protected abstract void saveObject(OutputStream fileStream, PersistentData<T> data) throws Exception;
+
     protected void loadDataSync() {
-        InputStream fileStream = null;
-        ObjectInputStream os = null;
         File file = getPersistentFile();
         if (file.exists()) {
             try {
-                fileStream = new BufferedInputStream(new FileInputStream(getPersistentFile()));
-                os = new ObjectInputStream(fileStream);
-                PersistentData<T> persistentData = (PersistentData<T>) os.readObject();
-                set(persistentData.object, true, persistentData.dataSetTime);
+                RandomAccessFile ra = new RandomAccessFile(file, "rw");
+                final byte[] b = new byte[(int) file.length()];
+                ra.read(b);
+                ra.close();
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            PersistentData<T> persistentData = loadObject(b);
+                            set(persistentData.object, true, persistentData.dataSetTime);
+                        } catch (Exception e) {
+                            JudoLogger.log(e);
+                        }finally {
+                            semaphore.release();
+                        }
+                    }
+                });
+                thread.setPriority(Thread.MIN_PRIORITY);
+                thread.start();
+
             } catch (Exception e) {
                 JudoLogger.log(e);
-            } finally {
-                try {
-                    if (os != null) {
-                        os.close();
-                    }if (fileStream != null) {
-                        fileStream.close();
-                    }
-                } catch (IOException ex) {
-                    JudoLogger.log(ex);
-                }
+                semaphore.release();
             }
+        }else{
+            semaphore.release();
         }
-        loaded=true;
-        semaphore.release();
+        loaded = true;
     }
 
     @Override
@@ -151,19 +163,13 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
             @Override
             public void run() {
                 OutputStream fileStream = null;
-                ObjectOutputStream os = null;
                 try {
-                    fileStream =new BufferedOutputStream( new FileOutputStream(getPersistentFile()));
-                    os = new ObjectOutputStream(fileStream);
-                    os.writeObject(new PersistentData<>(dataSetTime, object));
-                    os.flush();
-                } catch (IOException e) {
+                    fileStream = new BufferedOutputStream(new FileOutputStream(getPersistentFile()));
+                    saveObject(fileStream, new PersistentData<>(dataSetTime, object));
+                } catch (Exception e) {
                     JudoLogger.log(e);
                 } finally {
                     try {
-                        if (os != null) {
-                            os.close();
-                        }
                         if (fileStream != null) {
                             fileStream.close();
                         }
@@ -208,6 +214,9 @@ public class ObservablePersistentWrapper<T extends Serializable> extends Observa
     }
 
     protected static class PersistentData<T> implements Serializable {
+
+        private static final long serialVersionUID = -6391279026652710936L;
+
         public long dataSetTime;
         public T object;
 
