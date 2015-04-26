@@ -73,6 +73,9 @@ public abstract class ProtocolController {
     }
 
     public static class ApiKey implements Serializable {
+
+        private static final long serialVersionUID = -630342577502897709L;
+
         public String apiKeyName = null;
         public String apiKey = null;
 

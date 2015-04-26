@@ -84,6 +84,8 @@ public abstract class JsonRpcController extends JsonProtocolController {
 
 
     protected static class JsonRpcRequestModel implements Serializable {
+
+        private static final long serialVersionUID = -3197200310517347404L;
         private final String method;
         private final Object params;
         private final Integer id;
@@ -96,6 +98,8 @@ public abstract class JsonRpcController extends JsonProtocolController {
     }
 
     protected static class JsonRpcResponseModel implements Serializable, Comparable<JsonRpcResponseModel> {
+
+        private static final long serialVersionUID = 6520047711835131472L;
         Integer id;
         public Object result;
 

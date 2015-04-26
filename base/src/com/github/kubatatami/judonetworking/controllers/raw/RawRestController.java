@@ -188,6 +188,8 @@ public class RawRestController extends RawController {
     }
 
     protected static class AdditionalRequestData implements Serializable {
+
+        private static final long serialVersionUID = -5849466248972640154L;
         protected HashMap<String, Object> customGetKeys;
         protected HashMap<String, Object> customPostKeys;
 

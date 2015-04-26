@@ -50,10 +50,14 @@ public abstract class JsonProtocolController extends ProtocolController {
     }
 
     public static class JsonResponseModel implements Serializable {
+
+        private static final long serialVersionUID = 6605507238608079630L;
         public JsonNode result;
     }
 
     public static class JsonErrorModel implements Serializable {
+
+        private static final long serialVersionUID = -6224009858364300981L;
         public String message;
         public int code;
     }
