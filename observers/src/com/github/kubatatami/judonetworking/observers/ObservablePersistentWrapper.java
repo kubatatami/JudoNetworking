@@ -1,30 +1,19 @@
 package com.github.kubatatami.judonetworking.observers;
 
 import android.content.Context;
-import android.os.Parcel;
 import android.support.annotation.NonNull;
 
-import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
+import com.github.kubatatami.judonetworking.utils.MoveToHeadThreadPoolExecutor;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
@@ -38,23 +27,47 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
 
     protected static Level defaultLevel = Level.DATA;
 
+    protected static MoveToHeadThreadPoolExecutor loaderExecutor = new MoveToHeadThreadPoolExecutor(0, 1);
+    protected static MoveToHeadThreadPoolExecutor deserializatorExecutor = new MoveToHeadThreadPoolExecutor();
 
-    protected static LinkedBlockingDeque<Runnable> queue = new LinkedBlockingDeque<>();
+    protected class DeserializationRunnable implements Runnable{
 
-    protected static ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, queue, new ThreadFactory() {
-        @Override
-        public Thread newThread(@NonNull Runnable r) {
-            Thread thread = new Thread(r);
-            thread.setPriority(Thread.MIN_PRIORITY);
-            return thread;
+        protected long readTimeStart;
+        protected long readTimeStop;
+        protected byte[] data;
+
+        public DeserializationRunnable(long readTimeStart, long readTimeStop, byte[] data) {
+            this.data = data;
+            this.readTimeStart = readTimeStart;
+            this.readTimeStop = readTimeStop;
         }
-    });
+
+        @Override
+        public void run() {
+            try {
+                long deserializationTimeStart = System.currentTimeMillis();
+                PersistentData<T> persistentData = loadObject(data);
+                set(persistentData.object, true, persistentData.dataSetTime);
+                JudoLogger.log("ObservablePersistentWrapper " + persistentKey
+                        + " readTime: " + (readTimeStop - readTimeStart) +
+                        "ms waitToDeserializationTime: " + (deserializationTimeStart-readTimeStop) +
+                        "ms deserializationTime: " + (System.currentTimeMillis() - deserializationTimeStart) + "ms")
+                ;
+            } catch (Exception e) {
+                JudoLogger.log(e);
+            } finally {
+                semaphore.release();
+            }
+        }
+    }
+
 
 
     protected Context context;
     protected String persistentKey;
     protected Level level = defaultLevel;
     protected boolean loaded;
+    protected boolean waiting;
     protected Semaphore semaphore = new Semaphore(1, true);
     protected Runnable loadingRunnable = new Runnable() {
         @Override
@@ -62,6 +75,8 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
             loadDataSync();
         }
     };
+
+    protected Runnable deserializationRunnable;
 
     public ObservablePersistentWrapper(Context context, String persistentKey) {
         this.context = context;
@@ -90,16 +105,21 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
     public synchronized T get() {
         try {
             long time = System.currentTimeMillis();
-            if (queue.contains(loadingRunnable)) {
-                queue.removeFirstOccurrence(loadingRunnable);
-                queue.addFirst(loadingRunnable);
+            if(loaderExecutor.moveToHead(loadingRunnable)){
+                JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " move to loader queue head");
+            }else {
+                if(deserializatorExecutor.moveToHead(deserializationRunnable)){
+                    JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " move to deserializator queue head");
+                }
             }
+            waiting=true;
             semaphore.acquire();
             T result = super.get();
             semaphore.release();
+            waiting=false;
             time = System.currentTimeMillis() - time;
-            if (time > 0) {
-                JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " waiting:" + time + "ms");
+            if (time > 1) {
+                JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " waiting: " + time + "ms");
             }
             return result;
         } catch (InterruptedException e) {
@@ -108,37 +128,31 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
     }
 
     protected abstract PersistentData<T> loadObject(byte[] array) throws Exception;
+
     protected abstract void saveObject(OutputStream fileStream, PersistentData<T> data) throws Exception;
 
     protected void loadDataSync() {
         File file = getPersistentFile();
         if (file.exists()) {
             try {
+                final long readTimeStart = System.currentTimeMillis();
                 RandomAccessFile ra = new RandomAccessFile(file, "rw");
                 final byte[] b = new byte[(int) file.length()];
                 ra.read(b);
                 ra.close();
-                Thread thread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            PersistentData<T> persistentData = loadObject(b);
-                            set(persistentData.object, true, persistentData.dataSetTime);
-                        } catch (Exception e) {
-                            JudoLogger.log(e);
-                        }finally {
-                            semaphore.release();
-                        }
+                final long readTimeStop = System.currentTimeMillis();
+                deserializationRunnable=new DeserializationRunnable(readTimeStart,readTimeStop,b);
+                deserializatorExecutor.execute(deserializationRunnable);
+                if(waiting){
+                    if(deserializatorExecutor.moveToHead(deserializationRunnable)){
+                        JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " move to deserializator queue head");
                     }
-                });
-                thread.setPriority(Thread.MIN_PRIORITY);
-                thread.start();
-
+                }
             } catch (Exception e) {
                 JudoLogger.log(e);
                 semaphore.release();
             }
-        }else{
+        } else {
             semaphore.release();
         }
         loaded = true;
@@ -152,14 +166,14 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
     protected void loadDataAsync() {
         try {
             semaphore.acquire();
-            executor.execute(loadingRunnable);
+            loaderExecutor.execute(loadingRunnable);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     protected void saveData(final T object) {
-        executor.execute(new Runnable() {
+        loaderExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 OutputStream fileStream = null;
@@ -201,7 +215,7 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
     }
 
     public static void removeAllDataAsync(final Level level, final Context context) {
-        executor.execute(new Runnable() {
+        loaderExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 removeAllDataSync(level, context);

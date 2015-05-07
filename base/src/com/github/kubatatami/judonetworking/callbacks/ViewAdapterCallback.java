@@ -11,14 +11,14 @@ import java.util.Map;
 /**
  * Created by Kuba on 23/05/14.
  */
-public class  UniqueViewCallback<Z,T> extends DefaultCallback<T> {
+public class ViewAdapterCallback<Z,T> extends DefaultCallback<T> {
 
-    protected static final Map<View, UniqueViewCallback> viewCache = new HashMap<>();
+    protected static final Map<View, ViewAdapterCallback> viewCache = new HashMap<>();
     protected final View view;
     protected AsyncResult asyncResult;
     protected Z object;
 
-    public UniqueViewCallback(View view) {
+    public ViewAdapterCallback(View view) {
         this.view = view;
     }
 
