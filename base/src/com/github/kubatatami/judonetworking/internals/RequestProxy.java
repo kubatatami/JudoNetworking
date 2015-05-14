@@ -461,8 +461,9 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                         try {
                             for (BatchTask task : tasks) {
                                 task.join();
-                                if (task.getEx() != null) {
-                                    throw task.getEx();
+                                JudoException ex = task.getEx();
+                                if (ex != null) {
+                                    throw ex;
                                 } else {
                                     responses.addAll(task.getResponse());
                                 }

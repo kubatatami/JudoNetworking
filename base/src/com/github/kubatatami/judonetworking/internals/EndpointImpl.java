@@ -380,6 +380,9 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @Override
     public void clearTimeProfilerStat() {
         boolean result = statFile.delete();
+        if(result){
+            JudoLogger.log("Can't remove stats file");
+        }
         stats = Collections.synchronizedMap(new HashMap<String, MethodStat>());
     }
 

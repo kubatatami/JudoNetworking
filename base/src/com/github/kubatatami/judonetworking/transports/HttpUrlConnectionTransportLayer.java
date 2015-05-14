@@ -191,7 +191,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
 
     protected void sendRequest(HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo,
                                TimeStat timeStat, int debugFlags) throws Exception {
-        OutputStream stream = null;
+        OutputStream stream;
         try {
             if (digestAuth != null) {
                 String digestHeader = SecurityUtils.getDigestAuthHeader(digestAuth, urlConnection.getURL(), requestInfo, username, password);
