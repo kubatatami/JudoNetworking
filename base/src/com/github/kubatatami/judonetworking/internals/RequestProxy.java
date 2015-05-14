@@ -250,16 +250,16 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     protected RequestImpl callAsync(int id, Method m, String name, Object[] args, Type[] types, int timeout, RequestMethod ann) throws Exception {
         Object[] newArgs;
         Callback<Object> callback = null;
-        Class<?> returnType = Void.class;
+        Type returnType = Void.class;
         if (args.length > 0 && args[args.length - 1] instanceof Callback) {
             callback = (Callback<Object>) args[args.length - 1];
-            returnType = (Class<?>) ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
+            returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
         } else {
             Type[] genericTypes = m.getGenericParameterTypes();
             if (genericTypes.length > 0 && genericTypes[genericTypes.length - 1] instanceof ParameterizedType) {
                 ParameterizedType parameterizedType = (ParameterizedType) genericTypes[genericTypes.length - 1];
                 if (parameterizedType.getRawType().equals(Callback.class)) {
-                    returnType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
+                    returnType =  parameterizedType.getActualTypeArguments()[0];
                 }
             }
         }

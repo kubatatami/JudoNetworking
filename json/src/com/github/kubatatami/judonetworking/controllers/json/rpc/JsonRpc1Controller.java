@@ -15,6 +15,7 @@ import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResu
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public class JsonRpc1Controller extends JsonRpcController {
         return new JsonRpcRequestModel(name, params, id);
     }
 
-    protected JsonRpcResponseModel1 readObject(ObjectReader reader, JsonParser parser, Class<?> type) throws IOException {
+    protected JsonRpcResponseModel1 readObject(ObjectReader reader, JsonParser parser, Type type) throws IOException {
         JsonRpcResponseModel1 responseModel = new JsonRpcResponseModel1();
         while (parser.nextToken() != JsonToken.END_OBJECT) {
 

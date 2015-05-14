@@ -17,6 +17,7 @@ import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResu
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
@@ -39,7 +40,7 @@ public abstract class RawController extends ProtocolController {
     }
 
     public static RequestResult parseResponse(Request request, InputStream stream) {
-        Class<?> returnType = request.getReturnType();
+        Type returnType = request.getReturnType();
         if (String.class.equals(returnType)) {
             return new RequestSuccessResult(request.getId(), convertStreamToString(stream));
         } else if (Byte[].class.equals(returnType) || byte[].class.equals(returnType)) {

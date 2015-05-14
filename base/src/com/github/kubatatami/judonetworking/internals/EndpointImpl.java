@@ -43,6 +43,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -176,7 +177,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @SuppressWarnings("unchecked")
     @Override
     public <T> AsyncResult sendAsyncRequest(String url, String name, RequestOptions requestOptions, Callback<T> callback, Object... args) {
-        Class<?> returnType = (Class<?>) ((ParameterizedType) callback.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+        Type returnType = ((ParameterizedType) callback.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
         RequestImpl request = new RequestImpl(
                 ++id, this, null,
                 name, requestOptions, args,
@@ -191,7 +192,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T sendRequest(String url, String name, Class<?> returnType, RequestOptions requestOptions, Object... args) throws JudoException {
+    public <T> T sendRequest(String url, String name, Type returnType, RequestOptions requestOptions, Object... args) throws JudoException {
         RequestImpl request = new RequestImpl(++id, this, null, name, requestOptions, args,
                 returnType,
                 getRequestConnector().getMethodTimeout(),

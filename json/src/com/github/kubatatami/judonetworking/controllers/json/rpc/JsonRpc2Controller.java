@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +41,7 @@ public class JsonRpc2Controller extends JsonRpcController {
 
     protected int autoBatchTime = 0;
     protected boolean batchEnabled = false;
-    protected Map<Class<?>, JavaType> typeCache = new HashMap<>();
+    protected Map<Type, JavaType> typeCache = new HashMap<>();
 
     public JsonRpc2Controller() {
     }
@@ -69,7 +70,7 @@ public class JsonRpc2Controller extends JsonRpcController {
         return batchEnabled;
     }
 
-    protected JavaType getType(Class<?> type) {
+    protected JavaType getType(Type type) {
         JavaType javaType = typeCache.get(type);
         if (javaType == null) {
             javaType = mapper.getTypeFactory().constructType(type);
@@ -78,7 +79,7 @@ public class JsonRpc2Controller extends JsonRpcController {
         return javaType;
     }
 
-    protected JsonRpcResponseModel2 readObject(ObjectReader reader, JsonParser parser, Class<?> type, SparseArray<Request> requestMap) throws IOException {
+    protected JsonRpcResponseModel2 readObject(ObjectReader reader, JsonParser parser, Type type, SparseArray<Request> requestMap) throws IOException {
         JsonRpcResponseModel2 responseModel = new JsonRpcResponseModel2();
         JsonNode result = null;
         while (parser.nextToken() != JsonToken.END_OBJECT) {

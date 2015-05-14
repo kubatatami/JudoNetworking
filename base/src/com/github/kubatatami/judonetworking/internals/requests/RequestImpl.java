@@ -25,6 +25,7 @@ import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.concurrent.Future;
 
 public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressObserver, Request, AsyncResult {
@@ -38,7 +39,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     private int max = TimeStat.TICKS;
     private Object[] args;
     private String[] paramNames;
-    private Class<?> returnType;
+    private Type returnType;
     private Method method;
     private Class<?> apiInterface;
     private boolean batchFatal = true;
@@ -50,7 +51,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
 
     public RequestImpl(Integer id, EndpointImpl rpc, Method method, String name, RequestMethod ann,
-                       Object[] args, Class<?> returnType, int timeout, Callback<Object> callback,
+                       Object[] args, Type returnType, int timeout, Callback<Object> callback,
                        Serializable additionalControllerData) {
         this.id = id;
         this.name = name;
@@ -136,7 +137,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     }
 
     @Override
-    public Class<?> getReturnType() {
+    public Type getReturnType() {
         return returnType;
     }
 

@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,7 +18,7 @@ public interface Request {
 
     Object[] getArgs();
 
-    Class<?> getReturnType();
+    Type getReturnType();
 
     boolean isVoidResult();
 
