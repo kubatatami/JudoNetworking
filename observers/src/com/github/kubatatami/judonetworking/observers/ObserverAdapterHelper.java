@@ -7,8 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -136,11 +136,11 @@ public class ObserverAdapterHelper {
                         if (viewById != null) {
                             field.setAccessible(true);
                             int res;
-                            if(viewById.value()!=0){
-                                res=viewById.value();
-                            }else if(!viewById.resName().equals("")){
+                            if (viewById.value() != 0) {
+                                res = viewById.value();
+                            } else if (!viewById.resName().equals("")) {
                                 res = context.getResources().getIdentifier(viewById.resName(), "id", context.getPackageName());
-                            }else{
+                            } else {
                                 res = context.getResources().getIdentifier(field.getName(), "id", context.getPackageName());
                             }
                             field.set(holder, convertView.findViewById(res));

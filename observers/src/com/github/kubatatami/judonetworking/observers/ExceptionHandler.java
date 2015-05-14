@@ -5,10 +5,10 @@ package com.github.kubatatami.judonetworking.observers;
  */
 public class ExceptionHandler {
 
-    public static void throwRuntimeException(Exception e){
-        if(e instanceof RuntimeException){
-            throw (RuntimeException)e;
-        }else {
+    public static void throwRuntimeException(Exception e) {
+        if (e instanceof RuntimeException) {
+            throw (RuntimeException) e;
+        } else {
             throw new RuntimeException(e);
         }
     }

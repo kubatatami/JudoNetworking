@@ -15,7 +15,7 @@ import java.lang.ref.WeakReference;
  * Date: 11.02.2013
  * Time: 22:48
  */
-public abstract class SupportFragmentBatch<T> extends DefaultBatch<T> implements FragmentManager.OnBackStackChangedListener{
+public abstract class SupportFragmentBatch<T> extends DefaultBatch<T> implements FragmentManager.OnBackStackChangedListener {
 
 
     private final WeakReference<Fragment> fragment;
@@ -46,7 +46,7 @@ public abstract class SupportFragmentBatch<T> extends DefaultBatch<T> implements
     protected void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
-            if(manager.get()!=null) {
+            if (manager.get() != null) {
                 manager.get().removeOnBackStackChangedListener(this);
             }
         }
@@ -110,13 +110,13 @@ public abstract class SupportFragmentBatch<T> extends DefaultBatch<T> implements
         } else {
             tryCancel();
         }
-        if(manager.get()!=null) {
+        if (manager.get() != null) {
             manager.get().removeOnBackStackChangedListener(this);
         }
     }
 
-    protected boolean isActive(){
-        return fragment.get()!=null && fragment.get().getActivity() != null;
+    protected boolean isActive() {
+        return fragment.get() != null && fragment.get().getActivity() != null;
     }
 
     public void onSafeStart(AsyncResult asyncResult) {

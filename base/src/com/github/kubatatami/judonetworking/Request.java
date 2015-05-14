@@ -1,7 +1,6 @@
 package com.github.kubatatami.judonetworking;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,29 +11,31 @@ import java.lang.reflect.Type;
  */
 public interface Request {
 
-    public Integer getId();
+    Integer getId();
 
-    public String getName();
+    String getName();
 
-    public Object[] getArgs();
+    Object[] getArgs();
 
-    public Type getReturnType();
+    Class<?> getReturnType();
 
-    public String[] getParamNames();
+    boolean isVoidResult();
 
-    public boolean isAllowEmptyResult();
+    String[] getParamNames();
 
-    public Object getAdditionalData();
+    boolean isAllowEmptyResult();
 
-    public boolean isApiKeyRequired();
+    Object getAdditionalData();
 
-    public void setArgs(Object[] args);
+    boolean isApiKeyRequired();
 
-    public void setParamNames(String[] paramNames);
+    void setArgs(Object[] args);
 
-    public boolean isCancelled();
+    void setParamNames(String[] paramNames);
 
-    public int getMethodId();
+    boolean isCancelled();
 
-    public Method getMethod();
+    int getMethodId();
+
+    Method getMethod();
 }

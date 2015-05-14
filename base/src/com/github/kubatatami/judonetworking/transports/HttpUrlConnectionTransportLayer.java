@@ -4,12 +4,12 @@ import android.os.Build;
 
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.utils.ReflectionCache;
-import com.github.kubatatami.judonetworking.internals.streams.RequestOutputStream;
-import com.github.kubatatami.judonetworking.utils.SecurityUtils;
-import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
+import com.github.kubatatami.judonetworking.internals.streams.RequestOutputStream;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
+import com.github.kubatatami.judonetworking.utils.SecurityUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -76,7 +76,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
             field.setAccessible(true);
             HashMap map = (HashMap) field.get(null);
             map.clear();
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
         this.httpURLCreator = httpURLCreator;
@@ -152,7 +152,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
         }
         if (method != null) {
             HttpMethod ann = ReflectionCache.getAnnotationInherited(method, HttpMethod.class);
-            if(ann!=null) {
+            if (ann != null) {
                 urlConnection.setRequestMethod(ann.value());
             }
         }
@@ -163,18 +163,18 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
         }
     }
 
-    protected void logRequestHeaders(String requestName,int debugFlags, HttpURLConnection urlConnection) {
+    protected void logRequestHeaders(String requestName, int debugFlags, HttpURLConnection urlConnection) {
         if ((debugFlags & Endpoint.HEADERS_DEBUG) > 0) {
             String headers = "";
             for (String key : urlConnection.getRequestProperties().keySet()) {
                 headers += key + ":" + urlConnection.getRequestProperty(key) + " ";
             }
-            longLog("Request headers("+requestName+")", headers);
+            longLog("Request headers(" + requestName + ")", headers);
         }
 
     }
 
-    protected void logResponseHeaders(String requestName,int debugFlags, HttpURLConnection urlConnection) {
+    protected void logResponseHeaders(String requestName, int debugFlags, HttpURLConnection urlConnection) {
         if ((debugFlags & Endpoint.HEADERS_DEBUG) > 0) {
             String headers = "";
             if (urlConnection.getHeaderFields() != null) {
@@ -184,14 +184,14 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                     }
                 }
             }
-            longLog("Response headers("+requestName+")", headers);
+            longLog("Response headers(" + requestName + ")", headers);
         }
     }
 
 
     protected void sendRequest(HttpURLConnection urlConnection, ProtocolController.RequestInfo requestInfo,
                                TimeStat timeStat, int debugFlags) throws Exception {
-        OutputStream stream=null;
+        OutputStream stream = null;
         try {
             if (digestAuth != null) {
                 String digestHeader = SecurityUtils.getDigestAuthHeader(digestAuth, urlConnection.getURL(), requestInfo, username, password);
@@ -223,7 +223,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                 timeStat.tickConnectionTime();
                 timeStat.tickSendTime();
             }
-        }finally {
+        } finally {
             if (requestInfo.entity != null) {
                 requestInfo.entity.close();
             }
@@ -231,7 +231,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
 
     }
 
-    public Connection send(String requestName,final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
+    public Connection send(String requestName, final ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
                            int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException {
         boolean repeat = false;
         HttpURLConnection urlConnection = null;
@@ -242,7 +242,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                     return null;
                 }
                 initSetup(urlConnection, requestInfo, timeout, timeStat, method, cacheInfo);
-                logRequestHeaders(requestName,debugFlags, urlConnection);
+                logRequestHeaders(requestName, debugFlags, urlConnection);
                 if (Thread.currentThread().isInterrupted()) {
                     return null;
                 }
@@ -250,10 +250,10 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                 if (Thread.currentThread().isInterrupted()) {
                     return null;
                 }
-                logResponseHeaders(requestName,debugFlags, urlConnection);
+                logResponseHeaders(requestName, debugFlags, urlConnection);
 
                 if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
-                    longLog("Response code("+requestName+")", urlConnection.getResponseCode() + "");
+                    longLog("Response code(" + requestName + ")", urlConnection.getResponseCode() + "");
                 }
                 return new FinalConnection(urlConnection, protocolController);
             } catch (FileNotFoundException ex) {
@@ -275,11 +275,11 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                     handleHttpException(protocolController, code, message);
                 }
             } catch (Exception ex) {
-                if(urlConnection!=null){
+                if (urlConnection != null) {
                     urlConnection.disconnect();
                 }
                 //fix http://stackoverflow.com/a/21534175
-                if(urlConnection!=null && ex instanceof IOException){
+                if (urlConnection != null && ex instanceof IOException) {
                     int code;
                     String message;
                     try {
@@ -288,7 +288,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                     } catch (IOException e) {
                         throw new ConnectionException(ex);
                     }
-                    if(code>0){
+                    if (code > 0) {
                         if (!repeat && username != null) {
                             digestAuth = SecurityUtils.handleDigestAuth(urlConnection.getHeaderField("WWW-Authenticate"), code);
                             repeat = (digestAuth != null);
@@ -298,11 +298,10 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                         } else {
                             handleHttpException(protocolController, code, message);
                         }
-                    }else{
+                    } else {
                         throw new ConnectionException(ex);
                     }
-                }
-                else if (!(ex instanceof JudoException)) {
+                } else if (!(ex instanceof JudoException)) {
                     throw new ConnectionException(ex);
                 } else {
                     throw (JudoException) ex;
@@ -312,7 +311,6 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
         } while (repeat);
         return null;
     }
-
 
 
     class FinalConnection implements Connection {
@@ -401,7 +399,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
 
     public interface HttpURLCreator {
 
-        public HttpURLConnection create(String url) throws IOException;
+        HttpURLConnection create(String url) throws IOException;
 
     }
 

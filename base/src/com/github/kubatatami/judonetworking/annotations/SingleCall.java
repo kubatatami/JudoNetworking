@@ -13,12 +13,13 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface SingleCall {
     boolean enabled() default true;
+
     SingleMode mode() default SingleMode.CANCEL_NEW;
 
     /**
      * Created by Kuba on 08/05/14.
      */
-    public enum SingleMode {
+    enum SingleMode {
         CANCEL_OLD, CANCEL_NEW
     }
 }

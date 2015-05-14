@@ -1,9 +1,9 @@
 package com.github.kubatatami.judonetworking.controllers.raw;
 
 import com.github.kubatatami.judonetworking.Request;
-import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.controllers.GetOrPostTools;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 
 import java.io.ByteArrayInputStream;
 

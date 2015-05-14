@@ -1,8 +1,8 @@
 package com.github.kubatatami.judonetworking.controllers.json.simple;
 
 import com.github.kubatatami.judonetworking.Request;
-import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.controllers.GetOrPostTools;
+import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**

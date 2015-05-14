@@ -19,7 +19,7 @@ public class ViewCallback<T> extends DefaultCallback<T> {
     protected AsyncResult asyncResult;
 
     public ViewCallback(View view) {
-        this.viewHash=view.hashCode();
+        this.viewHash = view.hashCode();
         cancelRequest(viewHash);
         viewCache.put(viewHash, this);
     }
@@ -27,8 +27,8 @@ public class ViewCallback<T> extends DefaultCallback<T> {
     @Override
     public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         super.onStart(cacheInfo, asyncResult);
-        this.asyncResult=asyncResult;
-        if(viewCache.get(viewHash)!=this) {
+        this.asyncResult = asyncResult;
+        if (viewCache.get(viewHash) != this) {
             asyncResult.cancel();
         }
         onSafeStart(cacheInfo, asyncResult);
@@ -36,27 +36,27 @@ public class ViewCallback<T> extends DefaultCallback<T> {
 
     @Override
     public final void onSuccess(T result) {
-        if(viewCache.get(viewHash)!=this) {
+        if (viewCache.get(viewHash) != this) {
             asyncResult.cancel();
-        }else{
+        } else {
             onSafeSuccess(result);
         }
     }
 
     @Override
     public final void onError(JudoException e) {
-        if(viewCache.get(viewHash)!=this) {
+        if (viewCache.get(viewHash) != this) {
             asyncResult.cancel();
-        }else{
+        } else {
             onSafeError(e);
         }
     }
 
     @Override
     public final void onProgress(int progress) {
-        if(viewCache.get(viewHash)!=this) {
+        if (viewCache.get(viewHash) != this) {
             asyncResult.cancel();
-        }else{
+        } else {
             onSafeProgress(progress);
         }
     }
@@ -64,20 +64,20 @@ public class ViewCallback<T> extends DefaultCallback<T> {
     @Override
     public final void onFinish() {
         super.onFinish();
-        if(viewCache.containsKey(viewHash) && viewCache.get(viewHash)==this){
+        if (viewCache.containsKey(viewHash) && viewCache.get(viewHash) == this) {
             viewCache.remove(viewHash);
             onSafeFinish();
         }
     }
 
-    public static void cancelRequest(View view){
+    public static void cancelRequest(View view) {
         cancelRequest(view.hashCode());
     }
 
 
-    public static void cancelRequest(int viewHash){
-        if(viewCache.containsKey(viewHash)) {
-            if(viewCache.get(viewHash).asyncResult!=null) {
+    public static void cancelRequest(int viewHash) {
+        if (viewCache.containsKey(viewHash)) {
+            if (viewCache.get(viewHash).asyncResult != null) {
                 viewCache.get(viewHash).asyncResult.cancel();
             }
             viewCache.remove(viewHash);

@@ -3,8 +3,6 @@ package com.github.kubatatami.judonetworking.batches;
 import android.view.View;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.CacheInfo;
-import com.github.kubatatami.judonetworking.callbacks.DefaultCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.util.HashMap;
@@ -20,15 +18,15 @@ public class ViewBatch<T> extends DefaultBatch<T> {
     protected AsyncResult asyncResult;
 
     public ViewBatch(View view) {
-        this.viewHash=view.hashCode();
+        this.viewHash = view.hashCode();
         cancelRequest(viewHash);
         viewCache.put(viewHash, this);
     }
 
     @Override
     public final void onStart(AsyncResult asyncResult) {
-        this.asyncResult=asyncResult;
-        if(viewCache.get(viewHash)!=this) {
+        this.asyncResult = asyncResult;
+        if (viewCache.get(viewHash) != this) {
             asyncResult.cancel();
         }
         onSafeStart(asyncResult);
@@ -38,29 +36,28 @@ public class ViewBatch<T> extends DefaultBatch<T> {
     @Override
     public final void onSuccess(Object[] results) {
         super.onSuccess(results);
-        if(viewCache.get(viewHash)!=this) {
+        if (viewCache.get(viewHash) != this) {
             asyncResult.cancel();
-        }else{
+        } else {
             onSafeSuccess(results);
         }
     }
 
 
-
     @Override
     public final void onError(JudoException e) {
-        if(viewCache.get(viewHash)!=this) {
+        if (viewCache.get(viewHash) != this) {
             asyncResult.cancel();
-        }else{
+        } else {
             onSafeError(e);
         }
     }
 
     @Override
     public final void onProgress(int progress) {
-        if(viewCache.get(viewHash)!=this) {
+        if (viewCache.get(viewHash) != this) {
             asyncResult.cancel();
-        }else{
+        } else {
             onSafeProgress(progress);
         }
     }
@@ -68,20 +65,20 @@ public class ViewBatch<T> extends DefaultBatch<T> {
     @Override
     public final void onFinish() {
         super.onFinish();
-        if(viewCache.containsKey(viewHash) && viewCache.get(viewHash)==this){
+        if (viewCache.containsKey(viewHash) && viewCache.get(viewHash) == this) {
             viewCache.remove(viewHash);
             onSafeFinish();
         }
     }
 
-    public static void cancelRequest(View view){
+    public static void cancelRequest(View view) {
         cancelRequest(view.hashCode());
     }
 
 
-    public static void cancelRequest(int viewHash){
-        if(viewCache.containsKey(viewHash)) {
-            if(viewCache.get(viewHash).asyncResult!=null) {
+    public static void cancelRequest(int viewHash) {
+        if (viewCache.containsKey(viewHash)) {
+            if (viewCache.get(viewHash).asyncResult != null) {
                 viewCache.get(viewHash).asyncResult.cancel();
             }
             viewCache.remove(viewHash);

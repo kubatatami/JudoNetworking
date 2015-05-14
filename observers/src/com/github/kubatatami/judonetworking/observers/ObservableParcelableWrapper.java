@@ -4,15 +4,7 @@ import android.content.Context;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.github.kubatatami.judonetworking.logs.JudoLogger;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
@@ -35,8 +27,8 @@ public class ObservableParcelableWrapper<T extends Parcelable> extends Observabl
         Parcel parcel = Parcel.obtain();
         parcel.unmarshall(array, 0, array.length);
         Type sooper = getClass().getGenericSuperclass();
-        Class<?> t = (Class<?>) ((ParameterizedType)sooper).getActualTypeArguments()[ 0 ];
-        PersistentData<T> result = (PersistentData<T>) new PersistentData<>(parcel.readLong(),parcel.readParcelable(t.getClassLoader()));
+        Class<?> t = (Class<?>) ((ParameterizedType) sooper).getActualTypeArguments()[0];
+        PersistentData<T> result = (PersistentData<T>) new PersistentData<>(parcel.readLong(), parcel.readParcelable(t.getClassLoader()));
         parcel.recycle();
         return result;
     }

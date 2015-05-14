@@ -3,9 +3,9 @@ package com.github.kubatatami.judonetworking.controllers.raw;
 
 import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.utils.ReflectionCache;
-import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;

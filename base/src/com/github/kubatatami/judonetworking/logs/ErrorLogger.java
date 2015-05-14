@@ -12,6 +12,6 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  */
 public interface ErrorLogger {
 
-    public void onError(JudoException e, Request request);
+    void onError(JudoException e, Request request);
 
 }

@@ -2,11 +2,11 @@ package com.github.kubatatami.judonetworking.caches;
 
 import android.content.Context;
 
+import com.github.kubatatami.judonetworking.Endpoint;
+import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
 import com.github.kubatatami.judonetworking.internals.results.CacheResult;
-import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
-import com.github.kubatatami.judonetworking.annotations.LocalCache;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

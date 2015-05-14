@@ -9,14 +9,14 @@ package com.github.kubatatami.judonetworking.internals;
  */
 public interface ProgressObserver {
 
-    public void clearProgress();
+    void clearProgress();
 
-    public void progressTick();
+    void progressTick();
 
-    public void progressTick(float progress);
+    void progressTick(float progress);
 
-    public void setMaxProgress(int max);
+    void setMaxProgress(int max);
 
-    public int getMaxProgress();
+    int getMaxProgress();
 
 }

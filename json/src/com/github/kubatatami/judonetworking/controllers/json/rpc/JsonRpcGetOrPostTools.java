@@ -3,14 +3,14 @@ package com.github.kubatatami.judonetworking.controllers.json.rpc;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.Request;
-import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
-import com.github.kubatatami.judonetworking.internals.results.RequestResult;
-import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
 import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
+import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,7 +39,7 @@ public abstract class JsonRpcGetOrPostTools {
                     throw new ProtocolException(response.error.message, response.error.code);
                 }
 
-                if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
+                if (!request.isVoidResult()) {
                     return new RequestSuccessResult(request.getId(), mapper.readValue(response.result.traverse(), mapper.getTypeFactory().constructType(request.getReturnType())));
                 }
             } catch (JsonProcessingException ex) {

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 
 import java.io.OutputStream;
-import java.lang.reflect.ParameterizedType;
 
 /**
  * Created by Kuba on 22/04/15.

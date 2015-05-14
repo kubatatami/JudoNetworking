@@ -1,7 +1,6 @@
 package com.github.kubatatami.judonetworking.observers;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
 
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.utils.MoveToHeadThreadPoolExecutor;
@@ -13,12 +12,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.Serializable;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Kuba on 18/04/15.
@@ -30,7 +24,7 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
     protected static MoveToHeadThreadPoolExecutor loaderExecutor = new MoveToHeadThreadPoolExecutor(0, 1);
     protected static MoveToHeadThreadPoolExecutor deserializatorExecutor = new MoveToHeadThreadPoolExecutor();
 
-    protected class DeserializationRunnable implements Runnable{
+    protected class DeserializationRunnable implements Runnable {
 
         protected long readTimeStart;
         protected long readTimeStop;
@@ -50,7 +44,7 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
                 set(persistentData.object, true, persistentData.dataSetTime);
                 JudoLogger.log("ObservablePersistentWrapper " + persistentKey
                         + " readTime: " + (readTimeStop - readTimeStart) +
-                        "ms waitToDeserializationTime: " + (deserializationTimeStart-readTimeStop) +
+                        "ms waitToDeserializationTime: " + (deserializationTimeStart - readTimeStop) +
                         "ms deserializationTime: " + (System.currentTimeMillis() - deserializationTimeStart) + "ms")
                 ;
             } catch (Exception e) {
@@ -60,7 +54,6 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
             }
         }
     }
-
 
 
     protected Context context;
@@ -105,18 +98,18 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
     public synchronized T get() {
         try {
             long time = System.currentTimeMillis();
-            if(loaderExecutor.moveToHead(loadingRunnable)){
+            if (loaderExecutor.moveToHead(loadingRunnable)) {
                 JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " move to loader queue head");
-            }else {
-                if(deserializatorExecutor.moveToHead(deserializationRunnable)){
+            } else {
+                if (deserializatorExecutor.moveToHead(deserializationRunnable)) {
                     JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " move to deserializator queue head");
                 }
             }
-            waiting=true;
+            waiting = true;
             semaphore.acquire();
             T result = super.get();
             semaphore.release();
-            waiting=false;
+            waiting = false;
             time = System.currentTimeMillis() - time;
             if (time > 1) {
                 JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " waiting: " + time + "ms");
@@ -141,10 +134,10 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
                 ra.read(b);
                 ra.close();
                 final long readTimeStop = System.currentTimeMillis();
-                deserializationRunnable=new DeserializationRunnable(readTimeStart,readTimeStop,b);
+                deserializationRunnable = new DeserializationRunnable(readTimeStart, readTimeStop, b);
                 deserializatorExecutor.execute(deserializationRunnable);
-                if(waiting){
-                    if(deserializatorExecutor.moveToHead(deserializationRunnable)){
+                if (waiting) {
+                    if (deserializatorExecutor.moveToHead(deserializationRunnable)) {
                         JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " move to deserializator queue head");
                     }
                 }

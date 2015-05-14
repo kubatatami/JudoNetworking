@@ -8,6 +8,6 @@ package com.github.kubatatami.judonetworking.observers;
  */
 public interface WrapObserver<T> {
 
-    public void update(T data);
+    void update(T data);
 
 }

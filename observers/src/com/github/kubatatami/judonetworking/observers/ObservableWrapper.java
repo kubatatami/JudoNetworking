@@ -37,7 +37,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
                 firstNetworkState = false;
                 return;
             }
-            if (activeNetworkInfo!=null && activeNetworkInfo.isConnected()) {
+            if (activeNetworkInfo != null && activeNetworkInfo.isConnected()) {
                 if (forceUpdateOnNetworkStateChange) {
                     forceUpdate();
                 } else {
@@ -59,7 +59,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         }
     };
 
-    public boolean isLoaded(){
+    public boolean isLoaded() {
         return true;
     }
 
@@ -150,13 +150,13 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
     }
 
     public boolean set(T object, boolean notify) {
-        return set(object,notify,System.currentTimeMillis());
+        return set(object, notify, System.currentTimeMillis());
     }
 
     public boolean set(T object, boolean notify, long dataSetTime) {
 
-        if (setOnlyWhenDifferentHash && this.object != null && object!=null && object.hashCode() == this.object.hashCode()) {
-           return false;
+        if (setOnlyWhenDifferentHash && this.object != null && object != null && object.hashCode() == this.object.hashCode()) {
+            return false;
         }
 
         this.dataSetTime = dataSetTime;
@@ -217,7 +217,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
     }
 
     public void notifyObservers(ObservableTransaction transaction) {
-        if(transaction==null){
+        if (transaction == null) {
             if (object != null || notifyOnNull) {
                 Runnable runnable = new Runnable() {
                     @Override
@@ -234,7 +234,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
                     handler.post(runnable);
                 }
             }
-        }else{
+        } else {
             transaction.add(this, object);
         }
     }

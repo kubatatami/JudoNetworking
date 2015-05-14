@@ -24,7 +24,6 @@ import com.github.kubatatami.judonetworking.internals.executors.JudoExecutor;
 import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.internals.requests.RequestOptions;
 import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
-import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.internals.virtuals.VirtualServerInfo;
 import com.github.kubatatami.judonetworking.logs.ErrorLogger;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
@@ -32,6 +31,7 @@ import com.github.kubatatami.judonetworking.threads.DefaultThreadPoolSizer;
 import com.github.kubatatami.judonetworking.threads.ThreadPoolSizer;
 import com.github.kubatatami.judonetworking.transports.TransportLayer;
 import com.github.kubatatami.judonetworking.utils.NetworkUtils;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,7 +43,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -177,10 +176,11 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @SuppressWarnings("unchecked")
     @Override
     public <T> AsyncResult sendAsyncRequest(String url, String name, RequestOptions requestOptions, Callback<T> callback, Object... args) {
+        Class<?> returnType = (Class<?>) ((ParameterizedType) callback.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
         RequestImpl request = new RequestImpl(
                 ++id, this, null,
                 name, requestOptions, args,
-                ((ParameterizedType) callback.getClass().getGenericSuperclass()).getActualTypeArguments()[0], getRequestConnector().getMethodTimeout(),
+                returnType, getRequestConnector().getMethodTimeout(),
                 (Callback<Object>) callback, getProtocolController().getAdditionalRequestData());
         request.setCustomUrl(url);
         request.setApiKeyRequired(requestOptions.apiKeyRequired());
@@ -191,7 +191,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T sendRequest(String url, String name, Type returnType, RequestOptions requestOptions, Object... args) throws JudoException {
+    public <T> T sendRequest(String url, String name, Class<?> returnType, RequestOptions requestOptions, Object... args) throws JudoException {
         RequestImpl request = new RequestImpl(++id, this, null, name, requestOptions, args,
                 returnType,
                 getRequestConnector().getMethodTimeout(),
@@ -611,7 +611,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         this.urlModifier = urlModifier;
     }
 
-    static enum BatchMode {
+    enum BatchMode {
         NONE, MANUAL, AUTO
     }
 

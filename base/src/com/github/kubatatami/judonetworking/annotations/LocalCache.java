@@ -13,18 +13,18 @@ import java.lang.annotation.Target;
  * To change this template use File | Settings | File Templates.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD,ElementType.TYPE})
+@Target({ElementType.METHOD, ElementType.TYPE})
 public @interface LocalCache {
 
-    public boolean enabled() default true;
+    boolean enabled() default true;
 
-    public CacheLevel cacheLevel() default CacheLevel.MEMORY_ONLY;
+    CacheLevel cacheLevel() default CacheLevel.MEMORY_ONLY;
 
-    public int lifeTime() default 0;
+    int lifeTime() default 0;
 
-    public int size() default 0;
+    int size() default 0;
 
-    public OnlyOnError onlyOnError() default OnlyOnError.NO;
+    OnlyOnError onlyOnError() default OnlyOnError.NO;
 
 
     /**
@@ -34,14 +34,14 @@ public @interface LocalCache {
      * Time: 09:05
      * To change this template use File | Settings | File Templates.
      */
-    public enum CacheLevel {
+    enum CacheLevel {
         MEMORY_ONLY, DISK_CACHE, DISK_DATA
     }
 
     /**
      * Created by Kuba on 16/06/14.
      */
-    public enum OnlyOnError {
+    enum OnlyOnError {
         NO, ON_CONNECTION_ERROR, ON_ALL_ERROR
     }
 }

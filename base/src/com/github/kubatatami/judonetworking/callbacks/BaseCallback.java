@@ -7,12 +7,12 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  */
 public interface BaseCallback<T> {
 
-    public void onProgress(int progress);
+    void onProgress(int progress);
 
-    public void onSuccess(T result);
+    void onSuccess(T result);
 
-    public void onError(JudoException e);
+    void onError(JudoException e);
 
-    public void onFinish();
+    void onFinish();
 
 }

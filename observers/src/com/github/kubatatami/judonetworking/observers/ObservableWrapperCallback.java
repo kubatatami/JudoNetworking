@@ -5,7 +5,7 @@ import com.github.kubatatami.judonetworking.callbacks.DefaultCallback;
 public class ObservableWrapperCallback<T> extends DefaultCallback<T> {
 
     protected final ObservableWrapper<T> wrapper;
-    protected ObservableTransaction transaction=null;
+    protected ObservableTransaction transaction = null;
 
     public ObservableWrapperCallback(ObservableWrapper<T> wrapper) {
         this.wrapper = wrapper;
@@ -18,9 +18,9 @@ public class ObservableWrapperCallback<T> extends DefaultCallback<T> {
 
     @Override
     public void onSuccess(T result) {
-        if(transaction!=null){
-            wrapper.set(result,transaction);
-        }else {
+        if (transaction != null) {
+            wrapper.set(result, transaction);
+        } else {
             wrapper.set(result);
         }
     }

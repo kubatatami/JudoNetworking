@@ -47,7 +47,7 @@ public class BatchTask implements Runnable {
 
     public void execute() {
         future = rpc.getExecutorService().submit(this);
-        for(RequestImpl request : requests){
+        for (RequestImpl request : requests) {
             request.setFuture(future);
         }
     }

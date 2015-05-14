@@ -1,9 +1,9 @@
 package com.github.kubatatami.judonetworking.observers;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.callbacks.DefaultCallback;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
+import com.github.kubatatami.judonetworking.callbacks.DefaultCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**
@@ -19,7 +19,7 @@ public class CallbackWrapper<T> extends DefaultCallback<T> {
 
     @Override
     public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
-        baseCallback.onStart(cacheInfo,asyncResult);
+        baseCallback.onStart(cacheInfo, asyncResult);
     }
 
     @Override

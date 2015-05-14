@@ -1,9 +1,9 @@
 package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
 import com.github.kubatatami.judonetworking.Request;
-import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

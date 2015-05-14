@@ -311,7 +311,7 @@ public class ObserverHelper {
     }
 
     private Object getFieldOrMethodValue(String fieldName, Object object) throws IllegalAccessException {
-        if(object==null){
+        if (object == null) {
             return null;
         }
         String parts[] = fieldName.split(splitter);

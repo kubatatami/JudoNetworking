@@ -4,11 +4,8 @@ import android.content.Context;
 
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -37,7 +34,7 @@ public class ObservableSerializableWrapper<T extends Serializable> extends Obser
     }
 
     @Override
-    protected void saveObject(OutputStream fileStream, PersistentData<T> data) throws Exception{
+    protected void saveObject(OutputStream fileStream, PersistentData<T> data) throws Exception {
         ObjectOutputStream os = null;
         try {
             os = new ObjectOutputStream(fileStream);

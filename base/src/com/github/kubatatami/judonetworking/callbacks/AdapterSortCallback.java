@@ -34,8 +34,8 @@ public class AdapterSortCallback<T extends Comparable<T>> extends DefaultCallbac
 
     @Override
     public void onSuccess(List<T> result) {
-        ArrayAdapter<T> adapter=this.adapter.get();
-        if(adapter!=null) {
+        ArrayAdapter<T> adapter = this.adapter.get();
+        if (adapter != null) {
             adapter.clear();
             if (comparator != null) {
                 Collections.sort(result, comparator);

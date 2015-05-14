@@ -16,5 +16,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface HolderView {
     int value() default 0;
+
     String resName() default "";
 }

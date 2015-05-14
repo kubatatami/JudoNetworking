@@ -5,27 +5,25 @@ import android.util.SparseArray;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.github.kubatatami.judonetworking.Request;
-import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
-import com.github.kubatatami.judonetworking.internals.results.RequestResult;
-import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
 import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
+import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
+import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,7 +40,7 @@ public class JsonRpc2Controller extends JsonRpcController {
 
     protected int autoBatchTime = 0;
     protected boolean batchEnabled = false;
-    protected Map<Type, JavaType> typeCache = new HashMap<>();
+    protected Map<Class<?>, JavaType> typeCache = new HashMap<>();
 
     public JsonRpc2Controller() {
     }
@@ -71,7 +69,7 @@ public class JsonRpc2Controller extends JsonRpcController {
         return batchEnabled;
     }
 
-    protected JavaType getType(Type type) {
+    protected JavaType getType(Class<?> type) {
         JavaType javaType = typeCache.get(type);
         if (javaType == null) {
             javaType = mapper.getTypeFactory().constructType(type);
@@ -80,13 +78,13 @@ public class JsonRpc2Controller extends JsonRpcController {
         return javaType;
     }
 
-    protected JsonRpcResponseModel2 readObject(ObjectReader reader, JsonParser parser, Type type, SparseArray<Request> requestMap) throws IOException {
+    protected JsonRpcResponseModel2 readObject(ObjectReader reader, JsonParser parser, Class<?> type, SparseArray<Request> requestMap) throws IOException {
         JsonRpcResponseModel2 responseModel = new JsonRpcResponseModel2();
-        JsonNode result=null;
+        JsonNode result = null;
         while (parser.nextToken() != JsonToken.END_OBJECT) {
 
             String fieldName = parser.getCurrentName();
-            if(fieldName!=null) {
+            if (fieldName != null) {
                 switch (fieldName) {
                     case "jsonrpc":
                         parser.nextToken();
@@ -148,7 +146,7 @@ public class JsonRpc2Controller extends JsonRpcController {
 
             try {
                 parser = factory.createParser(stream);
-                response = readObject(reader,parser,request.getReturnType(),null);
+                response = readObject(reader, parser, request.getReturnType(), null);
             } catch (JsonProcessingException ex) {
                 throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
             } catch (IOException ex) {
@@ -170,8 +168,8 @@ public class JsonRpc2Controller extends JsonRpcController {
                 throw new ParseException(response.ex);
             }
             Object result = null;
-            if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
-                result=response.result;
+            if (!request.isVoidResult()) {
+                result = response.result;
                 if (!request.isAllowEmptyResult() && result == null) {
                     throw new ParseException("Empty result.");
                 }
@@ -179,8 +177,8 @@ public class JsonRpc2Controller extends JsonRpcController {
             return new RequestSuccessResult(request.getId(), result);
         } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
-        }finally {
-            if(parser!=null){
+        } finally {
+            if (parser != null) {
                 try {
                     parser.close();
                 } catch (IOException e) {
@@ -217,35 +215,34 @@ public class JsonRpc2Controller extends JsonRpcController {
         try {
             ObjectReader reader = mapper.reader();
             List<RequestResult> finalResponses = new ArrayList<>(requests.size());
-            SparseArray<Request> requestMap=new SparseArray<>(requests.size());
-            for(Request requestInterface : requests){
+            SparseArray<Request> requestMap = new SparseArray<>(requests.size());
+            for (Request requestInterface : requests) {
                 requestMap.put(requestInterface.getId(), requestInterface);
             }
             parser = factory.createParser(stream);
             parser.nextToken();
             while (parser.nextToken() != JsonToken.END_ARRAY) {
-                JsonRpcResponseModel2 res = readObject(reader,parser,null,requestMap);
-
+                JsonRpcResponseModel2 res = readObject(reader, parser, null, requestMap);
+                Request request = requestMap.get(res.id);
                 if (res.jsonrpc == null) {
                     throw new ParseException("Wrong server response. Did you select the correct protocol controller? Maybe your server doesn't support json-rpc 2.0? Try JsonRpc1Controller.");
                 } else if (res.ex != null) {
-                    finalResponses.add(new ErrorResult(res.id, new ParseException(requestMap.get(res.id).getName(), res.ex)));
+                    finalResponses.add(new ErrorResult(res.id, new ParseException(request.getName(), res.ex)));
                 } else if (res.error == null) {
                     Object result;
-                        Type type = requestMap.get(res.id).getReturnType();
-                        if (!type.equals(Void.class)) {
-                            result = res.result;
-                            if (!requestMap.get(res.id).isAllowEmptyResult() && result == null) {
-                                finalResponses.add(new ErrorResult(requestMap.get(res.id).getId(), new ParseException("Empty response.")));
-                            } else {
-                                finalResponses.add(new RequestSuccessResult(res.id, result));
-                            }
+                    if (!request.isVoidResult()) {
+                        result = res.result;
+                        if (!request.isAllowEmptyResult() && result == null) {
+                            finalResponses.add(new ErrorResult(request.getId(), new ParseException("Empty response.")));
                         } else {
-                            finalResponses.add(new RequestSuccessResult(res.id, null));
+                            finalResponses.add(new RequestSuccessResult(res.id, result));
                         }
+                    } else {
+                        finalResponses.add(new RequestSuccessResult(res.id, null));
+                    }
 
                 } else {
-                    finalResponses.add(new ErrorResult(res.id, new ProtocolException(requestMap.get(res.id).getName() + ": " + res.error.message, res.error.code)));
+                    finalResponses.add(new ErrorResult(res.id, new ProtocolException(request.getName() + ": " + res.error.message, res.error.code)));
                 }
 
             }
@@ -255,7 +252,7 @@ public class JsonRpc2Controller extends JsonRpcController {
         } catch (IOException ex) {
             throw new ConnectionException(ex);
         } finally {
-            if(parser!=null){
+            if (parser != null) {
                 try {
                     parser.close();
                 } catch (IOException e) {

@@ -23,7 +23,7 @@ public interface Endpoint extends EndpointBase {
      * @param maxDelay
      * @param <T>
      */
-    public <T> void registerVirtualServer(Class<T> type, T virtualServer, int minDelay, int maxDelay);
+    <T> void registerVirtualServer(Class<T> type, T virtualServer, int minDelay, int maxDelay);
 
     /**
      * @param type
@@ -31,20 +31,20 @@ public interface Endpoint extends EndpointBase {
      * @param delay
      * @param <T>
      */
-    public <T> void registerVirtualServer(Class<T> type, T virtualServer, int delay);
+    <T> void registerVirtualServer(Class<T> type, T virtualServer, int delay);
 
     /**
      * @param type
      * @param virtualServer
      * @param <T>
      */
-    public <T> void registerVirtualServer(Class<T> type, T virtualServer);
+    <T> void registerVirtualServer(Class<T> type, T virtualServer);
 
     /**
      * @param type
      * @param <T>
      */
-    public <T> void unregisterVirtualServer(Class<T> type);
+    <T> void unregisterVirtualServer(Class<T> type);
 
 
     /**
@@ -53,7 +53,7 @@ public interface Endpoint extends EndpointBase {
      * @param apiInterface API interface class
      * @return Api proxy object.
      */
-    public <T> T getService(Class<T> apiInterface);
+    <T> T getService(Class<T> apiInterface);
 
     /**
      * Create batch request.
@@ -62,7 +62,7 @@ public interface Endpoint extends EndpointBase {
      * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
-    public <T> AsyncResult callInBatch(Class<T> apiInterface, Batch<T> batch);
+    <T> AsyncResult callInBatch(Class<T> apiInterface, Batch<T> batch);
 
     /**
      * Create batch request.
@@ -71,68 +71,68 @@ public interface Endpoint extends EndpointBase {
      * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
-    public <T> AsyncResult callAsyncInBatch(final Class<T> apiInterface, final Batch<T> batch);
+    <T> AsyncResult callAsyncInBatch(final Class<T> apiInterface, final Batch<T> batch);
 
     /**
      * @param mode
      */
-    public void setBatchTimeoutMode(BatchTimeoutMode mode);
+    void setBatchTimeoutMode(BatchTimeoutMode mode);
 
     /**
      * Enables response cache.
      *
      * @param enabled If true cache is enable
      */
-    public void setCacheEnabled(boolean enabled);
+    void setCacheEnabled(boolean enabled);
 
 
     /**
      * @param mode
      */
-    public void setCacheMode(CacheMode mode);
+    void setCacheMode(CacheMode mode);
 
     /**
      * Enables statistics collection and
      *
      * @param enabled
      */
-    public void setTimeProfilerEnabled(boolean enabled);
+    void setTimeProfilerEnabled(boolean enabled);
 
     /**
      * @return Max stats file size
      */
-    public int getMaxStatFileSize();
+    int getMaxStatFileSize();
 
 
     /**
      * @param maxStatFileSize
      */
-    public void setMaxStatFileSize(int maxStatFileSize);
+    void setMaxStatFileSize(int maxStatFileSize);
 
     /**
      * Writes time statistics to log.
      */
-    public void showTimeProfilerInfo();
+    void showTimeProfilerInfo();
 
     /**
      * Clears time statistics.
      */
-    public void clearTimeProfilerStat();
+    void clearTimeProfilerStat();
 
     /**
      * @param clonner
      */
-    public void setClonner(Clonner clonner);
+    void setClonner(Clonner clonner);
 
 
-    public DiskCache getDiskCache();
+    DiskCache getDiskCache();
 
 
-    public MemoryCache getMemoryCache();
+    MemoryCache getMemoryCache();
 
-    public void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer);
+    void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer);
 
-    public void setUrl(String url);
+    void setUrl(String url);
 
     /**
      * Created with IntelliJ IDEA.
@@ -140,7 +140,7 @@ public interface Endpoint extends EndpointBase {
      * Date: 04.03.2013
      * Time: 21:21
      */
-    public enum BatchTimeoutMode {
+    enum BatchTimeoutMode {
         TIMEOUTS_SUM, LONGEST_TIMEOUT
     }
 
@@ -151,7 +151,7 @@ public interface Endpoint extends EndpointBase {
      * Time: 14:50
      * To change this template use File | Settings | File Templates.
      */
-    public enum CacheMode {
+    enum CacheMode {
         NORMAL, CLONE
     }
 }

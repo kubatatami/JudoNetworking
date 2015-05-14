@@ -15,13 +15,13 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Kuba on 19/05/14.
  */
-public class JudoExecutor extends ThreadPoolExecutor{
+public class JudoExecutor extends ThreadPoolExecutor {
 
     protected int threadPriority = Process.THREAD_PRIORITY_BACKGROUND;
     protected Endpoint endpoint;
     protected int count;
 
-    protected ThreadFactory threadFactory =  new ThreadFactory() {
+    protected ThreadFactory threadFactory = new ThreadFactory() {
         @Override
         public Thread newThread(final Runnable runnable) {
             count++;
@@ -29,16 +29,16 @@ public class JudoExecutor extends ThreadPoolExecutor{
                 JudoLogger.log("Create thread " + count);
             }
 
-            return new ConnectionThread(runnable,threadPriority,count, endpoint);
+            return new ConnectionThread(runnable, threadPriority, count, endpoint);
         }
     };
 
     public JudoExecutor(Endpoint endpoint) {
         super(DefaultThreadPoolSizer.DEFAULT_CONNECTIONS, Integer.MAX_VALUE, 30, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
-        this.endpoint=endpoint;
+        this.endpoint = endpoint;
         setThreadFactory(threadFactory);
         prestartAllCoreThreads();
-        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.GINGERBREAD){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
             allowCoreThreadTimeOut(true);
         }
     }
@@ -94,8 +94,7 @@ public class JudoExecutor extends ThreadPoolExecutor{
     }
 
 
-
-    public static class ConnectionThread extends Thread{
+    public static class ConnectionThread extends Thread {
 
         Runnable runnable;
         int threadPriority;
@@ -118,17 +117,16 @@ public class JudoExecutor extends ThreadPoolExecutor{
         }
 
 
-
         @Override
         public void interrupt() {
-            if((endpoint.getDebugFlags() & Endpoint.THREAD_DEBUG) > 0){
+            if ((endpoint.getDebugFlags() & Endpoint.THREAD_DEBUG) > 0) {
                 JudoLogger.log("Interrupt task on: " + getName());
             }
-            canceled=true;
+            canceled = true;
             super.interrupt();
-            if(canceller!=null){
+            if (canceller != null) {
                 canceller.cancel();
-                canceller=null;
+                canceller = null;
             }
         }
 
@@ -140,8 +138,8 @@ public class JudoExecutor extends ThreadPoolExecutor{
             this.canceller = canceller;
         }
 
-        public static interface Canceller{
-            public void cancel();
+        public interface Canceller {
+            void cancel();
         }
 
         public boolean isCanceled() {
