@@ -143,7 +143,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     @Override
     public boolean isVoidResult() {
-        return returnType.equals(Void.TYPE);
+        return returnType.equals(Void.TYPE) || returnType.equals(Void.class);
     }
 
     @Override

@@ -109,7 +109,7 @@ public class JsonRpc2Controller extends JsonRpcController {
                         parser.nextToken();
 
                         result = parser.readValueAsTree();
-                        if (type != null) {
+                        if (type != null && !type.equals(Void.TYPE) && !type.equals(Void.class)) {
                             try {
                                 responseModel.result = reader.readValue(result.traverse(), getType(type));
                             } catch (JsonProcessingException ex) {
