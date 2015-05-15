@@ -1,6 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven'
 apply plugin: 'signing'
+apply plugin: 'android-maven'
 
 def isReleaseBuild() {
     return VERSION_NAME.contains("SNAPSHOT") == false
@@ -16,17 +17,26 @@ def getSnapshotRepositoryUrl() {
             : "https://oss.sonatype.org/content/repositories/snapshots/"
 }
 
+//android.libraryVariants.all { variant ->
+//    def name = variant.buildType.name
+//    if (!name.equals("debug")) {
+//        def task = project.tasks.create "jar${name.capitalize()}", Jar
+//        task.dependsOn variant.javaCompile
+//        task.from variant.javaCompile.destinationDir
+//        task.baseName = BASE_NAME
+//        task.appendix = APPENDIX
+//        task.version = VERSION_NAME
+//        artifacts.add('archives', task);
+//    }
+//}
+
+// uncomment to build a jar file in addition to the default aar file
 android.libraryVariants.all { variant ->
     def name = variant.buildType.name
-    if (!name.equals("debug")) {
-        def task = project.tasks.create "jar${name.capitalize()}", Jar
-        task.dependsOn variant.javaCompile
-        task.from variant.javaCompile.destinationDir
-        task.baseName = BASE_NAME
-        task.appendix = APPENDIX
-        task.version = VERSION_NAME
-        artifacts.add('archives', task);
-    }
+    def task = project.tasks.create "jar${name.capitalize()}", Jar
+    task.dependsOn variant.javaCompile
+    task.from variant.javaCompile.destinationDir
+    artifacts.add('archives', task);
 }
 
 afterEvaluate { project ->

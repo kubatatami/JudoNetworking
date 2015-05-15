@@ -14,8 +14,9 @@ import java.lang.ref.WeakReference;
  * Created by Kuba on 13/12/14.
  */
 
+
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
-public class ActivityCallback<T> extends DefaultCallback<T>  {
+public class ActivityCallback<T> extends DefaultCallback<T> {
     private final WeakReference<Activity> activity;
     private AsyncResult asyncResult;
 
@@ -76,7 +77,7 @@ public class ActivityCallback<T> extends DefaultCallback<T>  {
     }
 
 
-    protected boolean isActive(){
+    protected boolean isActive() {
         return activity.get() != null && !activity.get().isFinishing();
     }
 

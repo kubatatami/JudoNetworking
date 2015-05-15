@@ -4,13 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.Request;
-import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
-import com.github.kubatatami.judonetworking.internals.results.RequestResult;
-import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
+import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,11 +39,11 @@ public abstract class JsonSimpleBaseController extends JsonProtocolController {
             try {
                 InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
 
-                if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
+                if (!request.isVoidResult()) {
                     try {
                         res = mapper.readValue(inputStreamReader, mapper.getTypeFactory().constructType(request.getReturnType()));
-                    }catch (JsonMappingException ex){
-                        if(!ex.getMessage().toLowerCase().contains("no content") || !request.isAllowEmptyResult()){
+                    } catch (JsonMappingException ex) {
+                        if (!ex.getMessage().toLowerCase().contains("no content") || !request.isAllowEmptyResult()) {
                             throw ex;
                         }
                     }

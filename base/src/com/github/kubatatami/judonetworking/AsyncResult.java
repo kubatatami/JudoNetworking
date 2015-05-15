@@ -5,13 +5,13 @@ package com.github.kubatatami.judonetworking;
  */
 public interface AsyncResult {
 
-    public boolean isDone();
+    boolean isDone();
 
-    public boolean isCancelled();
+    boolean isCancelled();
 
-    public boolean isRunning();
+    boolean isRunning();
 
-    public void cancel();
+    void cancel();
 
 
 }

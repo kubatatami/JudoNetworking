@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking.internals.requests;
 
+import com.github.kubatatami.judonetworking.AsyncResult;
+import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.annotations.ApiKeyRequired;
@@ -11,17 +13,15 @@ import com.github.kubatatami.judonetworking.annotations.SingleCall;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
-import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.internals.AsyncResultSender;
 import com.github.kubatatami.judonetworking.internals.EndpointImpl;
 import com.github.kubatatami.judonetworking.internals.ProgressObserver;
 import com.github.kubatatami.judonetworking.internals.RequestProxy;
-import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
 import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
-import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.logs.ErrorLogger;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.io.Serializable;
 import java.lang.reflect.Method;
@@ -57,7 +57,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
         this.name = name;
         this.timeout = timeout;
         this.method = method;
-        if(method!=null) {
+        if (method != null) {
             this.apiInterface = method.getDeclaringClass();
         }
         this.rpc = rpc;
@@ -72,7 +72,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     @Override
     public void run() {
         try {
-            if(!cancelled) {
+            if (!cancelled) {
                 Object result = rpc.getRequestConnector().call(this);
                 invokeCallback(result);
             }
@@ -82,7 +82,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
-                        for(ErrorLogger errorLogger : rpc.getErrorLoggers()) {
+                        for (ErrorLogger errorLogger : rpc.getErrorLoggers()) {
                             errorLogger.onError(e, RequestImpl.this);
                         }
                     }
@@ -142,6 +142,11 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     }
 
     @Override
+    public boolean isVoidResult() {
+        return returnType.equals(Void.TYPE) || returnType.equals(Void.class);
+    }
+
+    @Override
     public String[] getParamNames() {
         return paramNames;
     }
@@ -166,7 +171,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
         if (method != null) {
             ApiKeyRequired ann = ReflectionCache.getAnnotation(method, ApiKeyRequired.class);
             if (ann == null) {
-                ann = ReflectionCache.getAnnotation(apiInterface,ApiKeyRequired.class);
+                ann = ReflectionCache.getAnnotation(apiInterface, ApiKeyRequired.class);
             }
             return ann != null && ann.enabled();
         } else {
@@ -195,7 +200,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     public LocalCache getLocalCache() {
         if (method != null) {
-            LocalCache ann = ReflectionCache.getAnnotationInherited(method,LocalCache.class);
+            LocalCache ann = ReflectionCache.getAnnotationInherited(method, LocalCache.class);
             if (ann != null && !ann.enabled()) {
                 ann = null;
             }
@@ -207,7 +212,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     public int getDelay() {
         if (method != null) {
-            Delay ann = ReflectionCache.getAnnotationInherited(method,Delay.class);
+            Delay ann = ReflectionCache.getAnnotationInherited(method, Delay.class);
             if (ann != null && !ann.enabled()) {
                 ann = null;
             }
@@ -219,7 +224,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     public ServerCache getServerCache() {
         if (method != null) {
-            ServerCache ann = ReflectionCache.getAnnotationInherited(method,ServerCache.class);
+            ServerCache ann = ReflectionCache.getAnnotationInherited(method, ServerCache.class);
             if (ann != null && !ann.enabled()) {
                 ann = null;
             }
@@ -231,7 +236,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     public SingleCall getSingleCall() {
         if (method != null) {
-            SingleCall ann = ReflectionCache.getAnnotationInherited(method,SingleCall.class);
+            SingleCall ann = ReflectionCache.getAnnotationInherited(method, SingleCall.class);
             if (ann != null && !ann.enabled()) {
                 ann = null;
             }
@@ -369,7 +374,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     @Override
     public void cancel() {
-        if(done){
+        if (done) {
             return;
         }
         this.cancelled = true;

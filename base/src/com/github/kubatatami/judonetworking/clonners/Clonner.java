@@ -12,7 +12,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 public interface Clonner {
 
 
-    public <T> T clone(T object) throws JudoException;
+    <T> T clone(T object) throws JudoException;
 
 
 }

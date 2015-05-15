@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking.internals;
 
 import android.util.Base64;
 
+import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.annotations.Base64Param;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
@@ -15,7 +16,6 @@ import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.VerifyModelException;
-import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
 import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.internals.results.CacheResult;
@@ -26,11 +26,11 @@ import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResu
 import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
 import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStream;
-import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.internals.virtuals.VirtualCallback;
 import com.github.kubatatami.judonetworking.internals.virtuals.VirtualServerInfo;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.transports.TransportLayer;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -125,7 +125,7 @@ public class RequestConnector {
                 }
                 try {
                     stream.close();
-                } catch (Exception e) {
+                } catch (Exception ignored) {
                 }
                 timeStat.tickParseTime();
                 conn.close();
@@ -213,7 +213,7 @@ public class RequestConnector {
     }
 
     public static void verifyResult(RequestImpl request, RequestResult result) throws VerifyModelException {
-        if (result instanceof RequestSuccessResult && !request.getReturnType().equals(Void.class)) {
+        if (result instanceof RequestSuccessResult && !request.isVoidResult()) {
 
 
             if (result.result == null) {

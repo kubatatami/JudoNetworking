@@ -232,7 +232,7 @@ public class ObserverHelper {
                         @Override
                         public void update(Object data) {
                             try {
-                                if (data != null || wrapper.isAllowNull()) {
+                                if (data != null || wrapper.isNotifyOnNull()) {
                                     observerMethod.method.invoke(object, data);
                                 }
                             } catch (Exception e) {
@@ -252,7 +252,7 @@ public class ObserverHelper {
                         }
                     };
 
-                    wrapper.addObserver(observer, observerMethod.dataObserver.onStartup());
+                    wrapper.addObserver(observer, observerMethod.dataObserver.onStartup() && wrapper.isLoaded());
                     dataObservers.add(new Pair<>(wrapper, observer));
                 } else if (wrapperOrAdapter instanceof Adapter) {
                     final Adapter adapter = (Adapter) wrapperOrAdapter;
@@ -311,7 +311,7 @@ public class ObserverHelper {
     }
 
     private Object getFieldOrMethodValue(String fieldName, Object object) throws IllegalAccessException {
-        if(object==null){
+        if (object == null) {
             return null;
         }
         String parts[] = fieldName.split(splitter);

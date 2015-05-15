@@ -4,15 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.Request;
-import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.internals.results.RequestResult;
-import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.controllers.ProtocolControllerWrapper;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
 import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
+import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -110,11 +110,11 @@ public class JsonCustomModelController<T> extends ProtocolControllerWrapper {
                 }
 
 
-                if ((status != null && !status) || ( status == null && (errorMessage != null || errorCode != null))) {
+                if ((status != null && !status) || (status == null && (errorMessage != null || errorCode != null))) {
                     throw new ProtocolException(errorMessage != null ? errorMessage : "", errorCode != null ? errorCode : 0);
                 }
 
-                if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
+                if (!request.isVoidResult()) {
                     result = mapper.readValue(data.traverse(), mapper.getTypeFactory().constructType(request.getReturnType()));
                     if (!request.isAllowEmptyResult() && result == null) {
                         throw new ParseException("Empty result.");

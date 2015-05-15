@@ -3,13 +3,12 @@ package com.github.kubatatami.judonetworking.controllers.json.simple;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.utils.ReflectionCache;
-import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
-import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.controllers.raw.RawRestController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
-
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
+import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -52,16 +51,16 @@ public class JsonSimpleRestController extends RawRestController {
     @Override
     public RequestInfo createRequest(String url, Request request) throws JudoException {
         JsonPost jsonPost = ReflectionCache.getAnnotationInherited(request.getMethod(), JsonPost.class);
-        if (jsonPost!=null && jsonPost.enabled()) {
+        if (jsonPost != null && jsonPost.enabled()) {
             ProtocolController.RequestInfo requestInfo = super.createRequest(url, request);
             Object finalParams;
-            if(jsonPost.singleFlat()){
-                if(request.getArgs().length==1){
-                    finalParams=request.getArgs()[0];
-                }else{
+            if (jsonPost.singleFlat()) {
+                if (request.getArgs().length == 1) {
+                    finalParams = request.getArgs()[0];
+                } else {
                     throw new JudoException("SingleFlat can be enabled only for method with one parameter.");
                 }
-            }else {
+            } else {
                 Map<String, Object> params = new HashMap<>();
                 int i = 0;
                 for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
@@ -72,7 +71,7 @@ public class JsonSimpleRestController extends RawRestController {
                     }
                     i++;
                 }
-                finalParams=params;
+                finalParams = params;
             }
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             OutputStreamWriter writer = new OutputStreamWriter(stream);
@@ -87,7 +86,7 @@ public class JsonSimpleRestController extends RawRestController {
             requestInfo.mimeType = "application/json";
 
             Rest ann = ReflectionCache.getAnnotationInherited(request.getMethod(), Rest.class);
-            if (ann!=null && ann.mimeType() != null) {
+            if (ann != null && ann.mimeType() != null) {
                 requestInfo.mimeType = ann.mimeType();
             }
 
@@ -101,6 +100,7 @@ public class JsonSimpleRestController extends RawRestController {
     @Target({ElementType.METHOD, ElementType.TYPE})
     public @interface JsonPost {
         boolean enabled() default true;
+
         boolean singleFlat() default false;
     }
 }

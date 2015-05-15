@@ -1,9 +1,9 @@
 package com.github.kubatatami.judonetworking.transports;
 
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.utils.SecurityUtils;
 import com.github.kubatatami.judonetworking.exceptions.HttpException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.utils.SecurityUtils;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -43,7 +43,6 @@ public abstract class HttpTransportLayer extends TransportLayer {
     }
 
 
-
     protected void handleHttpException(ProtocolController protocolController, int code, String message) throws JudoException {
         protocolController.parseError(code, message);
         throw new HttpException(message + "(" + code + ")", code);
@@ -55,17 +54,17 @@ public abstract class HttpTransportLayer extends TransportLayer {
     }
 
     public void setBasicAuthentication(final String username, final String password) {
-        if(username == null || password == null){
-            authKey=null;
-        }else {
+        if (username == null || password == null) {
+            authKey = null;
+        } else {
             authKey = SecurityUtils.getBasicAuthHeader(username, password);
         }
     }
 
     public void setBasicAuthentication(final String hash) {
-        if(hash == null){
-            authKey=null;
-        }else {
+        if (hash == null) {
+            authKey = null;
+        } else {
             authKey = "Basic " + hash;
         }
 

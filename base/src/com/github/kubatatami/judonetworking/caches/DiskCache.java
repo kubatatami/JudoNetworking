@@ -12,23 +12,23 @@ import com.github.kubatatami.judonetworking.internals.results.CacheResult;
  */
 public interface DiskCache {
 
-    public CacheResult get(CacheMethod method, String hash, int cacheLifeTime);
+    CacheResult get(CacheMethod method, String hash, int cacheLifeTime);
 
-    public void put(CacheMethod method, String hash, Object object, int maxSize);
+    void put(CacheMethod method, String hash, Object object, int maxSize);
 
-    public void clearCache();
+    void clearCache();
 
-    public void clearCache(CacheMethod method);
+    void clearCache(CacheMethod method);
 
-    public void clearCache(CacheMethod method, Object... params);
+    void clearCache(CacheMethod method, Object... params);
 
-    public void clearTests();
+    void clearTests();
 
-    public void clearTest(String name);
+    void clearTest(String name);
 
-    public int getDebugFlags();
+    int getDebugFlags();
 
-    public void setDebugFlags(int debugFlags);
+    void setDebugFlags(int debugFlags);
 
 
 }

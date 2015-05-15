@@ -7,6 +7,6 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  */
 public interface ObserverErrorLogger {
 
-    public void onError(JudoException e);
+    void onError(JudoException e);
 
 }

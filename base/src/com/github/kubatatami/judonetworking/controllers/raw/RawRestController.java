@@ -3,9 +3,9 @@ package com.github.kubatatami.judonetworking.controllers.raw;
 
 import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.utils.ReflectionCache;
-import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -188,6 +188,8 @@ public class RawRestController extends RawController {
     }
 
     protected static class AdditionalRequestData implements Serializable {
+
+        private static final long serialVersionUID = -5849466248972640154L;
         protected HashMap<String, Object> customGetKeys;
         protected HashMap<String, Object> customPostKeys;
 

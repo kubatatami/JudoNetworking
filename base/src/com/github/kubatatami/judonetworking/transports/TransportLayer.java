@@ -1,10 +1,10 @@
 package com.github.kubatatami.judonetworking.transports;
 
-import com.github.kubatatami.judonetworking.logs.JudoLogger;
-import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
+import com.github.kubatatami.judonetworking.logs.JudoLogger;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -33,19 +33,19 @@ public abstract class TransportLayer {
 
 
     public interface Connection {
-        public InputStream getStream() throws ConnectionException;
+        InputStream getStream() throws ConnectionException;
 
-        public int getContentLength();
+        int getContentLength();
 
-        public String getHash();
+        String getHash();
 
-        public Long getDate();
+        Long getDate();
 
-        public void close();
+        void close();
 
-        public Map<String, List<String>> getHeaders();
+        Map<String, List<String>> getHeaders();
 
-        public boolean isNewestAvailable() throws ConnectionException;
+        boolean isNewestAvailable() throws ConnectionException;
     }
 
     public static class CacheInfo {

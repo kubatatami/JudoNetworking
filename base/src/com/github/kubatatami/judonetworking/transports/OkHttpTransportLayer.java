@@ -1,18 +1,17 @@
 package com.github.kubatatami.judonetworking.transports;
 
 import com.github.kubatatami.judonetworking.Endpoint;
-import com.github.kubatatami.judonetworking.internals.executors.JudoExecutor;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.utils.ReflectionCache;
-import com.github.kubatatami.judonetworking.internals.streams.RequestOutputStream;
-import com.github.kubatatami.judonetworking.utils.SecurityUtils;
-import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.internals.executors.JudoExecutor;
+import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
+import com.github.kubatatami.judonetworking.internals.streams.RequestOutputStream;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
+import com.github.kubatatami.judonetworking.utils.SecurityUtils;
 import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Call;
-import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -47,9 +46,9 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
         baseClient.setAuthenticator(new Authenticator() {
             @Override
             public Request authenticate(Proxy proxy, Response response) throws IOException {
-                if(authKey!=null) {
+                if (authKey != null) {
                     return response.request().newBuilder().header("Authorization", authKey).build();
-                }else{
+                } else {
                     return null;
                 }
             }
@@ -152,7 +151,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
             }
 
             final Call call = client.newCall(builder.method(methodName, requestBody).build());
-            if(Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
+            if (Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
                 JudoExecutor.ConnectionThread connectionThread = (JudoExecutor.ConnectionThread) Thread.currentThread();
                 connectionThread.setCanceller(new JudoExecutor.ConnectionThread.Canceller() {
                     @Override
@@ -170,7 +169,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
             try {
                 response = call.execute();
             } catch (IOException ex) {
-                if(Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
+                if (Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
                     JudoExecutor.ConnectionThread thread = (JudoExecutor.ConnectionThread) Thread.currentThread();
                     if (thread.isCanceled()) {
                         thread.resetCanceled();
@@ -178,7 +177,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                     } else {
                         throw ex;
                     }
-                }else{
+                } else {
                     throw ex;
                 }
             }
@@ -211,7 +210,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                 }
                 initSetup(client, builder, requestInfo, timeout, timeStat, cacheInfo);
 
-                logRequestHeaders(requestName,debugFlags, builder);
+                logRequestHeaders(requestName, debugFlags, builder);
 
                 response = sendRequest(client, builder, requestInfo, timeStat, method, debugFlags);
 
@@ -316,13 +315,13 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
         }
     }
 
-    protected void logRequestHeaders(String requestName,int debugFlags, OkHttpBuilder builder) {
+    protected void logRequestHeaders(String requestName, int debugFlags, OkHttpBuilder builder) {
         if ((debugFlags & Endpoint.HEADERS_DEBUG) > 0) {
             String headers = "";
             for (String key : builder.headers.keySet()) {
                 headers += key + ":" + builder.headers.get(key) + " ";
             }
-            longLog("Request headers("+requestName+")", headers);
+            longLog("Request headers(" + requestName + ")", headers);
         }
 
     }
@@ -342,8 +341,8 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
     }
 
-    static class  OkHttpBuilder extends Request.Builder{
-        Map<String,String> headers=new HashMap<>();
+    static class OkHttpBuilder extends Request.Builder {
+        Map<String, String> headers = new HashMap<>();
 
         @Override
         public Request.Builder addHeader(String name, String value) {

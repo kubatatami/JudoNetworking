@@ -16,13 +16,13 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface ServerCache {
 
-    public boolean enabled() default true;
+    boolean enabled() default true;
 
     boolean useOldOnError() default false;
 
-    public int size() default 0;
+    int size() default 0;
 
-    public CacheLevel cacheLevel() default CacheLevel.DISK_CACHE;
+    CacheLevel cacheLevel() default CacheLevel.DISK_CACHE;
 
     /**
      * Created with IntelliJ IDEA.
@@ -31,7 +31,7 @@ public @interface ServerCache {
      * Time: 09:05
      * To change this template use File | Settings | File Templates.
      */
-    public enum CacheLevel {
+    enum CacheLevel {
         DISK_CACHE, DISK_DATA
     }
 }

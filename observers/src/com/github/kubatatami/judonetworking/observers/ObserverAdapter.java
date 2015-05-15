@@ -141,10 +141,11 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> implements Iterable<T> {
     @Override
     public Iterator<T> iterator() {
         return new Iterator<T>() {
-            int i=0;
+            int i = 0;
+
             @Override
             public boolean hasNext() {
-                return i<getCount();
+                return i < getCount();
             }
 
             @Override
@@ -163,24 +164,26 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> implements Iterable<T> {
 
     public interface FilterInterface<T> {
 
-        public boolean filter(CharSequence constraint, T item);
+        boolean filter(CharSequence constraint, T item);
 
     }
 
     public void preHoneycombAddAll(Collection<? extends T> collection) {
-        preHoneycombAddAll(collection,false);
+        preHoneycombAddAll(collection, false);
     }
 
-    public void preHoneycombAddAll(T... items) {
-        preHoneycombAddAll(false,items);
+    @SafeVarargs
+    public final void preHoneycombAddAll(T... items) {
+        preHoneycombAddAll(false, items);
     }
 
-    public void preHoneycombAddAll(boolean clear, T... items) {
-        preHoneycombAddAll(Arrays.asList(items),clear);
+    @SafeVarargs
+    public final void preHoneycombAddAll(boolean clear, T... items) {
+        preHoneycombAddAll(Arrays.asList(items), clear);
     }
 
     public void preHoneycombAddAll(Collection<? extends T> collection, boolean clear) {
-        if(Build.VERSION.SDK_INT<Build.VERSION_CODES.HONEYCOMB) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
             setNotifyOnChange(false);
             if (clear) {
                 clear();
@@ -189,7 +192,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> implements Iterable<T> {
                 add(item);
             }
             notifyDataSetChanged();
-        }else{
+        } else {
             if (clear) {
                 setNotifyOnChange(false);
                 clear();

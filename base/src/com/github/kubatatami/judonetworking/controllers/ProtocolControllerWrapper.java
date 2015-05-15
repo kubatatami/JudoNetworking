@@ -1,8 +1,8 @@
 package com.github.kubatatami.judonetworking.controllers;
 
 import com.github.kubatatami.judonetworking.Request;
-import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 
 import java.io.InputStream;
 import java.io.Serializable;

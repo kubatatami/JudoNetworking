@@ -8,14 +8,14 @@ package com.github.kubatatami.judonetworking.observers;
  */
 public interface ObservableWrapperListenerInterface<T> {
 
-    public void onGet(ObservableWrapper<T> wrapper);
+    void onGet(ObservableWrapper<T> wrapper);
 
-    public void onSet(ObservableWrapper<T> wrapper, T value);
+    void onSet(ObservableWrapper<T> wrapper, T value);
 
-    public boolean onAddObserver(ObservableWrapper<T> wrapper, WrapObserver<T> observer);
+    boolean onAddObserver(ObservableWrapper<T> wrapper, WrapObserver<T> observer);
 
-    public boolean onDeleteObserver(ObservableWrapper<T> wrapper, WrapObserver<T> observer);
+    boolean onDeleteObserver(ObservableWrapper<T> wrapper, WrapObserver<T> observer);
 
-    public void onUpdate(ObservableWrapper<T> wrapper);
+    void onUpdate(ObservableWrapper<T> wrapper);
 
 }

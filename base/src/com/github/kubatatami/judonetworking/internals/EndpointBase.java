@@ -13,128 +13,129 @@ public interface EndpointBase {
      * @param connectionTimeout
      * @param methodTimeout
      */
-    public void setTimeouts(int connectionTimeout, int methodTimeout);
+    void setTimeouts(int connectionTimeout, int methodTimeout);
 
     /**
      * @param alwaysMainThread
      */
-    public void setCallbackThread(boolean alwaysMainThread);
+    void setCallbackThread(boolean alwaysMainThread);
 
     /**
      * @param flags
      */
-    public void setDebugFlags(int flags);
+    void setDebugFlags(int flags);
 
-    public int getDebugFlags();
+    int getDebugFlags();
 
     /**
      * @param delay
      */
-    public void setDelay(int delay);
+    void setDelay(int delay);
 
-    public void addErrorLogger(ErrorLogger logger);
+    void addErrorLogger(ErrorLogger logger);
 
-    public void removeErrorLogger(ErrorLogger logger);
+    void removeErrorLogger(ErrorLogger logger);
 
-    public void setOnRequestEventListener(OnRequestEventListener listener);
+    void setOnRequestEventListener(OnRequestEventListener listener);
 
 
-    public void setPercentLoss(float percentLoss);
+    void setPercentLoss(float percentLoss);
 
-    public int getThreadPriority();
+    int getThreadPriority();
 
-    public void setThreadPriority(int threadPriority);
+    void setThreadPriority(int threadPriority);
 
     /**
      * @param onlyInDebugMode
      */
-    public void startTest(boolean onlyInDebugMode, String name, int revision);
+    void startTest(boolean onlyInDebugMode, String name, int revision);
 
     /**
      *
      */
-    public void stopTest();
+    void stopTest();
 
-    public ProtocolController getProtocolController();
+    ProtocolController getProtocolController();
 
-    public void setVerifyResultModel(boolean enabled);
+    void setVerifyResultModel(boolean enabled);
 
-    public boolean isProcessingMethod();
+    boolean isProcessingMethod();
 
-    public void setProcessingMethod(boolean enabled);
+    void setProcessingMethod(boolean enabled);
 
-    public void setUrlModifier(UrlModifier urlModifier);
+    void setUrlModifier(UrlModifier urlModifier);
 
     /**
      * No log.
      */
-    public static final int NO_DEBUG = 0;
+    int NO_DEBUG = 0;
     /**
      * Log time of requests.
      */
-    public static final int TIME_DEBUG = 1;
+    int TIME_DEBUG = 1;
     /**
      * Log request content.
      */
-    public static final int REQUEST_DEBUG = 2;
+    int REQUEST_DEBUG = 2;
     /**
      * Log response content.
      */
-    public static final int RESPONSE_DEBUG = 4;
+    int RESPONSE_DEBUG = 4;
     /**
      * Log cache behavior.
      */
-    public static final int CACHE_DEBUG = 8;
+    int CACHE_DEBUG = 8;
     /**
      * Log request code line.
      */
-    public static final int REQUEST_LINE_DEBUG = 16;
+    int REQUEST_LINE_DEBUG = 16;
 
     /**
      * Log request and response headers.
      */
-    public static final int HEADERS_DEBUG = 32;
+    int HEADERS_DEBUG = 32;
 
     /**
      * Log token behavior
      */
-    public static final int TOKEN_DEBUG = 64;
+    int TOKEN_DEBUG = 64;
 
     /**
      * Log request errors
      */
-    public static final int ERROR_DEBUG = 128;
+    int ERROR_DEBUG = 128;
 
     /**
      * Log cancellations
      */
-    public static final int CANCEL_DEBUG = 256;
+    int CANCEL_DEBUG = 256;
 
     /**
      * Log cancellations
      */
-    public static final int THREAD_DEBUG = 512;
+    int THREAD_DEBUG = 512;
 
     /**
      * Log everything.
      */
-    public static final int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG | TOKEN_DEBUG | ERROR_DEBUG | CANCEL_DEBUG;
+    int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG | TOKEN_DEBUG | ERROR_DEBUG | CANCEL_DEBUG;
 
-    public static final int INTERNAL_DEBUG = FULL_DEBUG | THREAD_DEBUG;
+    int INTERNAL_DEBUG = FULL_DEBUG | THREAD_DEBUG;
 
     /**
      * Created by Kuba on 17/07/14.
      */
     interface UrlModifier {
 
-        public String createUrl(String url);
+        String createUrl(String url);
 
     }
 
-    interface OnRequestEventListener{
+    interface OnRequestEventListener {
 
-        public void onStart(Request request, int requestsCount);
-        public void onStop(Request request, int requestsCount);
+        void onStart(Request request, int requestsCount);
+
+        void onStop(Request request, int requestsCount);
 
     }
 }

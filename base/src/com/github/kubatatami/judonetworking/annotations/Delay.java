@@ -16,8 +16,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface Delay {
 
-    public boolean enabled() default true;
+    boolean enabled() default true;
 
-    public int value() default 0;
+    int value() default 0;
 
 }

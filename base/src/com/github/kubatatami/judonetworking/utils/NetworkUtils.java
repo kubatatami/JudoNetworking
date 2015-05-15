@@ -39,7 +39,7 @@ public class NetworkUtils {
     }
 
     public static boolean isNetworkAvailable(Context context) {
-        NetworkInfo activeNetworkInfo =  getActiveNetworkInfo(context);
+        NetworkInfo activeNetworkInfo = getActiveNetworkInfo(context);
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
@@ -68,9 +68,9 @@ public class NetworkUtils {
         }
     }
 
-    public static interface NetworkStateListener {
+    public interface NetworkStateListener {
 
-        public void onNetworkStateChange(NetworkInfo activeNetworkInfo);
+        void onNetworkStateChange(NetworkInfo activeNetworkInfo);
 
     }
 

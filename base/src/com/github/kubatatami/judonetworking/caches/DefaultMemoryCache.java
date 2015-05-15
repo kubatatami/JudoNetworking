@@ -3,9 +3,9 @@ package com.github.kubatatami.judonetworking.caches;
 import android.content.Context;
 import android.support.v4.util.LruCache;
 
+import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
 import com.github.kubatatami.judonetworking.internals.results.CacheResult;
-import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 
 import java.lang.reflect.Method;
@@ -47,7 +47,7 @@ public class DefaultMemoryCache implements MemoryCache {
                         JudoLogger.log("Cache(" + methodId + "): Get from memory cache object with hash:" + hash);
                     }
                     result.object = cacheObject.getObject();
-                    result.time=cacheObject.createTime;
+                    result.time = cacheObject.createTime;
                     result.result = true;
                     return result;
                 }
@@ -78,14 +78,14 @@ public class DefaultMemoryCache implements MemoryCache {
 
     @Override
     public void clearCache(Method method) {
-        int hash= CacheMethod.getMethodId(method);
+        int hash = CacheMethod.getMethodId(method);
         clearCache(hash);
     }
 
     @Override
     public void clearCache(Method method, Object... params) {
-        int hash=CacheMethod.getMethodId(method);
-        clearCache(hash,params);
+        int hash = CacheMethod.getMethodId(method);
+        clearCache(hash, params);
     }
 
     @Override

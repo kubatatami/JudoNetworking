@@ -1,9 +1,9 @@
 package com.github.kubatatami.judonetworking.internals;
 
-import android.os.*;
 import android.util.Pair;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
+import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.annotations.NamePrefix;
@@ -18,7 +18,6 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
 import com.github.kubatatami.judonetworking.internals.batches.BatchProgressObserver;
 import com.github.kubatatami.judonetworking.internals.batches.BatchTask;
-import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
 import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.internals.results.CacheResult;
@@ -26,9 +25,9 @@ import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
-import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.logs.ErrorLogger;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
@@ -260,7 +259,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
             if (genericTypes.length > 0 && genericTypes[genericTypes.length - 1] instanceof ParameterizedType) {
                 ParameterizedType parameterizedType = (ParameterizedType) genericTypes[genericTypes.length - 1];
                 if (parameterizedType.getRawType().equals(Callback.class)) {
-                    returnType = parameterizedType.getActualTypeArguments()[0];
+                    returnType =  parameterizedType.getActualTypeArguments()[0];
                 }
             }
         }
@@ -462,8 +461,9 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                         try {
                             for (BatchTask task : tasks) {
                                 task.join();
-                                if (task.getEx() != null) {
-                                    throw task.getEx();
+                                JudoException ex = task.getEx();
+                                if (ex != null) {
+                                    throw ex;
                                 } else {
                                     responses.addAll(task.getResponse());
                                 }
@@ -512,11 +512,11 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
             }
             for (RequestResult res : responses) {
                 String resultString;
-                if(res.result!=null){
+                if (res.result != null) {
                     resultString = res.result.toString();
-                }else if(res.error!=null){
+                } else if (res.error != null) {
                     resultString = res.error.toString();
-                }else{
+                } else {
                     resultString = "NO RESPONSE";
                 }
                 responseNameBuilder.append(resultString);
@@ -528,7 +528,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                     + "\nRequests:\n" + requestNameBuilder.toString()
                     + "\nResponse:\n" + responseNameBuilder.toString()
             );
-        }else {
+        } else {
             for (RequestImpl request : requests) {
                 try {
                     RequestResult response = null;
@@ -545,7 +545,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                             throw response.error;
                         }
 
-                        if (request.getReturnType() != Void.class) {
+                        if (!request.isVoidResult()) {
                             if (rpc.isVerifyResultModel()) {
                                 RequestConnector.verifyResult(request, response);
                             }

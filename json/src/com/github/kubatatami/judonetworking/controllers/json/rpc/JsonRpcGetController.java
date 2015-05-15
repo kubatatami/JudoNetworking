@@ -1,8 +1,8 @@
 package com.github.kubatatami.judonetworking.controllers.json.rpc;
 
 import com.github.kubatatami.judonetworking.Request;
-import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.controllers.json.simple.JsonSimpleGetController;
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 
 import java.io.InputStream;
 import java.util.List;

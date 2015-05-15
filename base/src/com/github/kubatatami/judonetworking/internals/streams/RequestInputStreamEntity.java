@@ -49,7 +49,7 @@ public class RequestInputStreamEntity {
         }
         this.content = instream;
         this.length = length;
-        buffer = new byte[(int) Math.min(BUFFER_SIZE,length)];
+        buffer = new byte[(int) Math.min(BUFFER_SIZE, length)];
     }
 
     public long getContentLength() {

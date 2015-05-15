@@ -11,28 +11,28 @@ import java.util.Map;
 /**
  * Created by Kuba on 23/05/14.
  */
-public class  UniqueViewCallback<Z,T> extends DefaultCallback<T> {
+public class ViewAdapterCallback<Z, T> extends DefaultCallback<T> {
 
-    protected static final Map<View, UniqueViewCallback> viewCache = new HashMap<>();
+    protected static final Map<View, ViewAdapterCallback> viewCache = new HashMap<>();
     protected final View view;
     protected AsyncResult asyncResult;
     protected Z object;
 
-    public UniqueViewCallback(View view) {
+    public ViewAdapterCallback(View view) {
         this.view = view;
     }
 
     public void setObject(Z object) {
         this.object = object;
         cancelRequest(view);
-        viewCache.put(view,this);
+        viewCache.put(view, this);
     }
 
     @Override
     public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         super.onStart(cacheInfo, asyncResult);
-        this.asyncResult=asyncResult;
-        if(viewCache.get(view)!=this) {
+        this.asyncResult = asyncResult;
+        if (viewCache.get(view) != this) {
             asyncResult.cancel();
         }
     }
@@ -40,15 +40,15 @@ public class  UniqueViewCallback<Z,T> extends DefaultCallback<T> {
     @Override
     public void onFinish() {
         super.onFinish();
-        if(viewCache.containsKey(view) && viewCache.get(view)==this){
+        if (viewCache.containsKey(view) && viewCache.get(view) == this) {
             viewCache.remove(view);
         }
     }
 
 
-    public static void cancelRequest(View view){
-        if(viewCache.containsKey(view)) {
-            if(viewCache.get(view).asyncResult!=null) {
+    public static void cancelRequest(View view) {
+        if (viewCache.containsKey(view)) {
+            if (viewCache.get(view).asyncResult != null) {
                 viewCache.get(view).asyncResult.cancel();
             }
             viewCache.remove(view);

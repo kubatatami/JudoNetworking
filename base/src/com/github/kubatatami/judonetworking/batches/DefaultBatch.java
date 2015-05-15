@@ -23,7 +23,7 @@ public abstract class DefaultBatch<T> implements Batch<T> {
 
     @Override
     public void onStart(AsyncResult asyncResult) {
-        if(mergeCallback !=null){
+        if (mergeCallback != null) {
             mergeCallback.addStart(asyncResult);
         }
     }
@@ -39,22 +39,22 @@ public abstract class DefaultBatch<T> implements Batch<T> {
 
     @Override
     public void onSuccess(Object[] results) {
-        if(mergeCallback !=null){
+        if (mergeCallback != null) {
             mergeCallback.addSuccess();
         }
     }
 
     @Override
     public void onError(JudoException e) {
-        if(mergeCallback !=null){
+        if (mergeCallback != null) {
             mergeCallback.addError(e);
         }
     }
 
     @Override
     public void onProgress(int progress) {
-        if(mergeCallback !=null){
-            mergeCallback.addProgress(this,progress);
+        if (mergeCallback != null) {
+            mergeCallback.addProgress(this, progress);
         }
     }
 

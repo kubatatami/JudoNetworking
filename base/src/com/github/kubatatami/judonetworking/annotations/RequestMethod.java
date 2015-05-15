@@ -11,23 +11,23 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface RequestMethod {
 
-    public int id() default 0;
+    int id() default 0;
 
-    public String name() default "";
+    String name() default "";
 
-    public String[] paramNames() default {};
+    String[] paramNames() default {};
 
-    public int timeout() default 0;
+    int timeout() default 0;
 
-    public boolean async() default false;
+    boolean async() default false;
 
-    public boolean highPriority() default false;
+    boolean highPriority() default false;
 
-    public boolean allowEmptyResult() default false;
+    boolean allowEmptyResult() default false;
 
-    public Class<? extends Modifier> modifier() default DefaultModifier.class;
+    Class<? extends Modifier> modifier() default DefaultModifier.class;
 
-    static final class DefaultModifier implements Modifier {
+    final class DefaultModifier implements Modifier {
         @Override
         public void modify(Request request) {
 
@@ -37,9 +37,9 @@ public @interface RequestMethod {
     /**
      * Created by Kuba on 11/07/14.
      */
-    public interface Modifier {
+    interface Modifier {
 
-        public void modify(Request request);
+        void modify(Request request);
 
     }
 }

@@ -24,7 +24,6 @@ import com.github.kubatatami.judonetworking.internals.executors.JudoExecutor;
 import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.internals.requests.RequestOptions;
 import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
-import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.internals.virtuals.VirtualServerInfo;
 import com.github.kubatatami.judonetworking.logs.ErrorLogger;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
@@ -32,6 +31,7 @@ import com.github.kubatatami.judonetworking.threads.DefaultThreadPoolSizer;
 import com.github.kubatatami.judonetworking.threads.ThreadPoolSizer;
 import com.github.kubatatami.judonetworking.transports.TransportLayer;
 import com.github.kubatatami.judonetworking.utils.NetworkUtils;
+import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -177,10 +177,11 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @SuppressWarnings("unchecked")
     @Override
     public <T> AsyncResult sendAsyncRequest(String url, String name, RequestOptions requestOptions, Callback<T> callback, Object... args) {
+        Type returnType = ((ParameterizedType) callback.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
         RequestImpl request = new RequestImpl(
                 ++id, this, null,
                 name, requestOptions, args,
-                ((ParameterizedType) callback.getClass().getGenericSuperclass()).getActualTypeArguments()[0], getRequestConnector().getMethodTimeout(),
+                returnType, getRequestConnector().getMethodTimeout(),
                 (Callback<Object>) callback, getProtocolController().getAdditionalRequestData());
         request.setCustomUrl(url);
         request.setApiKeyRequired(requestOptions.apiKeyRequired());
@@ -380,6 +381,9 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @Override
     public void clearTimeProfilerStat() {
         boolean result = statFile.delete();
+        if(result){
+            JudoLogger.log("Can't remove stats file");
+        }
         stats = Collections.synchronizedMap(new HashMap<String, MethodStat>());
     }
 
@@ -611,7 +615,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         this.urlModifier = urlModifier;
     }
 
-    static enum BatchMode {
+    enum BatchMode {
         NONE, MANUAL, AUTO
     }
 

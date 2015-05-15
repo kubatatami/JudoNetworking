@@ -41,7 +41,8 @@ public class ObservableCache {
                         Class<?> clazz = Class.forName(className);
                         try {
                             dataObserverMethodsCache.put(clazz, getMethods(clazz));
-                        }catch (NoClassDefFoundError ex){}
+                        } catch (NoClassDefFoundError ignored) {
+                        }
                     }
                 }
                 df.close();

@@ -65,7 +65,7 @@ public class JudoLogger {
 
     }
 
-    public static enum LogLevel {
+    public enum LogLevel {
         NONE, ERROR, WARNING, INFO, DEBUG
     }
 }

@@ -23,8 +23,6 @@ import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
 
 public class EnumAnnotationModule extends SimpleModule {
 
@@ -66,7 +64,7 @@ public class EnumAnnotationModule extends SimpleModule {
                     jgen.writeString(property.value());
                     return;
                 }
-            } catch (NoSuchFieldException e) {
+            } catch (NoSuchFieldException ignored) {
             }
             mapper.writeValue(jgen, value);
         }
@@ -87,17 +85,17 @@ public class EnumAnnotationModule extends SimpleModule {
             Enum<?> defaultEnum = null;
             try {
 
-                for (Field field : ReflectionCache.getDeclaredFields(getValueClass())) {
+                for (Field field : ReflectionCache.getDeclaredFields(handledType())) {
                     if (field.isEnumConstant()) {
-                        String value=propertyValueCache.get(field);
-                        if(value==null) {
+                        String value = propertyValueCache.get(field);
+                        if (value == null) {
                             JsonProperty property = ReflectionCache.getAnnotation(field, JsonProperty.class);
                             if (property != null) {
                                 value = property.value();
                                 propertyValueCache.put(field, value);
                             }
                         }
-                        if(text.equals(value)) {
+                        if (text.equals(value)) {
                             return (Enum<?>) field.get(null);
                         }
                         if (ReflectionCache.getAnnotation(field, JsonDefaultEnum.class) != null) {
@@ -111,10 +109,10 @@ public class EnumAnnotationModule extends SimpleModule {
                 }
 
 
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
             try {
-                return (Enum<?>) mapper.readValue("\"" + text + "\"", getValueClass());
+                return (Enum<?>) mapper.readValue("\"" + text + "\"", handledType());
             } catch (InvalidFormatException e) {
                 if (defaultEnum != null) {
                     return defaultEnum;

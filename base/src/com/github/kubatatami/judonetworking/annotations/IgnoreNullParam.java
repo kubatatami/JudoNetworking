@@ -9,9 +9,9 @@ import java.lang.annotation.Target;
  * Created by Kuba on 26/06/14.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.PARAMETER,ElementType.TYPE})
+@Target({ElementType.PARAMETER, ElementType.TYPE})
 public @interface IgnoreNullParam {
 
-    public boolean value() default true;
+    boolean value() default true;
 
 }

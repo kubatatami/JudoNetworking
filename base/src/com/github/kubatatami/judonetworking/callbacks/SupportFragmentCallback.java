@@ -24,7 +24,7 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
     public SupportFragmentCallback(Fragment fragment) {
         this.fragment = new WeakReference<>(fragment);
         this.manager = new WeakReference<>(fragment.getFragmentManager());
-        if(manager.get()!=null) {
+        if (manager.get() != null) {
             manager.get().addOnBackStackChangedListener(this);
         }
     }
@@ -32,7 +32,7 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
     @Override
     public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
-        if (fragment.get()!=null && fragment.get().getActivity() != null) {
+        if (fragment.get() != null && fragment.get().getActivity() != null) {
             onSafeStart(cacheInfo, asyncResult);
         } else {
             tryCancel();
@@ -41,7 +41,7 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
 
     @Override
     public final void onSuccess(T result) {
-        if (fragment.get()!=null && fragment.get().getActivity() != null) {
+        if (fragment.get() != null && fragment.get().getActivity() != null) {
             onSafeSuccess(result);
         } else {
             tryCancel();
@@ -50,7 +50,7 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
 
     @Override
     public final void onError(JudoException e) {
-        if (fragment.get()!=null && fragment.get().getActivity() != null) {
+        if (fragment.get() != null && fragment.get().getActivity() != null) {
             onSafeError(e);
         } else {
             tryCancel();
@@ -59,7 +59,7 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
 
     @Override
     public final void onProgress(int progress) {
-        if (fragment.get()!=null && fragment.get().getActivity() != null) {
+        if (fragment.get() != null && fragment.get().getActivity() != null) {
             onSafeProgress(progress);
         } else {
             tryCancel();
@@ -68,12 +68,12 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
 
     @Override
     public final void onFinish() {
-        if (fragment.get()!=null && fragment.get().getActivity() != null) {
+        if (fragment.get() != null && fragment.get().getActivity() != null) {
             onSafeFinish();
         } else {
             tryCancel();
         }
-        if(manager.get()!=null) {
+        if (manager.get() != null) {
             manager.get().removeOnBackStackChangedListener(this);
         }
     }
@@ -81,7 +81,7 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
     protected void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
-            if(manager.get()!=null) {
+            if (manager.get() != null) {
                 manager.get().removeOnBackStackChangedListener(this);
             }
         }
@@ -110,7 +110,7 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> implements Fr
 
     @Override
     public void onBackStackChanged() {
-        if (fragment.get()!=null && fragment.get().getActivity() == null) {
+        if (fragment.get() != null && fragment.get().getActivity() == null) {
             tryCancel();
         }
     }

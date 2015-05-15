@@ -21,7 +21,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
     protected boolean notifyInUiThread = true;
     protected long dataSetTime = 0;
     protected long updateTime = 0;
-    protected boolean allowNull = false;
+    protected boolean notifyOnNull = false;
     protected boolean forceUpdateOnNetworkStateChange = false;
     protected boolean checkNetworkState = false;
     protected boolean checkUpdateOnGet = false;
@@ -37,7 +37,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
                 firstNetworkState = false;
                 return;
             }
-            if (activeNetworkInfo!=null && activeNetworkInfo.isConnected()) {
+            if (activeNetworkInfo != null && activeNetworkInfo.isConnected()) {
                 if (forceUpdateOnNetworkStateChange) {
                     forceUpdate();
                 } else {
@@ -59,37 +59,8 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         }
     };
 
-    public ObservableWrapper() {
-
-    }
-
-    public ObservableWrapper(boolean notifyInUiThread) {
-        this.notifyInUiThread = notifyInUiThread;
-    }
-
-    public ObservableWrapper(long updateTime) {
-        this.updateTime = updateTime;
-    }
-
-    public ObservableWrapper(boolean notifyInUiThread, long updateTime) {
-        this.notifyInUiThread = notifyInUiThread;
-        this.updateTime = updateTime;
-    }
-
-    public ObservableWrapper(boolean notifyInUiThread, boolean allowNull) {
-        this.notifyInUiThread = notifyInUiThread;
-        this.allowNull = allowNull;
-    }
-
-    public ObservableWrapper(long updateTime, boolean allowNull) {
-        this.updateTime = updateTime;
-        this.allowNull = allowNull;
-    }
-
-    public ObservableWrapper(boolean notifyInUiThread, long updateTime, boolean allowNull) {
-        this.notifyInUiThread = notifyInUiThread;
-        this.updateTime = updateTime;
-        this.allowNull = allowNull;
+    public boolean isLoaded() {
+        return true;
     }
 
     public void addObserver(WrapObserver<T> observer) {
@@ -105,7 +76,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
             observers.add(observer);
             if (notify) {
                 T obj = get();
-                if (obj != null || allowNull) {
+                if (obj != null || notifyOnNull) {
                     observer.update(obj);
                 }
             }
@@ -179,12 +150,16 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
     }
 
     public boolean set(T object, boolean notify) {
+        return set(object, notify, System.currentTimeMillis());
+    }
 
-        if (setOnlyWhenDifferentHash && this.object != null && object!=null && object.hashCode() == this.object.hashCode()) {
-           return false;
+    public boolean set(T object, boolean notify, long dataSetTime) {
+
+        if (setOnlyWhenDifferentHash && this.object != null && object != null && object.hashCode() == this.object.hashCode()) {
+            return false;
         }
 
-        dataSetTime = System.currentTimeMillis();
+        this.dataSetTime = dataSetTime;
         this.object = object;
 
 
@@ -242,8 +217,8 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
     }
 
     public void notifyObservers(ObservableTransaction transaction) {
-        if(transaction==null){
-            if (object != null || allowNull) {
+        if (transaction == null) {
+            if (object != null || notifyOnNull) {
                 Runnable runnable = new Runnable() {
                     @Override
                     public void run() {
@@ -259,7 +234,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
                     handler.post(runnable);
                 }
             }
-        }else{
+        } else {
             transaction.add(this, object);
         }
     }
@@ -280,15 +255,19 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         this.updateTime = updateTime;
     }
 
-    public boolean isAllowNull() {
-        return allowNull;
+    public boolean isNotifyOnNull() {
+        return notifyOnNull;
     }
 
-    public void setAllowNull(boolean allowNull) {
-        this.allowNull = allowNull;
+    public void setNotifyOnNull(boolean notifyOnNull) {
+        this.notifyOnNull = notifyOnNull;
     }
 
     public void setOnlyWhenDifferentHash(boolean setOnlyWhenDifferentHash) {
         this.setOnlyWhenDifferentHash = setOnlyWhenDifferentHash;
+    }
+
+    public void setNotifyInUiThread(boolean notifyInUiThread) {
+        this.notifyInUiThread = notifyInUiThread;
     }
 }

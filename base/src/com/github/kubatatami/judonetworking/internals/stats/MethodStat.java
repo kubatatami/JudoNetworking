@@ -9,6 +9,9 @@ import java.io.Serializable;
  * Time: 16:59
  */
 public class MethodStat implements Serializable {
+
+    private static final long serialVersionUID = -8716566790880974135L;
+
     public long requestCount = 0;
     public long avgTime = 0;
     public long errors = 0;

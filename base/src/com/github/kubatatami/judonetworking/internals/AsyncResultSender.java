@@ -1,11 +1,11 @@
 package com.github.kubatatami.judonetworking.internals;
 
+import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.annotations.HandleException;
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
-import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 
@@ -93,7 +93,7 @@ public class AsyncResultSender implements Runnable {
     public AsyncResultSender(List<RequestImpl> requests) {
         this.requests = requests;
         this.type = Type.START;
-        this.cacheInfo=new CacheInfo(false,0L);
+        this.cacheInfo = new CacheInfo(false, 0L);
     }
 
     public AsyncResultSender(RequestImpl request, JudoException e) {
@@ -110,7 +110,7 @@ public class AsyncResultSender implements Runnable {
         for (; callbackClass != null; callbackClass = callbackClass.getSuperclass()) {
             for (Method method : callbackClass.getMethods()) {
                 HandleException handleException = method.getAnnotation(HandleException.class);
-                if (handleException!=null && handleException.enabled()) {
+                if (handleException != null && handleException.enabled()) {
                     if (method.getParameterTypes().length != 1) {
                         throw new RuntimeException("Method " + method.getName() + " annotated HandleException must have one parameter.");
                     }
@@ -146,7 +146,7 @@ public class AsyncResultSender implements Runnable {
                     break;
                 case ERROR:
                     Method handleMethod = findHandleMethod(callback.getClass(), e.getClass());
-                    logError(request.getName(),e);
+                    logError(request.getName(), e);
                     if (handleMethod != null) {
                         try {
                             handleMethod.invoke(callback, e);
@@ -182,7 +182,7 @@ public class AsyncResultSender implements Runnable {
                     break;
                 case ERROR:
                     Method handleMethod = findHandleMethod(transaction.getClass(), e.getClass());
-                    logError("Batch",e);
+                    logError("Batch", e);
                     if (handleMethod != null) {
                         try {
                             handleMethod.invoke(transaction, e);
@@ -202,16 +202,16 @@ public class AsyncResultSender implements Runnable {
                 requestProxy.clearBatchCallback();
 
             }
-        }else if(requests!=null && type==Type.PROGRESS){
-            for(RequestImpl batchRequest : requests){
-                if(batchRequest.getCallback()!=null) {
+        } else if (requests != null && type == Type.PROGRESS) {
+            for (RequestImpl batchRequest : requests) {
+                if (batchRequest.getCallback() != null) {
                     batchRequest.getCallback().onProgress(progress);
                 }
             }
-        }else if(requests!=null && type==Type.START){
-            for(RequestImpl batchRequest : requests){
-                if(batchRequest.getCallback()!=null) {
-                    batchRequest.getCallback().onStart(cacheInfo,batchRequest);
+        } else if (requests != null && type == Type.START) {
+            for (RequestImpl batchRequest : requests) {
+                if (batchRequest.getCallback() != null) {
+                    batchRequest.getCallback().onStart(cacheInfo, batchRequest);
                 }
             }
         }
@@ -220,7 +220,7 @@ public class AsyncResultSender implements Runnable {
                 case ERROR:
                 case RESULT:
                     synchronized (rpc.getSingleCallMethods()) {
-                        boolean result = rpc.getSingleCallMethods().remove(methodId)!=null;
+                        boolean result = rpc.getSingleCallMethods().remove(methodId) != null;
                         if (result && (rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
                             JudoLogger.log("Request " + request.getName() + "(" + methodId + ")" + " removed from SingleCall queue.");
                         }
@@ -238,7 +238,7 @@ public class AsyncResultSender implements Runnable {
 
     protected void logError(String requestName, Exception ex) {
         if ((rpc.getDebugFlags() & Endpoint.ERROR_DEBUG) > 0) {
-            if(requestName!=null){
+            if (requestName != null) {
                 JudoLogger.log("Error on: " + requestName);
             }
             JudoLogger.log(ex);

@@ -1,6 +1,5 @@
 package com.github.kubatatami.judonetworking.callbacks;
 
-import android.support.v4.app.Fragment;
 import android.widget.ArrayAdapter;
 
 import java.lang.ref.WeakReference;
@@ -32,8 +31,8 @@ public class AdapterCallback<T> extends DefaultCallback<List<T>> {
 
     @Override
     public void onSuccess(List<T> result) {
-        ArrayAdapter<T> adapter=this.adapter.get();
-        if(adapter!=null) {
+        ArrayAdapter<T> adapter = this.adapter.get();
+        if (adapter != null) {
             if (clear) {
                 adapter.clear();
             }

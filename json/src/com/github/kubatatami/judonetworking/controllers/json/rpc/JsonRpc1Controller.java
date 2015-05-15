@@ -5,13 +5,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.github.kubatatami.judonetworking.Request;
-import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
-import com.github.kubatatami.judonetworking.internals.results.RequestResult;
-import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
 import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
+import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestResult;
+import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +46,12 @@ public class JsonRpc1Controller extends JsonRpcController {
                     break;
                 case "result":
                     parser.nextToken();
-                    responseModel.result = reader.readValue(parser, mapper.getTypeFactory().constructType(type));
+                    if (!type.equals(Void.TYPE)) {
+                        responseModel.result = reader.readValue(parser, mapper.getTypeFactory().constructType(type));
+                    } else {
+                        //read and ignore result
+                        parser.readValueAsTree();
+                    }
                     break;
                 case "error":
                     parser.nextToken();
@@ -58,7 +63,7 @@ public class JsonRpc1Controller extends JsonRpcController {
     }
 
 
-        @Override
+    @Override
     public RequestResult parseResponse(Request request, InputStream stream, Map<String, List<String>> headers) {
         JsonParser parser = null;
         ObjectReader reader = mapper.reader();
@@ -66,7 +71,7 @@ public class JsonRpc1Controller extends JsonRpcController {
             JsonRpcResponseModel1 response;
             try {
                 parser = factory.createParser(stream);
-                response = readObject(reader,parser,request.getReturnType());
+                response = readObject(reader, parser, request.getReturnType());
 
                 if (response == null) {
                     throw new ParseException("Empty server response.");
@@ -75,7 +80,7 @@ public class JsonRpc1Controller extends JsonRpcController {
                     throw new ProtocolException(response.error);
                 }
 
-                if (!request.getReturnType().equals(Void.TYPE) && !request.getReturnType().equals(Void.class)) {
+                if (!request.isVoidResult()) {
                     Object result;
 
                     result = response.result;
@@ -93,8 +98,8 @@ public class JsonRpc1Controller extends JsonRpcController {
             return new RequestSuccessResult(request.getId(), null);
         } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
-        }finally {
-            if(parser!=null){
+        } finally {
+            if (parser != null) {
                 try {
                     parser.close();
                 } catch (IOException e) {

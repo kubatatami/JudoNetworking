@@ -49,7 +49,7 @@ public class CacheMethod {
         this.url = url;
         this.time = System.currentTimeMillis();
         this.cacheLevel = level;
-        if(test==null){
+        if (test == null) {
             this.dynamic = true;
         }
     }
@@ -92,10 +92,12 @@ public class CacheMethod {
     }
 
 
-    public String getInterfaceName(){return interfaceName;}
+    public String getInterfaceName() {
+        return interfaceName;
+    }
 
     public static int getMethodId(Method method) {
         RequestMethod requestMethod = ReflectionCache.getAnnotation(method, RequestMethod.class);
-        return requestMethod.id()==0 ? method.hashCode() : requestMethod.id();
+        return requestMethod.id() == 0 ? method.hashCode() : requestMethod.id();
     }
 }
