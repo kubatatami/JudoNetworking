@@ -30,7 +30,6 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-annotations:'+rootProject.ext.jacksonVersion
     compile 'com.fasterxml.jackson.core:jackson-databind:'+rootProject.ext.jacksonVersion
     compile project(':base')
-    compile project(':observers')
 }
 
 apply from: '../uploading_archives.gradle'
