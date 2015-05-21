@@ -130,6 +130,8 @@ public interface Endpoint extends EndpointBase {
 
     MemoryCache getMemoryCache();
 
+    void clearCache();
+
     void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer);
 
     void setUrl(String url);

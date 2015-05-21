@@ -459,6 +459,12 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     @Override
+    public void clearCache() {
+        getMemoryCache().clearCache();
+        getDiskCache().clearCache();
+    }
+
+    @Override
     public void setPercentLoss(float percentLoss) {
         this.percentLoss = percentLoss;
     }
