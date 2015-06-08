@@ -19,13 +19,13 @@ public class MergeCallback {
     boolean canceled = false;
     Map<BaseCallback<?>, Integer> progressMap = new HashMap<>();
     Set<AsyncResult> asyncResultSet = new HashSet<>();
-    Callback<Void> finalCallback;
+    Callback<?> finalCallback;
 
     public MergeCallback(int requests) {
         this.requests = requests;
     }
 
-    public MergeCallback(int requests, Callback<Void> finalCallback) {
+    public MergeCallback(int requests, Callback<?> finalCallback) {
         this.requests = requests;
         this.finalCallback = finalCallback;
     }
