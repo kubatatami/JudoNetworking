@@ -12,4 +12,4 @@ In particular modules you can find download instructions.
 
 Current version
 --------------
-2.2
+2.3.3
