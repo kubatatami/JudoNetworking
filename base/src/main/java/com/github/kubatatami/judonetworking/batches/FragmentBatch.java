@@ -6,7 +6,6 @@ import android.app.FragmentManager;
 import android.os.Build;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.callbacks.MergeCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.ref.WeakReference;

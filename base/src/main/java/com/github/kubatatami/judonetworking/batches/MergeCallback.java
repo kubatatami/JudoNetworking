@@ -1,6 +1,8 @@
-package com.github.kubatatami.judonetworking.callbacks;
+package com.github.kubatatami.judonetworking.batches;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
+import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
+import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.util.HashMap;
@@ -11,7 +13,7 @@ import java.util.Set;
 /**
  * Created by Kuba on 28/03/15.
  */
-public class MergeCallback {
+public class MergeCallback<T> {
 
     int requests;
     int finishRequests = 0;
@@ -19,18 +21,19 @@ public class MergeCallback {
     boolean canceled = false;
     Map<BaseCallback<?>, Integer> progressMap = new HashMap<>();
     Set<AsyncResult> asyncResultSet = new HashSet<>();
-    Callback<?> finalCallback;
+    Callback<T> finalCallback;
+    T result;
 
     public MergeCallback(int requests) {
         this.requests = requests;
     }
 
-    public MergeCallback(int requests, Callback<?> finalCallback) {
+    public MergeCallback(int requests, Callback<T> finalCallback) {
         this.requests = requests;
         this.finalCallback = finalCallback;
     }
 
-    public final void addStart(AsyncResult asyncResult) {
+    final void addStart(AsyncResult asyncResult) {
         if (canceled) {
             return;
         }
@@ -41,7 +44,7 @@ public class MergeCallback {
         asyncResultSet.add(asyncResult);
     }
 
-    public final void addProgress(BaseCallback<?> callback, int progress) {
+    final void addProgress(BaseCallback<?> callback, int progress) {
         if (canceled) {
             return;
         }
@@ -57,7 +60,7 @@ public class MergeCallback {
         return (int) ((float) progress / (float) requests);
     }
 
-    public final void addSuccess() {
+    final void addSuccess() {
         if (canceled) {
             return;
         }
@@ -69,7 +72,7 @@ public class MergeCallback {
 
     }
 
-    public final void addError(JudoException e) {
+    final void addError(JudoException e) {
         if (canceled) {
             return;
         }
@@ -81,6 +84,9 @@ public class MergeCallback {
         canceled = true;
     }
 
+    public void setResult(T result) {
+        this.result = result;
+    }
 
     protected void onMergeStart() {
         if (finalCallback != null) {
@@ -97,7 +103,7 @@ public class MergeCallback {
 
     protected void onMergeSuccess() {
         if (finalCallback != null) {
-            finalCallback.onSuccess(null);
+            finalCallback.onSuccess(result);
         }
     }
 
