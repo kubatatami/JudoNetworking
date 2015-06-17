@@ -78,6 +78,10 @@ public class ObserverHelper {
         startInternal(activity, view);
     }
 
+    public void start(View view) {
+        startInternal(view, view);
+    }
+
     protected ObserverSettings getSettingsAnnotation(Class<?> clazz) {
         for (; clazz != null; clazz = clazz.getSuperclass()) {
             ObserverSettings settings = clazz.getAnnotation(ObserverSettings.class);
