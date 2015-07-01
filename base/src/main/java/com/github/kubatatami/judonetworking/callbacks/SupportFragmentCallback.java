@@ -1,9 +1,11 @@
 package com.github.kubatatami.judonetworking.callbacks;
 
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
-import com.github.kubatatami.judonetworking.fragments.JudoSupportFragment;
 
 import java.lang.ref.WeakReference;
 
@@ -13,49 +15,103 @@ import java.lang.ref.WeakReference;
  * Date: 23.04.2013
  * Time: 11:40
  */
-public final class SupportFragmentCallback<T> extends DecoratorCallback<T> {
+public class SupportFragmentCallback<T> extends DefaultCallback<T> implements FragmentManager.OnBackStackChangedListener {
 
+    private final WeakReference<Fragment> fragment;
+    private final WeakReference<FragmentManager> manager;
     private AsyncResult asyncResult;
-    private final int id;
-    private final String who;
-    private int progress;
 
-    public SupportFragmentCallback(JudoSupportFragment fragment, int id, Callback<T> callback) {
-        super(callback);
-        this.id=id;
-        this.who=fragment.getWho();
-        JudoSupportFragment.addCallback(who, id, this);
+    public SupportFragmentCallback(Fragment fragment) {
+        this.fragment = new WeakReference<>(fragment);
+        this.manager = new WeakReference<>(fragment.getFragmentManager());
+        if (manager.get() != null) {
+            manager.get().addOnBackStackChangedListener(this);
+        }
     }
 
     @Override
     public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
-        super.onStart(cacheInfo, asyncResult);
+        if (fragment.get() != null && fragment.get().getActivity() != null) {
+            onSafeStart(cacheInfo, asyncResult);
+        } else {
+            tryCancel();
+        }
     }
 
     @Override
-    public void onFinish() {
-        super.onFinish();
-        JudoSupportFragment.removeCallback(who, id);
+    public final void onSuccess(T result) {
+        if (fragment.get() != null && fragment.get().getActivity() != null) {
+            onSafeSuccess(result);
+        } else {
+            tryCancel();
+        }
     }
 
     @Override
-    public void onProgress(int progress) {
-        super.onProgress(progress);
-        this.progress=progress;
+    public final void onError(JudoException e) {
+        if (fragment.get() != null && fragment.get().getActivity() != null) {
+            onSafeError(e);
+        } else {
+            tryCancel();
+        }
     }
 
-    public void tryCancel() {
+    @Override
+    public final void onProgress(int progress) {
+        if (fragment.get() != null && fragment.get().getActivity() != null) {
+            onSafeProgress(progress);
+        } else {
+            tryCancel();
+        }
+    }
+
+    @Override
+    public final void onFinish() {
+        if (fragment.get() != null && fragment.get().getActivity() != null) {
+            onSafeFinish();
+        } else {
+            tryCancel();
+        }
+        if (manager.get() != null) {
+            manager.get().removeOnBackStackChangedListener(this);
+        }
+    }
+
+    protected void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
+            if (manager.get() != null) {
+                manager.get().removeOnBackStackChangedListener(this);
+            }
         }
     }
 
-    public void setCallback(Callback<?> callback){
-        this.callback=new WeakReference<>((Callback<T>) callback);
-        if(progress>0){
-            callback.onProgress(progress);
-        }
+    public void onSafeStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
+
     }
 
+    public void onSafeProgress(int progress) {
+
+    }
+
+    public void onSafeSuccess(T result) {
+
+    }
+
+    public void onSafeFinish() {
+
+    }
+
+    public void onSafeError(JudoException e) {
+
+    }
+
+
+    @Override
+    public void onBackStackChanged() {
+        if (fragment.get() != null && fragment.get().getActivity() == null) {
+            tryCancel();
+        }
+    }
 }
