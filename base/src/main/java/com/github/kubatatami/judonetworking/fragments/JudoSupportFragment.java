@@ -46,6 +46,10 @@ public class JudoSupportFragment extends Fragment {
         return false;
     }
 
+    protected <T> StatefulCallback<T> generateCallback(Callback<T> callback){
+        return new StatefulCallback<>(this, callback);
+    }
+
     static void addCallback(String who, int id, StatefulCallback<?> statefulCallback) {
         if (!callbacksMap.containsKey(who)) {
             callbacksMap.put(who, new HashMap<Integer, StatefulCallback<?>>());
