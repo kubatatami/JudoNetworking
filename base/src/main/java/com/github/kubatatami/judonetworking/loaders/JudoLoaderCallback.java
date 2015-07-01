@@ -5,12 +5,13 @@ import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 
+import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**
  * Created by Kuba on 01/07/15.
  */
-public abstract class JudoLoaderCallback<T> implements LoaderManager.LoaderCallbacks<T> {
+public abstract class JudoLoaderCallback<T> implements LoaderManager.LoaderCallbacks<T>, Callback<T> {
 
     private final JudoLoader<T, ?> loader;
 
@@ -38,17 +39,17 @@ public abstract class JudoLoaderCallback<T> implements LoaderManager.LoaderCallb
 
     }
 
-
+    @Override
     public void onSuccess(T result){
 
     }
 
-
+    @Override
     public void onError(JudoException e){
 
     }
 
-
+    @Override
     public void onFinish(){
 
     }
