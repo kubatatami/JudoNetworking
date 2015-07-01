@@ -35,7 +35,10 @@ public class JudoSupportFragment extends Fragment {
     }
 
     protected boolean connectCallback(Callback<?> callback) {
-        int id = callback.getClass().hashCode();
+        return connectCallback(callback.getClass().hashCode(),callback);
+    }
+
+    protected boolean connectCallback(int id, Callback<?> callback) {
         if (callbacksMap.containsKey(getWho())) {
             Map<Integer, StatefulCallback<?>> fragmentCallbackMap = callbacksMap.get(getWho());
             if (fragmentCallbackMap.containsKey(id)) {
@@ -46,8 +49,12 @@ public class JudoSupportFragment extends Fragment {
         return false;
     }
 
-    protected <T> StatefulCallback<T> generateCallback(Callback<T> callback){
+    protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {
         return new StatefulCallback<>(this, callback);
+    }
+
+    protected <T> StatefulCallback<T> generateCallback(int id, Callback<T> callback) {
+        return new StatefulCallback<>(this,id, callback);
     }
 
     static void addCallback(String who, int id, StatefulCallback<?> statefulCallback) {
@@ -85,9 +92,13 @@ public class JudoSupportFragment extends Fragment {
         private int progress;
 
         public StatefulCallback(JudoSupportFragment fragment, Callback<T> callback) {
+            this(fragment, callback.getClass().hashCode(), callback);
+        }
+
+        public StatefulCallback(JudoSupportFragment fragment, int id, Callback<T> callback) {
             super(callback);
-            this.id=callback.getClass().hashCode();
-            this.who=fragment.getWho();
+            this.id = id;
+            this.who = fragment.getWho();
             addCallback(who, id, this);
         }
 
@@ -106,7 +117,7 @@ public class JudoSupportFragment extends Fragment {
         @Override
         public void onProgress(int progress) {
             super.onProgress(progress);
-            this.progress=progress;
+            this.progress = progress;
         }
 
         public void tryCancel() {
@@ -115,9 +126,9 @@ public class JudoSupportFragment extends Fragment {
             }
         }
 
-        public void setCallback(Callback<?> callback){
-            this.callback=new WeakReference<>((Callback<T>) callback);
-            if(progress>0){
+        public void setCallback(Callback<?> callback) {
+            this.callback = new WeakReference<>((Callback<T>) callback);
+            if (progress > 0) {
                 callback.onProgress(progress);
             }
         }
