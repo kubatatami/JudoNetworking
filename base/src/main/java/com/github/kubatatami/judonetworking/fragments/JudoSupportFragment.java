@@ -34,7 +34,8 @@ public class JudoSupportFragment extends Fragment {
         return mWho;
     }
 
-    protected boolean connectCallback(int id, Callback<?> callback) {
+    protected boolean connectCallback(Callback<?> callback) {
+        int id = callback.getClass().hashCode();
         if (callbacksMap.containsKey(getWho())) {
             Map<Integer, StatefulCallback<?>> fragmentCallbackMap = callbacksMap.get(getWho());
             if (fragmentCallbackMap.containsKey(id)) {
@@ -79,9 +80,9 @@ public class JudoSupportFragment extends Fragment {
         private final String who;
         private int progress;
 
-        public StatefulCallback(JudoSupportFragment fragment, int id, Callback<T> callback) {
+        public StatefulCallback(JudoSupportFragment fragment, Callback<T> callback) {
             super(callback);
-            this.id=id;
+            this.id=callback.getClass().hashCode();
             this.who=fragment.getWho();
             addCallback(who, id, this);
         }
