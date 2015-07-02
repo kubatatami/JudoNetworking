@@ -47,10 +47,28 @@ public class JudoSupportFragment extends Fragment {
         }
     }
 
+    private void removeStatefulCallbacks() {
+        if (callbacksMap.containsKey(getWho())) {
+            Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(getWho());
+            for(Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()){
+                entry.getValue().tryCancel();
+            }
+            callbacksMap.remove(getWho());
+        }
+    }
+
     @Override
     public void onStop() {
         super.onStop();
         removeCallbacks(getWho());
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(isRemoving()){
+            removeStatefulCallbacks();
+        }
     }
 
     protected boolean connectCallback(BaseCallback<?> callback) {
@@ -170,6 +188,7 @@ public class JudoSupportFragment extends Fragment {
         public void tryCancel() {
             if (asyncResult != null) {
                 asyncResult.cancel();
+                consume=true;
             }
         }
 
@@ -244,6 +263,7 @@ public class JudoSupportFragment extends Fragment {
         public void tryCancel() {
             if (asyncResult != null) {
                 asyncResult.cancel();
+                consume=true;
             }
         }
 
