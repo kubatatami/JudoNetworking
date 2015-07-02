@@ -6,6 +6,7 @@ import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.batches.DecoratorBatch;
+import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.callbacks.DecoratorCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -52,11 +53,11 @@ public class JudoSupportFragment extends Fragment {
         removeCallbacks(getWho());
     }
 
-    protected boolean connectCallback(Callback<?> callback) {
+    protected boolean connectCallback(BaseCallback<?> callback) {
         return connectCallback(callback.getClass().hashCode(),callback);
     }
 
-    protected boolean connectCallback(int id, Callback<?> callback) {
+    protected boolean connectCallback(int id, BaseCallback<?> callback) {
         if (callbacksMap.containsKey(getWho())) {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(getWho());
             if (fragmentCallbackMap.containsKey(id)) {
