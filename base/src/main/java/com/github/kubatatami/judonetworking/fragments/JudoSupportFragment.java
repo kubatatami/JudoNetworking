@@ -167,14 +167,16 @@ public class JudoSupportFragment extends Fragment {
         @Override
         public void setCallback(Callback<?> callback) {
             this.callback = new WeakReference<>((Callback<T>) callback);
-            if (progress > 0) {
-                callback.onProgress(progress);
-            }
-            if(!consume){
-                if(data!=null){
-                    this.callback.get().onSuccess(data);
-                }else if(exception!=null){
-                    this.callback.get().onError(exception);
+            if(callback!=null) {
+                if (progress > 0) {
+                    callback.onProgress(progress);
+                }
+                if (!consume) {
+                    if (data != null) {
+                        this.callback.get().onSuccess(data);
+                    } else if (exception != null) {
+                        this.callback.get().onError(exception);
+                    }
                 }
             }
         }
@@ -238,14 +240,16 @@ public class JudoSupportFragment extends Fragment {
 
         public void setCallback(Batch<?> batch) {
             this.batch = new WeakReference<>((Batch<T>) batch);
-            if (progress > 0) {
-                batch.onProgress(progress);
-            }
-            if(!consume){
-                if(data!=null){
-                    this.batch.get().onSuccess(data);
-                }else if(exception!=null){
-                    this.batch.get().onError(exception);
+            if(batch!=null) {
+                if (progress > 0) {
+                    batch.onProgress(progress);
+                }
+                if (!consume) {
+                    if (data != null) {
+                        this.batch.get().onSuccess(data);
+                    } else if (exception != null) {
+                        this.batch.get().onError(exception);
+                    }
                 }
             }
         }
