@@ -84,6 +84,15 @@ public class JudoSupportFragment extends Fragment {
         return new StatefulBatch<>(this,id, batch);
     }
 
+    public void cancelRequest(int id){
+        if (callbacksMap.containsKey(getWho())) {
+            Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(getWho());
+            if (fragmentCallbackMap.containsKey(id)) {
+                fragmentCallbackMap.get(id).tryCancel();
+            }
+        }
+    }
+
     static void addStatefulCallback(String who, int id, Stateful statefulCallback) {
         if (!callbacksMap.containsKey(who)) {
             callbacksMap.put(who, new HashMap<Integer, Stateful>());
