@@ -145,8 +145,10 @@ public class JudoSupportFragment extends Fragment {
         @Override
         public void onFinish() {
             super.onFinish();
-            removeStatefulCallback(who, id);
-            consume=true;
+            if(callback.get()!=null) {
+                removeStatefulCallback(who, id);
+                consume = true;
+            }
         }
 
         @Override
@@ -215,8 +217,10 @@ public class JudoSupportFragment extends Fragment {
         @Override
         public void onFinish() {
             super.onFinish();
-            removeStatefulCallback(who, id);
-            consume=true;
+            if(batch.get()!=null) {
+                removeStatefulCallback(who, id);
+                consume = true;
+            }
         }
 
         @Override
