@@ -78,10 +78,14 @@ public class MergeCallback<T> {
         }
         onMergeError(e);
         onMergeFinish();
+        cancelAll();
+        canceled = true;
+    }
+
+    private void cancelAll() {
         for (AsyncResult asyncResult : asyncResultSet) {
             asyncResult.cancel();
         }
-        canceled = true;
     }
 
     public void setResult(T result) {
@@ -90,7 +94,37 @@ public class MergeCallback<T> {
 
     protected void onMergeStart() {
         if (finalCallback != null) {
-            finalCallback.onStart(null, null);
+            finalCallback.onStart(null, new AsyncResult() {
+                @Override
+                public boolean isDone() {
+                    for(AsyncResult asyncResult : asyncResultSet){
+                        if(!asyncResult.isDone()){
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+
+                @Override
+                public boolean isCancelled() {
+                    return canceled;
+                }
+
+                @Override
+                public boolean isRunning() {
+                    for(AsyncResult asyncResult : asyncResultSet){
+                        if(asyncResult.isRunning()){
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
+                @Override
+                public void cancel() {
+                    cancelAll();
+                }
+            });
         }
 
     }
