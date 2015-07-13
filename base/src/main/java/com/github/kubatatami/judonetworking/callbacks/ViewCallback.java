@@ -8,13 +8,14 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Created by Kuba on 23/05/14.
  */
 public class ViewCallback<T> extends DefaultCallback<T> {
 
-    protected static final Map<Integer, ViewCallback> viewCache = new HashMap<>();
+    protected static final Map<Integer, ViewCallback> viewCache = new WeakHashMap<>();
     protected final int viewHash;
     protected AsyncResult asyncResult;
 

@@ -7,13 +7,14 @@ import com.github.kubatatami.judonetworking.CacheInfo;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Created by Kuba on 23/05/14.
  */
 public class ViewAdapterCallback<Z, T> extends DefaultCallback<T> {
 
-    protected static final Map<View, ViewAdapterCallback> viewCache = new HashMap<>();
+    protected static final Map<View, ViewAdapterCallback> viewCache = new WeakHashMap<>();
     protected final View view;
     protected AsyncResult asyncResult;
     protected Z object;
