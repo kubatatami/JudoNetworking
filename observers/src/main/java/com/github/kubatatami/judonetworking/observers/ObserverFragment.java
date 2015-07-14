@@ -9,7 +9,7 @@ import android.app.Fragment;
  * Date: 27.02.2013
  * Time: 16:39
  */
-class ObserverFragment extends Fragment {
+public class ObserverFragment extends Fragment {
 
     private ObserverHelper observerHelper;
 
