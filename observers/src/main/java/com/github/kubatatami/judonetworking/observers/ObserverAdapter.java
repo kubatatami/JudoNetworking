@@ -88,7 +88,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> implements Iterable<T> {
     public Filter getFilter() {
         return new Filter() {
             @Override
-            protected FilterResults performFiltering(CharSequence constraint) {
+            protected synchronized FilterResults performFiltering(CharSequence constraint) {
                 FilterResults results = new FilterResults();
                 try {
                     List<T> mOriginals = (List<T>) mOriginalField.get(ObserverAdapter.this);
