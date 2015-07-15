@@ -26,7 +26,3 @@ allprojects {
         jcenter()
     }
 }
-
-tasks.findByPath(":base:androidJavadocs").enabled = false
-tasks.findByPath(":json:androidJavadocs").enabled = false
-tasks.findByPath(":observers:androidJavadocs").enabled = false

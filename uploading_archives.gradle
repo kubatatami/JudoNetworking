@@ -31,13 +31,13 @@ def getSnapshotRepositoryUrl() {
 //}
 
 // uncomment to build a jar file in addition to the default aar file
-android.libraryVariants.all { variant ->
-    def name = variant.buildType.name
-    def task = project.tasks.create "jar${name.capitalize()}", Jar
-    task.dependsOn variant.javaCompile
-    task.from variant.javaCompile.destinationDir
-    artifacts.add('archives', task);
-}
+//android.libraryVariants.all { variant ->
+//    def name = variant.buildType.name
+//    def task = project.tasks.create "jar${name.capitalize()}", Jar
+//    task.dependsOn variant.javaCompile
+//    task.from variant.javaCompile.destinationDir
+//    artifacts.add('archives', task);
+//}
 
 afterEvaluate { project ->
     def isUploadArchiveNeeded = gradle.startParameter.taskNames.contains("uploadArchives")
@@ -99,28 +99,28 @@ afterEvaluate { project ->
         }
     }
 
-    task androidJavadocs(type: Javadoc) {
-        source = android.sourceSets.main.java.srcDirs
-    }
-
-    task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
-        classifier = 'javadoc'
-        baseName = BASE_NAME
-        appendix = APPENDIX
-        version = VERSION_NAME
-        from androidJavadocs.destinationDir
-    }
-
-    task androidSourcesJar(type: Jar) {
-        classifier = 'sources'
-        baseName = BASE_NAME
-        appendix = APPENDIX
-        version = VERSION_NAME
-        from android.sourceSets.main.java.srcDirs
-    }
-
-    artifacts {
-        archives androidJavadocsJar
-        archives androidSourcesJar
-    }
+//    task androidJavadocs(type: Javadoc) {
+//        source = android.sourceSets.main.java.srcDirs
+//    }
+//
+//    task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
+//        classifier = 'javadoc'
+//        baseName = BASE_NAME
+//        appendix = APPENDIX
+//        version = VERSION_NAME
+//        from androidJavadocs.destinationDir
+//    }
+//
+//    task androidSourcesJar(type: Jar) {
+//        classifier = 'sources'
+//        baseName = BASE_NAME
+//        appendix = APPENDIX
+//        version = VERSION_NAME
+//        from android.sourceSets.main.java.srcDirs
+//    }
+//
+//    artifacts {
+//        archives androidJavadocsJar
+//        archives androidSourcesJar
+//    }
 }
