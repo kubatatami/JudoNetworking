@@ -206,7 +206,7 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> implements Iterable<T> {
 
     public List<T> getItems(){
         try {
-            return (List<T>) mObjectsField.get(this);
+            return new ArrayList<>((List<T>) mObjectsField.get(this));
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
