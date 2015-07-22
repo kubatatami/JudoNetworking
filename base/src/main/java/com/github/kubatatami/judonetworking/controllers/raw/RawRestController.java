@@ -78,7 +78,7 @@ public class RawRestController extends RawController {
             if (request.getArgs() != null) {
                 int i = 0;
                 for (Object arg : request.getArgs()) {
-                    if(result.contains("\\{" + i + "\\}")) {
+                    if (result.contains("{" + i + "}")) {
                         try {
                             result = result.replaceAll("\\{" + i + "\\}", URLEncoder.encode(arg + "", "UTF-8"));
                         } catch (UnsupportedEncodingException e) {
@@ -90,7 +90,7 @@ public class RawRestController extends RawController {
             }
             AdditionalRequestData additionalRequestData = (AdditionalRequestData) request.getAdditionalData();
             for (Map.Entry<String, Object> entry : additionalRequestData.getCustomGetKeys().entrySet()) {
-                if(result.contains("\\{" + entry.getKey() + "\\}")) {
+                if (result.contains("{" + entry.getKey() + "}")) {
                     try {
                         result = result.replaceAll("\\{" + entry.getKey() + "\\}", URLEncoder.encode(entry.getValue() + "", "UTF-8"));
                     } catch (UnsupportedEncodingException e) {

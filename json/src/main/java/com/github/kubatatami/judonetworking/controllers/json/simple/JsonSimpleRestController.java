@@ -70,7 +70,7 @@ public class JsonSimpleRestController extends RawRestController {
                 } else {
                     throw new JudoException("SingleFlat can be enabled only for method with one POST parameter.");
                 }
-            }else {
+            } else {
                 finalParams = params;
             }
 
