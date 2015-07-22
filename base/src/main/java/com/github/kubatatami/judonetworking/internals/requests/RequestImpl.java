@@ -78,7 +78,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
             }
         } catch (final JudoException e) {
             invokeCallbackException(e);
-            if (rpc.getErrorLoggers().size() != 0 && !(e instanceof CancelException)) {
+            if (rpc.getErrorLoggers().size() != 0 && !(e instanceof CancelException) && !cancelled) {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {

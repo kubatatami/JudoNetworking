@@ -227,8 +227,8 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 }
             }
         } catch (final JudoException e) {
-            if (rpc.getErrorLoggers().size() == 0 && !(e instanceof CancelException)) {
-                final RequestImpl finalRequest = request;
+            final RequestImpl finalRequest = request;
+            if (rpc.getErrorLoggers().size() == 0 && !(e instanceof CancelException) && !finalRequest.isCancelled()) {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
@@ -591,7 +591,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         if (ex != null) {
             final JudoException finalEx = ex;
             final RequestImpl finalRequest = exceptionRequest;
-            if (rpc.getErrorLoggers().size() != 0 && !(ex instanceof CancelException)) {
+            if (rpc.getErrorLoggers().size() != 0 && !(ex instanceof CancelException) && !isCancelled()) {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
