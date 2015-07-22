@@ -78,20 +78,24 @@ public class RawRestController extends RawController {
             if (request.getArgs() != null) {
                 int i = 0;
                 for (Object arg : request.getArgs()) {
-                    try {
-                        result = result.replaceAll("\\{" + i + "\\}", URLEncoder.encode(arg + "", "UTF-8"));
-                    } catch (UnsupportedEncodingException e) {
-                        result = result.replaceAll("\\{" + i + "\\}", arg + "");
+                    if(result.contains("\\{" + i + "\\}")) {
+                        try {
+                            result = result.replaceAll("\\{" + i + "\\}", URLEncoder.encode(arg + "", "UTF-8"));
+                        } catch (UnsupportedEncodingException e) {
+                            result = result.replaceAll("\\{" + i + "\\}", arg + "");
+                        }
                     }
                     i++;
                 }
             }
             AdditionalRequestData additionalRequestData = (AdditionalRequestData) request.getAdditionalData();
             for (Map.Entry<String, Object> entry : additionalRequestData.getCustomGetKeys().entrySet()) {
-                try {
-                    result = result.replaceAll("\\{" + entry.getKey() + "\\}", URLEncoder.encode(entry.getValue() + "", "UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    result = result.replaceAll("\\{" + entry.getKey() + "\\}", entry.getValue() + "");
+                if(result.contains("\\{" + entry.getKey() + "\\}")) {
+                    try {
+                        result = result.replaceAll("\\{" + entry.getKey() + "\\}", URLEncoder.encode(entry.getValue() + "", "UTF-8"));
+                    } catch (UnsupportedEncodingException e) {
+                        result = result.replaceAll("\\{" + entry.getKey() + "\\}", entry.getValue() + "");
+                    }
                 }
             }
             if (ReflectionCache.getAnnotationInherited(request.getMethod(), RawPost.class) != null) {

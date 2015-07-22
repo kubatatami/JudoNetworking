@@ -54,25 +54,26 @@ public class JsonSimpleRestController extends RawRestController {
         if (jsonPost != null && jsonPost.enabled()) {
             ProtocolController.RequestInfo requestInfo = super.createRequest(url, request);
             Object finalParams;
-            if (jsonPost.singleFlat()) {
-                if (request.getArgs().length == 1) {
-                    finalParams = request.getArgs()[0];
-                } else {
-                    throw new JudoException("SingleFlat can be enabled only for method with one parameter.");
-                }
-            } else {
-                Map<String, Object> params = new HashMap<>();
-                int i = 0;
-                for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
-                    for (Annotation annotation : annotations) {
-                        if (annotation instanceof Post) {
-                            params.put(((Post) annotation).value(), request.getArgs()[i]);
-                        }
+            Map<String, Object> params = new HashMap<>();
+            int i = 0;
+            for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
+                for (Annotation annotation : annotations) {
+                    if (annotation instanceof Post) {
+                        params.put(((Post) annotation).value(), request.getArgs()[i]);
                     }
-                    i++;
                 }
+                i++;
+            }
+            if (jsonPost.singleFlat()) {
+                if (params.size() == 1) {
+                    finalParams = params.values().iterator().next();
+                } else {
+                    throw new JudoException("SingleFlat can be enabled only for method with one POST parameter.");
+                }
+            }else {
                 finalParams = params;
             }
+
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             OutputStreamWriter writer = new OutputStreamWriter(stream);
             try {
