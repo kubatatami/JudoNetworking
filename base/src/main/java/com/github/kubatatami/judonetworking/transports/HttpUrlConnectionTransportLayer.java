@@ -269,10 +269,10 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                     digestAuth = SecurityUtils.handleDigestAuth(urlConnection.getHeaderField("WWW-Authenticate"), code);
                     repeat = (digestAuth != null);
                     if (!repeat) {
-                        handleHttpException(protocolController, code, message);
+                        handleHttpException(protocolController, code, message, convertStreamToString(urlConnection.getErrorStream()));
                     }
                 } else {
-                    handleHttpException(protocolController, code, message);
+                    handleHttpException(protocolController, code, message, convertStreamToString(urlConnection.getErrorStream()));
                 }
             } catch (Exception ex) {
                 if (urlConnection != null) {
@@ -293,10 +293,10 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                             digestAuth = SecurityUtils.handleDigestAuth(urlConnection.getHeaderField("WWW-Authenticate"), code);
                             repeat = (digestAuth != null);
                             if (!repeat) {
-                                handleHttpException(protocolController, code, message);
+                                handleHttpException(protocolController, code, message, convertStreamToString(urlConnection.getErrorStream()));
                             }
                         } else {
-                            handleHttpException(protocolController, code, message);
+                            handleHttpException(protocolController, code, message, convertStreamToString(urlConnection.getErrorStream()));
                         }
                     } else {
                         throw new ConnectionException(ex);
@@ -329,7 +329,8 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                 return connection.getInputStream();
             } catch (FileNotFoundException ex) {
                 try {
-                    handleHttpException(protocolController, connection.getResponseCode(), convertStreamToString(connection.getErrorStream()));
+                    handleHttpException(protocolController, connection.getResponseCode(), connection.getResponseMessage(),
+                            convertStreamToString(connection.getErrorStream()));
                 } catch (IOException e) {
                     throw new ConnectionException(e);
                 }

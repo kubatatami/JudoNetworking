@@ -219,14 +219,19 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                 if (!response.isSuccessful() && response.code() != 0) {
                     int code = response.code();
                     String message = response.message();
+                    String body ="";
+                    try {
+                        body = response.body().string();
+                    }catch (IOException ignored){
+                    }
                     if (!repeat && username != null) {
                         digestAuth = SecurityUtils.handleDigestAuth(response.header("WWW-Authenticate"), code);
                         repeat = (digestAuth != null);
                         if (!repeat) {
-                            handleHttpException(protocolController, code, message);
+                            handleHttpException(protocolController, code, message, body);
                         }
                     } else {
-                        handleHttpException(protocolController, code, message);
+                        handleHttpException(protocolController, code, message, body);
                     }
                 }
 
