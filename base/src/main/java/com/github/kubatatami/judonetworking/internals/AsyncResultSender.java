@@ -222,7 +222,7 @@ public class AsyncResultSender implements Runnable {
                     synchronized (rpc.getSingleCallMethods()) {
                         boolean result = rpc.getSingleCallMethods().remove(methodId) != null;
                         if (result && (rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                            JudoLogger.log("Request " + request.getName() + "(" + methodId + ")" + " removed from SingleCall queue.");
+                            JudoLogger.log("Request " + request.getName() + "(" + methodId + ")" + " removed from SingleCall queue.", JudoLogger.LogLevel.DEBUG);
                         }
                     }
                     rpc.getHandler().post(new Runnable() {
@@ -239,7 +239,7 @@ public class AsyncResultSender implements Runnable {
     protected void logError(String requestName, Exception ex) {
         if ((rpc.getDebugFlags() & Endpoint.ERROR_DEBUG) > 0) {
             if (requestName != null) {
-                JudoLogger.log("Error on: " + requestName);
+                JudoLogger.log("Error on: " + requestName, JudoLogger.LogLevel.ERROR);
             }
             JudoLogger.log(ex);
         }

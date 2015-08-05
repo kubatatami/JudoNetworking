@@ -8,6 +8,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.executors.JudoExecutor;
 import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.internals.streams.RequestOutputStream;
+import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.utils.SecurityUtils;
 import com.squareup.okhttp.Authenticator;
@@ -106,7 +107,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
             if (digestAuth != null) {
                 String digestHeader = SecurityUtils.getDigestAuthHeader(digestAuth, new URL(requestInfo.url), requestInfo, username, password);
                 if ((debugFlags & Endpoint.TOKEN_DEBUG) > 0) {
-                    longLog("digest", digestHeader);
+                    longLog("digest", digestHeader, JudoLogger.LogLevel.DEBUG);
                 }
                 builder.addHeader("Authorization", digestHeader);
             }
@@ -135,10 +136,10 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
             }
             if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
                 if (requestBody != null) {
-                    longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
+                    longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()), JudoLogger.LogLevel.INFO);
                     requestInfo.entity.reset();
                 } else {
-                    longLog("Request", requestInfo.url);
+                    longLog("Request", requestInfo.url, JudoLogger.LogLevel.INFO);
                 }
             }
 
@@ -236,7 +237,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                 }
 
                 if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
-                    longLog("Response code(" + requestName + ")", response.code() + "");
+                    longLog("Response code(" + requestName + ")", response.code() + "", JudoLogger.LogLevel.INFO);
                 }
                 return new Connection() {
 
@@ -316,7 +317,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                     headers += key + ":" + response.header(key) + " ";
                 }
             }
-            longLog("Response headers(" + requestName + ")", headers);
+            longLog("Response headers(" + requestName + ")", headers, JudoLogger.LogLevel.INFO);
         }
     }
 
@@ -326,7 +327,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
             for (String key : builder.headers.keySet()) {
                 headers += key + ":" + builder.headers.get(key) + " ";
             }
-            longLog("Request headers(" + requestName + ")", headers);
+            longLog("Request headers(" + requestName + ")", headers, JudoLogger.LogLevel.INFO);
         }
 
     }

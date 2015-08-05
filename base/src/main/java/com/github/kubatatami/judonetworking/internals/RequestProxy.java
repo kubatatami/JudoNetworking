@@ -160,14 +160,14 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                         if (batchEnabled && mode == EndpointImpl.BatchMode.MANUAL) {
                             JudoLogger.log("In batch request " + name + " from " +
                                     stackTraceElement.getClassName() +
-                                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+                                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")", JudoLogger.LogLevel.DEBUG);
                         } else {
                             JudoLogger.log("Request " + name + " from " +
                                     stackTraceElement.getClassName() +
-                                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+                                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")", JudoLogger.LogLevel.DEBUG);
                         }
                     } catch (Exception ex) {
-                        JudoLogger.log("Can't log stacktrace");
+                        JudoLogger.log("Can't log stacktrace", JudoLogger.LogLevel.ASSERT);
                     }
                 }
 
@@ -194,7 +194,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
 
                             if (mode == SingleCall.SingleMode.CANCEL_NEW) {
                                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                                    JudoLogger.log("Request " + name + " rejected - SingleCall.");
+                                    JudoLogger.log("Request " + name + " rejected - SingleCall.", JudoLogger.LogLevel.DEBUG);
                                 }
                                 request.cancel();
                                 return request;
@@ -202,7 +202,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                             if (mode == SingleCall.SingleMode.CANCEL_OLD) {
                                 RequestImpl oldRequest = rpc.getSingleCallMethods().get(CacheMethod.getMethodId(m));
                                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                                    JudoLogger.log("Request " + oldRequest.getName() + " rejected - SingleCall.");
+                                    JudoLogger.log("Request " + oldRequest.getName() + " rejected - SingleCall.", JudoLogger.LogLevel.DEBUG);
                                 }
                                 oldRequest.cancel();
                                 synchronized (rpc.getSingleCallMethods()) {

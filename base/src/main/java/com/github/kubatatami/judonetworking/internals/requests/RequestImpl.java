@@ -379,7 +379,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
         }
         this.cancelled = true;
         if ((rpc.getDebugFlags() & Endpoint.CANCEL_DEBUG) > 0) {
-            JudoLogger.log("Request " + name + " cancelled.");
+            JudoLogger.log("Request " + name + " cancelled.", JudoLogger.LogLevel.DEBUG);
         }
         if (running) {
             running = false;
