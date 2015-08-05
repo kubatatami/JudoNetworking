@@ -170,7 +170,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
             for (String key : urlConnection.getRequestProperties().keySet()) {
                 headers += key + ":" + urlConnection.getRequestProperty(key) + " ";
             }
-            longLog("Request headers(" + requestName + ")", headers, JudoLogger.LogLevel.INFO);
+            longLog("Request headers(" + requestName + ")", headers, JudoLogger.LogLevel.DEBUG);
         }
 
     }
@@ -185,7 +185,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                     }
                 }
             }
-            longLog("Response headers(" + requestName + ")", headers, JudoLogger.LogLevel.INFO);
+            longLog("Response headers(" + requestName + ")", headers, JudoLogger.LogLevel.DEBUG);
         }
     }
 
@@ -254,7 +254,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                 logResponseHeaders(requestName, debugFlags, urlConnection);
 
                 if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
-                    longLog("Response code(" + requestName + ")", urlConnection.getResponseCode() + "", JudoLogger.LogLevel.INFO);
+                    longLog("Response code(" + requestName + ")", urlConnection.getResponseCode() + "", JudoLogger.LogLevel.DEBUG);
                 }
                 return new FinalConnection(urlConnection, protocolController);
             } catch (FileNotFoundException ex) {

@@ -237,7 +237,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                 }
 
                 if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
-                    longLog("Response code(" + requestName + ")", response.code() + "", JudoLogger.LogLevel.INFO);
+                    longLog("Response code(" + requestName + ")", response.code() + "", JudoLogger.LogLevel.DEBUG);
                 }
                 return new Connection() {
 
@@ -317,7 +317,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                     headers += key + ":" + response.header(key) + " ";
                 }
             }
-            longLog("Response headers(" + requestName + ")", headers, JudoLogger.LogLevel.INFO);
+            longLog("Response headers(" + requestName + ")", headers, JudoLogger.LogLevel.DEBUG);
         }
     }
 
@@ -327,7 +327,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
             for (String key : builder.headers.keySet()) {
                 headers += key + ":" + builder.headers.get(key) + " ";
             }
-            longLog("Request headers(" + requestName + ")", headers, JudoLogger.LogLevel.INFO);
+            longLog("Request headers(" + requestName + ")", headers, JudoLogger.LogLevel.DEBUG);
         }
 
     }
