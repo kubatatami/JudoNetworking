@@ -7,6 +7,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -123,6 +124,11 @@ public class MergeCallback<T> {
                 @Override
                 public void cancel() {
                     cancelAll();
+                }
+
+                @Override
+                public Map<String, List<String>> getHeaders() {
+                    throw new UnsupportedOperationException("getHeaders of MergeCallback is not supported");
                 }
             });
         }

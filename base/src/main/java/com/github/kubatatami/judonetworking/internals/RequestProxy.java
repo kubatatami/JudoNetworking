@@ -647,6 +647,11 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     }
 
     @Override
+    public Map<String, List<String>> getHeaders() {
+        throw new UnsupportedOperationException("getHeaders of batch is not supported");
+    }
+
+    @Override
     public boolean isRunning() {
         return running;
     }

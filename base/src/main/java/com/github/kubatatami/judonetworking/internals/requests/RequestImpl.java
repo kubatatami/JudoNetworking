@@ -26,6 +26,8 @@ import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Future;
 
 public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressObserver, Request, AsyncResult {
@@ -48,7 +50,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     private boolean isApiKeyRequired;
     private String customUrl;
     private Future<?> future;
-
+    private Map<String, List<String>> headers;
 
     public RequestImpl(Integer id, EndpointImpl rpc, Method method, String name, RequestMethod ann,
                        Object[] args, Type returnType, int timeout, Callback<Object> callback,
@@ -398,6 +400,15 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
                 }
             });
         }
+    }
+
+    @Override
+    public Map<String, List<String>> getHeaders() {
+        return headers;
+    }
+
+    public void setHeaders(Map<String, List<String>> headers) {
+        this.headers = headers;
     }
 
     @Override

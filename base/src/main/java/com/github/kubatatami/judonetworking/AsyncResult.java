@@ -1,5 +1,8 @@
 package com.github.kubatatami.judonetworking;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Created by Kuba on 05/04/14.
  */
@@ -13,5 +16,5 @@ public interface AsyncResult {
 
     void cancel();
 
-
+    Map<String, List<String>> getHeaders();
 }

@@ -117,6 +117,7 @@ public class RequestConnector {
                 }
                 RequestInputStream stream = new RequestInputStream(connectionStream, timeStat, conn.getContentLength());
                 EndpointImpl.checkThread();
+                request.setHeaders(conn.getHeaders());
                 result = controller.parseResponse(request, stream, conn.getHeaders());
                 EndpointImpl.checkThread();
                 if (result instanceof RequestSuccessResult) {
@@ -653,6 +654,9 @@ public class RequestConnector {
             }
             EndpointImpl.checkThread();
             RequestInputStream stream = new RequestInputStream(connectionStream, timeStat, conn.getContentLength());
+            for (RequestImpl request : requests) {
+                request.setHeaders(conn.getHeaders());
+            }
             responses = controller.parseResponses((List) requests, stream, conn.getHeaders());
             EndpointImpl.checkThread();
             timeStat.tickParseTime();
