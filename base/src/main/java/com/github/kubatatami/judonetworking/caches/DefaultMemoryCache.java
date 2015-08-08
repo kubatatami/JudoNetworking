@@ -38,13 +38,13 @@ public class DefaultMemoryCache implements MemoryCache {
         Integer hash = Arrays.deepHashCode(params);
         if (cache.containsKey(methodId)) {
             if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
-                JudoLogger.log("Search for " + methodId + " with hash:" + hash);
+                JudoLogger.log("Search for " + methodId + " with hash:" + hash, JudoLogger.LogLevel.DEBUG);
             }
             CacheObject cacheObject = cache.get(methodId).get(hash);
             if (cacheObject != null) {
                 if (cacheLifeTime == 0 || System.currentTimeMillis() - cacheObject.createTime < cacheLifeTime) {
                     if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
-                        JudoLogger.log("Cache(" + methodId + "): Get from memory cache object with hash:" + hash);
+                        JudoLogger.log("Cache(" + methodId + "): Get from memory cache object with hash:" + hash, JudoLogger.LogLevel.DEBUG);
                     }
                     result.object = cacheObject.getObject();
                     result.time = cacheObject.createTime;
@@ -65,7 +65,7 @@ public class DefaultMemoryCache implements MemoryCache {
         Integer hash = Arrays.deepHashCode(params);
         cache.get(methodId).put(hash, new CacheObject(System.currentTimeMillis(), object));
         if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
-            JudoLogger.log("Cache(" + methodId + "): Saved in memory cache with hash:" + hash);
+            JudoLogger.log("Cache(" + methodId + "): Saved in memory cache with hash:" + hash, JudoLogger.LogLevel.DEBUG);
         }
     }
 

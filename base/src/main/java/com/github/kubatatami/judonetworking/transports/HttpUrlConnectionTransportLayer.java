@@ -8,6 +8,7 @@ import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.internals.streams.RequestOutputStream;
+import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.utils.SecurityUtils;
 
@@ -169,7 +170,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
             for (String key : urlConnection.getRequestProperties().keySet()) {
                 headers += key + ":" + urlConnection.getRequestProperty(key) + " ";
             }
-            longLog("Request headers(" + requestName + ")", headers);
+            longLog("Request headers(" + requestName + ")", headers, JudoLogger.LogLevel.DEBUG);
         }
 
     }
@@ -184,7 +185,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                     }
                 }
             }
-            longLog("Response headers(" + requestName + ")", headers);
+            longLog("Response headers(" + requestName + ")", headers, JudoLogger.LogLevel.DEBUG);
         }
     }
 
@@ -196,7 +197,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
             if (digestAuth != null) {
                 String digestHeader = SecurityUtils.getDigestAuthHeader(digestAuth, urlConnection.getURL(), requestInfo, username, password);
                 if ((debugFlags & Endpoint.TOKEN_DEBUG) > 0) {
-                    longLog("digest", digestHeader);
+                    longLog("digest", digestHeader, JudoLogger.LogLevel.DEBUG);
                 }
                 urlConnection.addRequestProperty("Authorization", digestHeader);
             }
@@ -211,13 +212,13 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                                 requestInfo.entity.getContentLength()) : urlConnection.getOutputStream();
                 timeStat.tickConnectionTime();
                 if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                    longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()));
+                    longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()), JudoLogger.LogLevel.INFO);
                     requestInfo.entity.reset();
                 }
                 requestInfo.entity.writeTo(stream);
             } else {
                 if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                    longLog("Request", requestInfo.url);
+                    longLog("Request", requestInfo.url, JudoLogger.LogLevel.INFO);
                 }
                 urlConnection.getInputStream();
                 timeStat.tickConnectionTime();
@@ -253,7 +254,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                 logResponseHeaders(requestName, debugFlags, urlConnection);
 
                 if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
-                    longLog("Response code(" + requestName + ")", urlConnection.getResponseCode() + "");
+                    longLog("Response code(" + requestName + ")", urlConnection.getResponseCode() + "", JudoLogger.LogLevel.DEBUG);
                 }
                 return new FinalConnection(urlConnection, protocolController);
             } catch (FileNotFoundException ex) {
@@ -269,10 +270,10 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                     digestAuth = SecurityUtils.handleDigestAuth(urlConnection.getHeaderField("WWW-Authenticate"), code);
                     repeat = (digestAuth != null);
                     if (!repeat) {
-                        handleHttpException(protocolController, code, message);
+                        handleHttpException(protocolController, code, message, convertStreamToString(urlConnection.getErrorStream()));
                     }
                 } else {
-                    handleHttpException(protocolController, code, message);
+                    handleHttpException(protocolController, code, message, convertStreamToString(urlConnection.getErrorStream()));
                 }
             } catch (Exception ex) {
                 if (urlConnection != null) {
@@ -293,10 +294,10 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                             digestAuth = SecurityUtils.handleDigestAuth(urlConnection.getHeaderField("WWW-Authenticate"), code);
                             repeat = (digestAuth != null);
                             if (!repeat) {
-                                handleHttpException(protocolController, code, message);
+                                handleHttpException(protocolController, code, message, convertStreamToString(urlConnection.getErrorStream()));
                             }
                         } else {
-                            handleHttpException(protocolController, code, message);
+                            handleHttpException(protocolController, code, message, convertStreamToString(urlConnection.getErrorStream()));
                         }
                     } else {
                         throw new ConnectionException(ex);
@@ -329,7 +330,8 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
                 return connection.getInputStream();
             } catch (FileNotFoundException ex) {
                 try {
-                    handleHttpException(protocolController, connection.getResponseCode(), convertStreamToString(connection.getErrorStream()));
+                    handleHttpException(protocolController, connection.getResponseCode(), connection.getResponseMessage(),
+                            convertStreamToString(connection.getErrorStream()));
                 } catch (IOException e) {
                     throw new ConnectionException(e);
                 }

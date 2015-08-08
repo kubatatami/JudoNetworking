@@ -58,8 +58,8 @@ public abstract class TransportLayer {
         }
     }
 
-    protected void longLog(String tag, String message) {
-        JudoLogger.longLog(tag, message);
+    protected void longLog(String tag, String message, JudoLogger.LogLevel level) {
+        JudoLogger.longLog(tag, message, level);
     }
 
     protected static String convertStreamToString(InputStream is) {

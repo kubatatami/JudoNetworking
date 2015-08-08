@@ -26,7 +26,7 @@ public class JudoExecutor extends ThreadPoolExecutor {
         public Thread newThread(final Runnable runnable) {
             count++;
             if ((endpoint.getDebugFlags() & Endpoint.THREAD_DEBUG) > 0) {
-                JudoLogger.log("Create thread " + count);
+                JudoLogger.log("Create thread " + count, JudoLogger.LogLevel.VERBOSE);
             }
 
             return new ConnectionThread(runnable, threadPriority, count, endpoint);
@@ -49,7 +49,7 @@ public class JudoExecutor extends ThreadPoolExecutor {
         ConnectionThread connectionThread = (ConnectionThread) t;
         connectionThread.resetCanceled();
         if ((endpoint.getDebugFlags() & Endpoint.THREAD_DEBUG) > 0) {
-            JudoLogger.log("Before execute thread " + t.getName() + ":" + toString());
+            JudoLogger.log("Before execute thread " + t.getName() + ":" + toString(), JudoLogger.LogLevel.VERBOSE);
         }
     }
 
@@ -57,7 +57,7 @@ public class JudoExecutor extends ThreadPoolExecutor {
     protected void afterExecute(Runnable r, Throwable t) {
         super.afterExecute(r, t);
         if ((endpoint.getDebugFlags() & Endpoint.THREAD_DEBUG) > 0) {
-            JudoLogger.log("After thread execute:" + toString());
+            JudoLogger.log("After thread execute:" + toString(), JudoLogger.LogLevel.VERBOSE);
         }
     }
 
@@ -65,7 +65,7 @@ public class JudoExecutor extends ThreadPoolExecutor {
     public void execute(Runnable command) {
         super.execute(command);
         if ((endpoint.getDebugFlags() & Endpoint.THREAD_DEBUG) > 0) {
-            JudoLogger.log("Execute runnable" + toString());
+            JudoLogger.log("Execute runnable" + toString(), JudoLogger.LogLevel.VERBOSE);
         }
     }
 
@@ -73,7 +73,7 @@ public class JudoExecutor extends ThreadPoolExecutor {
     public void setCorePoolSize(int corePoolSize) {
         super.setCorePoolSize(corePoolSize);
         if ((endpoint.getDebugFlags() & Endpoint.THREAD_DEBUG) > 0) {
-            JudoLogger.log("Core thread pool size:" + corePoolSize);
+            JudoLogger.log("Core thread pool size:" + corePoolSize, JudoLogger.LogLevel.VERBOSE);
         }
     }
 
@@ -81,7 +81,7 @@ public class JudoExecutor extends ThreadPoolExecutor {
     public void setMaximumPoolSize(int maximumPoolSize) {
         super.setMaximumPoolSize(maximumPoolSize);
         if ((endpoint.getDebugFlags() & Endpoint.THREAD_DEBUG) > 0) {
-            JudoLogger.log("Maximum thread pool size:" + maximumPoolSize);
+            JudoLogger.log("Maximum thread pool size:" + maximumPoolSize, JudoLogger.LogLevel.VERBOSE);
         }
     }
 
@@ -120,7 +120,7 @@ public class JudoExecutor extends ThreadPoolExecutor {
         @Override
         public void interrupt() {
             if ((endpoint.getDebugFlags() & Endpoint.THREAD_DEBUG) > 0) {
-                JudoLogger.log("Interrupt task on: " + getName());
+                JudoLogger.log("Interrupt task on: " + getName(), JudoLogger.LogLevel.VERBOSE);
             }
             canceled = true;
             super.interrupt();

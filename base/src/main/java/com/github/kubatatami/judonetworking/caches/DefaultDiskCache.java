@@ -57,7 +57,7 @@ public class DefaultDiskCache implements DiskCache {
             os.flush();
             os.close();
             if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
-                JudoLogger.log("Cache(" + method + "): Saved in disk cache " + file.getAbsolutePath() + ".");
+                JudoLogger.log("Cache(" + method + "): Saved in disk cache " + file.getAbsolutePath() + ".", JudoLogger.LogLevel.DEBUG);
             }
         } catch (IOException e) {
             JudoLogger.log(e);
@@ -144,7 +144,7 @@ public class DefaultDiskCache implements DiskCache {
         File file = new File(getCacheDir(method), hash + "");
 
         if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
-            JudoLogger.log("Cache(" + method + "): Search in disk cache " + file.getAbsolutePath() + ".");
+            JudoLogger.log("Cache(" + method + "): Search in disk cache " + file.getAbsolutePath() + ".", JudoLogger.LogLevel.DEBUG);
         }
 
         if (file.exists()) {
@@ -154,7 +154,7 @@ public class DefaultDiskCache implements DiskCache {
                     os = new ObjectInputStream(fileStream);
                     result = (CacheResult) os.readObject();
                     if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
-                        JudoLogger.log("Cache(" + method + "): Get from disk cache " + file.getAbsolutePath() + ".");
+                        JudoLogger.log("Cache(" + method + "): Get from disk cache " + file.getAbsolutePath() + ".", JudoLogger.LogLevel.DEBUG);
                     }
                     return result;
                 } catch (Exception e) {

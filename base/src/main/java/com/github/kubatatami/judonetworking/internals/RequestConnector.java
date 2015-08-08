@@ -55,8 +55,8 @@ public class RequestConnector {
         this.transportLayer = transportLayer;
     }
 
-    private static void longLog(String tag, String message) {
-        JudoLogger.longLog(tag, message);
+    private static void longLog(String tag, String message, JudoLogger.LogLevel level) {
+        JudoLogger.longLog(tag, message, level);
     }
 
     private static String convertStreamToString(InputStream is) {
@@ -102,7 +102,7 @@ public class RequestConnector {
                 EndpointImpl.checkThread();
                 if (!conn.isNewestAvailable()) {
                     if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
-                        JudoLogger.log("No new data for method " + request.getName());
+                        JudoLogger.log("No new data for method " + request.getName(), JudoLogger.LogLevel.DEBUG);
                     }
 
                     return new NoNewResult();
@@ -112,7 +112,7 @@ public class RequestConnector {
                 if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
 
                     String resStr = convertStreamToString(conn.getStream());
-                    longLog("Response body(" + request.getName() + ", " + resStr.length() + " Bytes)", resStr);
+                    longLog("Response body(" + request.getName() + ", " + resStr.length() + " Bytes)", resStr, JudoLogger.LogLevel.INFO);
                     connectionStream = new ByteArrayInputStream(resStr.getBytes());
                 }
                 RequestInputStream stream = new RequestInputStream(connectionStream, timeStat, conn.getContentLength());
@@ -648,7 +648,7 @@ public class RequestConnector {
             if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
 
                 String resStr = convertStreamToString(conn.getStream());
-                longLog("Response body(" + requestsName + ", " + resStr.length() + " Bytes)", resStr);
+                longLog("Response body(" + requestsName + ", " + resStr.length() + " Bytes)", resStr, JudoLogger.LogLevel.INFO);
                 connectionStream = new ByteArrayInputStream(resStr.getBytes());
             }
             EndpointImpl.checkThread();

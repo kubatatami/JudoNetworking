@@ -45,7 +45,7 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
                 JudoLogger.log("ObservablePersistentWrapper " + persistentKey
                         + " readTime: " + (readTimeStop - readTimeStart) +
                         "ms waitToDeserializationTime: " + (deserializationTimeStart - readTimeStop) +
-                        "ms deserializationTime: " + (System.currentTimeMillis() - deserializationTimeStart) + "ms")
+                        "ms deserializationTime: " + (System.currentTimeMillis() - deserializationTimeStart) + "ms", JudoLogger.LogLevel.INFO)
                 ;
             } catch (Exception e) {
                 JudoLogger.log(e);
@@ -99,10 +99,10 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
         try {
             long time = System.currentTimeMillis();
             if (loaderExecutor.moveToHead(loadingRunnable)) {
-                JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " move to loader queue head");
+                JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " move to loader queue head", JudoLogger.LogLevel.VERBOSE);
             } else {
                 if (deserializatorExecutor.moveToHead(deserializationRunnable)) {
-                    JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " move to deserializator queue head");
+                    JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " move to deserializator queue head", JudoLogger.LogLevel.VERBOSE);
                 }
             }
             waiting = true;
@@ -112,7 +112,7 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
             waiting = false;
             time = System.currentTimeMillis() - time;
             if (time > 1) {
-                JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " waiting: " + time + "ms");
+                JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " waiting: " + time + "ms", JudoLogger.LogLevel.INFO);
             }
             return result;
         } catch (InterruptedException e) {
@@ -138,7 +138,7 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
                 deserializatorExecutor.execute(deserializationRunnable);
                 if (waiting) {
                     if (deserializatorExecutor.moveToHead(deserializationRunnable)) {
-                        JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " move to deserializator queue head");
+                        JudoLogger.log("ObservablePersistentWrapper " + persistentKey + " move to deserializator queue head", JudoLogger.LogLevel.VERBOSE);
                     }
                 }
             } catch (Exception e) {

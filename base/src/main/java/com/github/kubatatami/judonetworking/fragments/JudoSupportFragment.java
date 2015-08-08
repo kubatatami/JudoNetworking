@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking.fragments;
 
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
@@ -19,7 +20,7 @@ import java.util.Map;
 /**
  * Created by Kuba on 01/07/15.
  */
-public class JudoSupportFragment extends Fragment {
+public class JudoSupportFragment extends DialogFragment {
 
     private static final Map<String, Map<Integer, Stateful>> callbacksMap = new HashMap<>();
 

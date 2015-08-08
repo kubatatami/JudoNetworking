@@ -54,25 +54,26 @@ public class JsonSimpleRestController extends RawRestController {
         if (jsonPost != null && jsonPost.enabled()) {
             ProtocolController.RequestInfo requestInfo = super.createRequest(url, request);
             Object finalParams;
+            Map<String, Object> params = new HashMap<>();
+            int i = 0;
+            for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
+                for (Annotation annotation : annotations) {
+                    if (annotation instanceof Post) {
+                        params.put(((Post) annotation).value(), request.getArgs()[i]);
+                    }
+                }
+                i++;
+            }
             if (jsonPost.singleFlat()) {
-                if (request.getArgs().length == 1) {
-                    finalParams = request.getArgs()[0];
+                if (params.size() == 1) {
+                    finalParams = params.values().iterator().next();
                 } else {
-                    throw new JudoException("SingleFlat can be enabled only for method with one parameter.");
+                    throw new JudoException("SingleFlat can be enabled only for method with one POST parameter.");
                 }
             } else {
-                Map<String, Object> params = new HashMap<>();
-                int i = 0;
-                for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
-                    for (Annotation annotation : annotations) {
-                        if (annotation instanceof Post) {
-                            params.put(((Post) annotation).value(), request.getArgs()[i]);
-                        }
-                    }
-                    i++;
-                }
                 finalParams = params;
             }
+
             ByteArrayOutputStream stream = new ByteArrayOutputStream();
             OutputStreamWriter writer = new OutputStreamWriter(stream);
             try {
@@ -86,7 +87,7 @@ public class JsonSimpleRestController extends RawRestController {
             requestInfo.mimeType = "application/json";
 
             Rest ann = ReflectionCache.getAnnotationInherited(request.getMethod(), Rest.class);
-            if (ann != null && ann.mimeType() != null) {
+            if (ann != null && ann.mimeType() != null && !ann.mimeType().equals("")) {
                 requestInfo.mimeType = ann.mimeType();
             }
 

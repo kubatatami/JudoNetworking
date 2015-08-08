@@ -247,9 +247,9 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
                 StackTraceElement stackTraceElement = RequestProxy.getExternalStacktrace(Thread.currentThread().getStackTrace());
                 JudoLogger.log("Batch starts from " +
                         stackTraceElement.getClassName() +
-                        "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+                        "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")", JudoLogger.LogLevel.DEBUG);
             } catch (Exception ex) {
-                JudoLogger.log("Can't log stacktrace");
+                JudoLogger.log("Can't log stacktrace", JudoLogger.LogLevel.ASSERT);
             }
         }
 
@@ -277,9 +277,9 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
                 StackTraceElement stackTraceElement = RequestProxy.getExternalStacktrace(Thread.currentThread().getStackTrace());
                 JudoLogger.log("Batch starts from " +
                         stackTraceElement.getClassName() +
-                        "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+                        "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")", JudoLogger.LogLevel.DEBUG);
             } catch (Exception ex) {
-                JudoLogger.log("Can't log stacktrace");
+                JudoLogger.log("Can't log stacktrace", JudoLogger.LogLevel.ASSERT);
             }
         }
 
@@ -373,7 +373,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     public void showTimeProfilerInfo() {
         if (stats != null) {
             for (Map.Entry<String, MethodStat> entry : stats.entrySet()) {
-                JudoLogger.log(entry.getKey() + ":" + entry.getValue());
+                JudoLogger.log(entry.getKey() + ":" + entry.getValue(), JudoLogger.LogLevel.INFO);
             }
         }
     }
@@ -382,7 +382,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     public void clearTimeProfilerStat() {
         boolean result = statFile.delete();
         if(result){
-            JudoLogger.log("Can't remove stats file");
+            JudoLogger.log("Can't remove stats file", JudoLogger.LogLevel.ASSERT);
         }
         stats = Collections.synchronizedMap(new HashMap<String, MethodStat>());
     }

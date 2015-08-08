@@ -15,12 +15,13 @@ public class JudoLogger {
 
 
     private static String tag = JudoLogger.class.getPackage().getName();
-    private static LogLevel level = LogLevel.WARNING;
 
 
-    public static void log(String text) {
+    public static void log(String text, LogLevel level) {
         switch (level) {
-
+            case ASSERT:
+                Log.wtf(tag, text);
+                break;
             case ERROR:
                 Log.e(tag, text);
                 break;
@@ -33,6 +34,9 @@ public class JudoLogger {
             case DEBUG:
                 Log.d(tag, text);
                 break;
+            case VERBOSE:
+                Log.v(tag, text);
+                break;
         }
     }
 
@@ -41,9 +45,9 @@ public class JudoLogger {
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             ex.printStackTrace(pw);
-            JudoLogger.log(sw.toString());
+            JudoLogger.log(sw.toString(), LogLevel.ERROR);
         } else {
-            JudoLogger.log("Null exception");
+            JudoLogger.log("Null exception", LogLevel.ERROR);
         }
     }
 
@@ -51,21 +55,18 @@ public class JudoLogger {
         JudoLogger.tag = tag;
     }
 
-    public static void setLevel(LogLevel level) {
-        JudoLogger.level = level;
-    }
 
-    public static synchronized void longLog(String tag, String str) {
-        JudoLogger.log(tag + ":");
+    public static synchronized void longLog(String tag, String str, LogLevel level) {
+        JudoLogger.log(tag + ":", level);
         int i;
         for (i = 0; i < str.length() - 256; i += 256) {
-            JudoLogger.log(str.substring(i, i + 256));
+            JudoLogger.log(str.substring(i, i + 256), level);
         }
-        JudoLogger.log(str.substring(i, str.length()));
+        JudoLogger.log(str.substring(i, str.length()), level);
 
     }
 
     public enum LogLevel {
-        NONE, ERROR, WARNING, INFO, DEBUG
+        ASSERT, ERROR, WARNING, INFO, DEBUG, VERBOSE
     }
 }

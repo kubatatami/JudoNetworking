@@ -153,7 +153,7 @@ public class TimeStat {
                 " timeout(" + getTimeout() + "ms)" +
                 " send(" + getSendTime() + "ms)" +
                 " read(" + getReadTime() + "ms) parse(" + getParseTime() + "ms)" +
-                " all(" + getAllTime() + "ms)");
+                " all(" + getAllTime() + "ms)", JudoLogger.LogLevel.INFO);
     }
 
     private void progressTick() {

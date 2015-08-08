@@ -78,7 +78,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
             }
         } catch (final JudoException e) {
             invokeCallbackException(e);
-            if (rpc.getErrorLoggers().size() != 0 && !(e instanceof CancelException)) {
+            if (rpc.getErrorLoggers().size() != 0 && !(e instanceof CancelException) && !cancelled) {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
@@ -379,7 +379,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
         }
         this.cancelled = true;
         if ((rpc.getDebugFlags() & Endpoint.CANCEL_DEBUG) > 0) {
-            JudoLogger.log("Request " + name + " cancelled.");
+            JudoLogger.log("Request " + name + " cancelled.", JudoLogger.LogLevel.DEBUG);
         }
         if (running) {
             running = false;

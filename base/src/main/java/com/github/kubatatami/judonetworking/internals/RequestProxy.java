@@ -160,14 +160,14 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                         if (batchEnabled && mode == EndpointImpl.BatchMode.MANUAL) {
                             JudoLogger.log("In batch request " + name + " from " +
                                     stackTraceElement.getClassName() +
-                                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+                                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")", JudoLogger.LogLevel.DEBUG);
                         } else {
                             JudoLogger.log("Request " + name + " from " +
                                     stackTraceElement.getClassName() +
-                                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")");
+                                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")", JudoLogger.LogLevel.DEBUG);
                         }
                     } catch (Exception ex) {
-                        JudoLogger.log("Can't log stacktrace");
+                        JudoLogger.log("Can't log stacktrace", JudoLogger.LogLevel.ASSERT);
                     }
                 }
 
@@ -194,7 +194,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
 
                             if (mode == SingleCall.SingleMode.CANCEL_NEW) {
                                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                                    JudoLogger.log("Request " + name + " rejected - SingleCall.");
+                                    JudoLogger.log("Request " + name + " rejected - SingleCall.", JudoLogger.LogLevel.DEBUG);
                                 }
                                 request.cancel();
                                 return request;
@@ -202,7 +202,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                             if (mode == SingleCall.SingleMode.CANCEL_OLD) {
                                 RequestImpl oldRequest = rpc.getSingleCallMethods().get(CacheMethod.getMethodId(m));
                                 if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                                    JudoLogger.log("Request " + oldRequest.getName() + " rejected - SingleCall.");
+                                    JudoLogger.log("Request " + oldRequest.getName() + " rejected - SingleCall.", JudoLogger.LogLevel.DEBUG);
                                 }
                                 oldRequest.cancel();
                                 synchronized (rpc.getSingleCallMethods()) {
@@ -227,8 +227,8 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 }
             }
         } catch (final JudoException e) {
-            if (rpc.getErrorLoggers().size() == 0 && !(e instanceof CancelException)) {
-                final RequestImpl finalRequest = request;
+            final RequestImpl finalRequest = request;
+            if (rpc.getErrorLoggers().size() == 0 && !(e instanceof CancelException) && !finalRequest.isCancelled()) {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
@@ -591,7 +591,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         if (ex != null) {
             final JudoException finalEx = ex;
             final RequestImpl finalRequest = exceptionRequest;
-            if (rpc.getErrorLoggers().size() != 0 && !(ex instanceof CancelException)) {
+            if (rpc.getErrorLoggers().size() != 0 && !(ex instanceof CancelException) && !isCancelled()) {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {

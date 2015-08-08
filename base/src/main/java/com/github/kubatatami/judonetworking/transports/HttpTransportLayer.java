@@ -43,9 +43,9 @@ public abstract class HttpTransportLayer extends TransportLayer {
     }
 
 
-    protected void handleHttpException(ProtocolController protocolController, int code, String message) throws JudoException {
+    protected void handleHttpException(ProtocolController protocolController, int code, String message, String body) throws JudoException {
         protocolController.parseError(code, message);
-        throw new HttpException(message + "(" + code + ")", code);
+        throw new HttpException(message + "(" + code + ") " + body, code);
     }
 
     public void setDigestAuthentication(final String username, final String password) {
