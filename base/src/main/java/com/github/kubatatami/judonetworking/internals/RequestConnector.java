@@ -77,10 +77,12 @@ public class RequestConnector {
             RequestResult result;
             long currentTokenExpireTimestamp;
             ProtocolController controller = rpc.getProtocolController();
-            Object virtualObject = handleVirtualServerRequest(request, timeStat);
-            if (virtualObject != null) {
+            result = handleVirtualServerRequest(request, timeStat);
+            if (result != null) {
                 currentTokenExpireTimestamp = 0;
-                result = new RequestSuccessResult(request.getId(), virtualObject);
+                if (result.error != null) {
+                    return result;
+                }
             } else {
                 ProtocolController.RequestInfo requestInfo = controller.createRequest(
                         request.getCustomUrl() == null ? rpc.getUrl() : request.getCustomUrl(),
@@ -300,7 +302,7 @@ public class RequestConnector {
     }
 
 
-    private Object handleVirtualServerRequest(RequestImpl request, TimeStat timeStat) throws JudoException {
+    private RequestResult handleVirtualServerRequest(RequestImpl request, TimeStat timeStat) throws JudoException {
         try {
             if (request.getMethod() != null) {
                 VirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(request.getMethod().getDeclaringClass());
@@ -313,7 +315,7 @@ public class RequestConnector {
                                 Thread.sleep(delay / TimeStat.TICKS);
                                 timeStat.tickTime(i);
                             }
-                            return object;
+                            return new RequestSuccessResult(request.getId(),object);
                         } catch (InvocationTargetException ex) {
                             if (ex.getCause() == null || !(ex.getCause() instanceof UnsupportedOperationException)) {
                                 throw ex;
@@ -339,10 +341,7 @@ public class RequestConnector {
                             }
                         }
                         if (implemented) {
-                            if (callback.getResult().error != null) {
-                                throw callback.getResult().error;
-                            }
-                            return callback.getResult().result;
+                            return callback.getResult();
                         }
                     }
                 }
