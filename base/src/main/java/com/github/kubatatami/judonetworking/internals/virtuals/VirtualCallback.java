@@ -18,7 +18,7 @@ public class VirtualCallback implements Callback {
 
     @Override
     public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
-
+        throw new IllegalAccessError("Virtual server can't invoke onStart");
     }
 
     @Override
@@ -33,7 +33,7 @@ public class VirtualCallback implements Callback {
 
     @Override
     public void onFinish() {
-
+        throw new IllegalAccessError("Virtual server can't invoke onFinish");
     }
 
     @Override
