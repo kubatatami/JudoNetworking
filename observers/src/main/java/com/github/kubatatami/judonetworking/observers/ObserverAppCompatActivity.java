@@ -1,8 +1,9 @@
 package com.github.kubatatami.judonetworking.observers;
 
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.view.ViewGroup;
+
+import com.github.kubatatami.judonetworking.activity.JudoAppCompatActivity;
 
 /**
  * Created with IntelliJ IDEA.
@@ -10,7 +11,7 @@ import android.view.ViewGroup;
  * Date: 08.04.2013
  * Time: 22:27
  */
-public class ObserverFragmentActivity extends FragmentActivity {
+public class ObserverAppCompatActivity extends JudoAppCompatActivity {
 
     private ObserverHelper observerHelper;
 
@@ -22,7 +23,7 @@ public class ObserverFragmentActivity extends FragmentActivity {
 
 
     @Override
-    protected void onStop() {
+    public void onStop() {
         super.onStop();
         observerHelper.stop();
     }

@@ -23,6 +23,7 @@ android {
 
 dependencies {
     compile 'com.android.support:support-v4:'+rootProject.ext.supportLibVersion
+    compile 'com.android.support:appcompat-v7:'+rootProject.ext.supportLibVersion
     compile 'com.squareup.okhttp:okhttp:2.3.0'
     compile 'com.squareup.okio:okio:1.3.0'
 
