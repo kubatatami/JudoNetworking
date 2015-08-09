@@ -11,7 +11,6 @@ import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResu
 public class VirtualCallback implements Callback {
     private int id;
     private RequestResult result;
-    private AsyncResult asyncResult;
 
     public VirtualCallback(int id) {
         this.id = id;
@@ -19,7 +18,7 @@ public class VirtualCallback implements Callback {
 
     @Override
     public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
-        this.asyncResult = asyncResult;
+        throw new IllegalAccessError("Virtual server can't invoke onStart");
     }
 
     @Override
@@ -34,7 +33,7 @@ public class VirtualCallback implements Callback {
 
     @Override
     public void onFinish() {
-
+        throw new IllegalAccessError("Virtual server can't invoke onFinish");
     }
 
     @Override
@@ -44,9 +43,5 @@ public class VirtualCallback implements Callback {
 
     public RequestResult getResult() {
         return result;
-    }
-
-    public AsyncResult getAsyncResult() {
-        return asyncResult;
     }
 }

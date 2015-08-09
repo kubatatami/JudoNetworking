@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking.internals;
 
 import android.util.Base64;
 
+import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.annotations.Base64Param;
@@ -327,7 +328,10 @@ public class RequestConnector {
                         Object[] args = request.getArgs() != null ? addElement(request.getArgs(), callback) : new Object[]{callback};
                         boolean implemented = true;
                         try {
-                            request.getMethod().invoke(virtualServerInfo.server, args);
+                            AsyncResult asyncResult = (AsyncResult) request.getMethod().invoke(virtualServerInfo.server, args);
+                            if (asyncResult != null) {
+                                request.setHeaders(asyncResult.getHeaders());
+                            }
                             int delay = randDelay(virtualServerInfo.minDelay, virtualServerInfo.maxDelay);
                             for (int i = 0; i <= TimeStat.TICKS; i++) {
                                 Thread.sleep(delay / TimeStat.TICKS);
@@ -341,9 +345,6 @@ public class RequestConnector {
                             }
                         }
                         if (implemented) {
-                            if (callback.getAsyncResult() != null) {
-                                request.setHeaders(callback.getAsyncResult().getHeaders());
-                            }
                             return callback.getResult();
                         }
                     }
