@@ -315,7 +315,7 @@ public class RequestConnector {
                                 Thread.sleep(delay / TimeStat.TICKS);
                                 timeStat.tickTime(i);
                             }
-                            return new RequestSuccessResult(request.getId(),object);
+                            return new RequestSuccessResult(request.getId(), object);
                         } catch (InvocationTargetException ex) {
                             if (ex.getCause() == null || !(ex.getCause() instanceof UnsupportedOperationException)) {
                                 throw ex;
@@ -341,6 +341,9 @@ public class RequestConnector {
                             }
                         }
                         if (implemented) {
+                            if (callback.getAsyncResult() != null) {
+                                request.setHeaders(callback.getAsyncResult().getHeaders());
+                            }
                             return callback.getResult();
                         }
                     }
