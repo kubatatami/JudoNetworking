@@ -161,20 +161,24 @@ public class RawRestController extends RawController {
                 if (result.contains("{" + i + "}")) {
                     String stringParam;
                     Converter converter = ReflectionCache.getParameterAnnotation(request.getMethod(), i, Converter.class);
-                    RestConverter<Object> restConverter = null;
-                    if (converter != null) {
-                        try {
-                            restConverter = (RestConverter<Object>) converter.value().getConstructor(Class.class).newInstance(arg.getClass());
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
+                    RestConverter<Object> restConverter;
+                    if (arg != null) {
+                        if (converter != null) {
+                            try {
+                                restConverter = (RestConverter<Object>) converter.value().getConstructor(Class.class).newInstance(arg.getClass());
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        } else {
+                            restConverter = restConverters.get(arg.getClass());
+                        }
+                        if (restConverter != null) {
+                            stringParam = restConverter.convert(arg);
+                        } else {
+                            stringParam = arg + "";
                         }
                     } else {
-                        restConverter = restConverters.get(arg.getClass());
-                    }
-                    if (restConverter != null) {
-                        stringParam = restConverter.convert(arg);
-                    } else {
-                        stringParam = arg + "";
+                        stringParam = "null";
                     }
 
                     try {
