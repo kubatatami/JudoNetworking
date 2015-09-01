@@ -14,11 +14,17 @@ import java.lang.reflect.Type;
 public class ReflectionCache {
 
     protected final static LruCache<Class<?>, Method[]> interfaceMethodCache = new LruCache<>(100);
+
     protected final static LruCache<Class<?>, Field[]> fieldCache = new LruCache<>(100);
+
     protected final static LruCache<Class<?>, Annotation[]> interfaceAnnotationCache = new LruCache<>(100);
+
     protected final static LruCache<Method, Annotation[]> methodAnnotationCache = new LruCache<>(100);
+
     protected final static LruCache<Method, Annotation[][]> methodParamAnnotationCache = new LruCache<>(100);
+
     protected final static LruCache<String, Annotation[]> fieldAnnotationCache = new LruCache<>(100);
+
     protected final static LruCache<Method, Type[]> methodParamsTypeCache = new LruCache<>(100);
 
     public static void clearCache() {
@@ -84,6 +90,16 @@ public class ReflectionCache {
             methodParamAnnotationCache.put(method, result);
         }
         return result;
+    }
+
+    public static <T extends Annotation> T getParameterAnnotation(Method method, int param, Class<T> annotationClass) {
+        Annotation[][] annotations = getParameterAnnotations(method);
+        for(Annotation annotation : annotations[param]){
+            if(annotation.getClass().isInstance(annotationClass)){
+                return (T) annotation;
+            }
+        }
+        return null;
     }
 
     public static <T extends Annotation> T getAnnotation(Class<?> apiInterface, Class<T> annotationClass) {

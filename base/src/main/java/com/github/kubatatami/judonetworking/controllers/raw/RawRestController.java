@@ -39,6 +39,7 @@ import java.util.Map;
 public class RawRestController extends RawController {
 
     protected HashMap<String, Object> customGetKeys = new HashMap<>();
+
     protected HashMap<String, Object> customPostKeys = new HashMap<>();
 
     public void addCustomGetKey(String name, Object value) {
@@ -65,105 +66,136 @@ public class RawRestController extends RawController {
         return customPostKeys.get(name);
     }
 
+    protected void createRawPost(Request request, ProtocolController.RequestInfo requestInfo) {
+        int i = 0;
+        String stringContent = "";
+        for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
+            for (Annotation annotation : annotations) {
+                if (annotation instanceof Post) {
+                    stringContent += request.getArgs()[i].toString();
+                }
+            }
+            i++;
+
+        }
+        byte[] content = stringContent.getBytes();
+        requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content), content.length);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected void createFormPost(Request request, ProtocolController.RequestInfo requestInfo, AdditionalRequestData additionalRequestData) {
+        requestInfo.mimeType = "application/x-www-form-urlencoded";
+        List<NameValuePair> noEncodeNameValuePairs = new ArrayList<>();
+        List<NameValuePair> nameValuePairs = new ArrayList<>();
+        int i = 0;
+        for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
+            for (Annotation annotation : annotations) {
+                if (annotation instanceof Post) {
+                    addFormPostParam(nameValuePairs, ((Post) annotation).value(), request.getArgs()[i]);
+                } else if (annotation instanceof AdditionalPostParam) {
+                    AdditionalPostParam additionalPostParam = (AdditionalPostParam) annotation;
+                    if (additionalPostParam.urlEncode()) {
+                        nameValuePairs.addAll((java.util.Collection<? extends NameValuePair>) request.getArgs()[i]);
+                    } else {
+                        noEncodeNameValuePairs.addAll((java.util.Collection<? extends NameValuePair>) request.getArgs()[i]);
+                    }
+                }
+            }
+            i++;
+
+        }
+        for (Map.Entry<String, Object> entry : additionalRequestData.getCustomPostKeys().entrySet()) {
+            addFormPostParam(nameValuePairs, entry.getKey(), entry.getValue());
+        }
+        String formRequest = URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8).replaceAll("\\+", "%20");
+        for (NameValuePair nameValuePair : noEncodeNameValuePairs) {
+            formRequest += "&" + nameValuePair.getName() + "=" + nameValuePair.getValue();
+        }
+        byte[] content = formRequest.getBytes();
+        requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content), content.length);
+    }
+
+    protected void createFilePost(Request request, ProtocolController.RequestInfo requestInfo) {
+        requestInfo.mimeType = "multipart/form-data";
+        int i = 0;
+        File file = null;
+        for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
+            for (Annotation annotation : annotations) {
+                if (annotation instanceof Post && request.getArgs()[i] instanceof File) {
+                    file = (File) request.getArgs()[i];
+                    break;
+                }
+            }
+            i++;
+        }
+        if (file != null) {
+            try {
+                requestInfo.entity = new RequestInputStreamEntity(new FileInputStream(file), file.length());
+            } catch (FileNotFoundException e) {
+                throw new JudoException("File is not exist.", e);
+            }
+        } else {
+            throw new JudoException("No file param.");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    protected String createGetUrl(Request request, Rest ann, AdditionalRequestData additionalRequestData) {
+        String result = ann.value();
+        if (request.getName() != null) {
+            result = result.replaceAll("\\{name\\}", request.getName());
+        }
+        if (request.getArgs() != null) {
+            int i = 0;
+            for (Object arg : request.getArgs()) {
+                if (result.contains("{" + i + "}")) {
+                    String stringParam;
+                    Converter converter = ReflectionCache.getParameterAnnotation(request.getMethod(), i, Converter.class);
+                    if (converter != null) {
+                        try {
+                            RestConverter<Object> restConverter = (RestConverter<Object>) converter.value().newInstance();
+                            stringParam = restConverter.convert(arg);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                    } else {
+                        stringParam = arg + "";
+                    }
+                    try {
+                        result = result.replaceAll("\\{" + i + "\\}", URLEncoder.encode(stringParam, "UTF-8"));
+                    } catch (UnsupportedEncodingException e) {
+                        result = result.replaceAll("\\{" + i + "\\}", stringParam);
+                    }
+                }
+                i++;
+            }
+        }
+        for (Map.Entry<String, Object> entry : additionalRequestData.getCustomGetKeys().entrySet()) {
+            if (result.contains("{" + entry.getKey() + "}")) {
+                try {
+                    result = result.replaceAll("\\{" + entry.getKey() + "\\}", URLEncoder.encode(entry.getValue() + "", "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    result = result.replaceAll("\\{" + entry.getKey() + "\\}", entry.getValue() + "");
+                }
+            }
+        }
+        return result;
+    }
+
     @Override
     public ProtocolController.RequestInfo createRequest(String url, Request request) throws JudoException {
         ProtocolController.RequestInfo requestInfo = new ProtocolController.RequestInfo();
         String result;
         Rest ann = ReflectionCache.getAnnotationInherited(request.getMethod(), Rest.class);
         if (ann != null) {
-            result = ann.value();
-            if (request.getName() != null) {
-                result = result.replaceAll("\\{name\\}", request.getName());
-            }
-            if (request.getArgs() != null) {
-                int i = 0;
-                for (Object arg : request.getArgs()) {
-                    if (result.contains("{" + i + "}")) {
-                        try {
-                            result = result.replaceAll("\\{" + i + "\\}", URLEncoder.encode(arg + "", "UTF-8"));
-                        } catch (UnsupportedEncodingException e) {
-                            result = result.replaceAll("\\{" + i + "\\}", arg + "");
-                        }
-                    }
-                    i++;
-                }
-            }
             AdditionalRequestData additionalRequestData = (AdditionalRequestData) request.getAdditionalData();
-            for (Map.Entry<String, Object> entry : additionalRequestData.getCustomGetKeys().entrySet()) {
-                if (result.contains("{" + entry.getKey() + "}")) {
-                    try {
-                        result = result.replaceAll("\\{" + entry.getKey() + "\\}", URLEncoder.encode(entry.getValue() + "", "UTF-8"));
-                    } catch (UnsupportedEncodingException e) {
-                        result = result.replaceAll("\\{" + entry.getKey() + "\\}", entry.getValue() + "");
-                    }
-                }
-            }
+            result = createGetUrl(request, ann, additionalRequestData);
             if (ReflectionCache.getAnnotationInherited(request.getMethod(), RawPost.class) != null) {
-                int i = 0;
-                String stringContent = "";
-                for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
-                    for (Annotation annotation : annotations) {
-                        if (annotation instanceof Post) {
-                            stringContent += request.getArgs()[i].toString();
-                        }
-                    }
-                    i++;
-
-                }
-                byte[] content = stringContent.getBytes();
-                requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content), content.length);
+                createRawPost(request, requestInfo);
             } else if (ReflectionCache.getAnnotationInherited(request.getMethod(), FormPost.class) != null) {
-                requestInfo.mimeType = "application/x-www-form-urlencoded";
-                List<NameValuePair> noEncodeNameValuePairs = new ArrayList<>();
-                List<NameValuePair> nameValuePairs = new ArrayList<>();
-                int i = 0;
-                for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
-                    for (Annotation annotation : annotations) {
-                        if (annotation instanceof Post) {
-                            addFormPostParam(nameValuePairs, ((Post) annotation).value(), request.getArgs()[i]);
-                        } else if (annotation instanceof AdditionalPostParam) {
-                            AdditionalPostParam additionalPostParam = (AdditionalPostParam) annotation;
-                            if (additionalPostParam.urlEncode()) {
-                                nameValuePairs.addAll((java.util.Collection<? extends NameValuePair>) request.getArgs()[i]);
-                            } else {
-                                noEncodeNameValuePairs.addAll((java.util.Collection<? extends NameValuePair>) request.getArgs()[i]);
-                            }
-                        }
-                    }
-                    i++;
-
-                }
-                for (Map.Entry<String, Object> entry : additionalRequestData.getCustomPostKeys().entrySet()) {
-                    addFormPostParam(nameValuePairs, entry.getKey(), entry.getValue());
-                }
-                String formRequest = URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8).replaceAll("\\+", "%20");
-                for (NameValuePair nameValuePair : noEncodeNameValuePairs) {
-                    formRequest += "&" + nameValuePair.getName() + "=" + nameValuePair.getValue();
-                }
-                byte[] content = formRequest.getBytes();
-                requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content), content.length);
+                createFormPost(request, requestInfo, additionalRequestData);
             } else if (ReflectionCache.getAnnotationInherited(request.getMethod(), FilePost.class) != null) {
-                requestInfo.mimeType = "multipart/form-data";
-                int i = 0;
-                File file = null;
-                for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
-                    for (Annotation annotation : annotations) {
-                        if (annotation instanceof Post && request.getArgs()[i] instanceof File) {
-                            file = (File) request.getArgs()[i];
-                            break;
-                        }
-                    }
-                    i++;
-                }
-                if (file != null) {
-                    try {
-                        requestInfo.entity = new RequestInputStreamEntity(new FileInputStream(file), file.length());
-                    } catch (FileNotFoundException e) {
-                        throw new JudoException("File is not exist.", e);
-                    }
-                } else {
-                    throw new JudoException("No file param.");
-                }
+                createFilePost(request, requestInfo);
             }
             if (!ann.mimeType().equals("")) {
                 requestInfo.mimeType = ann.mimeType();
@@ -194,7 +226,9 @@ public class RawRestController extends RawController {
     protected static class AdditionalRequestData implements Serializable {
 
         private static final long serialVersionUID = -5849466248972640154L;
+
         protected HashMap<String, Object> customGetKeys;
+
         protected HashMap<String, Object> customPostKeys;
 
         protected AdditionalRequestData(HashMap<String, Object> customGetKeys, HashMap<String, Object> customPostKeys) {
@@ -219,6 +253,7 @@ public class RawRestController extends RawController {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     public @interface Rest {
+
         String value() default "";
 
         String mimeType() default "";
@@ -227,28 +262,33 @@ public class RawRestController extends RawController {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
     public @interface Post {
+
         String value() default "";
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
     public @interface AdditionalPostParam {
+
         boolean urlEncode() default true;
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     public @interface RawPost {
+
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     public @interface FormPost {
+
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     public @interface FilePost {
+
     }
 
     @Override
