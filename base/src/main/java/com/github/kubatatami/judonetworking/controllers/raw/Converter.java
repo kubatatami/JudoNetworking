@@ -12,13 +12,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.PARAMETER})
 public @interface Converter {
 
-    Class<? extends RestConverter<?>> value() default DummyConverter.class;
+    Class<? extends RestConverter<?>> value();
 
-    class DummyConverter extends RestConverter<Object>{
-
-        @Override
-        public String convert(Object value) {
-            return value + "";
-        }
-    }
 }

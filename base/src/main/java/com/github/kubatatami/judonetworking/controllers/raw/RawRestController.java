@@ -42,6 +42,16 @@ public class RawRestController extends RawController {
 
     protected HashMap<String, Object> customPostKeys = new HashMap<>();
 
+    protected HashMap<Class<?>, RestConverter<Object>> restConverters = new HashMap<>();
+
+    public void addConverter(RestConverter converter) {
+        restConverters.put(converter.getType(), converter);
+    }
+
+    public void removeConverter(RestConverter converter) {
+        restConverters.remove(converter.getType());
+    }
+
     public void addCustomGetKey(String name, Object value) {
         customGetKeys.put(name, value);
     }
@@ -151,16 +161,22 @@ public class RawRestController extends RawController {
                 if (result.contains("{" + i + "}")) {
                     String stringParam;
                     Converter converter = ReflectionCache.getParameterAnnotation(request.getMethod(), i, Converter.class);
+                    RestConverter<Object> restConverter = null;
                     if (converter != null) {
                         try {
-                            RestConverter<Object> restConverter = (RestConverter<Object>) converter.value().newInstance();
-                            stringParam = restConverter.convert(arg);
+                            restConverter = (RestConverter<Object>) converter.value().getConstructor(Class.class).newInstance(arg.getClass());
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                     } else {
+                        restConverter = restConverters.get(arg.getClass());
+                    }
+                    if (restConverter != null) {
+                        stringParam = restConverter.convert(arg);
+                    } else {
                         stringParam = arg + "";
                     }
+
                     try {
                         result = result.replaceAll("\\{" + i + "\\}", URLEncoder.encode(stringParam, "UTF-8"));
                     } catch (UnsupportedEncodingException e) {
