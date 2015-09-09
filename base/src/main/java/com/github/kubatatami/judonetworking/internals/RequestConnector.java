@@ -400,6 +400,9 @@ public class RequestConnector {
                     if (request.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                         request.invokeStart(new CacheInfo(true, localCacheObject.time));
                         timeStat.tickCacheTime();
+                        if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
+                            localCacheObject.object = rpc.getClonner().clone(localCacheObject.object);
+                        }
                         return localCacheObject.object;
                     }
                 } else if (cacheLevel != LocalCache.CacheLevel.MEMORY_ONLY) {
