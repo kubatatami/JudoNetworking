@@ -50,9 +50,9 @@ public class JsonSimpleRestController extends RawRestController {
 
     @Override
     public RequestInfo createRequest(String url, Request request) throws JudoException {
+        ProtocolController.RequestInfo requestInfo = super.createRequest(url, request);
         JsonPost jsonPost = ReflectionCache.getAnnotationInherited(request.getMethod(), JsonPost.class);
         if (jsonPost != null && jsonPost.enabled()) {
-            ProtocolController.RequestInfo requestInfo = super.createRequest(url, request);
             Object finalParams;
             Map<String, Object> params = new HashMap<>();
             int i = 0;
@@ -90,11 +90,8 @@ public class JsonSimpleRestController extends RawRestController {
             if (ann != null && ann.mimeType() != null && !ann.mimeType().equals("")) {
                 requestInfo.mimeType = ann.mimeType();
             }
-
-            return requestInfo;
-        } else {
-            return super.createRequest(url, request);
         }
+        return requestInfo;
     }
 
     @Retention(RetentionPolicy.RUNTIME)
