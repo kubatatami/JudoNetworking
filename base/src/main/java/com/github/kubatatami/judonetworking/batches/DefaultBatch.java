@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.batches;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
+import com.github.kubatatami.judonetworking.callbacks.AsyncResultCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**
@@ -9,9 +10,10 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  * Date: 11.02.2013
  * Time: 22:48
  */
-public abstract class DefaultBatch<T> implements Batch<T> {
+public abstract class DefaultBatch<T> implements Batch<T>, AsyncResultCallback {
 
     MergeCallback mergeCallback;
+    private AsyncResult asyncResult;
 
     public DefaultBatch() {
     }
@@ -60,5 +62,15 @@ public abstract class DefaultBatch<T> implements Batch<T> {
     @Override
     public void onFinish() {
 
+    }
+
+    @Override
+    public final AsyncResult getAsyncResult() {
+        return asyncResult;
+    }
+
+    @Override
+    public final void setAsyncResult(AsyncResult asyncResult) {
+        this.asyncResult = asyncResult;
     }
 }

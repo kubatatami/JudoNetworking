@@ -4,7 +4,9 @@ import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.annotations.HandleException;
 import com.github.kubatatami.judonetworking.batches.Batch;
+import com.github.kubatatami.judonetworking.callbacks.AsyncResultCallback;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
+import com.github.kubatatami.judonetworking.callbacks.DefaultCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
@@ -13,17 +15,29 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 public class AsyncResultSender implements Runnable {
+
     protected Callback<Object> callback;
+
     protected RequestProxy requestProxy;
+
     protected Object result = null;
+
     protected Object[] results = null;
+
     protected JudoException e = null;
+
     protected int progress = 0;
+
     protected final Type type;
+
     protected Integer methodId;
+
     protected EndpointImpl rpc;
+
     protected RequestImpl request;
+
     protected List<RequestImpl> requests;
+
     protected CacheInfo cacheInfo;
 
     enum Type {
@@ -139,6 +153,9 @@ public class AsyncResultSender implements Runnable {
             switch (type) {
                 case START:
                     request.start();
+                    if (callback instanceof AsyncResultCallback) {
+                        ((DefaultCallback) callback).setAsyncResult(request);
+                    }
                     callback.onStart(cacheInfo, request);
                     break;
                 case RESULT:
@@ -175,6 +192,9 @@ public class AsyncResultSender implements Runnable {
             switch (type) {
                 case START:
                     requestProxy.start();
+                    if (callback instanceof AsyncResultCallback) {
+                        ((DefaultCallback) callback).setAsyncResult(request);
+                    }
                     transaction.onStart(requestProxy);
                     break;
                 case RESULT:
