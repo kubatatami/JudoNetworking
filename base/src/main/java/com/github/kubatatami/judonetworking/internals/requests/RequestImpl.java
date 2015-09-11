@@ -249,7 +249,12 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     }
 
     public int getLocalCacheLifeTime() {
-        return getLocalCache().lifeTime();
+        int lifeTime = getLocalCache().lifeTime();
+        if(lifeTime == LocalCache.DEFAULT){
+            return rpc.getDefaultMethodCacheLifeTime();
+        }else{
+            return lifeTime;
+        }
     }
 
     public boolean isLocalCacheable() {
@@ -257,7 +262,12 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     }
 
     public int getLocalCacheSize() {
-        return getLocalCache().size();
+        int size = getLocalCache().size();
+        if(size == LocalCache.DEFAULT){
+            return rpc.getDefaultMethodCacheSize();
+        }else{
+            return size;
+        }
     }
 
     public LocalCache.CacheLevel getLocalCacheLevel() {

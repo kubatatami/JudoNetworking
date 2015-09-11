@@ -19,7 +19,7 @@ public @interface RequestMethod {
 
     int timeout() default 0;
 
-    boolean async() default false;
+    boolean async() default true;
 
     boolean highPriority() default false;
 

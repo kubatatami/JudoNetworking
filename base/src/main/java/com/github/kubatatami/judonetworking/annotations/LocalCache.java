@@ -20,27 +20,20 @@ public @interface LocalCache {
 
     CacheLevel cacheLevel() default CacheLevel.MEMORY_ONLY;
 
-    int lifeTime() default 0;
+    int lifeTime() default DEFAULT;
 
-    int size() default 0;
+    int size() default DEFAULT;
 
     OnlyOnError onlyOnError() default OnlyOnError.NO;
 
 
-    /**
-     * Created with IntelliJ IDEA.
-     * User: jbogacki
-     * Date: 15.10.2013
-     * Time: 09:05
-     * To change this template use File | Settings | File Templates.
-     */
+    int DEFAULT = -1;
+    int INFINITE = 0;
+
     enum CacheLevel {
         MEMORY_ONLY, DISK_CACHE, DISK_DATA
     }
 
-    /**
-     * Created by Kuba on 16/06/14.
-     */
     enum OnlyOnError {
         NO, ON_CONNECTION_ERROR, ON_ALL_ERROR
     }

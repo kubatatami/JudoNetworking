@@ -9,6 +9,7 @@ import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.EndpointClassic;
 import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.annotations.IgnoreNullParam;
+import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.caches.DefaultDiskCache;
 import com.github.kubatatami.judonetworking.caches.DefaultMemoryCache;
@@ -88,6 +89,9 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     private UrlModifier urlModifier;
     private OnRequestEventListener onRequestEventListener;
     private int requestCount = 0;
+    private int defaultMethodCacheLifeTime = LocalCache.INFINITE;
+    private int defaultMethodCacheSize = LocalCache.INFINITE;
+
 
     public EndpointImpl(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         init(context, protocolController, transportLayer, url);
@@ -628,5 +632,25 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @Override
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    @Override
+    public int getDefaultMethodCacheLifeTime() {
+        return defaultMethodCacheLifeTime;
+    }
+
+    @Override
+    public void setDefaultMethodCacheLifeTime(int millis) {
+        this.defaultMethodCacheLifeTime=millis;
+    }
+
+    @Override
+    public int getDefaultMethodCacheSize() {
+        return defaultMethodCacheSize;
+    }
+
+    @Override
+    public void setDefaultMethodCacheSize(int millis) {
+        this.defaultMethodCacheSize=millis;
     }
 }

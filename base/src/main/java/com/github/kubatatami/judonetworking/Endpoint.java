@@ -136,6 +136,14 @@ public interface Endpoint extends EndpointBase {
 
     void setUrl(String url);
 
+    int getDefaultMethodCacheLifeTime();
+
+    void setDefaultMethodCacheLifeTime(int millis);
+
+    int getDefaultMethodCacheSize();
+
+    void setDefaultMethodCacheSize(int millis);
+
     /**
      * Created with IntelliJ IDEA.
      * User: jbogacki
