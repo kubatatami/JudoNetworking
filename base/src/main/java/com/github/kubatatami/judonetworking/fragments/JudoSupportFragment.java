@@ -42,7 +42,7 @@ public class JudoSupportFragment extends DialogFragment {
     private void removeCallbacks(String who) {
         if (callbacksMap.containsKey(who)) {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(who);
-            for(Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()){
+            for (Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()) {
                 entry.getValue().setCallback(null);
             }
         }
@@ -51,7 +51,7 @@ public class JudoSupportFragment extends DialogFragment {
     private void removeStatefulCallbacks() {
         if (callbacksMap.containsKey(getWho())) {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(getWho());
-            for(Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()){
+            for (Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()) {
                 entry.getValue().tryCancel();
             }
             callbacksMap.remove(getWho());
@@ -67,13 +67,13 @@ public class JudoSupportFragment extends DialogFragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if(isRemoving()){
+        if (isRemoving()) {
             removeStatefulCallbacks();
         }
     }
 
     protected boolean connectCallback(BaseCallback<?> callback) {
-        return connectCallback(callback.getClass().hashCode(),callback);
+        return connectCallback(callback.getClass().hashCode(), callback);
     }
 
     protected boolean connectCallback(int id, BaseCallback<?> callback) {
@@ -92,7 +92,7 @@ public class JudoSupportFragment extends DialogFragment {
     }
 
     protected <T> StatefulCallback<T> generateCallback(int id, Callback<T> callback) {
-        return new StatefulCallback<>(this,id, callback);
+        return new StatefulCallback<>(this, id, callback);
     }
 
     protected <T> StatefulBatch<T> generateCallback(Batch<T> batch) {
@@ -100,10 +100,10 @@ public class JudoSupportFragment extends DialogFragment {
     }
 
     protected <T> StatefulBatch<T> generateCallback(int id, Batch<T> batch) {
-        return new StatefulBatch<>(this,id, batch);
+        return new StatefulBatch<>(this, id, batch);
     }
 
-    public void cancelRequest(int id){
+    public void cancelRequest(int id) {
         if (callbacksMap.containsKey(getWho())) {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(getWho());
             if (fragmentCallbackMap.containsKey(id)) {
@@ -133,21 +133,28 @@ public class JudoSupportFragment extends DialogFragment {
     }
 
 
-    interface Stateful<T>{
+    interface Stateful<T> {
+
         void setCallback(T callback);
+
         void tryCancel();
     }
-
 
 
     public static final class StatefulCallback<T> extends DecoratorCallback<T> implements Stateful<Callback<?>> {
 
         private AsyncResult asyncResult;
+
         private final int id;
+
         private final String who;
+
         private int progress;
-        private boolean consume=false;
+
+        private boolean consume = false;
+
         private T data;
+
         private JudoException exception;
 
         public StatefulCallback(JudoSupportFragment fragment, Callback<T> callback) {
@@ -164,16 +171,16 @@ public class JudoSupportFragment extends DialogFragment {
         @Override
         public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
             this.asyncResult = asyncResult;
-            consume=false;
-            data=null;
-            exception=null;
+            consume = false;
+            data = null;
+            exception = null;
             super.onStart(cacheInfo, asyncResult);
         }
 
         @Override
         public void onFinish() {
             super.onFinish();
-            if(callback.get()!=null) {
+            if (callback.get() != null) {
                 removeStatefulCallback(who, id);
                 consume = true;
             }
@@ -189,14 +196,14 @@ public class JudoSupportFragment extends DialogFragment {
         public void tryCancel() {
             if (asyncResult != null) {
                 asyncResult.cancel();
-                consume=true;
+                consume = true;
             }
         }
 
         @Override
         public void setCallback(Callback<?> callback) {
             this.callback = new WeakReference<>((Callback<T>) callback);
-            if(callback!=null) {
+            if (callback != null) {
                 if (progress > 0) {
                     callback.onProgress(progress);
                 }
@@ -213,16 +220,20 @@ public class JudoSupportFragment extends DialogFragment {
     }
 
 
-
-
-    public static final class StatefulBatch<T> extends DecoratorBatch<T> implements Stateful<Batch<?>>{
+    public static final class StatefulBatch<T> extends DecoratorBatch<T> implements Stateful<Batch<?>> {
 
         private AsyncResult asyncResult;
+
         private final int id;
+
         private final String who;
+
         private int progress;
-        private boolean consume=false;
+
+        private boolean consume = false;
+
         private Object[] data;
+
         private JudoException exception;
 
         public StatefulBatch(JudoSupportFragment fragment, Batch<T> batch) {
@@ -239,16 +250,16 @@ public class JudoSupportFragment extends DialogFragment {
         @Override
         public final void onStart(AsyncResult asyncResult) {
             this.asyncResult = asyncResult;
-            consume=false;
-            data=null;
-            exception=null;
+            consume = false;
+            data = null;
+            exception = null;
             super.onStart(asyncResult);
         }
 
         @Override
         public void onFinish() {
             super.onFinish();
-            if(batch.get()!=null) {
+            if (batch.get() != null) {
                 removeStatefulCallback(who, id);
                 consume = true;
             }
@@ -264,13 +275,13 @@ public class JudoSupportFragment extends DialogFragment {
         public void tryCancel() {
             if (asyncResult != null) {
                 asyncResult.cancel();
-                consume=true;
+                consume = true;
             }
         }
 
         public void setCallback(Batch<?> batch) {
             this.batch = new WeakReference<>((Batch<T>) batch);
-            if(batch!=null) {
+            if (batch != null) {
                 if (progress > 0) {
                     batch.onProgress(progress);
                 }
