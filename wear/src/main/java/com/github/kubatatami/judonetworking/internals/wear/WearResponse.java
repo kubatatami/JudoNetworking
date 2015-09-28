@@ -25,6 +25,8 @@ public class WearResponse {
     public WearResponse(Exception exception) {
         this.message = exception.getMessage();
         this.headers = new HashMap<>();
+        this.code = 0;
+        this.body = new byte[0];
         this.successful = false;
     }
 
