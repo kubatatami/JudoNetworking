@@ -63,7 +63,9 @@ public class MessageUtils {
         waitObjects.put(id, waitObject);
         sendMessage(MSG_PATH + id, pickBestNodeId(nodes), msg);
         try {
-            waitObject.wait(readTimeout + operationTimeout);
+            synchronized (waitObject) {
+                waitObject.wait(readTimeout + operationTimeout);
+            }
         } catch (InterruptedException e) {
             throw new ConnectionException("GoogleApiClient timeout");
         } finally {
