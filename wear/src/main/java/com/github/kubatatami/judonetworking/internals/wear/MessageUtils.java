@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
+import com.github.kubatatami.judonetworking.wear.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Status;
@@ -28,10 +29,9 @@ public class MessageUtils {
 
     protected ObjectMapper objectMapper = new ObjectMapper();
 
+    protected Context context;
 
-    protected final static String MSG_PATH = "/jj/messageProxy/";
-
-    public final static String CAPABILITY_NAME = "MESSAGE_PROXY";
+    protected final static String MSG_PATH = "/jj/requestProxy/";
 
     static Map<String, Object> waitObjects = new HashMap<>();
 
@@ -46,6 +46,7 @@ public class MessageUtils {
     protected long readTimeout = 15000;
 
     public MessageUtils(Context context) {
+        this.context = context.getApplicationContext();
         googleClient = new GoogleApiClient.Builder(context.getApplicationContext())
                 .addApiIfAvailable(Wearable.API)
                 .build();
@@ -55,7 +56,7 @@ public class MessageUtils {
     public <T> T sendMessageAndReceive(Object msg, int operationTimeout, Class<T> clazz) throws IOException {
         makeSureIsConnected();
         Set<Node> nodes = Wearable.CapabilityApi.getCapability(
-                googleClient, CAPABILITY_NAME,
+                googleClient, context.getString(R.string.jj_request_proxy),
                 CapabilityApi.FILTER_REACHABLE).await().getCapability().getNodes();
         String id = generateUniqId();
         Object waitObject = new Object();
