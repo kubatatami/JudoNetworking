@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.wearable.CapabilityApi;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.Node;
@@ -78,8 +79,10 @@ public class MessageUtils {
         byte[] message = objectMapper.writeValueAsBytes(msg);
         MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(googleClient,
                 nodeId, msgId, message).await(sendTimeout, TimeUnit.MILLISECONDS);
-        if (!result.getStatus().isSuccess()) {
-            throw new ConnectionException("GoogleApiClient failed to send Message");
+        Status status = result.getStatus();
+        if (!status.isSuccess()) {
+            throw new ConnectionException("GoogleApiClient failed to send message: "
+                    + status.getStatusMessage() + "(" + status.getStatusCode() + ")");
         }
     }
 
