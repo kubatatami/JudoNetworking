@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking.internals.wear;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class WearRequest {
@@ -8,7 +9,7 @@ public class WearRequest {
 
     private boolean followRedirects;
 
-    private Map<String, String> headers;
+    private Map<String, String> headers = new HashMap<>();
 
     private int connectTimeout;
 
