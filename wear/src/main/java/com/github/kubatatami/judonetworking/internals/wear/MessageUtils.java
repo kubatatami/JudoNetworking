@@ -71,7 +71,12 @@ public class MessageUtils {
         } finally {
             waitObjects.remove(id);
         }
-        return readObject(resultObjects.remove(id), clazz);
+        byte[] message = resultObjects.remove(id);
+        if (message != null) {
+            return readObject(message, clazz);
+        } else {
+            throw new ConnectionException("GoogleApiClient timeout");
+        }
     }
 
     public <T> T readObject(byte[] msg, Class<T> clazz) throws IOException {
