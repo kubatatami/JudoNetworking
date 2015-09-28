@@ -73,7 +73,7 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
     }
 
     protected WearResponse sendRequest(WearRequest request, final ProtocolController.RequestInfo requestInfo,
-                                   final TimeStat timeStat, Method method, int debugFlags) throws Exception {
+                                       final TimeStat timeStat, Method method, int debugFlags) throws Exception {
         String methodName = "GET";
 
         try {
@@ -179,18 +179,22 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
 
                 logResponseHeaders(requestName, debugFlags, response);
 
-                if (!response.isSuccessful() && response.getCode() != 0) {
+                if (!response.isSuccessful()) {
                     int code = response.getCode();
                     String message = response.getMessage();
                     String body = new String(response.getBody());
-                    if (!repeat && username != null) {
-                        digestAuth = SecurityUtils.handleDigestAuth(response.getHeader("WWW-Authenticate"), code);
-                        repeat = (digestAuth != null);
-                        if (!repeat) {
+                    if (response.getCode() != 0) {
+                        if (!repeat && username != null) {
+                            digestAuth = SecurityUtils.handleDigestAuth(response.getHeader("WWW-Authenticate"), code);
+                            repeat = (digestAuth != null);
+                            if (!repeat) {
+                                handleHttpException(protocolController, code, message, body);
+                            }
+                        } else {
                             handleHttpException(protocolController, code, message, body);
                         }
                     } else {
-                        handleHttpException(protocolController, code, message, body);
+                        throw new ConnectionException(message);
                     }
                 }
 
