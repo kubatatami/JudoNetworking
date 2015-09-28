@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking.internals.wear;
 
+import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.WearableListenerService;
 import com.squareup.okhttp.MediaType;
@@ -34,15 +35,19 @@ public class HandheldListenerService extends WearableListenerService {
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         if (messageEvent.getPath().contains(MessageUtils.MSG_PATH)) {
+            WearResponse response = null;
+            String id = messageEvent.getPath().substring(MessageUtils.MSG_PATH.length());
             try {
-                String id = messageEvent.getPath().substring(MessageUtils.MSG_PATH.length());
                 WearRequest request = messageUtils.readObject(messageEvent.getData(), WearRequest.class);
-                WearResponse response = send(request);
+                response = send(request);
+            } catch (IOException e) {
+                JudoLogger.log(e);
+            }
+            try {
                 messageUtils.sendMessage(id, messageEvent.getSourceNodeId(), response);
             } catch (IOException e) {
-                e.printStackTrace();
+                JudoLogger.log(e);
             }
-
         } else {
             super.onMessageReceived(messageEvent);
         }
