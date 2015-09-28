@@ -84,10 +84,7 @@ public class MessageUtils {
     }
 
     public void sendMessage(String msgId, String nodeId, Object msg) throws IOException {
-        byte[] message = new byte[0];
-        if(msg != null) {
-            message = objectMapper.writeValueAsBytes(msg);
-        }
+        byte[] message = objectMapper.writeValueAsBytes(msg);
         MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(googleClient,
                 nodeId, MSG_PATH + msgId, message).await(sendTimeout, TimeUnit.MILLISECONDS);
         Status status = result.getStatus();

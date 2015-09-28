@@ -41,6 +41,7 @@ public class HandheldListenerService extends WearableListenerService {
                 WearRequest request = messageUtils.readObject(messageEvent.getData(), WearRequest.class);
                 response = send(request);
             } catch (IOException e) {
+                response = new WearResponse(e);
                 JudoLogger.log(e);
             }
             try {

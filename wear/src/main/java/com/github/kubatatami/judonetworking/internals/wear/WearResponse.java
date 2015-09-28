@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking.internals.wear;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +18,15 @@ public class WearResponse {
     private boolean successful;
 
     private String message;
+
+    public WearResponse() {
+    }
+
+    public WearResponse(Exception exception) {
+        this.message = exception.getMessage();
+        this.headers = new HashMap<>();
+        this.successful = false;
+    }
 
     public Map<String, List<String>> getHeaders() {
         return headers;
