@@ -35,7 +35,7 @@ public class HandheldListenerService extends WearableListenerService {
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         if (messageEvent.getPath().contains(MessageUtils.MSG_PATH)) {
-            WearResponse response = null;
+            WearResponse response;
             String id = messageEvent.getPath().substring(MessageUtils.MSG_PATH.length());
             try {
                 WearRequest request = messageUtils.readObject(messageEvent.getData(), WearRequest.class);
