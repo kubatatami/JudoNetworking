@@ -61,7 +61,7 @@ public class MessageUtils {
         String id = generateUniqId();
         Object waitObject = new Object();
         waitObjects.put(id, waitObject);
-        sendMessage(MSG_PATH + id, pickBestNodeId(nodes), msg);
+        sendMessage(id, pickBestNodeId(nodes), msg);
         try {
             synchronized (waitObject) {
                 waitObject.wait(readTimeout + operationTimeout);
@@ -81,7 +81,7 @@ public class MessageUtils {
     public void sendMessage(String msgId, String nodeId, Object msg) throws IOException {
         byte[] message = objectMapper.writeValueAsBytes(msg);
         MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(googleClient,
-                nodeId, msgId, message).await(sendTimeout, TimeUnit.MILLISECONDS);
+                nodeId, MSG_PATH + msgId, message).await(sendTimeout, TimeUnit.MILLISECONDS);
         Status status = result.getStatus();
         if (!status.isSuccess()) {
             throw new ConnectionException("GoogleApiClient failed to send message: "
