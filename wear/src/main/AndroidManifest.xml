@@ -1,2 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.github.kubatatami.judonetworking.wear"/>
+          package="com.github.kubatatami.judonetworking.wear">
+
+    <application>
+
+        <service android:name="com.github.kubatatami.judonetworking.internals.wear.WearListenerService">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
+            </intent-filter>
+        </service>
+
+    </application>
+
+</manifest>

@@ -10,8 +10,6 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.executors.JudoExecutor;
 import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.internals.wear.MessageUtils;
-import com.github.kubatatami.judonetworking.internals.wear.WearRequest;
-import com.github.kubatatami.judonetworking.internals.wear.WearResponse;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import com.github.kubatatami.judonetworking.utils.SecurityUtils;
@@ -312,5 +310,167 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
     @Override
     public void setMaxConnections(int max) {
 
+    }
+
+    /**
+     * Created by Kuba on 28/09/15.
+     */
+    public static class WearResponse {
+
+        private Map<String, List<String>> headers;
+
+        private int code;
+
+        private byte[] body;
+
+        private boolean successful;
+
+        private String message;
+
+        public WearResponse() {
+        }
+
+        public WearResponse(Exception exception) {
+            this.message = exception.getMessage();
+            this.headers = new HashMap<>();
+            this.code = 0;
+            this.body = new byte[0];
+            this.successful = false;
+        }
+
+        public Map<String, List<String>> getHeaders() {
+            return headers;
+        }
+
+        public void setHeaders(Map<String, List<String>> headers) {
+            this.headers = headers;
+        }
+
+        public int getCode() {
+            return code;
+        }
+
+        public String getHeader(String key) {
+            if (headers.containsKey(key)) {
+                return headers.get(key).get(0);
+            } else {
+                return null;
+            }
+        }
+
+        public void setCode(int code) {
+            this.code = code;
+        }
+
+        public byte[] getBody() {
+            return body;
+        }
+
+        public void setBody(byte[] body) {
+            this.body = body;
+        }
+
+        public boolean isSuccessful() {
+            return successful;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public List<String> getHeaders(String name) {
+            return headers.get(name);
+        }
+
+        public void setSuccessful(boolean successful) {
+            this.successful = successful;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+    }
+
+    public static class WearRequest {
+
+        private byte[] body;
+
+        private boolean followRedirects;
+
+        private Map<String, String> headers = new HashMap<>();
+
+        private int connectTimeout;
+
+        private int readTimeout;
+
+        private String url;
+
+        private String mimeType;
+
+        private String methodName;
+
+        public void setFollowRedirects(boolean followRedirects) {
+            this.followRedirects = followRedirects;
+        }
+
+        public void addHeader(String key, String value) {
+            headers.put(key, value);
+        }
+
+        public void setConnectTimeout(int connectTimeout) {
+            this.connectTimeout = connectTimeout;
+        }
+
+        public void setReadTimeout(int readTimeout) {
+            this.readTimeout = readTimeout;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
+        }
+
+        public boolean isFollowRedirects() {
+            return followRedirects;
+        }
+
+        public Map<String, String> getHeaders() {
+            return headers;
+        }
+
+        public int getConnectTimeout() {
+            return connectTimeout;
+        }
+
+        public int getReadTimeout() {
+            return readTimeout;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public byte[] getBody() {
+            return body;
+        }
+
+        public void setBody(byte[] body) {
+            this.body = body;
+        }
+
+        public String getMimeType() {
+            return mimeType;
+        }
+
+        public void setMimeType(String mimeType) {
+            this.mimeType = mimeType;
+        }
+
+        public void setMethodName(String methodName) {
+            this.methodName = methodName;
+        }
+
+        public String getMethodName() {
+            return methodName;
+        }
     }
 }
