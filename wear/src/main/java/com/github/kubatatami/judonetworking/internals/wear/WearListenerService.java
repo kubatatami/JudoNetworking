@@ -24,12 +24,15 @@ public class WearListenerService extends WearableListenerService {
 
     protected MessageUtils messageUtils;
 
-    protected OkHttpClient baseClient = new OkHttpClient();
+    protected OkHttpClient baseClient;
 
     @Override
     public void onCreate() {
         super.onCreate();
-        messageUtils = new MessageUtils(this);
+        if(!getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            messageUtils = new MessageUtils(this);
+            baseClient = new OkHttpClient();
+        }
     }
 
     @Override
