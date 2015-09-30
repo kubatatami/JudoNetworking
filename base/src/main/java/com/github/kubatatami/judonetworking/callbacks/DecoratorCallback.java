@@ -11,9 +11,9 @@ import java.lang.ref.WeakReference;
  */
 public class DecoratorCallback<T> extends DefaultCallback<T> {
 
-    protected WeakReference<Callback<T>> callback;
+    private WeakReference<Callback<T>> callback;
 
-    protected WeakReference<MergeCallback<T>> mergeCallback;
+    private WeakReference<MergeCallback<T>> mergeCallback;
 
     public DecoratorCallback(Callback<T> callback) {
         this.callback = new WeakReference<>(callback);
