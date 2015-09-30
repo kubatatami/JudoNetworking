@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.activity;
 
 import android.support.v7.app.AppCompatActivity;
+
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.batches.Batch;
@@ -22,13 +23,13 @@ public class JudoAppCompatActivity extends AppCompatActivity {
     private static final Map<String, Map<Integer, Stateful>> callbacksMap = new HashMap<>();
 
     private String getWho() {
-        return getTaskId()+"";
+        return getTaskId() + "";
     }
 
     private void removeCallbacks(String who) {
         if (callbacksMap.containsKey(who)) {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(who);
-            for(Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()){
+            for (Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()) {
                 entry.getValue().setCallback(null);
             }
         }
@@ -37,7 +38,7 @@ public class JudoAppCompatActivity extends AppCompatActivity {
     private void removeStatefulCallbacks() {
         if (callbacksMap.containsKey(getWho())) {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(getWho());
-            for(Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()){
+            for (Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()) {
                 entry.getValue().tryCancel();
             }
             callbacksMap.remove(getWho());
@@ -53,13 +54,13 @@ public class JudoAppCompatActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if(isFinishing()){
+        if (isFinishing()) {
             removeStatefulCallbacks();
         }
     }
 
     protected boolean connectCallback(BaseCallback<?> callback) {
-        return connectCallback(callback.getClass().hashCode(),callback);
+        return connectCallback(callback.getClass().hashCode(), callback);
     }
 
     protected boolean connectCallback(int id, BaseCallback<?> callback) {
@@ -78,7 +79,7 @@ public class JudoAppCompatActivity extends AppCompatActivity {
     }
 
     protected <T> StatefulCallback<T> generateCallback(int id, Callback<T> callback) {
-        return new StatefulCallback<>(this,id, callback);
+        return new StatefulCallback<>(this, id, callback);
     }
 
     protected <T> StatefulBatch<T> generateCallback(Batch<T> batch) {
@@ -86,10 +87,10 @@ public class JudoAppCompatActivity extends AppCompatActivity {
     }
 
     protected <T> StatefulBatch<T> generateCallback(int id, Batch<T> batch) {
-        return new StatefulBatch<>(this,id, batch);
+        return new StatefulBatch<>(this, id, batch);
     }
 
-    public void cancelRequest(int id){
+    public void cancelRequest(int id) {
         if (callbacksMap.containsKey(getWho())) {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(getWho());
             if (fragmentCallbackMap.containsKey(id)) {
@@ -119,21 +120,28 @@ public class JudoAppCompatActivity extends AppCompatActivity {
     }
 
 
-    interface Stateful<T>{
+    interface Stateful<T> {
+
         void setCallback(T callback);
+
         void tryCancel();
     }
-
 
 
     public static final class StatefulCallback<T> extends DecoratorCallback<T> implements Stateful<Callback<?>> {
 
         private AsyncResult asyncResult;
+
         private final int id;
+
         private final String who;
+
         private int progress;
-        private boolean consume=false;
+
+        private boolean consume = false;
+
         private T data;
+
         private JudoException exception;
 
         public StatefulCallback(JudoAppCompatActivity activity, Callback<T> callback) {
@@ -150,16 +158,16 @@ public class JudoAppCompatActivity extends AppCompatActivity {
         @Override
         public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
             this.asyncResult = asyncResult;
-            consume=false;
-            data=null;
-            exception=null;
+            consume = false;
+            data = null;
+            exception = null;
             super.onStart(cacheInfo, asyncResult);
         }
 
         @Override
         public void onFinish() {
             super.onFinish();
-            if(callback.get()!=null) {
+            if (callback.get() != null) {
                 removeStatefulCallback(who, id);
                 consume = true;
             }
@@ -175,14 +183,14 @@ public class JudoAppCompatActivity extends AppCompatActivity {
         public void tryCancel() {
             if (asyncResult != null) {
                 asyncResult.cancel();
-                consume=true;
+                consume = true;
             }
         }
 
         @Override
         public void setCallback(Callback<?> callback) {
             this.callback = new WeakReference<>((Callback<T>) callback);
-            if(callback!=null) {
+            if (callback != null) {
                 if (progress > 0) {
                     callback.onProgress(progress);
                 }
@@ -199,16 +207,20 @@ public class JudoAppCompatActivity extends AppCompatActivity {
     }
 
 
-
-
-    public static final class StatefulBatch<T> extends DecoratorBatch<T> implements Stateful<Batch<?>>{
+    public static final class StatefulBatch<T> extends DecoratorBatch<T> implements Stateful<Batch<?>> {
 
         private AsyncResult asyncResult;
+
         private final int id;
+
         private final String who;
+
         private int progress;
-        private boolean consume=false;
+
+        private boolean consume = false;
+
         private Object[] data;
+
         private JudoException exception;
 
         public StatefulBatch(JudoAppCompatActivity activity, Batch<T> batch) {
@@ -225,16 +237,16 @@ public class JudoAppCompatActivity extends AppCompatActivity {
         @Override
         public final void onStart(AsyncResult asyncResult) {
             this.asyncResult = asyncResult;
-            consume=false;
-            data=null;
-            exception=null;
+            consume = false;
+            data = null;
+            exception = null;
             super.onStart(asyncResult);
         }
 
         @Override
         public void onFinish() {
             super.onFinish();
-            if(batch.get()!=null) {
+            if (batch.get() != null) {
                 removeStatefulCallback(who, id);
                 consume = true;
             }
@@ -250,13 +262,13 @@ public class JudoAppCompatActivity extends AppCompatActivity {
         public void tryCancel() {
             if (asyncResult != null) {
                 asyncResult.cancel();
-                consume=true;
+                consume = true;
             }
         }
 
         public void setCallback(Batch<?> batch) {
             this.batch = new WeakReference<>((Batch<T>) batch);
-            if(batch!=null) {
+            if (batch != null) {
                 if (progress > 0) {
                     batch.onProgress(progress);
                 }

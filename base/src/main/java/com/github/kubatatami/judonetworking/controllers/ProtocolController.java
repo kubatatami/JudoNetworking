@@ -22,12 +22,17 @@ import java.util.Scanner;
 public abstract class ProtocolController {
 
     private String apiKey = null;
+
     private String apiKeyName = null;
 
     public static class RequestInfo {
+
         public String url;
+
         public RequestInputStreamEntity entity;
+
         public String mimeType;
+
         public Map<String, String> customHeaders;
     }
 
@@ -77,6 +82,7 @@ public abstract class ProtocolController {
         private static final long serialVersionUID = -630342577502897709L;
 
         public String apiKeyName = null;
+
         public String apiKey = null;
 
 

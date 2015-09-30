@@ -139,11 +139,17 @@ public class SecurityUtils {
     }
 
     public static class DigestAuth {
+
         public String realm;
+
         public String nonce;
+
         public String algorithm;
+
         public String opaque;
+
         public String qop;
+
         public int digestCounter = 0;
     }
 

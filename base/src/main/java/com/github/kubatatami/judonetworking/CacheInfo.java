@@ -10,6 +10,7 @@ public class CacheInfo implements Serializable {
     private static final long serialVersionUID = -5445644584008032363L;
 
     public boolean isCached;
+
     public Long dataTime;
 
     public CacheInfo() {

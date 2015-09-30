@@ -31,25 +31,45 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressObserver, Request, AsyncResult {
+
     private Integer id;
+
     private final EndpointImpl rpc;
+
     private Callback<Object> callback;
+
     private final String name;
+
     private final int timeout;
+
     private RequestMethod ann;
+
     private float progress = 0;
+
     private int max = TimeStat.TICKS;
+
     private Object[] args;
+
     private String[] paramNames;
+
     private Type returnType;
+
     private Method method;
+
     private Class<?> apiInterface;
+
     private boolean batchFatal = true;
+
     private Serializable additionalControllerData = null;
+
     private boolean cancelled, done, running;
+
     private boolean isApiKeyRequired;
+
     private String customUrl;
+
     private Future<?> future;
+
     private Map<String, List<String>> headers;
 
     public RequestImpl(Integer id, EndpointImpl rpc, Method method, String name, RequestMethod ann,
@@ -250,9 +270,9 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     public int getLocalCacheLifeTime() {
         int lifeTime = getLocalCache().lifeTime();
-        if(lifeTime == LocalCache.DEFAULT){
+        if (lifeTime == LocalCache.DEFAULT) {
             return rpc.getDefaultMethodCacheLifeTime();
-        }else{
+        } else {
             return lifeTime;
         }
     }
@@ -263,9 +283,9 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     public int getLocalCacheSize() {
         int size = getLocalCache().size();
-        if(size == LocalCache.DEFAULT){
+        if (size == LocalCache.DEFAULT) {
             return rpc.getDefaultMethodCacheSize();
-        }else{
+        } else {
             return size;
         }
     }
@@ -455,6 +475,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
      * Created by Kuba on 19/02/14.
      */
     public static class Comparator implements java.util.Comparator<Request> {
+
         @Override
         public int compare(Request lhs, Request rhs) {
             return lhs.getId().compareTo(rhs.getId());

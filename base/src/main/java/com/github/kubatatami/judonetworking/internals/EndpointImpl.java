@@ -57,39 +57,73 @@ import java.util.concurrent.Future;
 public class EndpointImpl implements Endpoint, EndpointClassic {
 
     private RequestConnector requestConnector;
+
     private Handler handler = new Handler();
+
     private Context context;
+
     private boolean cacheEnabled = false;
+
     private CacheMode cacheMode = CacheMode.NORMAL;
+
     private boolean timeProfiler = false;
+
     private BatchTimeoutMode timeoutMode = BatchTimeoutMode.TIMEOUTS_SUM;
+
     private MemoryCache memoryCache;
+
     private DiskCache diskCache;
+
     private int debugFlags = 0;
+
     private Map<String, MethodStat> stats;
+
     private File statFile;
+
     private float percentLoss;
+
     private int maxStatFileSize = 50; //KB
+
     private Set<ErrorLogger> errorLoggers = new HashSet<>();
+
     private Clonner clonner = new DefaultClonner();
+
     private boolean test = false;
+
     private String testName = null;
+
     private int testRevision = 0;
+
     private int delay = 0;
+
     private String url;
+
     private ProtocolController protocolController;
+
     private HashMap<Class, VirtualServerInfo> virtualServers = new HashMap<>();
+
     private boolean verifyResultModel = false;
+
     private boolean processingMethod = false;
+
     private long tokenExpireTimestamp = -1;
+
     private Map<Integer, RequestImpl> singleCallMethods = new HashMap<>();
+
     private int id = 0;
+
     private ThreadPoolSizer threadPoolSizer = new DefaultThreadPoolSizer();
+
     private JudoExecutor executorService = new JudoExecutor(this);
+
     private UrlModifier urlModifier;
+
     private OnRequestEventListener onRequestEventListener;
+
     private int requestCount = 0;
+
     private int defaultMethodCacheLifeTime = LocalCache.INFINITE;
+
     private int defaultMethodCacheSize = LocalCache.INFINITE;
 
 
@@ -385,7 +419,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @Override
     public void clearTimeProfilerStat() {
         boolean result = statFile.delete();
-        if(result){
+        if (result) {
             JudoLogger.log("Can't remove stats file", JudoLogger.LogLevel.ASSERT);
         }
         stats = Collections.synchronizedMap(new HashMap<String, MethodStat>());
@@ -641,7 +675,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     @Override
     public void setDefaultMethodCacheLifeTime(int millis) {
-        this.defaultMethodCacheLifeTime=millis;
+        this.defaultMethodCacheLifeTime = millis;
     }
 
     @Override
@@ -651,6 +685,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     @Override
     public void setDefaultMethodCacheSize(int millis) {
-        this.defaultMethodCacheSize=millis;
+        this.defaultMethodCacheSize = millis;
     }
 }

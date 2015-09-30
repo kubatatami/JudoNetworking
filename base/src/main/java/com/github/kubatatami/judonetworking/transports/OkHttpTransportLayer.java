@@ -40,6 +40,7 @@ import okio.BufferedSink;
 public class OkHttpTransportLayer extends HttpTransportLayer {
 
     protected OkHttpConnectionModifier okHttpConnectionModifier;
+
     protected OkHttpClient baseClient = new OkHttpClient();
 
 
@@ -220,10 +221,10 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                 if (!response.isSuccessful() && response.code() != 0) {
                     int code = response.code();
                     String message = response.message();
-                    String body ="";
+                    String body = "";
                     try {
                         body = response.body().string();
-                    }catch (IOException ignored){
+                    } catch (IOException ignored) {
                     }
                     if (!repeat && username != null) {
                         digestAuth = SecurityUtils.handleDigestAuth(response.header("WWW-Authenticate"), code);
@@ -348,6 +349,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
     }
 
     static class OkHttpBuilder extends Request.Builder {
+
         Map<String, String> headers = new HashMap<>();
 
         @Override

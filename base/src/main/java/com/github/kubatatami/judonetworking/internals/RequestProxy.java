@@ -46,12 +46,19 @@ import java.util.concurrent.Future;
 public class RequestProxy implements InvocationHandler, AsyncResult {
 
     protected final EndpointImpl rpc;
+
     protected int id = 0;
+
     protected boolean batchEnabled = false;
+
     protected boolean batchFatal = true;
+
     protected final List<RequestImpl> batchRequests = new ArrayList<>();
+
     protected EndpointImpl.BatchMode mode = EndpointImpl.BatchMode.NONE;
+
     protected boolean cancelled, done, running;
+
     protected Batch<?> batchCallback;
 
     public RequestProxy(EndpointImpl rpc, EndpointImpl.BatchMode mode, Batch<?> batchCallback) {
@@ -259,7 +266,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
             if (genericTypes.length > 0 && genericTypes[genericTypes.length - 1] instanceof ParameterizedType) {
                 ParameterizedType parameterizedType = (ParameterizedType) genericTypes[genericTypes.length - 1];
                 if (parameterizedType.getRawType().equals(Callback.class)) {
-                    returnType =  parameterizedType.getActualTypeArguments()[0];
+                    returnType = parameterizedType.getActualTypeArguments()[0];
                 }
             }
         }

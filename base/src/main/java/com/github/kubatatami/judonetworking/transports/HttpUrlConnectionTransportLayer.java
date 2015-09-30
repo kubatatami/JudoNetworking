@@ -44,6 +44,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
     private CookieManager cookieManager;
 
     private HttpURLCreator httpURLCreator = null;
+
     private HttpURLConnectionModifier httpURLConnectionModifier;
 
     public HttpUrlConnectionTransportLayer() {
@@ -317,6 +318,7 @@ public class HttpUrlConnectionTransportLayer extends HttpTransportLayer {
     class FinalConnection implements Connection {
 
         HttpURLConnection connection;
+
         ProtocolController protocolController;
 
         FinalConnection(HttpURLConnection connection, ProtocolController protocolController) {

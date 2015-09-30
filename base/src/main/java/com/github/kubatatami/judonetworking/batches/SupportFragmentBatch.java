@@ -4,6 +4,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
+import com.github.kubatatami.judonetworking.callbacks.MergeCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.ref.WeakReference;
@@ -18,7 +19,9 @@ public abstract class SupportFragmentBatch<T> extends DefaultBatch<T> implements
 
 
     private final WeakReference<Fragment> fragment;
+
     private final WeakReference<FragmentManager> manager;
+
     private AsyncResult asyncResult;
 
     public SupportFragmentBatch(Fragment fragment) {

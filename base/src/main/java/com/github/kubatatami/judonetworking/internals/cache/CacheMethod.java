@@ -8,15 +8,25 @@ import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import java.lang.reflect.Method;
 
 public class CacheMethod {
+
     private String test;
+
     private int testRevision;
+
     private String url;
+
     private boolean dynamic = false;
+
     private String hash;
+
     private String interfaceName;
+
     private int methodId;
+
     private String methodName;
+
     private Long time;
+
     private LocalCache.CacheLevel cacheLevel;
 
     public CacheMethod(int methodId, String methodName, String interfaceName, String url, ServerCache.CacheLevel level) {

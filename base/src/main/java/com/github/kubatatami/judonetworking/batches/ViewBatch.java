@@ -14,7 +14,9 @@ import java.util.Map;
 public class ViewBatch<T> extends DefaultBatch<T> {
 
     protected static final Map<Integer, ViewBatch> viewCache = new HashMap<>();
+
     protected final int viewHash;
+
     protected AsyncResult asyncResult;
 
     public ViewBatch(View view) {

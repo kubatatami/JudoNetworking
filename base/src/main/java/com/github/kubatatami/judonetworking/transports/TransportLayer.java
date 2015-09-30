@@ -33,6 +33,7 @@ public abstract class TransportLayer {
 
 
     public interface Connection {
+
         InputStream getStream() throws ConnectionException;
 
         int getContentLength();
@@ -49,7 +50,9 @@ public abstract class TransportLayer {
     }
 
     public static class CacheInfo {
+
         public String hash;
+
         public Long time;
 
         public CacheInfo(String hash, Long time) {

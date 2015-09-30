@@ -17,23 +17,33 @@ import java.lang.reflect.Type;
 public class TokenDecoratorController<T, Z> extends ProtocolControllerWrapper {
 
     protected String login;
+
     protected String password;
+
     protected String keyName;
+
     protected int tokenLifetime; //min
+
     protected Method authMethod;
+
     protected Class<T> authInterface;
+
     protected Field keyField;
+
     protected ProtocolController baseController;
+
     protected TokenCaller tokenCaller = new SimpleTokenCaller();
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface AuthMethod {
+
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
     public @interface AuthKey {
+
     }
 
 

@@ -21,7 +21,9 @@ import java.util.Map;
  * Time: 08:05
  */
 public class DefaultMemoryCache implements MemoryCache {
+
     private int debugFlags;
+
     private Map<Integer, LruCache<Integer, CacheObject>> cache
             = Collections.synchronizedMap(new HashMap<Integer, LruCache<Integer, CacheObject>>());
 
@@ -122,7 +124,9 @@ public class DefaultMemoryCache implements MemoryCache {
      * Time: 07:55
      */
     static class CacheObject {
+
         final long createTime;
+
         private final Object object;
 
         CacheObject(long createTime, Object object) {

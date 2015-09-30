@@ -17,7 +17,9 @@ import java.lang.ref.WeakReference;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 public class ActivityCallback<T> extends DefaultCallback<T> {
+
     private final WeakReference<Activity> activity;
+
     private AsyncResult asyncResult;
 
     public ActivityCallback(Activity activity) {

@@ -12,11 +12,15 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 public abstract class RequestResult implements Comparable<RequestResult> {
 
     public Integer id;
+
     public Object result;
+
     public JudoException error;
+
     public Object cacheObject;
 
     public String hash;
+
     public Long time;
 
     @Override

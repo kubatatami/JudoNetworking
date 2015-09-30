@@ -8,6 +8,7 @@ import com.github.kubatatami.judonetworking.AsyncResult;
 public interface AsyncResultCallback {
 
     AsyncResult getAsyncResult();
+
     void setAsyncResult(AsyncResult asyncResult);
 
 }

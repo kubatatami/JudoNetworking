@@ -28,6 +28,7 @@ import java.util.Comparator;
  * Time: 08:05
  */
 public class DefaultDiskCache implements DiskCache {
+
     private int debugFlags;
 
     protected Context context;

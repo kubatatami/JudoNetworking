@@ -17,12 +17,19 @@ import java.text.SimpleDateFormat;
 public abstract class HttpTransportLayer extends TransportLayer {
 
     protected String authKey;
+
     protected String username;
+
     protected String password;
+
     protected SecurityUtils.DigestAuth digestAuth;
+
     protected static SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+
     protected int connectTimeout = 7500;
+
     protected int methodTimeout = 5000;
+
     protected boolean followRedirection = true;
 
 
@@ -73,6 +80,7 @@ public abstract class HttpTransportLayer extends TransportLayer {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD, ElementType.TYPE})
     public @interface HttpMethod {
+
         String value();
     }
 

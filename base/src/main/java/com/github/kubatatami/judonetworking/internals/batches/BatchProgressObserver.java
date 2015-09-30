@@ -20,10 +20,15 @@ import java.util.List;
 public class BatchProgressObserver implements ProgressObserver {
 
     int max = TimeStat.TICKS;
+
     float progress = 0;
+
     RequestProxy requestProxy;
+
     EndpointImpl rpc;
+
     List<RequestImpl> requestList;
+
     int lastProgress = 0;
 
     public BatchProgressObserver(EndpointImpl rpc, RequestProxy requestProxy, List<RequestImpl> requestList) {

@@ -11,6 +11,7 @@ import java.lang.reflect.Array;
 public class AddParamsController extends ProtocolControllerWrapper {
 
     protected Object[] additionalParams;
+
     protected String[] paramNames;
 
     public AddParamsController(ProtocolController baseController, Object... additionalParams) {

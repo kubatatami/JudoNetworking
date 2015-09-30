@@ -5,7 +5,6 @@ import android.view.View;
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -15,8 +14,11 @@ import java.util.WeakHashMap;
 public class ViewAdapterCallback<Z, T> extends DefaultCallback<T> {
 
     protected static final Map<View, ViewAdapterCallback> viewCache = new WeakHashMap<>();
+
     protected final View view;
+
     protected AsyncResult asyncResult;
+
     protected Z object;
 
     public ViewAdapterCallback(View view) {

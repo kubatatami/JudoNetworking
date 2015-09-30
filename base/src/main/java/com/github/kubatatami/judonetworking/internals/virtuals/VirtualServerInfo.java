@@ -1,8 +1,11 @@
 package com.github.kubatatami.judonetworking.internals.virtuals;
 
 public class VirtualServerInfo {
+
     public Object server;
+
     public int minDelay;
+
     public int maxDelay;
 
     public VirtualServerInfo(Object server, int minDelay, int maxDelay) {

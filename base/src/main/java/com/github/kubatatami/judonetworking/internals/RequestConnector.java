@@ -48,7 +48,9 @@ import java.util.Scanner;
 public class RequestConnector {
 
     private final EndpointImpl rpc;
+
     private final TransportLayer transportLayer;
+
     private final Random randomGenerator = new Random();
 
     public RequestConnector(EndpointImpl rpc, TransportLayer transportLayer) {

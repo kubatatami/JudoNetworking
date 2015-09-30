@@ -16,6 +16,7 @@ import java.util.List;
 public class AdapterSortCallback<T extends Comparable<T>> extends DefaultCallback<List<T>> {
 
     private final WeakReference<ArrayAdapter<T>> adapter;
+
     private final Comparator<T> comparator;
 
     public AdapterSortCallback(ArrayAdapter<T> adapter) {

@@ -69,22 +69,27 @@ public interface EndpointBase {
      * No log.
      */
     int NO_DEBUG = 0;
+
     /**
      * Log time of requests.
      */
     int TIME_DEBUG = 1;
+
     /**
      * Log request content.
      */
     int REQUEST_DEBUG = 2;
+
     /**
      * Log response content.
      */
     int RESPONSE_DEBUG = 4;
+
     /**
      * Log cache behavior.
      */
     int CACHE_DEBUG = 8;
+
     /**
      * Log request code line.
      */

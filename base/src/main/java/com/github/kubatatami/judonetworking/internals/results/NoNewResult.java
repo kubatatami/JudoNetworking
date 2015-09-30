@@ -8,4 +8,5 @@ package com.github.kubatatami.judonetworking.internals.results;
  * To change this template use File | Settings | File Templates.
  */
 public class NoNewResult extends RequestResult {
+
 }

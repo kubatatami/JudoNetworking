@@ -28,6 +28,7 @@ public @interface RequestMethod {
     Class<? extends Modifier> modifier() default DefaultModifier.class;
 
     final class DefaultModifier implements Modifier {
+
         @Override
         public void modify(Request request) {
 

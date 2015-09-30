@@ -28,6 +28,7 @@ public @interface LocalCache {
 
 
     int DEFAULT = -1;
+
     int INFINITE = 0;
 
     enum CacheLevel {

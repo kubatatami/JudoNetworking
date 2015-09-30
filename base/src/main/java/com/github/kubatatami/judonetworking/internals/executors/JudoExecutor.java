@@ -18,7 +18,9 @@ import java.util.concurrent.TimeUnit;
 public class JudoExecutor extends ThreadPoolExecutor {
 
     protected int threadPriority = Process.THREAD_PRIORITY_BACKGROUND;
+
     protected Endpoint endpoint;
+
     protected int count;
 
     protected ThreadFactory threadFactory = new ThreadFactory() {
@@ -97,9 +99,13 @@ public class JudoExecutor extends ThreadPoolExecutor {
     public static class ConnectionThread extends Thread {
 
         Runnable runnable;
+
         int threadPriority;
+
         Canceller canceller;
+
         boolean canceled;
+
         Endpoint endpoint;
 
         public ConnectionThread(Runnable runnable, int threadPriority, int count, Endpoint endpoint) {
@@ -139,6 +145,7 @@ public class JudoExecutor extends ThreadPoolExecutor {
         }
 
         public interface Canceller {
+
             void cancel();
         }
 
