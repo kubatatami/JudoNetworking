@@ -13,13 +13,13 @@ public class DecoratorCallback<T> extends DefaultCallback<T> {
 
     protected WeakReference<Callback<T>> internalCallback;
 
-    protected WeakReference<MergeCallback<T>> internalMergeCallback;
+    protected WeakReference<MergeCallback> internalMergeCallback;
 
     public DecoratorCallback(Callback<T> callback) {
         this.internalCallback = new WeakReference<>(callback);
     }
 
-    public DecoratorCallback(MergeCallback<T> mergeCallback) {
+    public DecoratorCallback(MergeCallback mergeCallback) {
         this.internalMergeCallback = new WeakReference<>(mergeCallback);
     }
 
