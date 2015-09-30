@@ -17,9 +17,11 @@ public class DecoratorCallback<T> extends DefaultCallback<T> {
 
     public DecoratorCallback(Callback<T> callback) {
         this.internalCallback = new WeakReference<>(callback);
+        this.internalMergeCallback = new WeakReference<>(null);
     }
 
     public DecoratorCallback(MergeCallback mergeCallback) {
+        this.internalCallback = new WeakReference<>(null);
         this.internalMergeCallback = new WeakReference<>(mergeCallback);
     }
 
