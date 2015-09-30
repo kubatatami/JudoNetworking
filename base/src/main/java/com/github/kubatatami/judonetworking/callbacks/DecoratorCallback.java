@@ -11,62 +11,62 @@ import java.lang.ref.WeakReference;
  */
 public class DecoratorCallback<T> extends DefaultCallback<T> {
 
-    private WeakReference<Callback<T>> callback;
+    protected WeakReference<Callback<T>> internalCallback;
 
-    private WeakReference<MergeCallback<T>> mergeCallback;
+    protected WeakReference<MergeCallback<T>> internalMergeCallback;
 
     public DecoratorCallback(Callback<T> callback) {
-        this.callback = new WeakReference<>(callback);
+        this.internalCallback = new WeakReference<>(callback);
     }
 
     public DecoratorCallback(MergeCallback<T> mergeCallback) {
-        this.mergeCallback = new WeakReference<>(mergeCallback);
+        this.internalMergeCallback = new WeakReference<>(mergeCallback);
     }
 
     @Override
     public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
-        if (callback.get() != null) {
-            callback.get().onStart(cacheInfo, asyncResult);
+        if (internalCallback.get() != null) {
+            internalCallback.get().onStart(cacheInfo, asyncResult);
         }
-        if (mergeCallback.get() != null) {
-            mergeCallback.get().addStart(asyncResult);
+        if (internalMergeCallback.get() != null) {
+            internalMergeCallback.get().addStart(asyncResult);
         }
     }
 
     @Override
     public void onSuccess(T result) {
-        if (callback.get() != null) {
-            callback.get().onSuccess(result);
+        if (internalCallback.get() != null) {
+            internalCallback.get().onSuccess(result);
         }
-        if (mergeCallback.get() != null) {
-            mergeCallback.get().addSuccess();
+        if (internalMergeCallback.get() != null) {
+            internalMergeCallback.get().addSuccess();
         }
     }
 
     @Override
     public void onError(JudoException e) {
-        if (callback.get() != null) {
-            callback.get().onError(e);
+        if (internalCallback.get() != null) {
+            internalCallback.get().onError(e);
         }
-        if (mergeCallback.get() != null) {
-            mergeCallback.get().addError(e);
+        if (internalMergeCallback.get() != null) {
+            internalMergeCallback.get().addError(e);
         }
     }
 
     @Override
     public void onFinish() {
-        if (callback.get() != null) {
-            callback.get().onFinish();
+        if (internalCallback.get() != null) {
+            internalCallback.get().onFinish();
         }
     }
 
     @Override
     public void onProgress(int progress) {
-        if (callback.get() != null) {
-            callback.get().onProgress(progress);
+        if (internalCallback.get() != null) {
+            internalCallback.get().onProgress(progress);
         }
-        if (mergeCallback.get() != null) {
-            mergeCallback.get().addProgress(this, progress);
+        if (internalMergeCallback.get() != null) {
+            internalMergeCallback.get().addProgress(this, progress);
         }
     }
 }

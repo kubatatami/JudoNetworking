@@ -180,7 +180,7 @@ public class JudoSupportFragment extends DialogFragment {
         @Override
         public void onFinish() {
             super.onFinish();
-            if (callback.get() != null) {
+            if (internalCallback.get() != null) {
                 removeStatefulCallback(who, id);
                 consume = true;
             }
@@ -202,16 +202,16 @@ public class JudoSupportFragment extends DialogFragment {
 
         @Override
         public void setCallback(Callback<?> callback) {
-            this.callback = new WeakReference<>((Callback<T>) callback);
+            this.internalCallback = new WeakReference<>((Callback<T>) callback);
             if (callback != null) {
                 if (progress > 0) {
                     callback.onProgress(progress);
                 }
                 if (!consume) {
                     if (data != null) {
-                        this.callback.get().onSuccess(data);
+                        this.internalCallback.get().onSuccess(data);
                     } else if (exception != null) {
-                        this.callback.get().onError(exception);
+                        this.internalCallback.get().onError(exception);
                     }
                 }
             }
