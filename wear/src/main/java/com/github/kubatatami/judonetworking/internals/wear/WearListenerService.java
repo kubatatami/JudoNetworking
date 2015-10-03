@@ -29,7 +29,7 @@ public class WearListenerService extends WearableListenerService {
     @Override
     public void onCreate() {
         super.onCreate();
-        if(!getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             messageUtils = new MessageUtils(this);
             baseClient = new OkHttpClient();
         }
@@ -38,14 +38,16 @@ public class WearListenerService extends WearableListenerService {
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         if (messageEvent.getPath().contains(MessageUtils.MSG_PATH)) {
-            if(getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)){
+            if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
                 String id = messageEvent.getPath().substring(MessageUtils.MSG_PATH.length());
-                MessageUtils.resultObjects.put(id, messageEvent.getData());
                 Object waitObject = MessageUtils.waitObjects.get(id);
-                synchronized (waitObject) {
-                    waitObject.notifyAll();
+                if (waitObject != null) {
+                    MessageUtils.resultObjects.put(id, messageEvent.getData());
+                    synchronized (waitObject) {
+                        waitObject.notifyAll();
+                    }
                 }
-            }else {
+            } else {
                 WearHttpTransportLayer.WearResponse response;
                 String id = messageEvent.getPath().substring(MessageUtils.MSG_PATH.length());
                 try {
