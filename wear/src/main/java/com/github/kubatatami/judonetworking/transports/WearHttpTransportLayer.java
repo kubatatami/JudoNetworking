@@ -125,9 +125,7 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
             WearResponse response = makeCallAndGetResponse(request);
 
             timeStat.tickConnectionTime();
-            if (request.getBody() != null) {
-                timeStat.tickSendTime();
-            }
+            timeStat.tickSendTime();
             return response;
         } finally {
 
