@@ -71,7 +71,6 @@ public class WearListenerService extends WearableListenerService {
     protected WearHttpTransportLayer.WearResponse send(final WearHttpTransportLayer.WearRequest request) throws IOException {
         RequestBody requestBody = null;
         OkHttpClient client = baseClient.clone();
-        long sendTime = System.currentTimeMillis() - request.getCreationTime();
         client.setConnectTimeout(request.getConnectTimeout(), TimeUnit.MILLISECONDS);
         client.setReadTimeout(request.getReadTimeout(), TimeUnit.MILLISECONDS);
         Request.Builder builder = new Request.Builder();
@@ -98,9 +97,10 @@ public class WearListenerService extends WearableListenerService {
             builder.addHeader(entry.getKey(), entry.getValue());
         }
         builder.url(request.getUrl());
+        long realRequestTime = System.currentTimeMillis();
         Response response = client.newCall(builder.build()).execute();
+        realRequestTime = System.currentTimeMillis() - realRequestTime;
         WearHttpTransportLayer.WearResponse wearResponse = new WearHttpTransportLayer.WearResponse();
-        wearResponse.setWearSendTime(sendTime);
         wearResponse.setSuccessful(response.isSuccessful());
         wearResponse.setCode(response.code());
         wearResponse.setMessage(response.message());
@@ -110,7 +110,7 @@ public class WearListenerService extends WearableListenerService {
             map.put(name, response.headers(name));
         }
         wearResponse.setHeaders(map);
-        wearResponse.setWearReadTimestamp(System.currentTimeMillis());
+        wearResponse.setRealRequestTime(realRequestTime);
         return wearResponse;
     }
 }

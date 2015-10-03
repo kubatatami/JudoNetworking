@@ -142,7 +142,6 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
     protected WearResponse makeCallAndGetResponse(WearRequest request) throws IOException {
         try {
             int timeoutSum = request.getConnectTimeout() + request.getReadTimeout();
-            request.setCreationTime(System.currentTimeMillis());
             return messageUtils.sendMessageAndReceive(request, timeoutSum, WearResponse.class);
         } catch (IOException ex) {
             if (Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
@@ -174,11 +173,15 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
 
                 logRequestHeaders(requestName, debugFlags, request);
 
+                long wearTime = System.currentTimeMillis();
+
                 response = sendRequest(request, requestInfo, timeStat, method, debugFlags);
 
-                long readTime = System.currentTimeMillis() - response.getWearReadTimestamp();
+                wearTime = System.currentTimeMillis() - wearTime - response.getRealRequestTime();
 
                 logResponseHeaders(requestName, debugFlags, response);
+
+                JudoLogger.log("Wear send and read sum time: " + wearTime + "ms", JudoLogger.LogLevel.INFO);
 
                 if (!response.isSuccessful()) {
                     int code = response.getCode();
@@ -202,8 +205,6 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
                 if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
                     longLog("Response code(" + requestName + ")", response.getCode() + "", JudoLogger.LogLevel.DEBUG);
                 }
-                long wearTime = Math.abs(Math.abs(response.getWearSendTime()) - Math.abs(readTime));
-                JudoLogger.log("Wear send and read sum time: ~" + wearTime + "ms", JudoLogger.LogLevel.INFO);
 
                 return new Connection() {
 
@@ -333,9 +334,7 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
 
         private String message;
 
-        private long wearSendTime;
-
-        private long wearReadTimestamp;
+        private long realRequestTime;
 
         public WearResponse() {
         }
@@ -400,20 +399,12 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
             this.message = message;
         }
 
-        public long getWearSendTime() {
-            return wearSendTime;
+        public long getRealRequestTime() {
+            return realRequestTime;
         }
 
-        public void setWearSendTime(long wearSendTime) {
-            this.wearSendTime = wearSendTime;
-        }
-
-        public long getWearReadTimestamp() {
-            return wearReadTimestamp;
-        }
-
-        public void setWearReadTimestamp(long wearReadTimestamp) {
-            this.wearReadTimestamp = wearReadTimestamp;
+        public void setRealRequestTime(long realRequestTime) {
+            this.realRequestTime = realRequestTime;
         }
     }
 
@@ -434,16 +425,6 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
         private String mimeType;
 
         private String methodName;
-
-        private long creationTime;
-
-        public void setCreationTime(long creationTime) {
-            this.creationTime = creationTime;
-        }
-
-        public long getCreationTime() {
-            return creationTime;
-        }
 
         public void setFollowRedirects(boolean followRedirects) {
             this.followRedirects = followRedirects;
