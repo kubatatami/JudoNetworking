@@ -57,7 +57,7 @@ public abstract class DefaultBatch<T> implements Batch<T>, AsyncResultCallback {
     @Override
     public void onProgress(int progress) {
         if (mergeCallback != null) {
-            mergeCallback.addProgress(this, progress);
+            mergeCallback.addProgress(progress);
         }
     }
 

@@ -22,7 +22,7 @@ public class MergeCallback<T> {
 
     boolean canceled = false;
 
-    Map<BaseCallback<?>, Integer> progressMap = new HashMap<>();
+    int progress;
 
     Set<AsyncResult> asyncResultSet = new HashSet<>();
 
@@ -50,19 +50,15 @@ public class MergeCallback<T> {
         asyncResultSet.add(asyncResult);
     }
 
-    public final void addProgress(BaseCallback<?> callback, int progress) {
+    public final void addProgress(int progress) {
         if (canceled) {
             return;
         }
-        progressMap.put(callback, progress);
+        this.progress+=progress;
         onMergeProgress(calculateProgress());
     }
 
     protected final int calculateProgress() {
-        int progress = 0;
-        for (int value : progressMap.values()) {
-            progress += value;
-        }
         return (int) ((float) progress / (float) requests);
     }
 

@@ -68,7 +68,7 @@ public class DecoratorCallback<T> extends DefaultCallback<T> {
             internalCallback.get().onProgress(progress);
         }
         if (internalMergeCallback.get() != null) {
-            internalMergeCallback.get().addProgress(this, progress);
+            internalMergeCallback.get().addProgress(progress);
         }
     }
 }
