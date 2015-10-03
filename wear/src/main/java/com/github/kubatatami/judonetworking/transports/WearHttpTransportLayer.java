@@ -203,7 +203,7 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
                     longLog("Response code(" + requestName + ")", response.getCode() + "", JudoLogger.LogLevel.DEBUG);
                 }
                 long wearTime = Math.abs(Math.abs(response.getWearSendTime()) - Math.abs(readTime));
-                JudoLogger.log("Wear time:" + wearTime + "ms", JudoLogger.LogLevel.INFO);
+                JudoLogger.log("Wear send and read sum time: ~" + wearTime + "ms", JudoLogger.LogLevel.INFO);
 
                 return new Connection() {
 
