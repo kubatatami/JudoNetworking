@@ -652,7 +652,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     public int getBestConnectionsSize() {
-        return this.threadPoolSizer.getThreadPoolSize(NetworkUtils.getActiveNetworkInfo(context));
+        return this.threadPoolSizer.getThreadPoolSize(context, NetworkUtils.getActiveNetworkInfo(context));
     }
 
     public void setUrlModifier(UrlModifier urlModifier) {
