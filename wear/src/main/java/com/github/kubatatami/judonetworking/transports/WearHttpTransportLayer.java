@@ -142,7 +142,7 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
     protected WearResponse makeCallAndGetResponse(WearRequest request) throws IOException {
         try {
             int timeoutSum = request.getConnectTimeout() + request.getReadTimeout();
-            messageUtils.setConnectionTimeout(System.currentTimeMillis());
+            request.setCreationTime(System.currentTimeMillis());
             return messageUtils.sendMessageAndReceive(request, timeoutSum, WearResponse.class);
         } catch (IOException ex) {
             if (Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
