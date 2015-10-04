@@ -27,7 +27,7 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
     }
 
     protected HttpTransportLayer getTransportLayer() {
-        if (NetworkUtils.isNetworkAvailable(context)) {
+        if (NetworkUtils.isDirectNetworkAvailable(context)) {
             return okHttpTransportLayer;
         } else {
             return dataLayerHttpTransportLayer;

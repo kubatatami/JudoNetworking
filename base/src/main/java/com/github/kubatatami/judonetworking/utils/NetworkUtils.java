@@ -44,6 +44,10 @@ public class NetworkUtils {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
+    public static boolean isDirectNetworkAvailable(Context context) {
+        NetworkInfo activeNetworkInfo = getActiveNetworkInfo(context);
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected() && activeNetworkInfo.getType() != 16;
+    }
 
     public static boolean isWifi(Context context) {
         if (connectManager == null) {
