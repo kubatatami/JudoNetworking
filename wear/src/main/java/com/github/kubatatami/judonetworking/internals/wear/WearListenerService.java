@@ -1,6 +1,8 @@
 package com.github.kubatatami.judonetworking.internals.wear;
 
 import android.content.pm.PackageManager;
+import android.os.*;
+import android.os.Process;
 
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.transports.WearHttpTransportLayer;
@@ -36,7 +38,7 @@ public class WearListenerService extends WearableListenerService {
     }
 
     @Override
-    public void onMessageReceived(MessageEvent messageEvent) {
+    public void onMessageReceived(final MessageEvent messageEvent) {
         if (messageEvent.getPath().contains(MessageUtils.MSG_PATH)) {
             if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
                 String id = messageEvent.getPath().substring(MessageUtils.MSG_PATH.length());
@@ -48,23 +50,46 @@ public class WearListenerService extends WearableListenerService {
                     }
                 }
             } else {
-                WearHttpTransportLayer.WearResponse response;
-                String id = messageEvent.getPath().substring(MessageUtils.MSG_PATH.length());
+                final String id = messageEvent.getPath().substring(MessageUtils.MSG_PATH.length());
+                WearHttpTransportLayer.WearRequest request = null;
                 try {
-                    WearHttpTransportLayer.WearRequest request = messageUtils.readObject(messageEvent.getData(), WearHttpTransportLayer.WearRequest.class);
-                    response = send(request);
+                    request = messageUtils.readObject(messageEvent.getData(), WearHttpTransportLayer.WearRequest.class);
                 } catch (IOException e) {
-                    response = new WearHttpTransportLayer.WearResponse(e);
                     JudoLogger.log(e);
+                    try {
+                        messageUtils.sendMessage(id, messageEvent.getSourceNodeId(), new WearHttpTransportLayer.WearResponse(e));
+                    } catch (IOException e1) {
+                        JudoLogger.log(e);
+                    }
                 }
-                try {
-                    messageUtils.sendMessage(id, messageEvent.getSourceNodeId(), response);
-                } catch (IOException e) {
-                    JudoLogger.log(e);
+                if (request != null) {
+                    final WearHttpTransportLayer.WearRequest finalRequest = request;
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+                            sendAndSendResponse(finalRequest, id, messageEvent.getSourceNodeId());
+                        }
+                    }).start();
                 }
             }
         } else {
             super.onMessageReceived(messageEvent);
+        }
+    }
+
+    protected void sendAndSendResponse(WearHttpTransportLayer.WearRequest request, String msgId, String nodeId) {
+        WearHttpTransportLayer.WearResponse response;
+        try {
+            response = send(request);
+        } catch (IOException e) {
+            response = new WearHttpTransportLayer.WearResponse(e);
+            JudoLogger.log(e);
+        }
+        try {
+            messageUtils.sendMessage(msgId, nodeId, response);
+        } catch (IOException e) {
+            JudoLogger.log(e);
         }
     }
 
