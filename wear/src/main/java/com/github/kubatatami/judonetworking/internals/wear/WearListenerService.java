@@ -1,11 +1,9 @@
 package com.github.kubatatami.judonetworking.internals.wear;
 
 import android.content.pm.PackageManager;
-import android.os.*;
 import android.os.Process;
 
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
-import com.github.kubatatami.judonetworking.transports.WearHttpTransportLayer;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.WearableListenerService;
 import com.squareup.okhttp.MediaType;
@@ -51,19 +49,19 @@ public class WearListenerService extends WearableListenerService {
                 }
             } else {
                 final String id = messageEvent.getPath().substring(MessageUtils.MSG_PATH.length());
-                WearHttpTransportLayer.WearRequest request = null;
+                DataLayerHttpTransportLayer.WearRequest request = null;
                 try {
-                    request = messageUtils.readObject(messageEvent.getData(), WearHttpTransportLayer.WearRequest.class);
+                    request = messageUtils.readObject(messageEvent.getData(), DataLayerHttpTransportLayer.WearRequest.class);
                 } catch (IOException e) {
                     JudoLogger.log(e);
                     try {
-                        messageUtils.sendMessage(id, messageEvent.getSourceNodeId(), new WearHttpTransportLayer.WearResponse(e));
+                        messageUtils.sendMessage(id, messageEvent.getSourceNodeId(), new DataLayerHttpTransportLayer.WearResponse(e));
                     } catch (IOException e1) {
                         JudoLogger.log(e);
                     }
                 }
                 if (request != null) {
-                    final WearHttpTransportLayer.WearRequest finalRequest = request;
+                    final DataLayerHttpTransportLayer.WearRequest finalRequest = request;
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -78,12 +76,12 @@ public class WearListenerService extends WearableListenerService {
         }
     }
 
-    protected void sendAndSendResponse(WearHttpTransportLayer.WearRequest request, String msgId, String nodeId) {
-        WearHttpTransportLayer.WearResponse response;
+    protected void sendAndSendResponse(DataLayerHttpTransportLayer.WearRequest request, String msgId, String nodeId) {
+        DataLayerHttpTransportLayer.WearResponse response;
         try {
             response = send(request);
         } catch (IOException e) {
-            response = new WearHttpTransportLayer.WearResponse(e);
+            response = new DataLayerHttpTransportLayer.WearResponse(e);
             JudoLogger.log(e);
         }
         try {
@@ -93,7 +91,7 @@ public class WearListenerService extends WearableListenerService {
         }
     }
 
-    protected WearHttpTransportLayer.WearResponse send(final WearHttpTransportLayer.WearRequest request) throws IOException {
+    protected DataLayerHttpTransportLayer.WearResponse send(final DataLayerHttpTransportLayer.WearRequest request) throws IOException {
         RequestBody requestBody = null;
         OkHttpClient client = baseClient.clone();
         client.setConnectTimeout(request.getConnectTimeout(), TimeUnit.MILLISECONDS);
@@ -125,7 +123,7 @@ public class WearListenerService extends WearableListenerService {
         long realRequestTime = System.currentTimeMillis();
         Response response = client.newCall(builder.build()).execute();
         realRequestTime = System.currentTimeMillis() - realRequestTime;
-        WearHttpTransportLayer.WearResponse wearResponse = new WearHttpTransportLayer.WearResponse();
+        DataLayerHttpTransportLayer.WearResponse wearResponse = new DataLayerHttpTransportLayer.WearResponse();
         wearResponse.setSuccessful(response.isSuccessful());
         wearResponse.setCode(response.code());
         wearResponse.setMessage(response.message());

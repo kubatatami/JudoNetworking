@@ -15,10 +15,10 @@ public class DefaultThreadPoolSizer implements ThreadPoolSizer {
 
     @Override
     public int getThreadPoolSize(Context context, NetworkInfo info) {
-        if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-            return 6;
-        }
         if (info == null || !info.isConnectedOrConnecting()) {
+            if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+                return 6;
+            }
             return DEFAULT_CONNECTIONS;
         }
         switch (info.getType()) {

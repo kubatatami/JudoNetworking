@@ -102,7 +102,7 @@ public class MessageUtils {
             }
             bestNodeId = node.getId();
         }
-        if(bestNodeId == null){
+        if (bestNodeId == null) {
             throw new ConnectionException("GoogleApiClient error jj_proxy node not found!");
         }
         return bestNodeId;
