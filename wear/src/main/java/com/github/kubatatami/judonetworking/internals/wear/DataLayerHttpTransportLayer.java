@@ -92,7 +92,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
                 request.setBody(outputStream.toByteArray());
             }
             if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                if (request.getBody() != null && requestInfo.entity != null) {
+                if (request.getBody() != null && request.getBody().length > 0 && requestInfo.entity != null) {
                     longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()), JudoLogger.LogLevel.INFO);
                     requestInfo.entity.reset();
                 } else {
@@ -409,7 +409,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
 
     public static class WearRequest {
 
-        private String body;
+        private String body = "";
 
         private boolean followRedirects;
 
