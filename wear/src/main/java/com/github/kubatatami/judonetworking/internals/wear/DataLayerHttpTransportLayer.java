@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.internals.wear;
 
 import android.content.Context;
+import android.util.Base64;
 
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
@@ -326,7 +327,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
 
         private int code;
 
-        private byte[] body;
+        private String body;
 
         private boolean successful;
 
@@ -341,7 +342,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
             this.message = exception.getMessage();
             this.headers = new HashMap<>();
             this.code = 0;
-            this.body = new byte[0];
+            this.body = "";
             this.successful = false;
         }
 
@@ -370,11 +371,11 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
         }
 
         public byte[] getBody() {
-            return body;
+            return Base64.decode(body, Base64.NO_WRAP);
         }
 
         public void setBody(byte[] body) {
-            this.body = body;
+            this.body = Base64.encodeToString(body, Base64.NO_WRAP);
         }
 
         public boolean isSuccessful() {
@@ -408,7 +409,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
 
     public static class WearRequest {
 
-        private byte[] body;
+        private String body;
 
         private boolean followRedirects;
 
@@ -465,11 +466,11 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
         }
 
         public byte[] getBody() {
-            return body;
+            return Base64.decode(body, Base64.NO_WRAP);
         }
 
         public void setBody(byte[] body) {
-            this.body = body;
+            this.body = Base64.encodeToString(body, Base64.NO_WRAP);
         }
 
         public String getMimeType() {

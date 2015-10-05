@@ -96,8 +96,9 @@ public class WearListenerService extends WearableListenerService {
         OkHttpClient client = baseClient.clone();
         client.setConnectTimeout(request.getConnectTimeout(), TimeUnit.MILLISECONDS);
         client.setReadTimeout(request.getReadTimeout(), TimeUnit.MILLISECONDS);
+        client.setFollowRedirects(request.isFollowRedirects());
         Request.Builder builder = new Request.Builder();
-        if (request.getBody() != null) {
+        if (request.getBody() != null && request.getBody().length > 0) {
             requestBody = new RequestBody() {
                 @Override
                 public MediaType contentType() {
