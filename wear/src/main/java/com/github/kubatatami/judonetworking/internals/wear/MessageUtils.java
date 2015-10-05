@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
+import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.wear.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -45,6 +46,8 @@ public class MessageUtils {
 
     protected long readTimeout = 15000;
 
+    protected static boolean debugLog = false;
+
     public MessageUtils(Context context) {
         this.context = context.getApplicationContext();
         googleClient = new GoogleApiClient.Builder(context.getApplicationContext())
@@ -80,11 +83,17 @@ public class MessageUtils {
     }
 
     public <T> T readObject(byte[] msg, Class<T> clazz) throws IOException {
+        if (debugLog) {
+            JudoLogger.log("Read wear message: " + new String(msg), JudoLogger.LogLevel.INFO);
+        }
         return objectMapper.readValue(msg, clazz);
     }
 
     public void sendMessage(String msgId, String nodeId, Object msg) throws IOException {
         byte[] message = objectMapper.writeValueAsBytes(msg);
+        if (debugLog) {
+            JudoLogger.log("Send wear message: " + new String(message), JudoLogger.LogLevel.INFO);
+        }
         MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(googleClient,
                 nodeId, MSG_PATH + msgId, message).await(sendTimeout, TimeUnit.MILLISECONDS);
         Status status = result.getStatus();
@@ -141,5 +150,9 @@ public class MessageUtils {
 
     public void setReadTimeout(long readTimeout) {
         this.readTimeout = readTimeout;
+    }
+
+    public static void setDebugLog(boolean debugLog) {
+        MessageUtils.debugLog = debugLog;
     }
 }
