@@ -10,6 +10,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.wearable.CapabilityApi;
+import com.google.android.gms.wearable.CapabilityInfo;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.Wearable;
@@ -58,9 +59,13 @@ public class MessageUtils {
 
     public <T> T sendMessageAndReceive(Object msg, int operationTimeout, Class<T> clazz) throws IOException {
         makeSureIsConnected();
-        Set<Node> nodes = Wearable.CapabilityApi.getCapability(
+        CapabilityInfo capabilityInfo = Wearable.CapabilityApi.getCapability(
                 googleClient, context.getString(R.string.jj_request_proxy),
-                CapabilityApi.FILTER_REACHABLE).await().getCapability().getNodes();
+                CapabilityApi.FILTER_REACHABLE).await().getCapability();
+        if (capabilityInfo == null) {
+            throw new ConnectionException("CapabilityApi unavailable");
+        }
+        Set<Node> nodes = capabilityInfo.getNodes();
         String id = generateUniqId();
         Object waitObject = new Object();
         waitObjects.put(id, waitObject);
