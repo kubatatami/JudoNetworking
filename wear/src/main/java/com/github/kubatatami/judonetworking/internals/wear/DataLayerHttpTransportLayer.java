@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -327,7 +328,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
 
         private int code;
 
-        private String body;
+        private byte[] body;
 
         private boolean successful;
 
@@ -342,7 +343,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
             this.message = exception.getMessage();
             this.headers = new HashMap<>();
             this.code = 0;
-            this.body = "";
+            this.body = new byte[0];
             this.successful = false;
         }
 
@@ -375,7 +376,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
         }
 
         public void setBody(byte[] body) {
-            this.body = Base64.encodeToString(body, Base64.NO_WRAP);
+            this.body = body;
         }
 
         public boolean isSuccessful() {
@@ -405,11 +406,23 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
         public void setRealRequestTime(long realRequestTime) {
             this.realRequestTime = realRequestTime;
         }
+
+        @Override
+        public String toString() {
+            return "WearResponse{" +
+                    "headers=" + headers +
+                    ", code=" + code +
+                    ", body=" + new String(body) +
+                    ", successful=" + successful +
+                    ", message='" + message + '\'' +
+                    ", realRequestTime=" + realRequestTime +
+                    '}';
+        }
     }
 
     public static class WearRequest {
 
-        private String body = "";
+        private byte[] body;
 
         private boolean followRedirects;
 
@@ -470,7 +483,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
         }
 
         public void setBody(byte[] body) {
-            this.body = Base64.encodeToString(body, Base64.NO_WRAP);
+            this.body = body;
         }
 
         public String getMimeType() {
@@ -487,6 +500,20 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
 
         public String getMethodName() {
             return methodName;
+        }
+
+        @Override
+        public String toString() {
+            return "WearRequest{" +
+                    "body=" + new String(body) +
+                    ", followRedirects=" + followRedirects +
+                    ", headers=" + headers +
+                    ", connectTimeout=" + connectTimeout +
+                    ", readTimeout=" + readTimeout +
+                    ", url='" + url + '\'' +
+                    ", mimeType='" + mimeType + '\'' +
+                    ", methodName='" + methodName + '\'' +
+                    '}';
         }
     }
 }

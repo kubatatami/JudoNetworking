@@ -22,6 +22,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-core:' + rootProject.ext.jacksonVersion
     compile 'com.fasterxml.jackson.core:jackson-annotations:' + rootProject.ext.jacksonVersion
     compile 'com.fasterxml.jackson.core:jackson-databind:' + rootProject.ext.jacksonVersion
+    compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-smile:' + rootProject.ext.jacksonVersion
     compile 'com.google.android.support:wearable:1.3.0'
     compile 'com.google.android.gms:play-services-wearable:8.1.0'
     compile fileTree(dir: 'libs', include: ['*.jar'])

@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking.internals.wear;
 import android.content.Context;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.smile.SmileFactory;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.wear.R;
@@ -29,7 +30,9 @@ public class MessageUtils {
 
     protected Random random = new Random();
 
-    protected ObjectMapper objectMapper = new ObjectMapper();
+    protected SmileFactory f = new SmileFactory();
+
+    protected ObjectMapper objectMapper = new ObjectMapper(f);
 
     protected Context context;
 
@@ -88,16 +91,17 @@ public class MessageUtils {
     }
 
     public <T> T readObject(byte[] msg, Class<T> clazz) throws IOException {
+        T result = objectMapper.readValue(msg, clazz);
         if (debugLog) {
-            JudoLogger.log("Read wear message: " + new String(msg), JudoLogger.LogLevel.INFO);
+            JudoLogger.log("Read wear message: " + result.toString(), JudoLogger.LogLevel.INFO);
         }
-        return objectMapper.readValue(msg, clazz);
+        return result;
     }
 
     public void sendMessage(String msgId, String nodeId, Object msg) throws IOException {
         byte[] message = objectMapper.writeValueAsBytes(msg);
         if (debugLog) {
-            JudoLogger.log("Send wear message: " + new String(message), JudoLogger.LogLevel.INFO);
+            JudoLogger.log("Send wear message: " + msg.toString(), JudoLogger.LogLevel.INFO);
         }
         MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(googleClient,
                 nodeId, MSG_PATH + msgId, message).await(sendTimeout, TimeUnit.MILLISECONDS);
