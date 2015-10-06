@@ -410,7 +410,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
             return "WearResponse{" +
                     "headers=" + headers +
                     ", code=" + code +
-                    ", body=" + new String(body) +
+                    ", body=" + MessageUtils.getBodyString(body) +
                     ", successful=" + successful +
                     ", message='" + message + '\'' +
                     ", realRequestTime=" + realRequestTime +
@@ -503,7 +503,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
         @Override
         public String toString() {
             return "WearRequest{" +
-                    "body=" + (body == null ? "" : new String(body)) +
+                    "body=" + MessageUtils.getBodyString(body) +
                     ", followRedirects=" + followRedirects +
                     ", headers=" + headers +
                     ", connectTimeout=" + connectTimeout +

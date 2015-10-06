@@ -17,6 +17,7 @@ import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.Wearable;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -163,5 +164,18 @@ public class MessageUtils {
 
     public static void setDebugLog(boolean debugLog) {
         MessageUtils.debugLog = debugLog;
+    }
+
+    public static String getBodyString(byte[] body) {
+        if (body == null || body.length == 0) {
+            return "<empty>";
+        }
+        String string = new String(body);
+        try {
+            string.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            return "<binary data size " + body.length + " bytes>";
+        }
+        return string;
     }
 }
