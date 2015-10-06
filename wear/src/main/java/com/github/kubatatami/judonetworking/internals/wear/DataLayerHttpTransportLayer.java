@@ -1,7 +1,6 @@
 package com.github.kubatatami.judonetworking.internals.wear;
 
 import android.content.Context;
-import android.util.Base64;
 
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
@@ -372,7 +371,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
         }
 
         public byte[] getBody() {
-            return Base64.decode(body, Base64.NO_WRAP);
+            return body;
         }
 
         public void setBody(byte[] body) {
@@ -479,7 +478,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
         }
 
         public byte[] getBody() {
-            return Base64.decode(body, Base64.NO_WRAP);
+            return body;
         }
 
         public void setBody(byte[] body) {
