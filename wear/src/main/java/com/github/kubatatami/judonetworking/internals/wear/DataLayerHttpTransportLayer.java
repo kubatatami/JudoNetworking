@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -504,7 +503,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
         @Override
         public String toString() {
             return "WearRequest{" +
-                    "body=" + new String(body) +
+                    "body=" + (body == null ? "" : new String(body)) +
                     ", followRedirects=" + followRedirects +
                     ", headers=" + headers +
                     ", connectTimeout=" + connectTimeout +
