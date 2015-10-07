@@ -170,12 +170,6 @@ public class MessageUtils {
         if (body == null || body.length == 0) {
             return "<empty>";
         }
-        String string = new String(body);
-        try {
-            string.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            return "<binary data size " + body.length + " bytes>";
-        }
-        return string;
+        return "<binary data size " + body.length + " bytes>";
     }
 }
