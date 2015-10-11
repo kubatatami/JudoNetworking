@@ -23,13 +23,9 @@ public class JudoAppCompatActivity extends AppCompatActivity implements Stateful
         super.onCreate(savedInstanceState);
         if (savedInstanceState == null) {
             id = JudoActivity.generateId(this);
+        }else{
+            id = savedInstanceState.getString(JudoActivity.UNIQUE_ACTIVITY_ID);
         }
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        id = savedInstanceState.getString("UNIQUE_ACTIVITY_ID");
     }
 
     @Override

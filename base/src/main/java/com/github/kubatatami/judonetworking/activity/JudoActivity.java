@@ -24,18 +24,14 @@ public class JudoActivity extends Activity implements StatefulController {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (savedInstanceState == null) {
-            id = generateId(this);
+            id = JudoActivity.generateId(this);
+        }else{
+            id = savedInstanceState.getString(JudoActivity.UNIQUE_ACTIVITY_ID);
         }
     }
 
     static String generateId(Object object) {
         return object.hashCode() + "" + object.getClass().hashCode() + System.currentTimeMillis();
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        id = savedInstanceState.getString("UNIQUE_ACTIVITY_ID");
     }
 
     @Override
