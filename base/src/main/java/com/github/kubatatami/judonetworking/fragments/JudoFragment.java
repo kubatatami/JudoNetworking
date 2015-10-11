@@ -1,7 +1,7 @@
 package com.github.kubatatami.judonetworking.fragments;
 
-import android.app.DialogFragment;
-import android.app.Fragment;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.Fragment;
 
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
@@ -16,7 +16,7 @@ import java.lang.reflect.Field;
 /**
  * Created by Kuba on 01/07/15.
  */
-public class JudoSupportFragment extends DialogFragment implements StatefulController {
+public class JudoFragment extends DialogFragment implements StatefulController {
 
     private String mWho;
 
