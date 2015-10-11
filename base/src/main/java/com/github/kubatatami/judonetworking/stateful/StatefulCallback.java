@@ -76,8 +76,10 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
             if (!consume) {
                 if (data != null) {
                     this.internalCallback.onSuccess(data);
+                    onFinish();
                 } else if (exception != null) {
                     this.internalCallback.onError(exception);
+                    onFinish();
                 }
             }
         }

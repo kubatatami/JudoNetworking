@@ -74,8 +74,10 @@ public final class StatefulBatch<T> extends DecoratorBatch<T> implements Statefu
             if (!consume) {
                 if (data != null) {
                     this.batch.onSuccess(data);
+                    onFinish();
                 } else if (exception != null) {
                     this.batch.onError(exception);
+                    onFinish();
                 }
             }
         }

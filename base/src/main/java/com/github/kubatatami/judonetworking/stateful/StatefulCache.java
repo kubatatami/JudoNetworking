@@ -53,8 +53,8 @@ public class StatefulCache {
     }
 
     public static boolean connectControllerCallbacks(StatefulController controller, BaseCallback<?>... callbacks) {
-        boolean result=false;
-        for(BaseCallback<?> callback : callbacks) {
+        boolean result = false;
+        for (BaseCallback<?> callback : callbacks) {
             result |= connectControllerCallback(controller, callback.getClass().hashCode(), callback);
         }
         return result;
