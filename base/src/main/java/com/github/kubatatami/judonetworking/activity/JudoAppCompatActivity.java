@@ -44,7 +44,7 @@ public class JudoAppCompatActivity extends AppCompatActivity implements Stateful
     }
 
     @Override
-    public void onDestroy() {
+    protected void onDestroy() {
         super.onDestroy();
         if (isFinishing()) {
             StatefulCache.removeAllStatefulCallbacks(getWho());

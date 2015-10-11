@@ -50,7 +50,7 @@ public class JudoActivity extends Activity implements StatefulController {
     }
 
     @Override
-    public void onDestroy() {
+    protected void onDestroy() {
         super.onDestroy();
         if (isFinishing()) {
             StatefulCache.removeAllStatefulCallbacks(getWho());
