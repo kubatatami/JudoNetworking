@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.fragments;
 
 
+import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.Fragment;
 
@@ -63,18 +64,25 @@ public class JudoFragment extends DialogFragment implements StatefulController {
         StatefulCache.cancelRequest(this, id);
     }
 
+    static <T, Z extends T> String getFragmentWho(Activity activity, Class<T> clazz, Z object){
+        try {
+            if(!(activity instanceof StatefulController)){
+                throw new RuntimeException("Activity must be instance of JudoActivity.");
+            }
+            Field whoFiled = clazz.getDeclaredField("mWho");
+            whoFiled.setAccessible(true);
+            return ((StatefulController)activity).getWho() + whoFiled.get(object);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public String getWho() {
         if (mWho == null) {
-            try {
-                Field whoFiled = Fragment.class.getDeclaredField("mWho");
-                whoFiled.setAccessible(true);
-                mWho = (String) whoFiled.get(this);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            mWho = getFragmentWho(getActivity(),Fragment.class, this);
         }
-        return "activity_" + getActivity().getTaskId() + "_fragment_" + mWho;
+        return mWho;
     }
 
 }

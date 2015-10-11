@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.activity;
 
 import android.app.Activity;
+import android.os.Bundle;
 
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
@@ -15,9 +16,37 @@ import com.github.kubatatami.judonetworking.stateful.StatefulController;
  */
 public class JudoActivity extends Activity implements StatefulController {
 
+    private String id;
+
+    static String UNIQUE_ACTIVITY_ID = "UNIQUE_ACTIVITY_ID";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (savedInstanceState == null) {
+            id = generateId(this);
+        }
+    }
+
+    static String generateId(Object object) {
+        return object.hashCode() + "" + object.getClass().hashCode() + System.currentTimeMillis();
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        id = savedInstanceState.getString("UNIQUE_ACTIVITY_ID");
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(UNIQUE_ACTIVITY_ID, id);
+    }
+
     @Override
     public String getWho() {
-        return "activity_" + getTaskId();
+        return "activity_" + id;
     }
 
     @Override
@@ -25,7 +54,7 @@ public class JudoActivity extends Activity implements StatefulController {
         super.onDestroy();
         if (isFinishing()) {
             StatefulCache.removeAllStatefulCallbacks(getWho());
-        }else{
+        } else {
             StatefulCache.removeAllControllersCallbacks(getWho());
         }
     }
@@ -54,7 +83,7 @@ public class JudoActivity extends Activity implements StatefulController {
         return new StatefulBatch<>(this, id, batch);
     }
 
-    public void cancelRequest(int id){
+    public void cancelRequest(int id) {
         StatefulCache.cancelRequest(this, id);
     }
 }

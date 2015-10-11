@@ -65,15 +65,9 @@ public class JudoSupportFragment extends DialogFragment implements StatefulContr
     @Override
     public String getWho() {
         if (mWho == null) {
-            try {
-                Field whoFiled = Fragment.class.getDeclaredField("mWho");
-                whoFiled.setAccessible(true);
-                mWho = (String) whoFiled.get(this);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            mWho = JudoFragment.getFragmentWho(getActivity(), Fragment.class, this);
         }
-        return "activity_" + getActivity().getTaskId() + "_fragment_" + mWho;
+        return mWho;
     }
 
 }
