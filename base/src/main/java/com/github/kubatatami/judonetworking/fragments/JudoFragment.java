@@ -59,7 +59,7 @@ public class JudoFragment extends DialogFragment implements StatefulController {
         return new StatefulBatch<>(this, id, batch);
     }
 
-    public void cancelRequest(int id){
+    public void cancelRequest(int id) {
         StatefulCache.cancelRequest(this, id);
     }
 
@@ -74,7 +74,7 @@ public class JudoFragment extends DialogFragment implements StatefulController {
                 throw new RuntimeException(e);
             }
         }
-        return "fragment_" + mWho;
+        return "activity_" + getActivity().getTaskId() + "_fragment_" + mWho;
     }
 
 }

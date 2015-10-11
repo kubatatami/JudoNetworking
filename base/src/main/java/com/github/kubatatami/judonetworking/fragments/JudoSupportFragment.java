@@ -73,7 +73,7 @@ public class JudoSupportFragment extends DialogFragment implements StatefulContr
                 throw new RuntimeException(e);
             }
         }
-        return "fragment_" + mWho;
+        return "activity_" + getActivity().getTaskId() + "_fragment_" + mWho;
     }
 
 }
