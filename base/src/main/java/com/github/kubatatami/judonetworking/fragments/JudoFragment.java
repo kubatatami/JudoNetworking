@@ -59,6 +59,10 @@ public class JudoFragment extends DialogFragment implements StatefulController {
         return new StatefulBatch<>(this, id, batch);
     }
 
+    public void cancelRequest(int id){
+        StatefulCache.cancelRequest(this, id);
+    }
+
     @Override
     public String getWho() {
         if (mWho == null) {
@@ -72,6 +76,5 @@ public class JudoFragment extends DialogFragment implements StatefulController {
         }
         return "fragment_" + mWho;
     }
-
 
 }

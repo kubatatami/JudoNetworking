@@ -54,4 +54,7 @@ public class JudoActivity extends Activity implements StatefulController {
         return new StatefulBatch<>(this, id, batch);
     }
 
+    public void cancelRequest(int id){
+        StatefulCache.cancelRequest(this, id);
+    }
 }
