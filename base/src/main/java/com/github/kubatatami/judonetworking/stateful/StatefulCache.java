@@ -23,7 +23,7 @@ public class StatefulCache {
         fragmentCallbackMap.put(id, statefulCallback);
     }
 
-    public static void removeStatefulCallback(String who, int id) {
+    public static void endStatefulCallback(String who, int id) {
         if (callbacksMap.containsKey(who)) {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(who);
             if (fragmentCallbackMap.containsKey(id)) {
@@ -33,7 +33,7 @@ public class StatefulCache {
     }
 
 
-    public static void removeCallbacks(String who) {
+    public static void removeAllControllersCallbacks(String who) {
         if (callbacksMap.containsKey(who)) {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(who);
             for (Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()) {
@@ -42,7 +42,7 @@ public class StatefulCache {
         }
     }
 
-    public static void removeStatefulCallbacks(String who) {
+    public static void removeAllStatefulCallbacks(String who) {
         if (callbacksMap.containsKey(who)) {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(who);
             for (Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()) {
@@ -52,7 +52,7 @@ public class StatefulCache {
         }
     }
 
-    public static boolean connectCallback(StatefulController controller, int id, BaseCallback<?> callback) {
+    public static boolean connectControllerCallback(StatefulController controller, int id, BaseCallback<?> callback) {
         if (callbacksMap.containsKey(controller.getWho())) {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(controller.getWho());
             if (fragmentCallbackMap.containsKey(id)) {

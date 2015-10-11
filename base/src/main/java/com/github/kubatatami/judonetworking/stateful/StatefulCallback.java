@@ -6,9 +6,8 @@ import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.callbacks.DecoratorCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-import java.lang.ref.WeakReference;
 
-public final class StatefulCallback<T> extends DecoratorCallback<T> implements Stateful<Callback<?>> {
+public final class StatefulCallback<T> extends DecoratorCallback<T> implements Stateful<Callback<T>> {
 
     private AsyncResult asyncResult;
 
@@ -47,8 +46,8 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
     @Override
     public void onFinish() {
         super.onFinish();
-        if (internalCallback.get() != null) {
-            StatefulCache.removeStatefulCallback(who, id);
+        if (internalCallback != null) {
+            StatefulCache.endStatefulCallback(who, id);
             consume = true;
         }
     }
@@ -68,17 +67,17 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
     }
 
     @Override
-    public void setCallback(Callback<?> callback) {
-        this.internalCallback = new WeakReference<>((Callback<T>) callback);
+    public void setCallback(Callback<T> callback) {
+        this.internalCallback = callback;
         if (callback != null) {
             if (progress > 0) {
                 callback.onProgress(progress);
             }
             if (!consume) {
                 if (data != null) {
-                    this.internalCallback.get().onSuccess(data);
+                    this.internalCallback.onSuccess(data);
                 } else if (exception != null) {
-                    this.internalCallback.get().onError(exception);
+                    this.internalCallback.onError(exception);
                 }
             }
         }

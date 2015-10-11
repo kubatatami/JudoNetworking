@@ -5,9 +5,8 @@ import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.batches.DecoratorBatch;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-import java.lang.ref.WeakReference;
 
-public final class StatefulBatch<T> extends DecoratorBatch<T> implements Stateful<Batch<?>> {
+public final class StatefulBatch<T> extends DecoratorBatch<T> implements Stateful<Batch<T>> {
 
     private AsyncResult asyncResult;
 
@@ -46,8 +45,8 @@ public final class StatefulBatch<T> extends DecoratorBatch<T> implements Statefu
     @Override
     public void onFinish() {
         super.onFinish();
-        if (batch.get() != null) {
-            StatefulCache.removeStatefulCallback(who, id);
+        if (batch != null) {
+            StatefulCache.endStatefulCallback(who, id);
             consume = true;
         }
     }
@@ -66,17 +65,17 @@ public final class StatefulBatch<T> extends DecoratorBatch<T> implements Statefu
         }
     }
 
-    public void setCallback(Batch<?> batch) {
-        this.batch = new WeakReference<>((Batch<T>) batch);
+    public void setCallback(Batch<T> batch) {
+        this.batch = batch;
         if (batch != null) {
             if (progress > 0) {
                 batch.onProgress(progress);
             }
             if (!consume) {
                 if (data != null) {
-                    this.batch.get().onSuccess(data);
+                    this.batch.onSuccess(data);
                 } else if (exception != null) {
-                    this.batch.get().onError(exception);
+                    this.batch.onError(exception);
                 }
             }
         }

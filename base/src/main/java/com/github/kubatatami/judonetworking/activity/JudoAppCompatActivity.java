@@ -24,9 +24,9 @@ public class JudoAppCompatActivity extends AppCompatActivity implements Stateful
     public void onDestroy() {
         super.onDestroy();
         if (isFinishing()) {
-            StatefulCache.removeStatefulCallbacks(getWho());
+            StatefulCache.removeAllStatefulCallbacks(getWho());
         } else {
-            StatefulCache.removeCallbacks(getWho());
+            StatefulCache.removeAllControllersCallbacks(getWho());
         }
     }
 
@@ -35,7 +35,7 @@ public class JudoAppCompatActivity extends AppCompatActivity implements Stateful
     }
 
     protected boolean connectCallback(int id, BaseCallback<?> callback) {
-        return StatefulCache.connectCallback(this, id, callback);
+        return StatefulCache.connectControllerCallback(this, id, callback);
     }
 
     protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {

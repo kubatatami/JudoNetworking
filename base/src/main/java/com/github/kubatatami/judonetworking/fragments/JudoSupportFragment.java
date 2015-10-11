@@ -23,14 +23,14 @@ public class JudoSupportFragment extends DialogFragment implements StatefulContr
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        StatefulCache.removeCallbacks(getWho());
+        StatefulCache.removeAllControllersCallbacks(getWho());
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         if (isRemoving()) {
-            StatefulCache.removeStatefulCallbacks(getWho());
+            StatefulCache.removeAllStatefulCallbacks(getWho());
         }
     }
 
@@ -39,7 +39,7 @@ public class JudoSupportFragment extends DialogFragment implements StatefulContr
     }
 
     protected boolean connectCallback(int id, BaseCallback<?> callback) {
-        return StatefulCache.connectCallback(this, id, callback);
+        return StatefulCache.connectControllerCallback(this, id, callback);
     }
 
     protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {
