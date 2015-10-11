@@ -55,8 +55,8 @@ public class JudoActivity extends Activity implements StatefulController {
         }
     }
 
-    protected boolean connectCallback(BaseCallback<?> callback) {
-        return connectCallback(callback.getClass().hashCode(), callback);
+    protected boolean connectCallback(BaseCallback<?>... callbacks) {
+        return StatefulCache.connectControllerCallbacks(this, callbacks);
     }
 
     protected boolean connectCallback(int id, BaseCallback<?> callback) {

@@ -50,8 +50,8 @@ public class JudoFragmentActivity extends FragmentActivity implements StatefulCo
         }
     }
 
-    protected boolean connectCallback(BaseCallback<?> callback) {
-        return connectCallback(callback.getClass().hashCode(), callback);
+    protected boolean connectCallback(BaseCallback<?>... callbacks) {
+        return StatefulCache.connectControllerCallbacks(this, callbacks);
     }
 
     protected boolean connectCallback(int id, BaseCallback<?> callback) {

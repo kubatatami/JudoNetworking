@@ -52,6 +52,14 @@ public class StatefulCache {
         }
     }
 
+    public static boolean connectControllerCallbacks(StatefulController controller, BaseCallback<?>... callbacks) {
+        boolean result=false;
+        for(BaseCallback<?> callback : callbacks) {
+            result |= connectControllerCallback(controller, callback.getClass().hashCode(), callback);
+        }
+        return result;
+    }
+
     public static boolean connectControllerCallback(StatefulController controller, int id, BaseCallback<?> callback) {
         if (callbacksMap.containsKey(controller.getWho())) {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(controller.getWho());
