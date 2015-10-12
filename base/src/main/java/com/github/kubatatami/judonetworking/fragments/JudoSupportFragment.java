@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking.fragments;
 
+import android.os.Handler;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 
@@ -19,6 +20,7 @@ import java.lang.reflect.Field;
 public class JudoSupportFragment extends DialogFragment implements StatefulController {
 
     private String mWho;
+    private Handler handler = new Handler();
 
     @Override
     public void onDestroyView() {
@@ -29,7 +31,7 @@ public class JudoSupportFragment extends DialogFragment implements StatefulContr
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (isRemoving()) {
+        if (getActivity().isFinishing()) {
             StatefulCache.removeAllStatefulCallbacks(getWho());
         }
     }

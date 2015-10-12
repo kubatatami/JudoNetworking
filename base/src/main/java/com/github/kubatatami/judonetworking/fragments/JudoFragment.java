@@ -31,7 +31,7 @@ public class JudoFragment extends DialogFragment implements StatefulController {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (isRemoving()) {
+        if (getActivity().isFinishing()) {
             StatefulCache.removeAllStatefulCallbacks(getWho());
         }
     }
