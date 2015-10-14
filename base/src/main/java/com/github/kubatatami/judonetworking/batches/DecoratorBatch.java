@@ -3,8 +3,6 @@ package com.github.kubatatami.judonetworking.batches;
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-import java.lang.ref.WeakReference;
-
 /**
  * Created by Kuba on 02/07/15.
  */

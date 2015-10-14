@@ -23,7 +23,7 @@ public class JudoAppCompatActivity extends AppCompatActivity implements Stateful
         super.onCreate(savedInstanceState);
         if (savedInstanceState == null) {
             id = JudoActivity.generateId(this);
-        }else{
+        } else {
             id = savedInstanceState.getString(JudoActivity.UNIQUE_ACTIVITY_ID);
         }
     }
@@ -73,7 +73,7 @@ public class JudoAppCompatActivity extends AppCompatActivity implements Stateful
         return new StatefulBatch<>(this, id, batch);
     }
 
-    public void cancelRequest(int id){
+    public void cancelRequest(int id) {
         StatefulCache.cancelRequest(this, id);
     }
 }

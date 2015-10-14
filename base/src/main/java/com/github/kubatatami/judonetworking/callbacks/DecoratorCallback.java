@@ -4,8 +4,6 @@ import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-import java.lang.ref.WeakReference;
-
 /**
  * Created by Kuba on 19/03/15.
  */

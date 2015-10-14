@@ -2,7 +2,6 @@ package com.github.kubatatami.judonetworking.activity;
 
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AppCompatActivity;
 
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
@@ -24,7 +23,7 @@ public class JudoFragmentActivity extends FragmentActivity implements StatefulCo
         super.onCreate(savedInstanceState);
         if (savedInstanceState == null) {
             id = JudoActivity.generateId(this);
-        }else{
+        } else {
             id = savedInstanceState.getString(JudoActivity.UNIQUE_ACTIVITY_ID);
         }
     }
@@ -74,7 +73,7 @@ public class JudoFragmentActivity extends FragmentActivity implements StatefulCo
         return new StatefulBatch<>(this, id, batch);
     }
 
-    public void cancelRequest(int id){
+    public void cancelRequest(int id) {
         StatefulCache.cancelRequest(this, id);
     }
 }

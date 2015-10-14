@@ -10,8 +10,6 @@ import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.internals.streams.RequestOutputStream;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
-import com.github.kubatatami.judonetworking.utils.SecurityUtils;
-import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
@@ -23,8 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
-import java.net.Proxy;
-import java.net.URL;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
@@ -43,41 +39,13 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
     protected OkHttpClient baseClient = new OkHttpClient();
 
-
-    public OkHttpTransportLayer() {
-        baseClient.setAuthenticator(new Authenticator() {
-            @Override
-            public Request authenticate(Proxy proxy, Response response) throws IOException {
-                if (authKey != null) {
-                    return response.request().newBuilder().header("Authorization", authKey).build();
-                } else {
-                    return null;
-                }
-            }
-
-            @Override
-            public Request authenticateProxy(Proxy proxy, Response response) throws IOException {
-                return null;
-            }
-        });
-    }
-
     protected void initSetup(OkHttpClient client, Request.Builder builder, ProtocolController.RequestInfo requestInfo,
-                             int timeout, TimeStat timeStat, CacheInfo cacheInfo) throws Exception {
+                             int timeout, TimeStat timeStat) throws Exception {
         client.setFollowRedirects(followRedirection);
         client.setFollowSslRedirects(followRedirection);
-        if (cacheInfo != null) {
-            if (cacheInfo.hash != null) {
-                builder.addHeader("If-None-Match", cacheInfo.hash);
-            } else if (cacheInfo.time != null) {
-                builder.addHeader("If-Modified-Since", format.format(new Date(cacheInfo.time)));
-            }
-        }
+
         if (requestInfo.mimeType != null) {
             builder.addHeader("Content-Type", requestInfo.mimeType);
-        }
-        if (authKey != null) {
-            builder.addHeader("Authorization", authKey);
         }
         client.setConnectTimeout(connectTimeout, TimeUnit.MILLISECONDS);
 
@@ -103,16 +71,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                                    final TimeStat timeStat, Method method, int debugFlags) throws Exception {
         RequestBody requestBody = null;
         String methodName = "GET";
-
         try {
-            if (digestAuth != null) {
-                String digestHeader = SecurityUtils.getDigestAuthHeader(digestAuth, new URL(requestInfo.url), requestInfo, username, password);
-                if ((debugFlags & Endpoint.TOKEN_DEBUG) > 0) {
-                    longLog("digest", digestHeader, JudoLogger.LogLevel.DEBUG);
-                }
-                builder.addHeader("Authorization", digestHeader);
-            }
-
             if (requestInfo.entity != null) {
                 methodName = "POST";
                 requestBody = new RequestBody() {
@@ -198,116 +157,47 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
     }
 
     @Override
-    public Connection send(String requestName, ProtocolController protocolController, ProtocolController.RequestInfo requestInfo, int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException {
-        boolean repeat = false;
-        OkHttpBuilder builder = new OkHttpBuilder();
-        OkHttpClient client = baseClient.clone();
+    public Connection send(String requestName, ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
+                           int timeout, TimeStat timeStat, int debugFlags, Method method) throws JudoException {
+        try {
+            OkHttpBuilder builder = new OkHttpBuilder();
+            OkHttpClient client = baseClient.clone();
+            builder.url(requestInfo.url);
+            if (Thread.currentThread().isInterrupted()) {
+                return null;
+            }
+            initSetup(client, builder, requestInfo, timeout, timeStat);
 
-        final Response response;
-        do {
-            try {
-                builder.url(requestInfo.url);
-                if (Thread.currentThread().isInterrupted()) {
-                    return null;
+            logRequestHeaders(requestName, debugFlags, builder);
+
+            Response response = sendRequest(client, builder, requestInfo, timeStat, method, debugFlags);
+
+            logResponseHeaders(requestName, debugFlags, response);
+
+            if (!response.isSuccessful() && response.code() != 0) {
+                int code = response.code();
+                String message = response.message();
+                String body = "";
+                try {
+                    body = response.body().string();
+                } catch (IOException ignored) {
                 }
-                initSetup(client, builder, requestInfo, timeout, timeStat, cacheInfo);
-
-                logRequestHeaders(requestName, debugFlags, builder);
-
-                response = sendRequest(client, builder, requestInfo, timeStat, method, debugFlags);
-
-                logResponseHeaders(requestName, debugFlags, response);
-
-                if (!response.isSuccessful() && response.code() != 0) {
-                    int code = response.code();
-                    String message = response.message();
-                    String body = "";
-                    try {
-                        body = response.body().string();
-                    } catch (IOException ignored) {
-                    }
-                    if (!repeat && username != null) {
-                        digestAuth = SecurityUtils.handleDigestAuth(response.header("WWW-Authenticate"), code);
-                        repeat = (digestAuth != null);
-                        if (!repeat) {
-                            handleHttpException(protocolController, code, message, body);
-                        }
-                    } else {
-                        handleHttpException(protocolController, code, message, body);
-                    }
-                }
-
-                if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
-                    longLog("Response code(" + requestName + ")", response.code() + "", JudoLogger.LogLevel.DEBUG);
-                }
-                return new Connection() {
-
-                    @Override
-                    public InputStream getStream() throws ConnectionException {
-                        try {
-                            return response.body().byteStream();
-                        } catch (IOException e) {
-                            throw new ConnectionException(e);
-                        }
-                    }
-
-                    @Override
-                    public int getContentLength() {
-                        try {
-                            return (int) response.body().contentLength();
-                        } catch (IOException e) {
-                            throw new ConnectionException(e);
-                        }
-                    }
-
-                    public boolean isNewestAvailable() throws ConnectionException {
-                        return response.code() != 304;
-                    }
-
-                    public Map<String, List<String>> getHeaders() {
-                        Map<String, List<String>> map = new HashMap<>();
-                        for (String name : response.headers().names()) {
-                            map.put(name, response.headers(name));
-                        }
-                        return map;
-                    }
-
-                    @Override
-                    public String getHash() {
-                        return response.header("ETag");
-                    }
-
-                    @Override
-                    public Long getDate() {
-                        String lastModified = response.header("Last-Modified");
-                        if (lastModified != null) {
-
-                            try {
-                                Date date = format.parse(lastModified);
-                                return date.getTime();
-                            } catch (ParseException e) {
-                                return null;
-                            }
-
-                        } else {
-                            return null;
-                        }
-                    }
-
-                    @Override
-                    public void close() {
-
-                    }
-                };
-            } catch (Exception ex) {
-                if (!(ex instanceof JudoException)) {
-                    throw new ConnectionException(ex);
-                } else {
-                    throw (JudoException) ex;
-                }
+                handleHttpException(protocolController, code, message, body);
             }
 
-        } while (repeat);
+            if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
+                longLog("Response code(" + requestName + ")", response.code() + "", JudoLogger.LogLevel.DEBUG);
+            }
+            return new OkConnection(response);
+
+
+        } catch (Exception ex) {
+            if (!(ex instanceof JudoException)) {
+                throw new ConnectionException(ex);
+            } else {
+                throw (JudoException) ex;
+            }
+        }
     }
 
     protected void logResponseHeaders(String requestName, int debugFlags, Response response) {
@@ -359,4 +249,65 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
         }
     }
 
+    static class OkConnection implements Connection {
+
+        protected Response response;
+
+        public OkConnection(Response response) {
+            this.response = response;
+        }
+
+        @Override
+        public InputStream getStream() throws ConnectionException {
+            try {
+                return response.body().byteStream();
+            } catch (IOException e) {
+                throw new ConnectionException(e);
+            }
+        }
+
+        @Override
+        public int getContentLength() {
+            try {
+                return (int) response.body().contentLength();
+            } catch (IOException e) {
+                throw new ConnectionException(e);
+            }
+        }
+
+        public Map<String, List<String>> getHeaders() {
+            Map<String, List<String>> map = new HashMap<>();
+            for (String name : response.headers().names()) {
+                map.put(name, response.headers(name));
+            }
+            return map;
+        }
+
+        @Override
+        public Long getDate() {
+            String lastModified = response.header("Last-Modified");
+            if (lastModified != null) {
+
+                try {
+                    Date date = format.parse(lastModified);
+                    return date.getTime();
+                } catch (ParseException e) {
+                    return null;
+                }
+
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public void close() {
+
+        }
+    }
+
+
+    public OkHttpClient getOkHttpClient() {
+        return baseClient;
+    }
 }

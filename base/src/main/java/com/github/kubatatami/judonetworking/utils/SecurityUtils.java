@@ -2,8 +2,6 @@ package com.github.kubatatami.judonetworking.utils;
 
 import android.util.Base64;
 
-import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-
 import java.io.IOException;
 import java.net.URL;
 import java.security.MessageDigest;
@@ -20,17 +18,16 @@ public class SecurityUtils {
     }
 
     public static String getDigestAuthHeader(DigestAuth digestAuth, URL url,
-                                             ProtocolController.RequestInfo requestInfo,
-                                             String username, String password) throws IOException {
+                                             String method,
+                                             String username, String password, byte[] requestBody) throws IOException {
         digestAuth.digestCounter++;
         String cnonce = Base64.encodeToString((System.currentTimeMillis() + "").getBytes(), Base64.NO_WRAP);
         String base = url.getProtocol() + "://" + url.getHost();
         String uri = url.toString().substring(base.length());
         String nc = digestAuth.digestCounter + "";
-        String method = requestInfo.entity != null ? "POST" : "GET";
 
         String response = digestAuth(username, password, nc,
-                cnonce, method, uri, digestAuth, requestInfo);
+                cnonce, method, uri, digestAuth, requestBody);
         return "Digest username=\"" + username + "\", realm=\"" + digestAuth.realm + "\", nonce=\""
                 + digestAuth.nonce + "\"," +
                 " uri=\"" + uri + "\", cnonce=\"" + cnonce + "\"," +
@@ -41,11 +38,10 @@ public class SecurityUtils {
     }
 
     private static String digestAuth(String login, String pass, String nonceCount, String clientNonce,
-                                     String method, String digestURI, DigestAuth digestAuth,
-                                     ProtocolController.RequestInfo requestInfo) throws IOException {
+                                     String method, String digestURI, DigestAuth digestAuth, byte[] requestBody) throws IOException {
         String source;
         String ha1 = digestAuthHa1(login, pass, clientNonce, digestAuth);
-        String ha2 = digestAuthHa2(method, digestURI, digestAuth.qop, requestInfo);
+        String ha2 = digestAuthHa2(method, digestURI, digestAuth.qop, requestBody);
 
         if (digestAuth.qop != null) {
             source = ha1 + ":" + digestAuth.nonce + ":" + nonceCount +
@@ -66,12 +62,9 @@ public class SecurityUtils {
         }
     }
 
-    private static String digestAuthHa2(String method, String digestURI, String qop,
-                                        ProtocolController.RequestInfo requestInfo) throws IOException {
+    private static String digestAuthHa2(String method, String digestURI, String qop, byte[] requestBody) throws IOException {
         if (qop.equalsIgnoreCase("auth-int")) {
-            byte[] body = new byte[(int) requestInfo.entity.getContentLength()];
-            requestInfo.entity.getContent().read(body);
-            return md5(method + ":" + digestURI + ":" + md5(body));
+            return md5(method + ":" + digestURI + ":" + md5(requestBody));
         } else {
             return md5(method + ":" + digestURI);
         }

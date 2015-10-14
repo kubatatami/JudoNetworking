@@ -45,8 +45,6 @@ public class DefaultDiskCache implements DiskCache {
 
     @Override
     public void put(CacheMethod method, String hash, Object object, int cacheSize) {
-
-
         try {
             File dir = getCacheDir(method);
             File file = new File(getCacheDir(method), hash + "");
@@ -54,7 +52,7 @@ public class DefaultDiskCache implements DiskCache {
                 trimToSize(dir, cacheSize);
             }
             ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
-            os.writeObject(new CacheResult(object, true, method.getTime(), method.getHash()));
+            os.writeObject(new CacheResult(object, true, method.getTime()));
             os.flush();
             os.close();
             if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {

@@ -39,20 +39,10 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
     }
 
     protected void initSetup(WearRequest request, ProtocolController.RequestInfo requestInfo,
-                             int timeout, TimeStat timeStat, CacheInfo cacheInfo) throws Exception {
+                             int timeout, TimeStat timeStat) throws Exception {
         request.setFollowRedirects(followRedirection);
-        if (cacheInfo != null) {
-            if (cacheInfo.hash != null) {
-                request.addHeader("If-None-Match", cacheInfo.hash);
-            } else if (cacheInfo.time != null) {
-                request.addHeader("If-Modified-Since", format.format(new Date(cacheInfo.time)));
-            }
-        }
         if (requestInfo.mimeType != null) {
             request.addHeader("Content-Type", requestInfo.mimeType);
-        }
-        if (authKey != null) {
-            request.addHeader("Authorization", authKey);
         }
         request.setConnectTimeout(connectTimeout);
 
@@ -73,15 +63,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
     protected WearResponse sendRequest(WearRequest request, final ProtocolController.RequestInfo requestInfo,
                                        final TimeStat timeStat, Method method, int debugFlags) throws Exception {
         String methodName = "GET";
-
         try {
-            if (digestAuth != null) {
-                String digestHeader = SecurityUtils.getDigestAuthHeader(digestAuth, new URL(requestInfo.url), requestInfo, username, password);
-                if ((debugFlags & Endpoint.TOKEN_DEBUG) > 0) {
-                    longLog("digest", digestHeader, JudoLogger.LogLevel.DEBUG);
-                }
-                request.addHeader("Authorization", digestHeader);
-            }
 
             if (requestInfo.entity != null) {
                 methodName = "POST";
@@ -98,7 +80,6 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
                     longLog("Request", requestInfo.url, JudoLogger.LogLevel.INFO);
                 }
             }
-
 
             if (method != null) {
                 HttpMethod ann = ReflectionCache.getAnnotationInherited(method, HttpMethod.class);
@@ -157,124 +138,105 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
     }
 
     @Override
-    public Connection send(String requestName, ProtocolController protocolController, ProtocolController.RequestInfo requestInfo, int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException {
-        boolean repeat = false;
-        final WearRequest request = new WearRequest();
-        final WearResponse response;
-        do {
-            try {
-                request.setUrl(requestInfo.url);
-                if (Thread.currentThread().isInterrupted()) {
-                    return null;
-                }
-                initSetup(request, requestInfo, timeout, timeStat, cacheInfo);
+    public Connection send(String requestName, ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
+                           int timeout, TimeStat timeStat, int debugFlags, Method method) throws JudoException {
+        WearRequest request = new WearRequest();
+        try {
+            request.setUrl(requestInfo.url);
+            if (Thread.currentThread().isInterrupted()) {
+                return null;
+            }
+            initSetup(request, requestInfo, timeout, timeStat);
 
-                logRequestHeaders(requestName, debugFlags, request);
+            logRequestHeaders(requestName, debugFlags, request);
 
-                long wearTime = System.currentTimeMillis();
+            long wearTime = System.currentTimeMillis();
 
-                response = sendRequest(request, requestInfo, timeStat, method, debugFlags);
+            WearResponse response = sendRequest(request, requestInfo, timeStat, method, debugFlags);
 
-                wearTime = System.currentTimeMillis() - wearTime - response.getRealRequestTime();
+            wearTime = System.currentTimeMillis() - wearTime - response.getRealRequestTime();
 
-                logResponseHeaders(requestName, debugFlags, response);
+            logResponseHeaders(requestName, debugFlags, response);
 
-                JudoLogger.log("Wear send and read sum time: " + wearTime + "ms", JudoLogger.LogLevel.INFO);
+            JudoLogger.log("Wear send and read sum time: " + wearTime + "ms", JudoLogger.LogLevel.INFO);
 
-                if (!response.isSuccessful()) {
-                    int code = response.getCode();
-                    String message = response.getMessage();
-                    String body = new String(response.getBody());
-                    if (response.getCode() != 0) {
-                        if (!repeat && username != null) {
-                            digestAuth = SecurityUtils.handleDigestAuth(response.getHeader("WWW-Authenticate"), code);
-                            repeat = (digestAuth != null);
-                            if (!repeat) {
-                                handleHttpException(protocolController, code, message, body);
-                            }
-                        } else {
-                            handleHttpException(protocolController, code, message, body);
-                        }
-                    } else {
-                        throw new ConnectionException(message);
-                    }
-                }
-
-                if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
-                    longLog("Response code(" + requestName + ")", response.getCode() + "", JudoLogger.LogLevel.DEBUG);
-                }
-
-                return new Connection() {
-
-                    InputStream stream;
-
-                    @Override
-                    public InputStream getStream() throws ConnectionException {
-                        if (stream == null) {
-                            stream = new ByteArrayInputStream(response.getBody());
-                        }
-                        return stream;
-                    }
-
-                    @Override
-                    public int getContentLength() {
-                        return response.getBody().length;
-                    }
-
-                    public boolean isNewestAvailable() throws ConnectionException {
-                        return response.getCode() != 304;
-                    }
-
-                    public Map<String, List<String>> getHeaders() {
-                        Map<String, List<String>> map = new HashMap<>();
-                        for (String name : response.getHeaders().keySet()) {
-                            map.put(name, response.getHeaders(name));
-                        }
-                        return map;
-                    }
-
-                    @Override
-                    public String getHash() {
-                        return response.getHeader("ETag");
-                    }
-
-                    @Override
-                    public Long getDate() {
-                        String lastModified = response.getHeader("Last-Modified");
-                        if (lastModified != null) {
-
-                            try {
-                                Date date = format.parse(lastModified);
-                                return date.getTime();
-                            } catch (ParseException e) {
-                                return null;
-                            }
-
-                        } else {
-                            return null;
-                        }
-                    }
-
-                    @Override
-                    public void close() {
-                        if (stream != null) {
-                            try {
-                                stream.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-                };
-            } catch (Exception ex) {
-                if (!(ex instanceof JudoException)) {
-                    throw new ConnectionException(ex);
-                } else {
-                    throw (JudoException) ex;
-                }
+            if (!response.isSuccessful()) {
+                int code = response.getCode();
+                String message = response.getMessage();
+                String body = new String(response.getBody());
+                handleHttpException(protocolController, code, message, body);
             }
 
-        } while (repeat);
+            if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
+                longLog("Response code(" + requestName + ")", response.getCode() + "", JudoLogger.LogLevel.DEBUG);
+            }
+
+            return new DataLayerConnection(response);
+        } catch (Exception ex) {
+            if (!(ex instanceof JudoException)) {
+                throw new ConnectionException(ex);
+            } else {
+                throw (JudoException) ex;
+            }
+        }
+    }
+
+    static class DataLayerConnection implements Connection{
+        InputStream stream;
+        WearResponse response;
+
+        public DataLayerConnection(WearResponse response) {
+            this.response = response;
+        }
+
+        @Override
+        public InputStream getStream() throws ConnectionException {
+            if (stream == null) {
+                stream = new ByteArrayInputStream(response.getBody());
+            }
+            return stream;
+        }
+
+        @Override
+        public int getContentLength() {
+            return response.getBody().length;
+        }
+
+        public Map<String, List<String>> getHeaders() {
+            Map<String, List<String>> map = new HashMap<>();
+            for (String name : response.getHeaders().keySet()) {
+                map.put(name, response.getHeaders(name));
+            }
+            return map;
+        }
+
+        @Override
+        public Long getDate() {
+            String lastModified = response.getHeader("Last-Modified");
+            if (lastModified != null) {
+
+                try {
+                    Date date = format.parse(lastModified);
+                    return date.getTime();
+                } catch (ParseException e) {
+                    return null;
+                }
+
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public void close() {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     protected void logResponseHeaders(String requestName, int debugFlags, WearResponse response) {

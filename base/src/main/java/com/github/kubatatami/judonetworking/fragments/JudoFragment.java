@@ -64,14 +64,14 @@ public class JudoFragment extends DialogFragment implements StatefulController {
         StatefulCache.cancelRequest(this, id);
     }
 
-    static <T, Z extends T> String getFragmentWho(Activity activity, Class<T> clazz, Z object){
+    static <T, Z extends T> String getFragmentWho(Activity activity, Class<T> clazz, Z object) {
         try {
-            if(!(activity instanceof StatefulController)){
+            if (!(activity instanceof StatefulController)) {
                 throw new RuntimeException("Activity must be instance of JudoActivity.");
             }
             Field whoFiled = clazz.getDeclaredField("mWho");
             whoFiled.setAccessible(true);
-            return ((StatefulController)activity).getWho() + whoFiled.get(object);
+            return ((StatefulController) activity).getWho() + whoFiled.get(object);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -80,7 +80,7 @@ public class JudoFragment extends DialogFragment implements StatefulController {
     @Override
     public String getWho() {
         if (mWho == null) {
-            mWho = getFragmentWho(getActivity(),Fragment.class, this);
+            mWho = getFragmentWho(getActivity(), Fragment.class, this);
         }
         return mWho;
     }

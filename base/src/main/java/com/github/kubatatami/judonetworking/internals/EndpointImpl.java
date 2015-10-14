@@ -336,11 +336,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         return pr;
     }
 
-
-    public ProtocolController.TokenCaller getTokenCaller() {
-        return protocolController.getTokenCaller();
-    }
-
     public Handler getHandler() {
         return handler;
     }
@@ -587,14 +582,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     }
 
-    public long getTokenExpireTimestamp() {
-        return tokenExpireTimestamp;
-    }
-
-    public void setTokenExpireTimestamp(long tokenExpireTimestamp) {
-        this.tokenExpireTimestamp = tokenExpireTimestamp;
-    }
-
     CacheMode getCacheMode() {
         return cacheMode;
     }
@@ -621,10 +608,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         } else {
             return url;
         }
-    }
-
-    boolean isTest() {
-        return test;
     }
 
     public ProtocolController getProtocolController() {

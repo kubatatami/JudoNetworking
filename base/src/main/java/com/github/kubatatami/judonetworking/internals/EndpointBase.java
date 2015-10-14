@@ -101,29 +101,24 @@ public interface EndpointBase {
     int HEADERS_DEBUG = 32;
 
     /**
-     * Log token behavior
-     */
-    int TOKEN_DEBUG = 64;
-
-    /**
      * Log request errors
      */
-    int ERROR_DEBUG = 128;
+    int ERROR_DEBUG = 64;
 
     /**
      * Log cancellations
      */
-    int CANCEL_DEBUG = 256;
+    int CANCEL_DEBUG = 128;
 
     /**
      * Log cancellations
      */
-    int THREAD_DEBUG = 512;
+    int THREAD_DEBUG = 256;
 
     /**
      * Log everything.
      */
-    int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG | TOKEN_DEBUG | ERROR_DEBUG | CANCEL_DEBUG;
+    int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG | ERROR_DEBUG | CANCEL_DEBUG;
 
     int INTERNAL_DEBUG = FULL_DEBUG | THREAD_DEBUG;
 

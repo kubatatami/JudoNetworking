@@ -12,14 +12,13 @@ import com.github.kubatatami.judonetworking.stateful.StatefulCache;
 import com.github.kubatatami.judonetworking.stateful.StatefulCallback;
 import com.github.kubatatami.judonetworking.stateful.StatefulController;
 
-import java.lang.reflect.Field;
-
 /**
  * Created by Kuba on 01/07/15.
  */
 public class JudoSupportFragment extends DialogFragment implements StatefulController {
 
     private String mWho;
+
     private Handler handler = new Handler();
 
     @Override
@@ -60,7 +59,7 @@ public class JudoSupportFragment extends DialogFragment implements StatefulContr
         return new StatefulBatch<>(this, id, batch);
     }
 
-    public void cancelRequest(int id){
+    public void cancelRequest(int id) {
         StatefulCache.cancelRequest(this, id);
     }
 

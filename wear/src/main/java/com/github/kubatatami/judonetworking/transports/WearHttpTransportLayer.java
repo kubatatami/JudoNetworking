@@ -35,8 +35,9 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
     }
 
     @Override
-    public Connection send(String requestName, ProtocolController protocolController, ProtocolController.RequestInfo requestInfo, int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException {
-        return getTransportLayer().send(requestName, protocolController, requestInfo, timeout, timeStat, debugFlags, method, cacheInfo);
+    public Connection send(String requestName, ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
+                           int timeout, TimeStat timeStat, int debugFlags, Method method) throws JudoException {
+        return getTransportLayer().send(requestName, protocolController, requestInfo, timeout, timeStat, debugFlags, method);
     }
 
     @Override
@@ -68,21 +69,11 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
         dataLayerHttpTransportLayer.setMethodTimeout(connectTimeout);
     }
 
-    @Override
-    public void setDigestAuthentication(String username, String password) {
-        okHttpTransportLayer.setDigestAuthentication(username, password);
-        dataLayerHttpTransportLayer.setDigestAuthentication(username, password);
+    public OkHttpTransportLayer getOkHttpTransportLayer() {
+        return okHttpTransportLayer;
     }
 
-    @Override
-    public void setBasicAuthentication(String username, String password) {
-        okHttpTransportLayer.setBasicAuthentication(username, password);
-        dataLayerHttpTransportLayer.setBasicAuthentication(username, password);
-    }
-
-    @Override
-    public void setBasicAuthentication(String hash) {
-        okHttpTransportLayer.setBasicAuthentication(hash);
-        dataLayerHttpTransportLayer.setBasicAuthentication(hash);
+    public DataLayerHttpTransportLayer getDataLayerHttpTransportLayer() {
+        return dataLayerHttpTransportLayer;
     }
 }

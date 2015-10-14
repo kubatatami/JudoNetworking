@@ -8,7 +8,6 @@ import com.github.kubatatami.judonetworking.annotations.ApiKeyRequired;
 import com.github.kubatatami.judonetworking.annotations.Delay;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.annotations.RequestMethod;
-import com.github.kubatatami.judonetworking.annotations.ServerCache;
 import com.github.kubatatami.judonetworking.annotations.SingleCall;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
@@ -244,17 +243,6 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
         }
     }
 
-    public ServerCache getServerCache() {
-        if (method != null) {
-            ServerCache ann = ReflectionCache.getAnnotationInherited(method, ServerCache.class);
-            if (ann != null && !ann.enabled()) {
-                ann = null;
-            }
-            return ann;
-        } else {
-            return null;
-        }
-    }
 
     public SingleCall getSingleCall() {
         if (method != null) {
@@ -298,22 +286,6 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     public LocalCache.OnlyOnError getLocalCacheOnlyOnErrorMode() {
         LocalCache localCache = getLocalCache();
         return localCache != null ? localCache.onlyOnError() : LocalCache.OnlyOnError.NO;
-    }
-
-    public boolean isServerCacheable() {
-        return getServerCache() != null;
-    }
-
-    public int getServerCacheSize() {
-        return getServerCache().size();
-    }
-
-    public ServerCache.CacheLevel getServerCacheLevel() {
-        return getServerCache().cacheLevel();
-    }
-
-    public boolean useServerCacheOldOnError() {
-        return getServerCache().useOldOnError();
     }
 
     public long getWeight() {
@@ -471,14 +443,4 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
         this.future = future;
     }
 
-    /**
-     * Created by Kuba on 19/02/14.
-     */
-    public static class Comparator implements java.util.Comparator<Request> {
-
-        @Override
-        public int compare(Request lhs, Request rhs) {
-            return lhs.getId().compareTo(rhs.getId());
-        }
-    }
 }

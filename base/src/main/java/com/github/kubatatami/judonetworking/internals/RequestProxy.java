@@ -312,9 +312,9 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
             if (rpc.isCacheEnabled()) {
                 for (int i = batches.size() - 1; i >= 0; i--) {
                     RequestImpl req = batches.get(i);
-                    if (req.isLocalCacheable() || rpc.isTest()) {
-                        CacheResult result = rpc.getMemoryCache().get(req.getMethodId(), req.getArgs(), rpc.isTest() ? 0 : req.getLocalCacheLifeTime(), req.getLocalCacheSize());
-                        LocalCache.CacheLevel cacheLevel = rpc.isTest() ? LocalCache.CacheLevel.DISK_CACHE : req.getLocalCacheLevel();
+                    if (req.isLocalCacheable()) {
+                        CacheResult result = rpc.getMemoryCache().get(req.getMethodId(), req.getArgs(), req.getLocalCacheLifeTime(), req.getLocalCacheSize());
+                        LocalCache.CacheLevel cacheLevel = req.getLocalCacheLevel();
                         if (result.result) {
                             if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
                                 result.object = rpc.getClonner().clone(result.object);
@@ -331,9 +331,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                                     , rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
                             result = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(req.getArgs()), req.getLocalCacheLifeTime());
                             if (result.result) {
-                                if (!rpc.isTest()) {
-                                    rpc.getMemoryCache().put(req.getMethodId(), req.getArgs(), result.object, req.getLocalCacheSize());
-                                }
+                                rpc.getMemoryCache().put(req.getMethodId(), req.getArgs(), result.object, req.getLocalCacheSize());
                                 cacheObjects.put(req.getId(), new Pair<>(req, result.object));
                                 if (req.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                                     batches.remove(i);
@@ -560,20 +558,17 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                                 RequestConnector.processingMethod(response.result);
                             }
                             results[i] = response.result;
-                            if ((rpc.isCacheEnabled() && request.isLocalCacheable()) || rpc.isTest()) {
+                            if ((rpc.isCacheEnabled() && request.isLocalCacheable())) {
                                 rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), results[i], request.getLocalCacheSize());
                                 if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
                                     results[i] = rpc.getClonner().clone(results[i]);
                                 }
-                                LocalCache.CacheLevel cacheLevel = rpc.isTest() ? LocalCache.CacheLevel.DISK_CACHE : request.getLocalCacheLevel();
+                                LocalCache.CacheLevel cacheLevel = request.getLocalCacheLevel();
 
                                 if (cacheLevel != LocalCache.CacheLevel.MEMORY_ONLY) {
                                     CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
                                     rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getLocalCacheSize());
                                 }
-                            } else if (rpc.isCacheEnabled() && request.isServerCacheable() && (response.hash != null || response.time != null)) {
-                                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), response.hash, response.time, request.getServerCacheLevel());
-                                rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getServerCacheSize());
                             }
                         }
                     }

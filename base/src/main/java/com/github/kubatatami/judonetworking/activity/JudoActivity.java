@@ -25,7 +25,7 @@ public class JudoActivity extends Activity implements StatefulController {
         super.onCreate(savedInstanceState);
         if (savedInstanceState == null) {
             id = JudoActivity.generateId(this);
-        }else{
+        } else {
             id = savedInstanceState.getString(JudoActivity.UNIQUE_ACTIVITY_ID);
         }
     }

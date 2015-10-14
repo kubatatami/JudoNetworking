@@ -12,16 +12,13 @@ public class CacheResult implements Serializable {
 
     public Long time;
 
-    public String hash;
-
     public CacheResult() {
 
     }
 
-    public CacheResult(Object object, boolean result, Long time, String hash) {
+    public CacheResult(Object object, boolean result, Long time) {
         this.object = object;
         this.result = result;
         this.time = time;
-        this.hash = hash;
     }
 }

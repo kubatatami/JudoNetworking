@@ -2,7 +2,6 @@ package com.github.kubatatami.judonetworking.internals.cache;
 
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.annotations.RequestMethod;
-import com.github.kubatatami.judonetworking.annotations.ServerCache;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.lang.reflect.Method;
@@ -17,8 +16,6 @@ public class CacheMethod {
 
     private boolean dynamic = false;
 
-    private String hash;
-
     private String interfaceName;
 
     private int methodId;
@@ -28,27 +25,6 @@ public class CacheMethod {
     private Long time;
 
     private LocalCache.CacheLevel cacheLevel;
-
-    public CacheMethod(int methodId, String methodName, String interfaceName, String url, ServerCache.CacheLevel level) {
-        this.methodId = methodId;
-        this.methodName = methodName;
-        this.interfaceName = interfaceName;
-        this.url = url;
-        this.dynamic = true;
-        this.time = System.currentTimeMillis();
-        cacheLevel = (level == ServerCache.CacheLevel.DISK_CACHE) ? LocalCache.CacheLevel.DISK_CACHE : LocalCache.CacheLevel.DISK_DATA;
-    }
-
-    public CacheMethod(int methodId, String methodName, String interfaceName, String url, String hash, Long time, ServerCache.CacheLevel level) {
-        this.methodId = methodId;
-        this.methodName = methodName;
-        this.interfaceName = interfaceName;
-        this.url = url;
-        this.hash = hash;
-        this.time = time;
-        this.dynamic = true;
-        cacheLevel = (level == ServerCache.CacheLevel.DISK_CACHE) ? LocalCache.CacheLevel.DISK_CACHE : LocalCache.CacheLevel.DISK_DATA;
-    }
 
     public CacheMethod(int methodId, String methodName, String interfaceName, String test, int testRevision, String url, LocalCache.CacheLevel level) {
         this.methodId = methodId;
@@ -91,10 +67,6 @@ public class CacheMethod {
     @Override
     public String toString() {
         return methodName;
-    }
-
-    public String getHash() {
-        return hash;
     }
 
     public Long getTime() {
