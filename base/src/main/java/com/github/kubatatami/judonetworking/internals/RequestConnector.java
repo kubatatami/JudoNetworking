@@ -2,14 +2,12 @@ package com.github.kubatatami.judonetworking.internals;
 
 
 import android.util.Base64;
+
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.annotations.Base64Param;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
-import com.github.kubatatami.judonetworking.annotations.ProcessingMethod;
-import com.github.kubatatami.judonetworking.annotations.Required;
-import com.github.kubatatami.judonetworking.annotations.RequiredList;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
@@ -35,7 +33,6 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -109,141 +106,11 @@ public class RequestConnector {
                 timeStat.tickParseTime();
                 conn.close();
             }
-             if (result instanceof RequestSuccessResult) {
-                if (rpc.isVerifyResultModel()) {
-                    verifyResult(request, result);
-                }
-                if (rpc.isProcessingMethod()) {
-                    processingMethod(result.result);
-                }
-            }
             return result;
         } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
         } catch (Exception e) {
             return new ErrorResult(request.getId(), new JudoException(e));
-        }
-
-    }
-
-
-    public static void processingMethod(Object object) {
-        if (object instanceof Iterable) {
-            for (Object obj : ((Iterable) object)) {
-                processingMethod(obj);
-            }
-        } else {
-            for (Field field : object.getClass().getFields()) {
-                field.setAccessible(true);
-                try {
-                    if (!field.getDeclaringClass().equals(Object.class) && !field.getType().isPrimitive()) {
-                        Object fieldObject = field.get(object);
-                        if (fieldObject != null) {
-                            processingMethod(fieldObject);
-                        }
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            invokeProcessingMethod(object);
-        }
-    }
-
-    public static void invokeProcessingMethod(Object result) {
-        Class<?> clazz = result.getClass();
-        do {
-            for (Method method : clazz.getDeclaredMethods()) {
-                if (method.isAnnotationPresent(ProcessingMethod.class)) {
-                    method.setAccessible(true);
-                    try {
-                        method.invoke(result);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-            clazz = clazz.getSuperclass();
-        } while (!clazz.equals(Object.class));
-
-    }
-
-    public static void verifyResult(RequestImpl request, RequestResult result) throws VerifyModelException {
-        if (result instanceof RequestSuccessResult && !request.isVoidResult()) {
-
-
-            if (result.result == null) {
-                Required ann = ReflectionCache.getAnnotation(request.getMethod(), Required.class);
-                if (ann != null) {
-                    throw new VerifyModelException("Result object required.");
-                }
-                RequiredList ann2 = ReflectionCache.getAnnotation(request.getMethod(), RequiredList.class);
-                if (ann2 != null) {
-                    throw new VerifyModelException("Result object required.");
-                }
-            } else {
-                RequiredList ann = ReflectionCache.getAnnotation(request.getMethod(), RequiredList.class);
-                if (ann != null) {
-                    if (result.result instanceof Iterable) {
-                        int i = 0;
-                        for (Object obj : (Iterable) result.result) {
-                            verifyResultObject(obj);
-                            i++;
-                        }
-                        if (ann.minSize() > 0 && i < ann.minSize()) {
-                            throw new VerifyModelException("Result list from method " + request.getName() + "(size " + i + ") is smaller then limit: " + ann.minSize() + ".");
-                        }
-                        if (ann.maxSize() > 0 && i > ann.maxSize()) {
-                            throw new VerifyModelException("Result list from method " + request.getName() + "(size " + i + ") is larger then limit: " + ann.maxSize() + ".");
-                        }
-                    }
-                }
-                verifyResultObject(result.result);
-            }
-        }
-    }
-
-    public static void verifyResultObject(Object object) throws VerifyModelException {
-        if (object instanceof Iterable) {
-            for (Object obj : ((Iterable) object)) {
-                verifyResultObject(obj);
-            }
-        } else {
-            for (Field field : object.getClass().getFields()) {
-                try {
-                    field.setAccessible(true);
-
-                    if (field.get(object) == null) {
-                        if (field.isAnnotationPresent(Required.class) || field.isAnnotationPresent(RequiredList.class)) {
-                            throw new VerifyModelException("Field " + object.getClass().getName() + "." + field.getName() + " required.");
-                        }
-                    } else {
-
-                        Object iterableObject = field.get(object);
-                        if (iterableObject instanceof Iterable) {
-                            RequiredList ann = field.getAnnotation(RequiredList.class);
-                            if (ann != null) {
-                                int i = 0;
-                                for (Object obj : (Iterable) iterableObject) {
-                                    verifyResultObject(obj);
-                                    i++;
-                                }
-
-                                if (ann.minSize() > 0 && i < ann.minSize()) {
-                                    throw new VerifyModelException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is smaller then limit: " + ann.minSize() + ".");
-                                }
-                                if (ann.maxSize() > 0 && i > ann.maxSize()) {
-                                    throw new VerifyModelException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is larger then limit: " + ann.maxSize() + ".");
-                                }
-                            }
-                        } else if (field.getAnnotation(Required.class) != null) {
-                            verifyResultObject(field.get(object));
-                        }
-                    }
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
@@ -344,7 +211,7 @@ public class RequestConnector {
             TimeStat timeStat = new TimeStat(request);
 
 
-            if ((rpc.isCacheEnabled() && request.isLocalCacheable()) ) {
+            if ((rpc.isCacheEnabled() && request.isLocalCacheable())) {
                 LocalCache.CacheLevel cacheLevel = request.getLocalCacheLevel();
                 localCacheObject = rpc.getMemoryCache().get(request.getMethodId(), request.getArgs(), request.getLocalCacheLifeTime(), request.getLocalCacheSize());
                 if (localCacheObject.result) {
@@ -357,7 +224,7 @@ public class RequestConnector {
                         return localCacheObject.object;
                     }
                 } else if (cacheLevel != LocalCache.CacheLevel.MEMORY_ONLY) {
-                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
+                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), cacheLevel);
                     localCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getLocalCacheLifeTime());
                     if (localCacheObject.result) {
                         rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), localCacheObject.object, request.getLocalCacheSize());
@@ -403,15 +270,15 @@ public class RequestConnector {
                 timeStat.logTime("End single request(" + request.getName() + "):");
             }
 
-            if ((rpc.isCacheEnabled() && request.isLocalCacheable()) ) {
+            if ((rpc.isCacheEnabled() && request.isLocalCacheable())) {
                 rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), result.result, request.getLocalCacheSize());
                 if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
                     result.result = rpc.getClonner().clone(result.result);
                 }
-                LocalCache.CacheLevel cacheLevel =request.getLocalCacheLevel();
+                LocalCache.CacheLevel cacheLevel = request.getLocalCacheLevel();
                 if (cacheLevel != LocalCache.CacheLevel.MEMORY_ONLY) {
 
-                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
+                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), cacheLevel);
                     rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getLocalCacheSize());
                 }
             }

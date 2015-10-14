@@ -45,23 +45,8 @@ public interface EndpointBase {
 
     void setThreadPriority(int threadPriority);
 
-    /**
-     * @param onlyInDebugMode
-     */
-    void startTest(boolean onlyInDebugMode, String name, int revision);
-
-    /**
-     *
-     */
-    void stopTest();
 
     ProtocolController getProtocolController();
-
-    void setVerifyResultModel(boolean enabled);
-
-    boolean isProcessingMethod();
-
-    void setProcessingMethod(boolean enabled);
 
     void setUrlModifier(UrlModifier urlModifier);
 

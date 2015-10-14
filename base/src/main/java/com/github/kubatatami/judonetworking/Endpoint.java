@@ -130,6 +130,10 @@ public interface Endpoint extends EndpointBase {
 
     MemoryCache getMemoryCache();
 
+    void setMemoryCache(MemoryCache memoryCache);
+
+    void setDiskCache(DiskCache diskCache);
+
     void clearCache();
 
     void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer);

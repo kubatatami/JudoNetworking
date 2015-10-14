@@ -8,13 +8,8 @@ import java.lang.reflect.Method;
 
 public class CacheMethod {
 
-    private String test;
-
-    private int testRevision;
-
     private String url;
 
-    private boolean dynamic = false;
 
     private String interfaceName;
 
@@ -26,34 +21,18 @@ public class CacheMethod {
 
     private LocalCache.CacheLevel cacheLevel;
 
-    public CacheMethod(int methodId, String methodName, String interfaceName, String test, int testRevision, String url, LocalCache.CacheLevel level) {
+    public CacheMethod(int methodId, String methodName, String interfaceName, String url, LocalCache.CacheLevel level) {
         this.methodId = methodId;
         this.methodName = methodName;
         this.interfaceName = interfaceName;
-        this.test = test;
-        this.testRevision = testRevision;
         this.url = url;
         this.time = System.currentTimeMillis();
         this.cacheLevel = level;
-        if (test == null) {
-            this.dynamic = true;
-        }
+
     }
 
     public LocalCache.CacheLevel getCacheLevel() {
         return cacheLevel;
-    }
-
-    public boolean isDynamic() {
-        return dynamic;
-    }
-
-    public String getTest() {
-        return test;
-    }
-
-    public int getTestRevision() {
-        return testRevision;
     }
 
     public String getUrl() {
