@@ -9,6 +9,7 @@ import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.EndpointClassic;
 import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.annotations.IgnoreNullParam;
+import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.caches.DefaultDiskCache;
 import com.github.kubatatami.judonetworking.caches.DefaultMemoryCache;
@@ -40,7 +41,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
@@ -56,38 +56,67 @@ import java.util.concurrent.Future;
 public class EndpointImpl implements Endpoint, EndpointClassic {
 
     private RequestConnector requestConnector;
+
     private Handler handler = new Handler();
+
     private Context context;
+
     private boolean cacheEnabled = false;
+
     private CacheMode cacheMode = CacheMode.NORMAL;
+
     private boolean timeProfiler = false;
+
     private BatchTimeoutMode timeoutMode = BatchTimeoutMode.TIMEOUTS_SUM;
+
     private MemoryCache memoryCache;
+
     private DiskCache diskCache;
+
     private int debugFlags = 0;
+
     private Map<String, MethodStat> stats;
+
     private File statFile;
+
     private float percentLoss;
+
     private int maxStatFileSize = 50; //KB
+
     private Set<ErrorLogger> errorLoggers = new HashSet<>();
+
     private Clonner clonner = new DefaultClonner();
-    private boolean test = false;
+
     private String testName = null;
+
     private int testRevision = 0;
+
     private int delay = 0;
+
     private String url;
+
     private ProtocolController protocolController;
+
     private HashMap<Class, VirtualServerInfo> virtualServers = new HashMap<>();
-    private boolean verifyResultModel = false;
-    private boolean processingMethod = false;
-    private long tokenExpireTimestamp = -1;
+
     private Map<Integer, RequestImpl> singleCallMethods = new HashMap<>();
+
     private int id = 0;
+
     private ThreadPoolSizer threadPoolSizer = new DefaultThreadPoolSizer();
+
     private JudoExecutor executorService = new JudoExecutor(this);
+
     private UrlModifier urlModifier;
+
     private OnRequestEventListener onRequestEventListener;
+
     private int requestCount = 0;
+
+    private int defaultMethodCacheLifeTime = LocalCache.INFINITE;
+
+    private int defaultMethodCacheSize = LocalCache.INFINITE;
+
 
     public EndpointImpl(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         init(context, protocolController, transportLayer, url);
@@ -146,16 +175,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         } else {
             handler = new Handler();
         }
-    }
-
-    @Override
-    public boolean isProcessingMethod() {
-        return processingMethod;
-    }
-
-    @Override
-    public void setProcessingMethod(boolean enabled) {
-        this.processingMethod = enabled;
     }
 
     @SuppressWarnings("unchecked")
@@ -298,11 +317,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         return pr;
     }
 
-
-    public ProtocolController.TokenCaller getTokenCaller() {
-        return protocolController.getTokenCaller();
-    }
-
     public Handler getHandler() {
         return handler;
     }
@@ -381,58 +395,10 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @Override
     public void clearTimeProfilerStat() {
         boolean result = statFile.delete();
-        if(result){
+        if (result) {
             JudoLogger.log("Can't remove stats file", JudoLogger.LogLevel.ASSERT);
         }
         stats = Collections.synchronizedMap(new HashMap<String, MethodStat>());
-    }
-
-
-    @Override
-    public void startTest(boolean onlyInDebugMode, String name, int revision) {
-
-        String className = context.getApplicationContext().getPackageName() + ".BuildConfig";
-        try {
-            Class<?> clazz = Class.forName(className);
-
-            Field field = clazz.getDeclaredField("DEBUG");
-
-            Boolean debug = (Boolean) field.get(null);
-
-            if (!onlyInDebugMode || debug) {
-                this.test = true;
-                this.testName = name;
-                this.testRevision = revision;
-            }
-
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-
-    }
-
-    @Override
-    public void setVerifyResultModel(boolean enabled) {
-        verifyResultModel = enabled;
-    }
-
-    boolean isVerifyResultModel() {
-        return verifyResultModel;
-    }
-
-    String getTestName() {
-        return testName;
-    }
-
-    int getTestRevision() {
-        return testRevision;
-    }
-
-    @Override
-    public void stopTest() {
-        this.test = false;
     }
 
     public BatchTimeoutMode getTimeoutMode() {
@@ -444,8 +410,13 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
 
-    void setMemoryCache(MemoryCache memoryCache) {
+    public void setMemoryCache(MemoryCache memoryCache) {
         this.memoryCache = memoryCache;
+    }
+
+    @Override
+    public void setDiskCache(DiskCache diskCache) {
+        this.diskCache = diskCache;
     }
 
 
@@ -549,14 +520,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     }
 
-    public long getTokenExpireTimestamp() {
-        return tokenExpireTimestamp;
-    }
-
-    public void setTokenExpireTimestamp(long tokenExpireTimestamp) {
-        this.tokenExpireTimestamp = tokenExpireTimestamp;
-    }
-
     CacheMode getCacheMode() {
         return cacheMode;
     }
@@ -585,10 +548,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         }
     }
 
-    boolean isTest() {
-        return test;
-    }
-
     public ProtocolController getProtocolController() {
         return protocolController;
     }
@@ -614,7 +573,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     public int getBestConnectionsSize() {
-        return this.threadPoolSizer.getThreadPoolSize(NetworkUtils.getActiveNetworkInfo(context));
+        return this.threadPoolSizer.getThreadPoolSize(context, NetworkUtils.getActiveNetworkInfo(context));
     }
 
     public void setUrlModifier(UrlModifier urlModifier) {
@@ -628,5 +587,25 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @Override
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    @Override
+    public int getDefaultMethodCacheLifeTime() {
+        return defaultMethodCacheLifeTime;
+    }
+
+    @Override
+    public void setDefaultMethodCacheLifeTime(int millis) {
+        this.defaultMethodCacheLifeTime = millis;
+    }
+
+    @Override
+    public int getDefaultMethodCacheSize() {
+        return defaultMethodCacheSize;
+    }
+
+    @Override
+    public void setDefaultMethodCacheSize(int millis) {
+        this.defaultMethodCacheSize = millis;
     }
 }

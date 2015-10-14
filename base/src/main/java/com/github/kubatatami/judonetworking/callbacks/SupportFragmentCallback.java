@@ -18,7 +18,9 @@ import java.lang.ref.WeakReference;
 public class SupportFragmentCallback<T> extends DefaultCallback<T> implements FragmentManager.OnBackStackChangedListener {
 
     private final WeakReference<Fragment> fragment;
+
     private final WeakReference<FragmentManager> manager;
+
     private AsyncResult asyncResult;
 
     public SupportFragmentCallback(Fragment fragment) {

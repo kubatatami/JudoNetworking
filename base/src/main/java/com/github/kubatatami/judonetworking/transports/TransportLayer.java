@@ -21,7 +21,7 @@ import java.util.Scanner;
 public abstract class TransportLayer {
 
     public abstract Connection send(String requestName, ProtocolController protocolController, ProtocolController.RequestInfo requestInfo,
-                                    int timeout, TimeStat timeStat, int debugFlags, Method method, CacheInfo cacheInfo) throws JudoException;
+                                    int timeout, TimeStat timeStat, int debugFlags, Method method) throws JudoException;
 
     public abstract void setMaxConnections(int max);
 
@@ -33,30 +33,18 @@ public abstract class TransportLayer {
 
 
     public interface Connection {
+
         InputStream getStream() throws ConnectionException;
 
         int getContentLength();
-
-        String getHash();
 
         Long getDate();
 
         void close();
 
         Map<String, List<String>> getHeaders();
-
-        boolean isNewestAvailable() throws ConnectionException;
     }
 
-    public static class CacheInfo {
-        public String hash;
-        public Long time;
-
-        public CacheInfo(String hash, Long time) {
-            this.hash = hash;
-            this.time = time;
-        }
-    }
 
     protected void longLog(String tag, String message, JudoLogger.LogLevel level) {
         JudoLogger.longLog(tag, message, level);

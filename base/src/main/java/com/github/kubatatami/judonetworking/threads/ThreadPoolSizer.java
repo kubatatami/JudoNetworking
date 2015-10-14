@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking.threads;
 
+import android.content.Context;
 import android.net.NetworkInfo;
 
 /**
@@ -7,6 +8,6 @@ import android.net.NetworkInfo;
  */
 public interface ThreadPoolSizer {
 
-    int getThreadPoolSize(NetworkInfo activeNetworkInfo);
+    int getThreadPoolSize(Context context, NetworkInfo activeNetworkInfo);
 
 }

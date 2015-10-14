@@ -23,9 +23,9 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: '*.jar')
-    compile 'com.fasterxml.jackson.core:jackson-core:'+rootProject.ext.jacksonVersion
-    compile 'com.fasterxml.jackson.core:jackson-annotations:'+rootProject.ext.jacksonVersion
-    compile 'com.fasterxml.jackson.core:jackson-databind:'+rootProject.ext.jacksonVersion
+    compile 'com.fasterxml.jackson.core:jackson-core:' + rootProject.ext.jacksonVersion
+    compile 'com.fasterxml.jackson.core:jackson-annotations:' + rootProject.ext.jacksonVersion
+    compile 'com.fasterxml.jackson.core:jackson-databind:' + rootProject.ext.jacksonVersion
     compile project(':base')
 }
 

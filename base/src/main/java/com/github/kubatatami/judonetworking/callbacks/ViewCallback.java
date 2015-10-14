@@ -6,7 +6,6 @@ import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -16,7 +15,9 @@ import java.util.WeakHashMap;
 public class ViewCallback<T> extends DefaultCallback<T> {
 
     protected static final Map<Integer, ViewCallback> viewCache = new WeakHashMap<>();
+
     protected final int viewHash;
+
     protected AsyncResult asyncResult;
 
     public ViewCallback(View view) {

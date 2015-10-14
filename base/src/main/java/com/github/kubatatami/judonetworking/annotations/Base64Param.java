@@ -13,6 +13,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface Base64Param {
+
     int type() default Base64.DEFAULT;
 
     String prefix() default "";

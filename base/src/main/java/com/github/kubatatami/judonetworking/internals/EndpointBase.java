@@ -45,23 +45,8 @@ public interface EndpointBase {
 
     void setThreadPriority(int threadPriority);
 
-    /**
-     * @param onlyInDebugMode
-     */
-    void startTest(boolean onlyInDebugMode, String name, int revision);
-
-    /**
-     *
-     */
-    void stopTest();
 
     ProtocolController getProtocolController();
-
-    void setVerifyResultModel(boolean enabled);
-
-    boolean isProcessingMethod();
-
-    void setProcessingMethod(boolean enabled);
 
     void setUrlModifier(UrlModifier urlModifier);
 
@@ -69,22 +54,27 @@ public interface EndpointBase {
      * No log.
      */
     int NO_DEBUG = 0;
+
     /**
      * Log time of requests.
      */
     int TIME_DEBUG = 1;
+
     /**
      * Log request content.
      */
     int REQUEST_DEBUG = 2;
+
     /**
      * Log response content.
      */
     int RESPONSE_DEBUG = 4;
+
     /**
      * Log cache behavior.
      */
     int CACHE_DEBUG = 8;
+
     /**
      * Log request code line.
      */
@@ -96,29 +86,24 @@ public interface EndpointBase {
     int HEADERS_DEBUG = 32;
 
     /**
-     * Log token behavior
-     */
-    int TOKEN_DEBUG = 64;
-
-    /**
      * Log request errors
      */
-    int ERROR_DEBUG = 128;
+    int ERROR_DEBUG = 64;
 
     /**
      * Log cancellations
      */
-    int CANCEL_DEBUG = 256;
+    int CANCEL_DEBUG = 128;
 
     /**
      * Log cancellations
      */
-    int THREAD_DEBUG = 512;
+    int THREAD_DEBUG = 256;
 
     /**
      * Log everything.
      */
-    int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG | TOKEN_DEBUG | ERROR_DEBUG | CANCEL_DEBUG;
+    int FULL_DEBUG = TIME_DEBUG | REQUEST_DEBUG | RESPONSE_DEBUG | CACHE_DEBUG | REQUEST_LINE_DEBUG | HEADERS_DEBUG | ERROR_DEBUG | CANCEL_DEBUG;
 
     int INTERNAL_DEBUG = FULL_DEBUG | THREAD_DEBUG;
 

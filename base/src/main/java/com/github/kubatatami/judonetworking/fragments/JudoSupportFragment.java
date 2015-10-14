@@ -1,90 +1,46 @@
 package com.github.kubatatami.judonetworking.fragments;
 
+import android.os.Handler;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 
-import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.batches.Batch;
-import com.github.kubatatami.judonetworking.batches.DecoratorBatch;
 import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
-import com.github.kubatatami.judonetworking.callbacks.DecoratorCallback;
-import com.github.kubatatami.judonetworking.exceptions.JudoException;
-
-import java.lang.ref.WeakReference;
-import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.Map;
+import com.github.kubatatami.judonetworking.stateful.StatefulBatch;
+import com.github.kubatatami.judonetworking.stateful.StatefulCache;
+import com.github.kubatatami.judonetworking.stateful.StatefulCallback;
+import com.github.kubatatami.judonetworking.stateful.StatefulController;
 
 /**
  * Created by Kuba on 01/07/15.
  */
-public class JudoSupportFragment extends DialogFragment {
-
-    private static final Map<String, Map<Integer, Stateful>> callbacksMap = new HashMap<>();
+public class JudoSupportFragment extends DialogFragment implements StatefulController {
 
     private String mWho;
 
-    private String getWho() {
-        if (mWho == null) {
-            try {
-                Field whoFiled = Fragment.class.getDeclaredField("mWho");
-                whoFiled.setAccessible(true);
-                mWho = (String) whoFiled.get(this);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return mWho;
-    }
-
-    private void removeCallbacks(String who) {
-        if (callbacksMap.containsKey(who)) {
-            Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(who);
-            for(Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()){
-                entry.getValue().setCallback(null);
-            }
-        }
-    }
-
-    private void removeStatefulCallbacks() {
-        if (callbacksMap.containsKey(getWho())) {
-            Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(getWho());
-            for(Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()){
-                entry.getValue().tryCancel();
-            }
-            callbacksMap.remove(getWho());
-        }
-    }
+    private Handler handler = new Handler();
 
     @Override
-    public void onStop() {
-        super.onStop();
-        removeCallbacks(getWho());
+    public void onDestroyView() {
+        super.onDestroyView();
+        StatefulCache.removeAllControllersCallbacks(getWho());
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if(isRemoving()){
-            removeStatefulCallbacks();
+        if (getActivity().isFinishing()) {
+            StatefulCache.removeAllStatefulCallbacks(getWho());
         }
     }
 
-    protected boolean connectCallback(BaseCallback<?> callback) {
-        return connectCallback(callback.getClass().hashCode(),callback);
+    protected boolean connectCallback(BaseCallback<?>... callbacks) {
+        return StatefulCache.connectControllerCallbacks(this, callbacks);
     }
 
     protected boolean connectCallback(int id, BaseCallback<?> callback) {
-        if (callbacksMap.containsKey(getWho())) {
-            Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(getWho());
-            if (fragmentCallbackMap.containsKey(id)) {
-                fragmentCallbackMap.get(id).setCallback(callback);
-                return true;
-            }
-        }
-        return false;
+        return StatefulCache.connectControllerCallback(this, id, callback);
     }
 
     protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {
@@ -92,7 +48,7 @@ public class JudoSupportFragment extends DialogFragment {
     }
 
     protected <T> StatefulCallback<T> generateCallback(int id, Callback<T> callback) {
-        return new StatefulCallback<>(this,id, callback);
+        return new StatefulCallback<>(this, id, callback);
     }
 
     protected <T> StatefulBatch<T> generateCallback(Batch<T> batch) {
@@ -100,189 +56,19 @@ public class JudoSupportFragment extends DialogFragment {
     }
 
     protected <T> StatefulBatch<T> generateCallback(int id, Batch<T> batch) {
-        return new StatefulBatch<>(this,id, batch);
+        return new StatefulBatch<>(this, id, batch);
     }
 
-    public void cancelRequest(int id){
-        if (callbacksMap.containsKey(getWho())) {
-            Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(getWho());
-            if (fragmentCallbackMap.containsKey(id)) {
-                fragmentCallbackMap.get(id).tryCancel();
-            }
-        }
+    public void cancelRequest(int id) {
+        StatefulCache.cancelRequest(this, id);
     }
 
-    static void addStatefulCallback(String who, int id, Stateful statefulCallback) {
-        if (!callbacksMap.containsKey(who)) {
-            callbacksMap.put(who, new HashMap<Integer, Stateful>());
+    @Override
+    public String getWho() {
+        if (mWho == null) {
+            mWho = JudoFragment.getFragmentWho(getActivity(), Fragment.class, this);
         }
-        Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(who);
-        if (fragmentCallbackMap.containsKey(id)) {
-            fragmentCallbackMap.get(id).tryCancel();
-        }
-        fragmentCallbackMap.put(id, statefulCallback);
+        return mWho;
     }
 
-    static void removeStatefulCallback(String who, int id) {
-        if (callbacksMap.containsKey(who)) {
-            Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(who);
-            if (fragmentCallbackMap.containsKey(id)) {
-                fragmentCallbackMap.remove(id);
-            }
-        }
-    }
-
-
-    interface Stateful<T>{
-        void setCallback(T callback);
-        void tryCancel();
-    }
-
-
-
-    public static final class StatefulCallback<T> extends DecoratorCallback<T> implements Stateful<Callback<?>> {
-
-        private AsyncResult asyncResult;
-        private final int id;
-        private final String who;
-        private int progress;
-        private boolean consume=false;
-        private T data;
-        private JudoException exception;
-
-        public StatefulCallback(JudoSupportFragment fragment, Callback<T> callback) {
-            this(fragment, callback.getClass().hashCode(), callback);
-        }
-
-        public StatefulCallback(JudoSupportFragment fragment, int id, Callback<T> callback) {
-            super(callback);
-            this.id = id;
-            this.who = fragment.getWho();
-            addStatefulCallback(who, id, this);
-        }
-
-        @Override
-        public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
-            this.asyncResult = asyncResult;
-            consume=false;
-            data=null;
-            exception=null;
-            super.onStart(cacheInfo, asyncResult);
-        }
-
-        @Override
-        public void onFinish() {
-            super.onFinish();
-            if(callback.get()!=null) {
-                removeStatefulCallback(who, id);
-                consume = true;
-            }
-        }
-
-        @Override
-        public void onProgress(int progress) {
-            super.onProgress(progress);
-            this.progress = progress;
-        }
-
-        @Override
-        public void tryCancel() {
-            if (asyncResult != null) {
-                asyncResult.cancel();
-                consume=true;
-            }
-        }
-
-        @Override
-        public void setCallback(Callback<?> callback) {
-            this.callback = new WeakReference<>((Callback<T>) callback);
-            if(callback!=null) {
-                if (progress > 0) {
-                    callback.onProgress(progress);
-                }
-                if (!consume) {
-                    if (data != null) {
-                        this.callback.get().onSuccess(data);
-                    } else if (exception != null) {
-                        this.callback.get().onError(exception);
-                    }
-                }
-            }
-        }
-
-    }
-
-
-
-
-    public static final class StatefulBatch<T> extends DecoratorBatch<T> implements Stateful<Batch<?>>{
-
-        private AsyncResult asyncResult;
-        private final int id;
-        private final String who;
-        private int progress;
-        private boolean consume=false;
-        private Object[] data;
-        private JudoException exception;
-
-        public StatefulBatch(JudoSupportFragment fragment, Batch<T> batch) {
-            this(fragment, batch.getClass().hashCode(), batch);
-        }
-
-        public StatefulBatch(JudoSupportFragment fragment, int id, Batch<T> batch) {
-            super(batch);
-            this.id = id;
-            this.who = fragment.getWho();
-            addStatefulCallback(who, id, this);
-        }
-
-        @Override
-        public final void onStart(AsyncResult asyncResult) {
-            this.asyncResult = asyncResult;
-            consume=false;
-            data=null;
-            exception=null;
-            super.onStart(asyncResult);
-        }
-
-        @Override
-        public void onFinish() {
-            super.onFinish();
-            if(batch.get()!=null) {
-                removeStatefulCallback(who, id);
-                consume = true;
-            }
-        }
-
-        @Override
-        public void onProgress(int progress) {
-            super.onProgress(progress);
-            this.progress = progress;
-        }
-
-        @Override
-        public void tryCancel() {
-            if (asyncResult != null) {
-                asyncResult.cancel();
-                consume=true;
-            }
-        }
-
-        public void setCallback(Batch<?> batch) {
-            this.batch = new WeakReference<>((Batch<T>) batch);
-            if(batch!=null) {
-                if (progress > 0) {
-                    batch.onProgress(progress);
-                }
-                if (!consume) {
-                    if (data != null) {
-                        this.batch.get().onSuccess(data);
-                    } else if (exception != null) {
-                        this.batch.get().onError(exception);
-                    }
-                }
-            }
-        }
-
-    }
 }

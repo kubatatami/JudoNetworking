@@ -2,6 +2,7 @@ package com.github.kubatatami.judonetworking.batches;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.callbacks.AsyncResultCallback;
+import com.github.kubatatami.judonetworking.callbacks.MergeCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**
@@ -13,6 +14,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 public abstract class DefaultBatch<T> implements Batch<T>, AsyncResultCallback {
 
     MergeCallback mergeCallback;
+
     private AsyncResult asyncResult;
 
     public DefaultBatch() {

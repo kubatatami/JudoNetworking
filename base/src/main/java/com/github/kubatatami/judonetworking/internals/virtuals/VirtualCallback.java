@@ -9,7 +9,9 @@ import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 
 public class VirtualCallback implements Callback {
+
     private int id;
+
     private RequestResult result;
 
     public VirtualCallback(int id) {

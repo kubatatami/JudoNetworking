@@ -13,18 +13,31 @@ import java.util.List;
  * Time: 11:10
  */
 public class TimeStat {
+
     private long allTime = 0;
+
     private long createTime = 0;
+
     private long connectionTime = 0;
+
     private long sendTime = 0;
+
     private long readTime = 0;
+
     private long parseTime = 0;
+
     private long time = 0;
+
     private long startTime = 0;
+
     private long timeout = 0;
+
     private List<ProgressObserver> requests;
+
     private boolean readTimeProgressTick = true;
+
     private boolean sendTimeProgressTick = true;
+
     public final static int TICKS = 5;
 
     public TimeStat() {

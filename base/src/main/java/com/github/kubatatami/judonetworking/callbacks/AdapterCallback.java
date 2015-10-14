@@ -14,6 +14,7 @@ import java.util.List;
 public class AdapterCallback<T> extends DefaultCallback<List<T>> {
 
     private final WeakReference<ArrayAdapter<T>> adapter;
+
     private boolean clear = true;
 
     public AdapterCallback(ArrayAdapter<T> adapter) {

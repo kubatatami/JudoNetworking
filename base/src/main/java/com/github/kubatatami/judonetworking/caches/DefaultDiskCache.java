@@ -28,6 +28,7 @@ import java.util.Comparator;
  * Time: 08:05
  */
 public class DefaultDiskCache implements DiskCache {
+
     private int debugFlags;
 
     protected Context context;
@@ -44,8 +45,6 @@ public class DefaultDiskCache implements DiskCache {
 
     @Override
     public void put(CacheMethod method, String hash, Object object, int cacheSize) {
-
-
         try {
             File dir = getCacheDir(method);
             File file = new File(getCacheDir(method), hash + "");
@@ -53,7 +52,7 @@ public class DefaultDiskCache implements DiskCache {
                 trimToSize(dir, cacheSize);
             }
             ObjectOutputStream os = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
-            os.writeObject(new CacheResult(object, true, method.getTime(), method.getHash()));
+            os.writeObject(new CacheResult(object, true, method.getTime()));
             os.flush();
             os.close();
             if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
@@ -80,26 +79,10 @@ public class DefaultDiskCache implements DiskCache {
     }
 
     @Override
-    public void clearTests() {
-        File file = getTestDir();
-        delete(file);
-    }
-
-    @Override
-    public void clearTest(String name) {
-        File file = getTestDir(name);
-        delete(file);
-    }
-
-    @Override
     public void clearCache() {
-        File file = getLocalCacheDir(LocalCache.CacheLevel.DISK_CACHE);
+        File file = getCacheDir(LocalCache.CacheLevel.DISK_CACHE);
         delete(file);
-        file = getDynamicCacheDir(LocalCache.CacheLevel.DISK_CACHE);
-        delete(file);
-        file = getLocalCacheDir(LocalCache.CacheLevel.DISK_DATA);
-        delete(file);
-        file = getDynamicCacheDir(LocalCache.CacheLevel.DISK_DATA);
+        file = getCacheDir(LocalCache.CacheLevel.DISK_DATA);
         delete(file);
     }
 
@@ -178,26 +161,8 @@ public class DefaultDiskCache implements DiskCache {
     }
 
 
-    private File getLocalCacheDir(LocalCache.CacheLevel cacheLevel) {
-        File file = new File(getRootDir(cacheLevel) + "/cache/local/");
-        file.mkdirs();
-        return file;
-    }
-
-    private File getDynamicCacheDir(LocalCache.CacheLevel cacheLevel) {
-        File file = new File(getRootDir(cacheLevel) + "/cache/dynamic/");
-        file.mkdirs();
-        return file;
-    }
-
-    private File getTestDir() {
-        File file = new File(context.getCacheDir() + "/cache/tests/");
-        file.mkdirs();
-        return file;
-    }
-
-    private File getTestDir(String name) {
-        File file = new File(context.getCacheDir() + "/cache/tests/" + name + "/");
+    private File getCacheDir(LocalCache.CacheLevel cacheLevel) {
+        File file = new File(getRootDir(cacheLevel) + "/cache/");
         file.mkdirs();
         return file;
     }
@@ -209,15 +174,6 @@ public class DefaultDiskCache implements DiskCache {
 
     private File getCacheDir(CacheMethod method) {
         String name = getRootDir(method.getCacheLevel()) + "/cache/";
-        if (method.isDynamic()) {
-            name += "dynamic/";
-        } else {
-            if (method.getTest() != null) {
-                name += "tests/" + method.getTest() + "/" + method.getTestRevision() + "/";
-            } else {
-                name += "local/";
-            }
-        }
         name += method.getInterfaceName() + "/";
         name += method.getUrl().hashCode() + "/";
         name += method.getMethodId() + "/";

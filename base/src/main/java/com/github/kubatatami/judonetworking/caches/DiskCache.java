@@ -22,10 +22,6 @@ public interface DiskCache {
 
     void clearCache(CacheMethod method, Object... params);
 
-    void clearTests();
-
-    void clearTest(String name);
-
     int getDebugFlags();
 
     void setDebugFlags(int debugFlags);

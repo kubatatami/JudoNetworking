@@ -15,7 +15,9 @@ import java.io.InputStream;
 public class RequestInputStream extends InputStream {
 
     private InputStream stream;
+
     private TimeStat timeStat;
+
     private int contentSize;
 
     public RequestInputStream(InputStream stream, TimeStat timeStat, int contentSize) {

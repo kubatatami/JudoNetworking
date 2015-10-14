@@ -1,8 +1,6 @@
-package com.github.kubatatami.judonetworking.batches;
+package com.github.kubatatami.judonetworking.callbacks;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
-import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.util.HashMap;
@@ -17,12 +15,19 @@ import java.util.Set;
 public class MergeCallback<T> {
 
     int requests;
+
     int finishRequests = 0;
+
     boolean started = false;
+
     boolean canceled = false;
+
     Map<BaseCallback<?>, Integer> progressMap = new HashMap<>();
+
     Set<AsyncResult> asyncResultSet = new HashSet<>();
+
     Callback<T> finalCallback;
+
     T result;
 
     public MergeCallback(int requests) {
@@ -34,7 +39,7 @@ public class MergeCallback<T> {
         this.finalCallback = finalCallback;
     }
 
-    final void addStart(AsyncResult asyncResult) {
+    public final void addStart(AsyncResult asyncResult) {
         if (canceled) {
             return;
         }
@@ -45,7 +50,7 @@ public class MergeCallback<T> {
         asyncResultSet.add(asyncResult);
     }
 
-    final void addProgress(BaseCallback<?> callback, int progress) {
+    public final void addProgress(BaseCallback<?> callback, int progress) {
         if (canceled) {
             return;
         }
@@ -61,7 +66,7 @@ public class MergeCallback<T> {
         return (int) ((float) progress / (float) requests);
     }
 
-    final void addSuccess() {
+    public final void addSuccess() {
         if (canceled) {
             return;
         }
@@ -73,7 +78,7 @@ public class MergeCallback<T> {
 
     }
 
-    final void addError(JudoException e) {
+    public final void addError(JudoException e) {
         if (canceled) {
             return;
         }
@@ -98,8 +103,8 @@ public class MergeCallback<T> {
             finalCallback.onStart(null, new AsyncResult() {
                 @Override
                 public boolean isDone() {
-                    for(AsyncResult asyncResult : asyncResultSet){
-                        if(!asyncResult.isDone()){
+                    for (AsyncResult asyncResult : asyncResultSet) {
+                        if (!asyncResult.isDone()) {
                             return false;
                         }
                     }
@@ -113,8 +118,8 @@ public class MergeCallback<T> {
 
                 @Override
                 public boolean isRunning() {
-                    for(AsyncResult asyncResult : asyncResultSet){
-                        if(asyncResult.isRunning()){
+                    for (AsyncResult asyncResult : asyncResultSet) {
+                        if (asyncResult.isRunning()) {
                             return true;
                         }
                     }

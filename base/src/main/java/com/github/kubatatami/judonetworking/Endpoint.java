@@ -130,11 +130,23 @@ public interface Endpoint extends EndpointBase {
 
     MemoryCache getMemoryCache();
 
+    void setMemoryCache(MemoryCache memoryCache);
+
+    void setDiskCache(DiskCache diskCache);
+
     void clearCache();
 
     void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer);
 
     void setUrl(String url);
+
+    int getDefaultMethodCacheLifeTime();
+
+    void setDefaultMethodCacheLifeTime(int millis);
+
+    int getDefaultMethodCacheSize();
+
+    void setDefaultMethodCacheSize(int millis);
 
     /**
      * Created with IntelliJ IDEA.

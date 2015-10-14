@@ -10,8 +10,11 @@ import java.lang.annotation.Annotation;
 public class RequestOptions implements RequestMethod {
 
     private String[] paramNames = new String[0];
+
     private int timeout = 0;
+
     private boolean allowEmptyResult = false;
+
     private boolean isApiKeyRequired = false;
 
     public RequestOptions() {

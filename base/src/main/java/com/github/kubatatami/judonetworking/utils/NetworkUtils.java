@@ -16,6 +16,7 @@ import java.util.Set;
 public class NetworkUtils {
 
     protected static Set<NetworkStateListener> networkStateListeners = new HashSet<>();
+
     protected static ConnectivityManager connectManager;
 
     protected NetworkUtils() {
@@ -43,6 +44,10 @@ public class NetworkUtils {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
+    public static boolean isDirectNetworkAvailable(Context context) {
+        NetworkInfo activeNetworkInfo = getActiveNetworkInfo(context);
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected() && activeNetworkInfo.getType() != 16;
+    }
 
     public static boolean isWifi(Context context) {
         if (connectManager == null) {

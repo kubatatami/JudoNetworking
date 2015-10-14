@@ -16,9 +16,9 @@ project.ext {
     compileSdkVersion = 22
     buildToolsVersion = "22.0.1"
     targetSdkVersion = 22
-    minSdkVersion = 9
+    minSdkVersion = 11
     supportLibVersion = "22.2.1"
-    jacksonVersion = "2.5.3"
+    jacksonVersion = "2.6.2"
 }
 
 allprojects {

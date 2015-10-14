@@ -19,7 +19,7 @@ public @interface RequestMethod {
 
     int timeout() default 0;
 
-    boolean async() default false;
+    boolean async() default true;
 
     boolean highPriority() default false;
 
@@ -28,6 +28,7 @@ public @interface RequestMethod {
     Class<? extends Modifier> modifier() default DefaultModifier.class;
 
     final class DefaultModifier implements Modifier {
+
         @Override
         public void modify(Request request) {
 

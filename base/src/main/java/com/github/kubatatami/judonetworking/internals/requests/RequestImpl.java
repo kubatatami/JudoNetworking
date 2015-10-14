@@ -8,7 +8,6 @@ import com.github.kubatatami.judonetworking.annotations.ApiKeyRequired;
 import com.github.kubatatami.judonetworking.annotations.Delay;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.annotations.RequestMethod;
-import com.github.kubatatami.judonetworking.annotations.ServerCache;
 import com.github.kubatatami.judonetworking.annotations.SingleCall;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
@@ -31,25 +30,45 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressObserver, Request, AsyncResult {
+
     private Integer id;
+
     private final EndpointImpl rpc;
+
     private Callback<Object> callback;
+
     private final String name;
+
     private final int timeout;
+
     private RequestMethod ann;
+
     private float progress = 0;
+
     private int max = TimeStat.TICKS;
+
     private Object[] args;
+
     private String[] paramNames;
+
     private Type returnType;
+
     private Method method;
+
     private Class<?> apiInterface;
+
     private boolean batchFatal = true;
+
     private Serializable additionalControllerData = null;
+
     private boolean cancelled, done, running;
+
     private boolean isApiKeyRequired;
+
     private String customUrl;
+
     private Future<?> future;
+
     private Map<String, List<String>> headers;
 
     public RequestImpl(Integer id, EndpointImpl rpc, Method method, String name, RequestMethod ann,
@@ -224,17 +243,6 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
         }
     }
 
-    public ServerCache getServerCache() {
-        if (method != null) {
-            ServerCache ann = ReflectionCache.getAnnotationInherited(method, ServerCache.class);
-            if (ann != null && !ann.enabled()) {
-                ann = null;
-            }
-            return ann;
-        } else {
-            return null;
-        }
-    }
 
     public SingleCall getSingleCall() {
         if (method != null) {
@@ -249,7 +257,12 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     }
 
     public int getLocalCacheLifeTime() {
-        return getLocalCache().lifeTime();
+        int lifeTime = getLocalCache().lifeTime();
+        if (lifeTime == LocalCache.DEFAULT) {
+            return rpc.getDefaultMethodCacheLifeTime();
+        } else {
+            return lifeTime;
+        }
     }
 
     public boolean isLocalCacheable() {
@@ -257,7 +270,12 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     }
 
     public int getLocalCacheSize() {
-        return getLocalCache().size();
+        int size = getLocalCache().size();
+        if (size == LocalCache.DEFAULT) {
+            return rpc.getDefaultMethodCacheSize();
+        } else {
+            return size;
+        }
     }
 
     public LocalCache.CacheLevel getLocalCacheLevel() {
@@ -268,22 +286,6 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     public LocalCache.OnlyOnError getLocalCacheOnlyOnErrorMode() {
         LocalCache localCache = getLocalCache();
         return localCache != null ? localCache.onlyOnError() : LocalCache.OnlyOnError.NO;
-    }
-
-    public boolean isServerCacheable() {
-        return getServerCache() != null;
-    }
-
-    public int getServerCacheSize() {
-        return getServerCache().size();
-    }
-
-    public ServerCache.CacheLevel getServerCacheLevel() {
-        return getServerCache().cacheLevel();
-    }
-
-    public boolean useServerCacheOldOnError() {
-        return getServerCache().useOldOnError();
     }
 
     public long getWeight() {
@@ -441,13 +443,4 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
         this.future = future;
     }
 
-    /**
-     * Created by Kuba on 19/02/14.
-     */
-    public static class Comparator implements java.util.Comparator<Request> {
-        @Override
-        public int compare(Request lhs, Request rhs) {
-            return lhs.getId().compareTo(rhs.getId());
-        }
-    }
 }

@@ -13,12 +13,19 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 public class BatchTask implements Runnable {
+
     private final Integer timeout;
+
     private final List<RequestImpl> requests;
+
     private List<RequestResult> response = null;
+
     private JudoException ex = null;
+
     private final EndpointImpl rpc;
+
     private ProgressObserver progressObserver;
+
     private Future future;
 
     public BatchTask(EndpointImpl rpc, ProgressObserver progressObserver, Integer timeout, List<RequestImpl> requests) {

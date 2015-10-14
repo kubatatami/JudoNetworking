@@ -40,7 +40,9 @@ public class RequestInputStreamEntity {
     private final static long BUFFER_SIZE = 4096;
 
     private final InputStream content;
+
     private final long length;
+
     byte[] buffer;
 
     public RequestInputStreamEntity(final InputStream instream, long length) {

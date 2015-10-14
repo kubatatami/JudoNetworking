@@ -8,11 +8,7 @@ import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.annotations.Base64Param;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
-import com.github.kubatatami.judonetworking.annotations.ProcessingMethod;
-import com.github.kubatatami.judonetworking.annotations.Required;
-import com.github.kubatatami.judonetworking.annotations.RequiredList;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.exceptions.AuthException;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -21,7 +17,6 @@ import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
 import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.internals.results.CacheResult;
 import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
-import com.github.kubatatami.judonetworking.internals.results.NoNewResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
 import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
@@ -38,7 +33,6 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,7 +42,9 @@ import java.util.Scanner;
 public class RequestConnector {
 
     private final EndpointImpl rpc;
+
     private final TransportLayer transportLayer;
+
     private final Random randomGenerator = new Random();
 
     public RequestConnector(EndpointImpl rpc, TransportLayer transportLayer) {
@@ -66,21 +62,15 @@ public class RequestConnector {
     }
 
     private RequestResult sendRequest(RequestImpl request, TimeStat timeStat) {
-        return sendRequest(request, timeStat, null, null, false);
+        return sendRequest(request, timeStat, false);
     }
 
-    private RequestResult sendRequest(RequestImpl request, TimeStat timeStat, String hash, Long time) {
-        return sendRequest(request, timeStat, hash, time, false);
-    }
-
-    private RequestResult sendRequest(RequestImpl request, TimeStat timeStat, String hash, Long time, boolean ignoreTokenError) {
+    private RequestResult sendRequest(RequestImpl request, TimeStat timeStat, boolean ignoreTokenError) {
         try {
             RequestResult result;
-            long currentTokenExpireTimestamp;
             ProtocolController controller = rpc.getProtocolController();
             result = handleVirtualServerRequest(request, timeStat);
             if (result != null) {
-                currentTokenExpireTimestamp = 0;
                 if (result.error != null) {
                     return result;
                 }
@@ -92,24 +82,10 @@ public class RequestConnector {
                 lossCheck();
                 EndpointImpl.checkThread();
                 delay(request.getDelay());
-                currentTokenExpireTimestamp = rpc.getTokenExpireTimestamp();
-                if (rpc.getTokenCaller() != null && request.isApiKeyRequired() && !ignoreTokenError && !checkTokenExpireTimestamp(currentTokenExpireTimestamp)) {
-                    try {
-                        doTokenRequest(currentTokenExpireTimestamp);
-                    } catch (Exception ex) {
-                        return new ErrorResult(request.getId(), new AuthException("Can't obtain api token", ex));
-                    }
-                }
-                TransportLayer.Connection conn = transportLayer.send(request.getName(), controller, requestInfo, request.getTimeout(), timeStat,
-                        rpc.getDebugFlags(), request.getMethod(), new TransportLayer.CacheInfo(hash, time));
-                EndpointImpl.checkThread();
-                if (!conn.isNewestAvailable()) {
-                    if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
-                        JudoLogger.log("No new data for method " + request.getName(), JudoLogger.LogLevel.DEBUG);
-                    }
 
-                    return new NoNewResult();
-                }
+                TransportLayer.Connection conn = transportLayer.send(request.getName(), controller, requestInfo, request.getTimeout(), timeStat,
+                        rpc.getDebugFlags(), request.getMethod());
+                EndpointImpl.checkThread();
 
                 InputStream connectionStream = conn.getStream();
                 if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
@@ -123,10 +99,6 @@ public class RequestConnector {
                 request.setHeaders(conn.getHeaders());
                 result = controller.parseResponse(request, stream, conn.getHeaders());
                 EndpointImpl.checkThread();
-                if (result instanceof RequestSuccessResult) {
-                    result.hash = conn.getHash();
-                    result.time = conn.getDate();
-                }
                 try {
                     stream.close();
                 } catch (Exception ignored) {
@@ -134,164 +106,11 @@ public class RequestConnector {
                 timeStat.tickParseTime();
                 conn.close();
             }
-            if (request.isApiKeyRequired() && result.error != null &&
-                    rpc.getTokenCaller() != null && !ignoreTokenError &&
-                    rpc.getTokenCaller().checkIsTokenException(result.error)) {
-                try {
-                    doTokenRequest(currentTokenExpireTimestamp);
-                    request.clearProgress();
-                    request.setAdditionalControllerData(rpc.getProtocolController().getAdditionalRequestData());
-                    return sendRequest(request, timeStat, hash, time, true);
-                } catch (Exception ex) {
-                    return new ErrorResult(request.getId(), new AuthException("Can't obtain api token", ex));
-                }
-            } else if (result instanceof RequestSuccessResult) {
-                if (rpc.isVerifyResultModel()) {
-                    verifyResult(request, result);
-                }
-                if (rpc.isProcessingMethod()) {
-                    processingMethod(result.result);
-                }
-            }
             return result;
         } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
         } catch (Exception e) {
             return new ErrorResult(request.getId(), new JudoException(e));
-        }
-
-    }
-
-    protected boolean checkTokenExpireTimestamp(long tokenExpireTimestamp) {
-        return (tokenExpireTimestamp == 0 || (tokenExpireTimestamp != -1 && tokenExpireTimestamp > System.currentTimeMillis()));
-    }
-
-    protected void doTokenRequest(long oldTokenExpireTimestamp) throws Exception {
-        synchronized (rpc.getTokenCaller()) {
-            if (oldTokenExpireTimestamp == rpc.getTokenExpireTimestamp()) {
-                long tokenExpireTimestamp = rpc.getTokenCaller().doTokenRequest(rpc);
-                rpc.setTokenExpireTimestamp(tokenExpireTimestamp);
-            }
-        }
-    }
-
-    public static void processingMethod(Object object) {
-        if (object instanceof Iterable) {
-            for (Object obj : ((Iterable) object)) {
-                processingMethod(obj);
-            }
-        } else {
-            for (Field field : object.getClass().getFields()) {
-                field.setAccessible(true);
-                try {
-                    if (!field.getDeclaringClass().equals(Object.class) && !field.getType().isPrimitive()) {
-                        Object fieldObject = field.get(object);
-                        if (fieldObject != null) {
-                            processingMethod(fieldObject);
-                        }
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            invokeProcessingMethod(object);
-        }
-    }
-
-    public static void invokeProcessingMethod(Object result) {
-        Class<?> clazz = result.getClass();
-        do {
-            for (Method method : clazz.getDeclaredMethods()) {
-                if (method.isAnnotationPresent(ProcessingMethod.class)) {
-                    method.setAccessible(true);
-                    try {
-                        method.invoke(result);
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-            clazz = clazz.getSuperclass();
-        } while (!clazz.equals(Object.class));
-
-    }
-
-    public static void verifyResult(RequestImpl request, RequestResult result) throws VerifyModelException {
-        if (result instanceof RequestSuccessResult && !request.isVoidResult()) {
-
-
-            if (result.result == null) {
-                Required ann = ReflectionCache.getAnnotation(request.getMethod(), Required.class);
-                if (ann != null) {
-                    throw new VerifyModelException("Result object required.");
-                }
-                RequiredList ann2 = ReflectionCache.getAnnotation(request.getMethod(), RequiredList.class);
-                if (ann2 != null) {
-                    throw new VerifyModelException("Result object required.");
-                }
-            } else {
-                RequiredList ann = ReflectionCache.getAnnotation(request.getMethod(), RequiredList.class);
-                if (ann != null) {
-                    if (result.result instanceof Iterable) {
-                        int i = 0;
-                        for (Object obj : (Iterable) result.result) {
-                            verifyResultObject(obj);
-                            i++;
-                        }
-                        if (ann.minSize() > 0 && i < ann.minSize()) {
-                            throw new VerifyModelException("Result list from method " + request.getName() + "(size " + i + ") is smaller then limit: " + ann.minSize() + ".");
-                        }
-                        if (ann.maxSize() > 0 && i > ann.maxSize()) {
-                            throw new VerifyModelException("Result list from method " + request.getName() + "(size " + i + ") is larger then limit: " + ann.maxSize() + ".");
-                        }
-                    }
-                }
-                verifyResultObject(result.result);
-            }
-        }
-    }
-
-    public static void verifyResultObject(Object object) throws VerifyModelException {
-        if (object instanceof Iterable) {
-            for (Object obj : ((Iterable) object)) {
-                verifyResultObject(obj);
-            }
-        } else {
-            for (Field field : object.getClass().getFields()) {
-                try {
-                    field.setAccessible(true);
-
-                    if (field.get(object) == null) {
-                        if (field.isAnnotationPresent(Required.class) || field.isAnnotationPresent(RequiredList.class)) {
-                            throw new VerifyModelException("Field " + object.getClass().getName() + "." + field.getName() + " required.");
-                        }
-                    } else {
-
-                        Object iterableObject = field.get(object);
-                        if (iterableObject instanceof Iterable) {
-                            RequiredList ann = field.getAnnotation(RequiredList.class);
-                            if (ann != null) {
-                                int i = 0;
-                                for (Object obj : (Iterable) iterableObject) {
-                                    verifyResultObject(obj);
-                                    i++;
-                                }
-
-                                if (ann.minSize() > 0 && i < ann.minSize()) {
-                                    throw new VerifyModelException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is smaller then limit: " + ann.minSize() + ".");
-                                }
-                                if (ann.maxSize() > 0 && i > ann.maxSize()) {
-                                    throw new VerifyModelException("List " + object.getClass().getName() + "." + field.getName() + "(size " + i + ") is larger then limit: " + ann.maxSize() + ".");
-                                }
-                            }
-                        } else if (field.getAnnotation(Required.class) != null) {
-                            verifyResultObject(field.get(object));
-                        }
-                    }
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
@@ -389,13 +208,12 @@ public class RequestConnector {
         try {
 
             CacheResult localCacheObject = null;
-            CacheResult serverCacheObject = null;
             TimeStat timeStat = new TimeStat(request);
 
 
-            if ((rpc.isCacheEnabled() && request.isLocalCacheable()) || rpc.isTest()) {
-                LocalCache.CacheLevel cacheLevel = rpc.isTest() ? LocalCache.CacheLevel.DISK_CACHE : request.getLocalCacheLevel();
-                localCacheObject = rpc.getMemoryCache().get(request.getMethodId(), request.getArgs(), rpc.isTest() ? 0 : request.getLocalCacheLifeTime(), request.getLocalCacheSize());
+            if ((rpc.isCacheEnabled() && request.isLocalCacheable())) {
+                LocalCache.CacheLevel cacheLevel = request.getLocalCacheLevel();
+                localCacheObject = rpc.getMemoryCache().get(request.getMethodId(), request.getArgs(), request.getLocalCacheLifeTime(), request.getLocalCacheSize());
                 if (localCacheObject.result) {
                     if (request.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                         request.invokeStart(new CacheInfo(true, localCacheObject.time));
@@ -406,12 +224,10 @@ public class RequestConnector {
                         return localCacheObject.object;
                     }
                 } else if (cacheLevel != LocalCache.CacheLevel.MEMORY_ONLY) {
-                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
+                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), cacheLevel);
                     localCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getLocalCacheLifeTime());
                     if (localCacheObject.result) {
-                        if (!rpc.isTest()) {  //we don't know when test will be stop
-                            rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), localCacheObject.object, request.getLocalCacheSize());
-                        }
+                        rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), localCacheObject.object, request.getLocalCacheSize());
                         if (request.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                             request.invokeStart(new CacheInfo(true, localCacheObject.time));
                             timeStat.tickCacheTime();
@@ -422,25 +238,10 @@ public class RequestConnector {
                 }
             }
 
-            if (rpc.isCacheEnabled() && request.isServerCacheable()) {
-                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), request.getServerCacheLevel());
-                serverCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), 0);
-
-            }
 
             findAndCreateBase64(request);
             request.invokeStart(new CacheInfo(false, 0L));
-            RequestResult result;
-            if (serverCacheObject != null && serverCacheObject.result) {
-                result = sendRequest(request, timeStat, serverCacheObject.hash, serverCacheObject.time);
-                if (result instanceof NoNewResult) {
-                    return serverCacheObject.object;
-                } else if (result instanceof ErrorResult && request.useServerCacheOldOnError()) {
-                    return serverCacheObject.object;
-                }
-            } else {
-                result = sendRequest(request, timeStat, null, null);
-            }
+            RequestResult result = sendRequest(request, timeStat);
 
             if (result instanceof ErrorResult) {
                 if (localCacheObject != null && localCacheObject.result) {
@@ -469,24 +270,18 @@ public class RequestConnector {
                 timeStat.logTime("End single request(" + request.getName() + "):");
             }
 
-            if ((rpc.isCacheEnabled() && request.isLocalCacheable()) || rpc.isTest()) {
+            if ((rpc.isCacheEnabled() && request.isLocalCacheable())) {
                 rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), result.result, request.getLocalCacheSize());
                 if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
                     result.result = rpc.getClonner().clone(result.result);
                 }
-                LocalCache.CacheLevel cacheLevel = rpc.isTest() ? LocalCache.CacheLevel.DISK_CACHE : request.getLocalCacheLevel();
+                LocalCache.CacheLevel cacheLevel = request.getLocalCacheLevel();
                 if (cacheLevel != LocalCache.CacheLevel.MEMORY_ONLY) {
 
-                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getTestName(), rpc.getTestRevision(), rpc.getUrl(), cacheLevel);
+                    CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), cacheLevel);
                     rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getLocalCacheSize());
                 }
-
-
-            } else if (rpc.isCacheEnabled() && request.isServerCacheable() && (result.hash != null || result.time != null)) {
-                CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), request.getServerCacheLevel());
-                rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getServerCacheSize());
             }
-
 
             return result.result;
         } catch (JudoException e) {
@@ -560,43 +355,17 @@ public class RequestConnector {
                     results.addAll(callRealBatch(copyRequest, progressObserver, timeout, requestsName));
                 }
             } else {
-
                 for (RequestImpl request : requests) {
                     findAndCreateBase64(request);
                 }
-
                 synchronized (progressObserver) {
                     progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (requests.size() - 1) * TimeStat.TICKS);
                 }
-
                 for (final RequestImpl request : requests) {
-
                     final TimeStat timeStat = new TimeStat(progressObserver);
-
-                    CacheResult cacheObject = null;
                     if (!request.isCancelled()) {
-
-
-                        if (rpc.isCacheEnabled() && request.isServerCacheable()) {
-                            CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), request.getServerCacheLevel());
-                            cacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getServerCacheSize());
-
-                        }
-
-                        if (cacheObject != null && cacheObject.result) {
-                            RequestResult result = sendRequest(request, timeStat, cacheObject.hash, cacheObject.time);
-
-                            if (result instanceof NoNewResult) {
-                                results.add(new RequestSuccessResult(request.getId(), cacheObject.object));
-                            } else if (result instanceof ErrorResult && request.useServerCacheOldOnError()) {
-                                results.add(new RequestSuccessResult(request.getId(), cacheObject.object));
-                            } else {
-                                results.add(result);
-                            }
-                        } else {
-                            RequestResult result = sendRequest(request, timeStat);
-                            results.add(result);
-                        }
+                        RequestResult result = sendRequest(request, timeStat);
+                        results.add(result);
                     }
                 }
 
@@ -635,21 +404,7 @@ public class RequestConnector {
             }
             EndpointImpl.checkThread();
             delay(maxDelay);
-            boolean isApiRequired = false;
-            for (RequestImpl request : requests) {
-                if (request.isApiKeyRequired()) {
-                    isApiRequired = true;
-                }
-            }
-            long currentTokenExpireTimestamp = rpc.getTokenExpireTimestamp();
-            if (rpc.getTokenCaller() != null && isApiRequired && !checkTokenExpireTimestamp(currentTokenExpireTimestamp)) {
-                try {
-                    doTokenRequest(currentTokenExpireTimestamp);
-                } catch (Exception ex) {
-                    throw new AuthException("Can't obtain api token", ex);
-                }
-            }
-            TransportLayer.Connection conn = transportLayer.send(requestsName, controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null, null);
+            TransportLayer.Connection conn = transportLayer.send(requestsName, controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null);
             EndpointImpl.checkThread();
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {

@@ -13,8 +13,11 @@ import java.io.OutputStream;
  * To change this template use File | Settings | File Templates.
  */
 public class RequestOutputStream extends OutputStream {
+
     private OutputStream stream;
+
     private TimeStat timeStat;
+
     private long contentSize;
 
     public RequestOutputStream(OutputStream stream, TimeStat timeStat, long contentSize) {
