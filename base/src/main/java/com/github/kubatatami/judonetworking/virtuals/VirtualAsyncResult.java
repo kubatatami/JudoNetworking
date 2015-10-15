@@ -18,7 +18,7 @@ public class VirtualAsyncResult implements AsyncResult {
 
     @Override
     public boolean isDone() {
-        return false;
+        return true;
     }
 
     @Override
@@ -33,6 +33,11 @@ public class VirtualAsyncResult implements AsyncResult {
 
     @Override
     public void cancel() {
+
+    }
+
+    @Override
+    public void await() {
 
     }
 

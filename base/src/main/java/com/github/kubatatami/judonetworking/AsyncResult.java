@@ -16,5 +16,7 @@ public interface AsyncResult {
 
     void cancel();
 
+    void await() throws InterruptedException;
+
     Map<String, List<String>> getHeaders();
 }

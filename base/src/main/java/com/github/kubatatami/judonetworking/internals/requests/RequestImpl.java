@@ -419,8 +419,20 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     }
 
     public void done() {
-        this.done = true;
-        this.running = false;
+        synchronized (this) {
+            this.done = true;
+            this.running = false;
+            notifyAll();
+        }
+    }
+
+    @Override
+    public void await() throws InterruptedException {
+        synchronized (this) {
+            if (!isDone()) {
+                wait();
+            }
+        }
     }
 
     public void start() {

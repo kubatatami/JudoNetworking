@@ -644,6 +644,15 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     }
 
     @Override
+    public void await() throws InterruptedException {
+        synchronized (this) {
+            if (!isDone()) {
+                wait();
+            }
+        }
+    }
+
+    @Override
     public Map<String, List<String>> getHeaders() {
         throw new UnsupportedOperationException("getHeaders of batch is not supported");
     }
@@ -654,8 +663,11 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     }
 
     public void done() {
-        this.done = true;
-        this.running = false;
+        synchronized (this) {
+            this.done = true;
+            this.running = false;
+            notifyAll();
+        }
     }
 
     public void start() {

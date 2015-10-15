@@ -100,44 +100,8 @@ public class MergeCallback<T> {
 
     protected void onMergeStart() {
         if (finalCallback != null) {
-            finalCallback.onStart(null, new AsyncResult() {
-                @Override
-                public boolean isDone() {
-                    for (AsyncResult asyncResult : asyncResultSet) {
-                        if (!asyncResult.isDone()) {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-
-                @Override
-                public boolean isCancelled() {
-                    return canceled;
-                }
-
-                @Override
-                public boolean isRunning() {
-                    for (AsyncResult asyncResult : asyncResultSet) {
-                        if (asyncResult.isRunning()) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-
-                @Override
-                public void cancel() {
-                    cancelAll();
-                }
-
-                @Override
-                public Map<String, List<String>> getHeaders() {
-                    throw new UnsupportedOperationException("getHeaders of MergeCallback is not supported");
-                }
-            });
+            finalCallback.onStart(null, new MergeAsyncResult());
         }
-
     }
 
     protected void onMergeProgress(int progress) {
@@ -164,4 +128,48 @@ public class MergeCallback<T> {
         }
     }
 
+    protected class MergeAsyncResult implements AsyncResult {
+
+        @Override
+        public boolean isDone() {
+            for (AsyncResult asyncResult : asyncResultSet) {
+                if (!asyncResult.isDone()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return canceled;
+        }
+
+        @Override
+        public boolean isRunning() {
+            for (AsyncResult asyncResult : asyncResultSet) {
+                if (asyncResult.isRunning()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public void cancel() {
+            cancelAll();
+        }
+
+        @Override
+        public void await() throws InterruptedException {
+            for (AsyncResult asyncResult : asyncResultSet) {
+                asyncResult.await();
+            }
+        }
+
+        @Override
+        public Map<String, List<String>> getHeaders() {
+            throw new UnsupportedOperationException("getHeaders of MergeCallback is not supported");
+        }
+    }
 }
