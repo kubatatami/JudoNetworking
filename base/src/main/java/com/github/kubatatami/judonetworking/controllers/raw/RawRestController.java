@@ -224,7 +224,11 @@ public class RawRestController extends RawController {
             result = request.getName();
         }
 
-        requestInfo.url = url + (url.lastIndexOf("/") != url.length() - 1 ? "/" : "") + result;
+        try {
+            requestInfo.url = URLEncoder.encode(url + (url.lastIndexOf("/") != url.length() - 1 ? "/" : "") + result, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new JudoException(e);
+        }
 
         return requestInfo;
     }
