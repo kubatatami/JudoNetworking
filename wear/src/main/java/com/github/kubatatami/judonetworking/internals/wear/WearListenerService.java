@@ -24,14 +24,13 @@ public class WearListenerService extends WearableListenerService {
 
     protected MessageUtils messageUtils;
 
-    protected OkHttpClient baseClient;
+    protected static OkHttpClient okHttpClient  = new OkHttpClient();
 
     @Override
     public void onCreate() {
         super.onCreate();
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
             messageUtils = new MessageUtils(this);
-            baseClient = new OkHttpClient();
         }
     }
 
@@ -93,7 +92,7 @@ public class WearListenerService extends WearableListenerService {
 
     protected DataLayerHttpTransportLayer.WearResponse send(final DataLayerHttpTransportLayer.WearRequest request) throws IOException {
         RequestBody requestBody = null;
-        OkHttpClient client = baseClient.clone();
+        OkHttpClient client = okHttpClient.clone();
         client.setConnectTimeout(request.getConnectTimeout(), TimeUnit.MILLISECONDS);
         client.setReadTimeout(request.getReadTimeout(), TimeUnit.MILLISECONDS);
         client.setFollowRedirects(request.isFollowRedirects());
@@ -136,5 +135,9 @@ public class WearListenerService extends WearableListenerService {
         wearResponse.setHeaders(map);
         wearResponse.setRealRequestTime(realRequestTime);
         return wearResponse;
+    }
+
+    public static OkHttpClient getOkHttpClient() {
+        return okHttpClient;
     }
 }
