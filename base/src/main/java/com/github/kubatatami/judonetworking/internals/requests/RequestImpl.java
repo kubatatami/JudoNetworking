@@ -382,6 +382,9 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
             return;
         }
         this.cancelled = true;
+        synchronized(this) {
+            notifyAll();
+        }
         if ((rpc.getDebugFlags() & Endpoint.CANCEL_DEBUG) > 0) {
             JudoLogger.log("Request " + name + " cancelled.", JudoLogger.LogLevel.DEBUG);
         }
@@ -429,7 +432,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     @Override
     public void await() throws InterruptedException {
         synchronized (this) {
-            if (!isDone()) {
+            if (!isDone() && !isCancelled()) {
                 wait();
             }
         }

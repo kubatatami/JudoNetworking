@@ -627,6 +627,9 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     public void cancel() {
         if (!cancelled) {
             this.cancelled = true;
+            synchronized(this) {
+                notifyAll();
+            }
             for (RequestImpl request : batchRequests) {
                 request.cancel();
             }
@@ -646,7 +649,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     @Override
     public void await() throws InterruptedException {
         synchronized (this) {
-            if (!isDone()) {
+            if (!isDone() && !isCancelled()) {
                 wait();
             }
         }
