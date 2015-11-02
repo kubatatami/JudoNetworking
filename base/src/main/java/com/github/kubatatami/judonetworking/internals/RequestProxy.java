@@ -120,7 +120,9 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         for (StackTraceElement element : stackTrace) {
             if (!current && element.getClassName().contains(packageName)) {
                 current = true;
-            } else if (current && !element.getClassName().contains(packageName) && !element.getClassName().contains("$Proxy")) {
+            } else if (current && !element.getClassName().contains(packageName)
+                    && !element.getClassName().contains("$Proxy")
+                    && !element.getClassName().contains("java.lang.reflect.Proxy")) {
                 return element;
             }
         }
