@@ -43,7 +43,7 @@ public abstract class HttpTransportLayer extends TransportLayer {
 
     protected void handleHttpException(ProtocolController protocolController, int code, String message, String body) throws JudoException {
         protocolController.parseError(code, message);
-        throw new HttpException(message + "(" + code + ") " + body, code);
+        throw new HttpException(message + "(" + code + ") ", body, code);
     }
 
     @Retention(RetentionPolicy.RUNTIME)
