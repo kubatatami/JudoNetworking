@@ -30,8 +30,8 @@ public class HttpException extends ConnectionException {
         } else if (body == null) {
             return name + ": " + msg;
         } else if (msg == null) {
-            return name + ": " + body;
+            return name + ":\n" + body;
         }
-        return name + ": " + msg + " " + body;
+        return name + ": " + msg + "\n" + body;
     }
 }
