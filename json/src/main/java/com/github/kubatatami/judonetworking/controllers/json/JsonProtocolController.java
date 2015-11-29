@@ -70,12 +70,4 @@ public abstract class JsonProtocolController extends ProtocolController {
         return mapper;
     }
 
-    @Override
-    public void parseError(int code, String resp) throws JudoException {
-        if (code == 405) {
-            throw new ProtocolException("Server response: Method Not Allowed. Did you select the correct protocol controller?", new HttpException(resp, code));
-        }
-    }
-
-
 }

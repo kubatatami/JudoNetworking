@@ -61,14 +61,6 @@ public abstract class RawController extends ProtocolController {
         }
     }
 
-
-    @Override
-    public void parseError(int code, String resp) throws JudoException {
-        if (code == 405) {
-            throw new ProtocolException("Server response: Method Not Allowed. Did you select the correct protocol controller?", new HttpException(resp, code));
-        }
-    }
-
     protected static byte[] getByteArray(InputStream stream) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 

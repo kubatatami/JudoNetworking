@@ -87,10 +87,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     private Clonner clonner = new DefaultClonner();
 
-    private String testName = null;
-
-    private int testRevision = 0;
-
     private int delay = 0;
 
     private String url;
@@ -121,8 +117,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     public EndpointImpl(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         init(context, protocolController, transportLayer, url);
     }
-
-
+    
     private void init(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         this.requestConnector = new RequestConnector(this, transportLayer);
         this.context = context;
@@ -156,10 +151,14 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         virtualServers.put(type, new VirtualServerInfo(virtualServer, minDelay, maxDelay));
     }
 
-
     @Override
     public <T> void unregisterVirtualServer(Class<T> type) {
         virtualServers.remove(type);
+    }
+
+    @Override
+    public boolean isIdleNow() {
+        return requestCount == 0;
     }
 
     @Override

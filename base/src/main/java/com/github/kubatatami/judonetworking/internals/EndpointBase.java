@@ -9,6 +9,8 @@ import com.github.kubatatami.judonetworking.logs.ErrorLogger;
  */
 public interface EndpointBase {
 
+    boolean isIdleNow();
+
     /**
      * @param connectionTimeout
      * @param methodTimeout
