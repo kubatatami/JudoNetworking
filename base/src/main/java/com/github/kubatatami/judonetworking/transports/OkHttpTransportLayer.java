@@ -77,7 +77,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                 requestBody = new RequestBody() {
                     @Override
                     public MediaType contentType() {
-                        return MediaType.parse(requestInfo.mimeType);
+                        return MediaType.parse(requestInfo.mimeType != null ? requestInfo.mimeType : "");
                     }
 
                     @Override
@@ -109,6 +109,26 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                 if (ann != null) {
                     methodName = ann.value();
                 }
+            }
+
+            if (com.squareup.okhttp.internal.http.HttpMethod.requiresRequestBody(methodName) && requestBody == null) {
+                requestBody = new RequestBody() {
+                    @Override
+                    public MediaType contentType() {
+                        return MediaType.parse(requestInfo.mimeType != null ? requestInfo.mimeType : "");
+
+                    }
+
+                    @Override
+                    public void writeTo(BufferedSink sink) throws IOException {
+
+                    }
+
+                    @Override
+                    public long contentLength() throws IOException {
+                        return 0;
+                    }
+                };
             }
 
             final Call call = client.newCall(builder.method(methodName, requestBody).build());
