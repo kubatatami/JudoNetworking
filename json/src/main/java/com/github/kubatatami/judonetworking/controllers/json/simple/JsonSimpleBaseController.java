@@ -1,7 +1,6 @@
 package com.github.kubatatami.judonetworking.controllers.json.simple;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
@@ -40,18 +39,16 @@ public abstract class JsonSimpleBaseController extends JsonProtocolController {
                 InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
 
                 if (!request.isVoidResult()) {
-                    try {
-                        res = mapper.readValue(inputStreamReader, mapper.getTypeFactory().constructType(request.getReturnType()));
-                    } catch (JsonMappingException ex) {
-                        if (!ex.getMessage().toLowerCase().contains("no content") || !request.isAllowEmptyResult()) {
-                            throw ex;
-                        }
-                    }
+                    res = mapper.readValue(inputStreamReader, mapper.getTypeFactory().constructType(request.getReturnType()));
                 }
                 inputStreamReader.close();
 
             } catch (JsonProcessingException ex) {
-                throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
+                if (ex.getCause() != null && ex.getCause() instanceof IOException) {
+                    throw new ConnectionException(ex);
+                } else {
+                    throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
+                }
             } catch (IOException ex) {
                 throw new ConnectionException(ex);
             }
