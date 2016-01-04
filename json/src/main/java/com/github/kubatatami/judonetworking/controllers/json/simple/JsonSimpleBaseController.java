@@ -48,7 +48,8 @@ public abstract class JsonSimpleBaseController extends JsonProtocolController {
                 while (baseException.getCause() != null) {
                     baseException = baseException.getCause();
                 }
-                if (baseException instanceof IOException) {
+                String baseExceptionName = baseException.getClass().getName();
+                if (baseExceptionName.contains("javax.net") || baseExceptionName.contains("java.net")) {
                     throw new ConnectionException(ex);
                 } else {
                     throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
