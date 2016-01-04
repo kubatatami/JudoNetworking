@@ -44,7 +44,11 @@ public abstract class JsonSimpleBaseController extends JsonProtocolController {
                 inputStreamReader.close();
 
             } catch (JsonProcessingException ex) {
-                if (ex.getCause() != null && ex.getCause() instanceof IOException) {
+                Throwable baseException = ex;
+                while (baseException.getCause() != null) {
+                    baseException = baseException.getCause();
+                }
+                if (baseException instanceof IOException) {
                     throw new ConnectionException(ex);
                 } else {
                     throw new ParseException("Wrong server response. Did you select the correct protocol controller?", ex);
