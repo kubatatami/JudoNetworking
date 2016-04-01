@@ -12,11 +12,11 @@ public class RequestMultipartEntity implements StreamEntity {
 
     private final static int BUFFER_SIZE = 4096;
 
+    private final static String NEW_LINE = "\r\n";
+
     public static final String BOUNDARY = "-----------------------------735323031399963166993862150";
 
     private List<PartFormData> parts;
-
-    private byte[] buffer;
 
     public RequestMultipartEntity(List<PartFormData> parts) {
         this.parts = parts;
@@ -29,23 +29,25 @@ public class RequestMultipartEntity implements StreamEntity {
 
     @Override
     public void writeTo(OutputStream outstream) throws IOException {
-        buffer = new byte[BUFFER_SIZE];
+        byte[] buffer = new byte[BUFFER_SIZE];
         DataOutputStream data = new DataOutputStream(outstream);
         for (PartFormData part : parts) {
             data.writeBytes(BOUNDARY);
-            data.writeChar('\n');
-            data.writeBytes("Content-Disposition: form-data; name=\"" + part.getName() + "\"\n");
+            data.writeBytes(NEW_LINE);
+            data.writeBytes("Content-Disposition: form-data; name=\"" + part.getName() +"\"; " + "filename=\"" + part.getFileName() +"\"" + NEW_LINE);
             if (part.mimeType != null && !part.getMimeType().isEmpty()) {
-                data.writeBytes("Content-Type: " + part.getMimeType() + "\n");
+                data.writeBytes("Content-Type: " + part.getMimeType() + NEW_LINE);
             }
-            data.writeChar('\n');
+            data.writeBytes(NEW_LINE);
             data.flush();
             FileUtils.copyStream(outstream, part.getInputStream(), -1, buffer);
-            outstream.write('\n');
             outstream.flush();
+            data.writeBytes(NEW_LINE);
+            data.flush();
         }
         data.writeBytes(BOUNDARY);
         data.writeBytes("--");
+        data.flush();
         outstream.close();
     }
 
@@ -62,7 +64,7 @@ public class RequestMultipartEntity implements StreamEntity {
         for (PartFormData part : parts) {
             sb.append(BOUNDARY);
             sb.append("\n");
-            sb.append("Content-Disposition: form-data; name=\"" + part.getName() + "\"\n");
+            sb.append("Content-Disposition: form-data; name=\"" + part.getName() +"\"; " + "filename=\"" + part.getFileName() +"\"" + "\n");
             if (part.mimeType != null && !part.getMimeType().isEmpty()) {
                 sb.append("Content-Type: " + part.getMimeType() + "\n");
             }
@@ -87,10 +89,13 @@ public class RequestMultipartEntity implements StreamEntity {
 
         private String mimeType;
 
-        public PartFormData(String name, InputStream inputStream, String mimeType) {
+        private String fileName;
+
+        public PartFormData(String name, InputStream inputStream, String mimeType, String fileName) {
             this.name = name;
             this.inputStream = inputStream;
             this.mimeType = mimeType;
+            this.fileName = fileName;
         }
 
         public String getName() {
@@ -103,6 +108,10 @@ public class RequestMultipartEntity implements StreamEntity {
 
         public String getMimeType() {
             return mimeType;
+        }
+
+        public String getFileName() {
+            return fileName;
         }
     }
 }
