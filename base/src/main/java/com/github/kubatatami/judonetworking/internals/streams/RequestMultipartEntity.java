@@ -2,17 +2,19 @@ package com.github.kubatatami.judonetworking.internals.streams;
 
 import com.github.kubatatami.judonetworking.utils.FileUtils;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.List;
 
 public class RequestMultipartEntity implements StreamEntity {
 
-    private final static String NEW_LINE = "\r\n";
+    private static final byte[] CRLF = {'\r', '\n'};
 
     public static final String BOUNDARY = "-----------------------------735323031399963166993862150";
+
+    private static Charset charset = Charset.forName("UTF-8");
 
     private List<PartFormData> parts;
 
@@ -27,31 +29,50 @@ public class RequestMultipartEntity implements StreamEntity {
 
     @Override
     public void writeTo(OutputStream outstream) throws IOException {
-        DataOutputStream data = new DataOutputStream(outstream);
+        write(null, outstream);
+    }
+
+    @Override
+    public String getLog() throws IOException {
+        StringBuilder sb = new StringBuilder();
+        write(sb, null);
+        return sb.toString();
+    }
+
+    private void write(StringBuilder sb, OutputStream outStream) throws IOException {
         for (PartFormData part : parts) {
-            data.writeBytes(BOUNDARY);
-            data.writeBytes(NEW_LINE);
-            data.writeBytes("Content-Disposition: form-data; name=\"" + part.getName() +"\"; " + "filename=\"" + part.getFileName() +"\"");
-            data.writeBytes(NEW_LINE);
+            writeLine(sb, outStream, BOUNDARY);
+            writeLine(sb, outStream, "Content-Disposition: form-data; name=\"" + part.getName() + "\"; " + "filename=\"" + part.getFileName() + "\"");
             if (part.getMimeType() != null && !part.getMimeType().isEmpty()) {
-                data.writeBytes("Content-Type: " + part.getMimeType());
-                data.writeBytes(NEW_LINE);
+                writeLine(sb, outStream, "Content-Type: " + part.getMimeType());
             }
             if (part.getSize() >= 0) {
-                data.writeBytes("Content-Length: " + part.getSize());
-                data.writeBytes(NEW_LINE);
+                writeLine(sb, outStream, "Content-Length: " + part.getSize());
             }
-            data.writeBytes(NEW_LINE);
-            data.flush();
-            FileUtils.copyStream(outstream, part.getInputStream(), part.getSize());
-            outstream.flush();
-            data.writeBytes(NEW_LINE);
-            data.flush();
+            writeLine(sb, outStream, "");
+            write(sb, outStream, part.getInputStream(), part.getSize());
+            writeLine(sb, outStream, "");
         }
-        data.writeBytes(BOUNDARY);
-        data.writeBytes("--");
-        data.flush();
-        outstream.close();
+        writeLine(sb, outStream, BOUNDARY + "--");
+    }
+
+    private void write(StringBuilder sb, OutputStream outStream, InputStream inputStream, long size) throws IOException {
+        if (sb != null) {
+            sb.append("[Binary body size: +\"" + size + "\"]");
+        } else if (outStream != null) {
+            FileUtils.copyStream(outStream, inputStream, size);
+        }
+    }
+
+    private void writeLine(StringBuilder sb, OutputStream outStream, String line) throws IOException {
+        if (sb != null) {
+            sb.append(line);
+            sb.append('\n');
+        }
+        if (outStream != null) {
+            outStream.write(line.getBytes(charset));
+            outStream.write(CRLF);
+        }
     }
 
     @Override
@@ -59,29 +80,6 @@ public class RequestMultipartEntity implements StreamEntity {
         for (PartFormData part : parts) {
             part.getInputStream().close();
         }
-    }
-
-    @Override
-    public String getLog() throws IOException {
-        StringBuilder sb = new StringBuilder();
-        for (PartFormData part : parts) {
-            sb.append(BOUNDARY);
-            sb.append("\n");
-            sb.append("Content-Disposition: form-data; name=\"" + part.getName() +"\"; " + "filename=\"" + part.getFileName() +"\"" + "\n");
-            if (part.getMimeType() != null && !part.getMimeType().isEmpty()) {
-                sb.append("Content-Type: " + part.getMimeType() + "\n");
-            }
-            if (part.getSize() >= 0) {
-                sb.append("Content-Length: " + part.getSize());
-                sb.append("\n");
-            }
-            sb.append("\n");
-            sb.append("[Binary body]");
-            sb.append("\n");
-        }
-        sb.append(BOUNDARY);
-        sb.append("--");
-        return sb.toString();
     }
 
     public static String getMimeType() {
