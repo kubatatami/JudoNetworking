@@ -33,6 +33,7 @@ public class RequestMultipartEntity implements StreamEntity {
         DataOutputStream data = new DataOutputStream(outstream);
         for (PartFormData part : parts) {
             data.writeBytes(BOUNDARY);
+            data.writeChar('\n');
             data.writeBytes("Content-Disposition: form-data; name=\"" + part.getName() + "\"\n");
             if (part.mimeType != null && !part.getMimeType().isEmpty()) {
                 data.writeBytes("Content-Type: " + part.getMimeType() + "\n");
@@ -44,6 +45,7 @@ public class RequestMultipartEntity implements StreamEntity {
             outstream.flush();
         }
         data.writeBytes(BOUNDARY);
+        data.writeChar('\n');
         outstream.close();
     }
 
@@ -59,6 +61,7 @@ public class RequestMultipartEntity implements StreamEntity {
         StringBuilder sb = new StringBuilder();
         for (PartFormData part : parts) {
             sb.append(BOUNDARY);
+            sb.append("\n");
             sb.append("Content-Disposition: form-data; name=\"" + part.getName() + "\"\n");
             if (part.mimeType != null && !part.getMimeType().isEmpty()) {
                 sb.append("Content-Type: " + part.getMimeType() + "\n");
@@ -68,6 +71,7 @@ public class RequestMultipartEntity implements StreamEntity {
             sb.append("\n");
         }
         sb.append(BOUNDARY);
+        sb.append("\n");
         return sb.toString();
     }
 
