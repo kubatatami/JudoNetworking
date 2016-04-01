@@ -39,15 +39,12 @@ import java.io.OutputStream;
  */
 public class RequestInputStreamEntity implements StreamEntity {
 
-    private final static long BUFFER_SIZE = 4096;
 
     private final InputStream content;
 
     private final long length;
 
     private final boolean binary;
-
-    byte[] buffer;
 
     public RequestInputStreamEntity(final InputStream instream, long length) {
         this(instream, length, false);
@@ -60,7 +57,7 @@ public class RequestInputStreamEntity implements StreamEntity {
         this.content = instream;
         this.length = length;
         this.binary = binary;
-        buffer = new byte[(int) Math.min(BUFFER_SIZE, length)];
+
     }
 
     @Override
@@ -73,7 +70,7 @@ public class RequestInputStreamEntity implements StreamEntity {
         if (outstream == null) {
             throw new IllegalArgumentException("Output stream may not be null");
         }
-        FileUtils.copyStream(outstream, content, length, buffer);
+        FileUtils.copyStream(outstream, content, length);
         outstream.flush();
         outstream.close();
     }

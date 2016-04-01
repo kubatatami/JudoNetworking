@@ -8,6 +8,8 @@ import java.util.Scanner;
 
 public class FileUtils {
 
+    private final static long BUFFER_SIZE = 4096;
+
     public static String getFileExtension(File file) {
         String name = file.getName();
         try {
@@ -17,7 +19,8 @@ public class FileUtils {
         }
     }
 
-    public static void copyStream(OutputStream outstream, InputStream instream, long length, byte[] buffer) throws IOException {
+    public static void copyStream(OutputStream outstream, InputStream instream, long length) throws IOException {
+        byte[] buffer = new byte[(int) Math.min(BUFFER_SIZE, length)];
         int l;
         if (length < 0) {
             // consume until EOF

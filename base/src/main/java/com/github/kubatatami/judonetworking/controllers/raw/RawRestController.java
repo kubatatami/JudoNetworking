@@ -142,7 +142,7 @@ public class RawRestController extends RawController {
                         String name = ((Post) annotation).value();
                         FileInputStream fileInputStream = new FileInputStream(file);
                         String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(FileUtils.getFileExtension(file));
-                        parts.add(new PartFormData(name, fileInputStream, mimeType, file.getName()));
+                        parts.add(new PartFormData(name, fileInputStream, mimeType, file.getName(), file.length()));
                     } catch (FileNotFoundException e) {
                         throw new JudoException("File is not exist.", e);
                     }
