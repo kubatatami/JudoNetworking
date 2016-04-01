@@ -27,6 +27,8 @@
 
 package com.github.kubatatami.judonetworking.internals.streams;
 
+import com.github.kubatatami.judonetworking.utils.FileUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,7 +37,7 @@ import java.io.OutputStream;
  * A streamed, non-repeatable entity that obtains its content from
  * an {@link InputStream}.
  */
-public class RequestInputStreamEntity {
+public class RequestInputStreamEntity implements StreamEntity {
 
     private final static long BUFFER_SIZE = 4096;
 
@@ -43,59 +45,56 @@ public class RequestInputStreamEntity {
 
     private final long length;
 
+    private final boolean binary;
+
     byte[] buffer;
 
     public RequestInputStreamEntity(final InputStream instream, long length) {
+        this(instream, length, false);
+    }
+
+    public RequestInputStreamEntity(final InputStream instream, long length, boolean binary) {
         if (instream == null) {
             throw new IllegalArgumentException("Source input stream may not be null");
         }
         this.content = instream;
         this.length = length;
+        this.binary = binary;
         buffer = new byte[(int) Math.min(BUFFER_SIZE, length)];
     }
 
+    @Override
     public long getContentLength() {
         return this.length;
     }
 
+    @Override
     public void writeTo(final OutputStream outstream) throws IOException {
         if (outstream == null) {
             throw new IllegalArgumentException("Output stream may not be null");
         }
-        InputStream instream = this.content;
-
-        int l;
-        if (this.length < 0) {
-            // consume until EOF
-            while ((l = instream.read(buffer)) != -1) {
-                outstream.write(buffer, 0, l);
-            }
-        } else {
-            // consume no more than length
-            long remaining = this.length;
-            while (remaining > 0) {
-                l = instream.read(buffer, 0, (int) Math.min(BUFFER_SIZE, remaining));
-                if (l == -1) {
-                    break;
-                }
-                outstream.write(buffer, 0, l);
-                remaining -= l;
-            }
-        }
+        FileUtils.copyStream(outstream, content, length, buffer);
         outstream.flush();
         outstream.close();
     }
 
-    // non-javadoc, see interface HttpEntity
+    @Override
     public void close() throws IOException {
         this.content.close();
     }
 
-    public void reset() throws IOException {
-        this.content.reset();
+    @Override
+    public String getLog() throws IOException {
+        if (binary) {
+            if (length >= 0) {
+                return "Binary body size: " + length;
+            } else {
+                return "Binary body";
+            }
+        } else {
+            String result = FileUtils.convertStreamToString(content);
+            content.reset();
+            return result;
+        }
     }
-
-    public InputStream getContent() {
-        return content;
-    }
-} // class InputStreamEntity
+}

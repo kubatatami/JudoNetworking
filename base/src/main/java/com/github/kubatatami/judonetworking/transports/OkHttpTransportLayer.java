@@ -96,13 +96,11 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
             }
             if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
                 if (requestBody != null) {
-                    longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()), JudoLogger.LogLevel.INFO);
-                    requestInfo.entity.reset();
+                    longLog("Request(" + requestInfo.url + ")", requestInfo.entity.getLog(), JudoLogger.LogLevel.INFO);
                 } else {
                     longLog("Request", requestInfo.url, JudoLogger.LogLevel.INFO);
                 }
             }
-
 
             if (method != null) {
                 HttpMethod ann = ReflectionCache.getAnnotationInherited(method, HttpMethod.class);

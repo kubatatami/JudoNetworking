@@ -12,14 +12,12 @@ import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.transports.HttpTransportLayer;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
-import com.github.kubatatami.judonetworking.utils.SecurityUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.net.URL;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
@@ -74,8 +72,7 @@ public class DataLayerHttpTransportLayer extends HttpTransportLayer {
             }
             if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
                 if (request.getBody() != null && request.getBody().length > 0 && requestInfo.entity != null) {
-                    longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()), JudoLogger.LogLevel.INFO);
-                    requestInfo.entity.reset();
+                    longLog("Request(" + requestInfo.url + ")", requestInfo.entity.getLog(), JudoLogger.LogLevel.INFO);
                 } else {
                     longLog("Request", requestInfo.url, JudoLogger.LogLevel.INFO);
                 }

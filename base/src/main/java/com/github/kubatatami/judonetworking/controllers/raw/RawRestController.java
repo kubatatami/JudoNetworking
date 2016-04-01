@@ -1,10 +1,14 @@
 package com.github.kubatatami.judonetworking.controllers.raw;
 
 
+import android.webkit.MimeTypeMap;
+
 import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
+import com.github.kubatatami.judonetworking.internals.streams.RequestMultipartEntity;
+import com.github.kubatatami.judonetworking.utils.FileUtils;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import org.apache.http.NameValuePair;
@@ -28,6 +32,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.github.kubatatami.judonetworking.internals.streams.RequestMultipartEntity.PartFormData;
 
 /**
  * Created with IntelliJ IDEA.
@@ -125,8 +131,34 @@ public class RawRestController extends RawController {
         requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content), content.length);
     }
 
+    protected void createMultipartFormDataPost(Request request, ProtocolController.RequestInfo requestInfo) {
+        int i = 0;
+        List<PartFormData> parts = new ArrayList<>();
+        for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
+            for (Annotation annotation : annotations) {
+                if (annotation instanceof Post && request.getArgs()[i] instanceof File) {
+                    try {
+                        File file = (File) request.getArgs()[i];
+                        String name = ((Post) annotation).value();
+                        FileInputStream fileInputStream = new FileInputStream(file);
+                        String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(FileUtils.getFileExtension(file));
+                        parts.add(new PartFormData(name, fileInputStream, mimeType));
+                    } catch (FileNotFoundException e) {
+                        throw new JudoException("File is not exist.", e);
+                    }
+                }
+            }
+            i++;
+        }
+        if (parts.size() > 0) {
+            requestInfo.entity = new RequestMultipartEntity(parts);
+            requestInfo.mimeType = RequestMultipartEntity.getMimeType();
+        } else {
+            throw new JudoException("No @Post file params.");
+        }
+    }
+
     protected void createFilePost(Request request, ProtocolController.RequestInfo requestInfo) {
-        requestInfo.mimeType = "multipart/form-data";
         int i = 0;
         File file = null;
         for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
@@ -139,13 +171,17 @@ public class RawRestController extends RawController {
             i++;
         }
         if (file != null) {
+            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(FileUtils.getFileExtension(file));
+            if (mimeType != null) {
+                requestInfo.mimeType = mimeType;
+            }
             try {
                 requestInfo.entity = new RequestInputStreamEntity(new FileInputStream(file), file.length());
             } catch (FileNotFoundException e) {
                 throw new JudoException("File is not exist.", e);
             }
         } else {
-            throw new JudoException("No file param.");
+            throw new JudoException("No @Post file param.");
         }
     }
 
@@ -216,6 +252,8 @@ public class RawRestController extends RawController {
                 createFormPost(request, requestInfo, additionalRequestData);
             } else if (ReflectionCache.getAnnotationInherited(request.getMethod(), FilePost.class) != null) {
                 createFilePost(request, requestInfo);
+            } else if (ReflectionCache.getAnnotationInherited(request.getMethod(), MultipartDataPost.class) != null) {
+                createMultipartFormDataPost(request, requestInfo);
             }
             if (!ann.mimeType().equals("")) {
                 requestInfo.mimeType = ann.mimeType();
@@ -311,6 +349,12 @@ public class RawRestController extends RawController {
 
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.METHOD, ElementType.TYPE})
+    public @interface MultipartDataPost {
+
+    }
+
     @Override
     public void setApiKey(String name, String key) {
         customGetKeys.put(name, key);
@@ -320,4 +364,5 @@ public class RawRestController extends RawController {
     public void setApiKey(String key) {
         throw new UnsupportedOperationException("You must set key name or use addCustomKey method.");
     }
+
 }
