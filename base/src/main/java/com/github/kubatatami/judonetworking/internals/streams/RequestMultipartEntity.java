@@ -12,7 +12,7 @@ public class RequestMultipartEntity implements StreamEntity {
 
     private final static int BUFFER_SIZE = 4096;
 
-    public static final String BOUNDARY = "aksjdfn9834lkjfaawef324";
+    public static final String BOUNDARY = "-----------------------------735323031399963166993862150";
 
     private List<PartFormData> parts;
 
@@ -43,6 +43,7 @@ public class RequestMultipartEntity implements StreamEntity {
             outstream.write('\n');
             outstream.flush();
         }
+        data.writeBytes(BOUNDARY);
         outstream.close();
     }
 
@@ -57,6 +58,7 @@ public class RequestMultipartEntity implements StreamEntity {
     public String getLog() throws IOException {
         StringBuilder sb = new StringBuilder();
         for (PartFormData part : parts) {
+            sb.append(BOUNDARY);
             sb.append("Content-Disposition: form-data; name=\"" + part.getName() + "\"\n");
             if (part.mimeType != null && !part.getMimeType().isEmpty()) {
                 sb.append("Content-Type: " + part.getMimeType() + "\n");
@@ -65,6 +67,7 @@ public class RequestMultipartEntity implements StreamEntity {
             sb.append("Binary body");
             sb.append("\n");
         }
+        sb.append(BOUNDARY);
         return sb.toString();
     }
 
