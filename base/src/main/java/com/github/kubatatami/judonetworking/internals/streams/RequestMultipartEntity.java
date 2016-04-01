@@ -45,7 +45,7 @@ public class RequestMultipartEntity implements StreamEntity {
             outstream.flush();
         }
         data.writeBytes(BOUNDARY);
-        data.writeChar('\n');
+        data.writeBytes("--");
         outstream.close();
     }
 
@@ -71,7 +71,7 @@ public class RequestMultipartEntity implements StreamEntity {
             sb.append("\n");
         }
         sb.append(BOUNDARY);
-        sb.append("\n");
+        sb.append("--");
         return sb.toString();
     }
 
