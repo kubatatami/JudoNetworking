@@ -7,12 +7,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.UUID;
 
 public class RequestMultipartEntity implements StreamEntity {
 
     private static final byte[] CRLF = {'\r', '\n'};
 
-    public static final String BOUNDARY = "-----------------------------735323031399963166993862150";
+    public static final String BOUNDARY = UUID.randomUUID().toString();
 
     private static Charset charset = Charset.forName("UTF-8");
 
@@ -41,25 +42,32 @@ public class RequestMultipartEntity implements StreamEntity {
 
     private void write(StringBuilder sb, OutputStream outStream) throws IOException {
         for (PartFormData part : parts) {
+            write(sb, outStream, "--");
             writeLine(sb, outStream, BOUNDARY);
-            writeLine(sb, outStream, "Content-Disposition: form-data; name=\"" + part.getName() + "\"; " + "filename=\"" + part.getFileName() + "\"");
+            writeLine(sb, outStream, "Content-Disposition: form-data; name=\"" + part.getName() + "\"; filename=\"" + part.getFileName() + "\"");
             if (part.getMimeType() != null && !part.getMimeType().isEmpty()) {
                 writeLine(sb, outStream, "Content-Type: " + part.getMimeType());
             }
             if (part.getSize() >= 0) {
                 writeLine(sb, outStream, "Content-Length: " + part.getSize());
             }
-            writeLine(sb, outStream, "");
+            writeNewLine(sb, outStream);
             write(sb, outStream, part.getInputStream(), part.getSize());
-            writeLine(sb, outStream, "");
+            writeNewLine(sb, outStream);
         }
-        writeLine(sb, outStream, BOUNDARY + "--");
+        write(sb, outStream, "--");
+        write(sb, outStream, BOUNDARY);
+        write(sb, outStream, "--");
+        writeNewLine(sb, outStream);
     }
 
     private void write(StringBuilder sb, OutputStream outStream, InputStream inputStream, long size) throws IOException {
         if (sb != null) {
-            sb.append("[Binary body size: +\"" + size + "\"]");
-        } else if (outStream != null) {
+            sb.append("[Binary body size: ");
+            sb.append(size);
+            sb.append("]");
+        }
+        if (outStream != null) {
             FileUtils.copyStream(outStream, inputStream, size);
         }
     }
@@ -67,10 +75,27 @@ public class RequestMultipartEntity implements StreamEntity {
     private void writeLine(StringBuilder sb, OutputStream outStream, String line) throws IOException {
         if (sb != null) {
             sb.append(line);
-            sb.append('\n');
         }
         if (outStream != null) {
             outStream.write(line.getBytes(charset));
+        }
+        writeNewLine(sb, outStream);
+    }
+
+    private void write(StringBuilder sb, OutputStream outStream, String line) throws IOException {
+        if (sb != null) {
+            sb.append(line);
+        }
+        if (outStream != null) {
+            outStream.write(line.getBytes(charset));
+        }
+    }
+
+    private void writeNewLine(StringBuilder sb, OutputStream outStream) throws IOException {
+        if (sb != null) {
+            sb.append('\n');
+        }
+        if (outStream != null) {
             outStream.write(CRLF);
         }
     }
@@ -83,7 +108,7 @@ public class RequestMultipartEntity implements StreamEntity {
     }
 
     public static String getMimeType() {
-        return "multipart/form-data;boundary=" + BOUNDARY;
+        return "multipart/form-data; boundary=" + BOUNDARY;
     }
 
     public static class PartFormData {
