@@ -13,7 +13,7 @@ public class RequestMultipartEntity implements StreamEntity {
 
     private static final byte[] CRLF = {'\r', '\n'};
 
-    public static final String BOUNDARY = UUID.randomUUID().toString();
+    public static final String BOUNDARY = UUID.randomUUID().toString().replaceAll("-", "");
 
     private static Charset charset = Charset.forName("UTF-8");
 
