@@ -139,16 +139,16 @@ public class RawRestController extends RawController {
             for (Annotation annotation : annotations) {
                 if (annotation instanceof Post) {
                     Post postAnnotation = (Post) annotation;
-                    if (request.getArgs()[i] instanceof File) {
-                        File file = (File) request.getArgs()[i];
-                        String name = postAnnotation.value();
-                        addFileMultipart(parts, file, name);
-                    } else if (request.getArgs()[i] instanceof InputStream) {
-                        InputStream is = (InputStream) request.getArgs()[i];
-                        parts.add(new PartFormData(postAnnotation.value(), is, postAnnotation.mimeType()));
-                    } else {
-                        String string = request.getArgs()[i].toString();
-                        addStringMultipart(parts, string, postAnnotation.value(), postAnnotation.mimeType());
+                    Object param = request.getArgs()[i];
+                    if (param != null) {
+                        if (param instanceof File) {
+                            String name = postAnnotation.value();
+                            addFileMultipart(parts, (File) param, name);
+                        } else if (param instanceof InputStream) {
+                            parts.add(new PartFormData(postAnnotation.value(), (InputStream) param, postAnnotation.mimeType()));
+                        } else {
+                            addStringMultipart(parts, param.toString(), postAnnotation.value(), postAnnotation.mimeType());
+                        }
                     }
                 }
             }
