@@ -20,7 +20,8 @@ public class FileUtils {
     }
 
     public static void copyStream(OutputStream outstream, InputStream instream, long length) throws IOException {
-        byte[] buffer = new byte[(int) Math.min(BUFFER_SIZE, length)];
+        int size = (int) (length > 0 ? Math.min(BUFFER_SIZE, length) : BUFFER_SIZE);
+        byte[] buffer = new byte[size];
         int l;
         if (length < 0) {
             // consume until EOF
