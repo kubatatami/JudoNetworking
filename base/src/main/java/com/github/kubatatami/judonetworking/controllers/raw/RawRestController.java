@@ -20,6 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
@@ -136,15 +137,18 @@ public class RawRestController extends RawController {
         List<PartFormData> parts = new ArrayList<>();
         for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
             for (Annotation annotation : annotations) {
-                if (annotation instanceof Post && request.getArgs()[i] instanceof File) {
-                    try {
+                if (annotation instanceof Post) {
+                    Post postAnnotation = (Post) annotation;
+                    if (request.getArgs()[i] instanceof File) {
                         File file = (File) request.getArgs()[i];
-                        String name = ((Post) annotation).value();
-                        FileInputStream fileInputStream = new FileInputStream(file);
-                        String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(FileUtils.getFileExtension(file));
-                        parts.add(new PartFormData(name, fileInputStream, mimeType, file.getName(), file.length()));
-                    } catch (FileNotFoundException e) {
-                        throw new JudoException("File is not exist.", e);
+                        String name = postAnnotation.value();
+                        addFileMultipart(parts, file, name);
+                    } else if (request.getArgs()[i] instanceof InputStream) {
+                        InputStream is = (InputStream) request.getArgs()[i];
+                        parts.add(new PartFormData(postAnnotation.value(), is, postAnnotation.mimeType()));
+                    } else {
+                        String string = request.getArgs()[i].toString();
+                        addStringMultipart(parts, string, postAnnotation.value(), postAnnotation.mimeType());
                     }
                 }
             }
@@ -155,6 +159,26 @@ public class RawRestController extends RawController {
             requestInfo.mimeType = RequestMultipartEntity.getMimeType();
         } else {
             throw new JudoException("No @Post file params.");
+        }
+    }
+
+
+    private void addStringMultipart(List<PartFormData> parts, String data, String name, String mimeType) {
+        try {
+            InputStream is = new ByteArrayInputStream(data.getBytes("UTF-8"));
+            parts.add(new PartFormData(name, is, mimeType));
+        } catch (UnsupportedEncodingException e) {
+            throw new JudoException("Unsupported encoding exception.", e);
+        }
+    }
+
+    private void addFileMultipart(List<PartFormData> parts, File file, String name) {
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);
+            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(FileUtils.getFileExtension(file));
+            parts.add(new PartFormData(name, fileInputStream, mimeType, file.getName(), file.length()));
+        } catch (FileNotFoundException e) {
+            throw new JudoException("File is not exist.", e);
         }
     }
 
@@ -322,6 +346,8 @@ public class RawRestController extends RawController {
     public @interface Post {
 
         String value() default "";
+
+        String mimeType() default "";
     }
 
     @Retention(RetentionPolicy.RUNTIME)

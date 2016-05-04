@@ -44,7 +44,11 @@ public class RequestMultipartEntity implements StreamEntity {
         for (PartFormData part : parts) {
             write(sb, outStream, "--");
             writeLine(sb, outStream, BOUNDARY);
-            writeLine(sb, outStream, "Content-Disposition: form-data; name=\"" + part.getName() + "\"; filename=\"" + part.getFileName() + "\"");
+            write(sb, outStream, "Content-Disposition: form-data; name=\"" + part.getName() + "\";");
+            if (part.getFileName() != null && !part.getFileName().isEmpty()) {
+                write(sb, outStream, "filename=\"" + part.getFileName() + "\"");
+            }
+            writeNewLine(sb, outStream);
             if (part.getMimeType() != null && !part.getMimeType().isEmpty()) {
                 writeLine(sb, outStream, "Content-Type: " + part.getMimeType());
             }
@@ -122,6 +126,10 @@ public class RequestMultipartEntity implements StreamEntity {
         private String fileName;
 
         private final long size;
+
+        public PartFormData(String name, InputStream inputStream, String mimeType) {
+            this(name, inputStream, mimeType, null, -1);
+        }
 
         public PartFormData(String name, InputStream inputStream, String mimeType, String fileName, long size) {
             this.name = name;
