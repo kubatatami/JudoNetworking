@@ -37,10 +37,18 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
     protected OkHttpConnectionModifier okHttpConnectionModifier;
 
-    protected OkHttpClient baseClient = new OkHttpClient();
+    protected final OkHttpClient baseClient;
+
+    public OkHttpTransportLayer() {
+        this(new OkHttpClient());
+    }
+
+    public OkHttpTransportLayer(OkHttpClient baseClient) {
+        this.baseClient = baseClient;
+    }
 
     protected OkHttpClient initSetup(OkHttpClient.Builder clientBuilder, Request.Builder builder, ProtocolController.RequestInfo requestInfo,
-                             int timeout, TimeStat timeStat) throws Exception {
+                                     int timeout, TimeStat timeStat) throws Exception {
         clientBuilder.followRedirects(followRedirection).followSslRedirects(followRedirection);
 
         if (requestInfo.mimeType != null) {
