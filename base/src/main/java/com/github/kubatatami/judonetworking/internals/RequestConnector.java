@@ -214,6 +214,7 @@ public class RequestConnector {
                 if (localCacheObject.result) {
                     if (request.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                         request.invokeStart(new CacheInfo(true, localCacheObject.time));
+                        request.setHeaders(localCacheObject.headers);
                         timeStat.tickCacheTime();
                         if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
                             localCacheObject.object = rpc.getClonner().clone(localCacheObject.object);
@@ -231,6 +232,7 @@ public class RequestConnector {
                                 localCacheObject.headers);
                         if (request.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                             request.invokeStart(new CacheInfo(true, localCacheObject.time));
+                            request.setHeaders(localCacheObject.headers);
                             timeStat.tickCacheTime();
                             return localCacheObject.object;
                         }

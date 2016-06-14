@@ -325,6 +325,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                             if (req.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                                 batches.remove(i);
                                 req.invokeStart(new CacheInfo(true, result.time));
+                                req.setHeaders(result.headers);
                             }
 
 
@@ -342,6 +343,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                                 if (req.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                                     batches.remove(i);
                                     req.invokeStart(new CacheInfo(true, result.time));
+                                    req.setHeaders(result.headers);
                                 }
                             }
 
