@@ -141,4 +141,8 @@ public class WearListenerService extends WearableListenerService {
     public static OkHttpClient getOkHttpClient() {
         return okHttpClient;
     }
+
+    public static void setOkHttpClient(OkHttpClient okHttpClient) {
+        WearListenerService.okHttpClient = okHttpClient;
+    }
 }
