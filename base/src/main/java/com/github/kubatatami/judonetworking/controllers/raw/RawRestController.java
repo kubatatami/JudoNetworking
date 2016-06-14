@@ -1,20 +1,17 @@
 package com.github.kubatatami.judonetworking.controllers.raw;
 
 
+import android.util.Pair;
 import android.webkit.MimeTypeMap;
 
 import com.github.kubatatami.judonetworking.Request;
+import com.github.kubatatami.judonetworking.controllers.GetOrPostTools;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.internals.streams.RequestMultipartEntity;
 import com.github.kubatatami.judonetworking.utils.FileUtils;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
-
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -30,6 +27,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,33 +100,24 @@ public class RawRestController extends RawController {
     @SuppressWarnings("unchecked")
     protected void createFormPost(Request request, ProtocolController.RequestInfo requestInfo, AdditionalRequestData additionalRequestData) {
         requestInfo.mimeType = "application/x-www-form-urlencoded";
-        List<NameValuePair> noEncodeNameValuePairs = new ArrayList<>();
-        List<NameValuePair> nameValuePairs = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
         int i = 0;
         for (Annotation[] annotations : ReflectionCache.getParameterAnnotations(request.getMethod())) {
             for (Annotation annotation : annotations) {
                 if (annotation instanceof Post) {
-                    addFormPostParam(nameValuePairs, ((Post) annotation).value(), request.getArgs()[i]);
+                    addFormPostParam(sb, ((Post) annotation).value(), request.getArgs()[i]);
                 } else if (annotation instanceof AdditionalPostParam) {
                     AdditionalPostParam additionalPostParam = (AdditionalPostParam) annotation;
-                    if (additionalPostParam.urlEncode()) {
-                        nameValuePairs.addAll((java.util.Collection<? extends NameValuePair>) request.getArgs()[i]);
-                    } else {
-                        noEncodeNameValuePairs.addAll((java.util.Collection<? extends NameValuePair>) request.getArgs()[i]);
-                    }
+                    GetOrPostTools.addGetParam(sb, (Collection<? extends Pair>) request.getArgs()[i], additionalPostParam.urlEncode());
                 }
             }
             i++;
 
         }
         for (Map.Entry<String, Object> entry : additionalRequestData.getCustomPostKeys().entrySet()) {
-            addFormPostParam(nameValuePairs, entry.getKey(), entry.getValue());
+            addFormPostParam(sb, entry.getKey(), entry.getValue());
         }
-        String formRequest = URLEncodedUtils.format(nameValuePairs, HTTP.UTF_8).replaceAll("\\+", "%20");
-        for (NameValuePair nameValuePair : noEncodeNameValuePairs) {
-            formRequest += "&" + nameValuePair.getName() + "=" + nameValuePair.getValue();
-        }
-        byte[] content = formRequest.getBytes();
+        byte[] content = sb.toString().getBytes();
         requestInfo.entity = new RequestInputStreamEntity(new ByteArrayInputStream(content), content.length);
     }
 
@@ -291,17 +280,17 @@ public class RawRestController extends RawController {
         return requestInfo;
     }
 
-    protected void addFormPostParam(List<NameValuePair> nameValuePairs, String name, Object arg) {
+    protected void addFormPostParam(StringBuilder sb, String name, Object arg) {
         if (arg != null && arg instanceof Map<?, ?>) {
             for (Map.Entry<?, ?> entry : ((Map<?, ?>) arg).entrySet()) {
-                nameValuePairs.add(new BasicNameValuePair(name + "[" + entry.getKey().toString() + "]", entry.getValue() == null ? "" : entry.getValue().toString()));
+                GetOrPostTools.addGetParam(sb, name + "[" + entry.getKey().toString() + "]", entry.getValue() == null ? "" : entry.getValue().toString(), true);
             }
         } else if (arg != null && (arg instanceof List<?> || arg.getClass().isArray())) {
             for (Object obj : (Iterable<?>) arg) {
-                nameValuePairs.add(new BasicNameValuePair(name + "[]", obj == null ? "" : obj.toString()));
+                GetOrPostTools.addGetParam(sb, name + "[]", obj == null ? "" : obj.toString(), true);
             }
         } else {
-            nameValuePairs.add(new BasicNameValuePair(name, arg == null ? "" : arg.toString()));
+            GetOrPostTools.addGetParam(sb, name, arg == null ? "" : arg.toString(), true);
         }
     }
 

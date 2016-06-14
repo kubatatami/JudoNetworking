@@ -10,7 +10,6 @@ public class CacheMethod {
 
     private String url;
 
-
     private String interfaceName;
 
     private int methodId;
@@ -51,7 +50,6 @@ public class CacheMethod {
     public Long getTime() {
         return time;
     }
-
 
     public String getInterfaceName() {
         return interfaceName;
