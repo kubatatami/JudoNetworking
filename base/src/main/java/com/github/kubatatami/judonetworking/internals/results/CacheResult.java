@@ -1,6 +1,8 @@
 package com.github.kubatatami.judonetworking.internals.results;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
 public class CacheResult implements Serializable {
 
@@ -12,13 +14,16 @@ public class CacheResult implements Serializable {
 
     public Long time;
 
+    public Map<String, List<String>> headers;
+
     public CacheResult() {
 
     }
 
-    public CacheResult(Object object, boolean result, Long time) {
+    public CacheResult(Object object, boolean result, Long time,  Map<String, List<String>> headers) {
         this.object = object;
         this.result = result;
         this.time = time;
+        this.headers = headers;
     }
 }

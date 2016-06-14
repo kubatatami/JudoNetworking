@@ -12,6 +12,7 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -50,6 +51,7 @@ public class DefaultMemoryCache implements MemoryCache {
                     }
                     result.object = cacheObject.getObject();
                     result.time = cacheObject.createTime;
+                    result.headers = cacheObject.headers;
                     result.result = true;
                     return result;
                 }
@@ -60,12 +62,12 @@ public class DefaultMemoryCache implements MemoryCache {
     }
 
     @Override
-    public void put(int methodId, Object params[], Object object, int cacheSize) {
+    public void put(int methodId, Object params[], Object object, int cacheSize, Map<String, List<String>> headers) {
         if (!cache.containsKey(methodId)) {
             cache.put(methodId, new LruCache<Integer, CacheObject>(cacheSize != 0 ? cacheSize : Integer.MAX_VALUE));
         }
         Integer hash = Arrays.deepHashCode(params);
-        cache.get(methodId).put(hash, new CacheObject(System.currentTimeMillis(), object));
+        cache.get(methodId).put(hash, new CacheObject(System.currentTimeMillis(), object, headers));
         if ((debugFlags & Endpoint.CACHE_DEBUG) > 0) {
             JudoLogger.log("Cache(" + methodId + "): Saved in memory cache with hash:" + hash, JudoLogger.LogLevel.DEBUG);
         }
@@ -125,13 +127,16 @@ public class DefaultMemoryCache implements MemoryCache {
      */
     static class CacheObject {
 
+        final Map<String, List<String>> headers;
+
         final long createTime;
 
         private final Object object;
 
-        CacheObject(long createTime, Object object) {
+        CacheObject(long createTime, Object object, Map<String, List<String>> headers) {
             this.createTime = createTime;
             this.object = object;
+            this.headers = headers;
         }
 
         public long getCreateTime() {
@@ -140,6 +145,10 @@ public class DefaultMemoryCache implements MemoryCache {
 
         public Object getObject() {
             return object;
+        }
+
+        public Map<String, List<String>> getHeaders() {
+            return headers;
         }
     }
 }
