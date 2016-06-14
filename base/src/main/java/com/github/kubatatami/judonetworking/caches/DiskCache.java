@@ -3,6 +3,9 @@ package com.github.kubatatami.judonetworking.caches;
 import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
 import com.github.kubatatami.judonetworking.internals.results.CacheResult;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  * User: jbogacki
@@ -14,7 +17,7 @@ public interface DiskCache {
 
     CacheResult get(CacheMethod method, String hash, int cacheLifeTime);
 
-    void put(CacheMethod method, String hash, Object object, int maxSize);
+    void put(CacheMethod method, String hash, Object object, int maxSize,  Map<String, List<String>> headers);
 
     void clearCache();
 

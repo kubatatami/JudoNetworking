@@ -325,6 +325,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                             if (req.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                                 batches.remove(i);
                                 req.invokeStart(new CacheInfo(true, result.time));
+                                req.setHeaders(result.headers);
                             }
 
 
@@ -333,11 +334,16 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                                     req.getName(), req.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), cacheLevel);
                             result = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(req.getArgs()), req.getLocalCacheLifeTime());
                             if (result.result) {
-                                rpc.getMemoryCache().put(req.getMethodId(), req.getArgs(), result.object, req.getLocalCacheSize());
+                                rpc.getMemoryCache().put(req.getMethodId(),
+                                        req.getArgs(),
+                                        result.object,
+                                        req.getLocalCacheSize(),
+                                        result.headers);
                                 cacheObjects.put(req.getId(), new Pair<>(req, result.object));
                                 if (req.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                                     batches.remove(i);
                                     req.invokeStart(new CacheInfo(true, result.time));
+                                    req.setHeaders(result.headers);
                                 }
                             }
 
@@ -367,7 +373,6 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
             }
         }
     }
-
 
     protected void receiveResponse(List<RequestImpl> batches, List<RequestResult> responses, Map<Integer, Pair<RequestImpl, Object>> cacheObjects) {
         if (rpc.isCacheEnabled()) {
@@ -555,7 +560,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                         if (!request.isVoidResult()) {
                             results[i] = response.result;
                             if ((rpc.isCacheEnabled() && request.isLocalCacheable())) {
-                                rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), results[i], request.getLocalCacheSize());
+                                rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), results[i], request.getLocalCacheSize(), request.getHeaders());
                                 if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
                                     results[i] = rpc.getClonner().clone(results[i]);
                                 }
@@ -564,7 +569,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                                 if (cacheLevel != LocalCache.CacheLevel.MEMORY_ONLY) {
                                     CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()),
                                             request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), cacheLevel);
-                                    rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getLocalCacheSize());
+                                    rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), results[i], request.getLocalCacheSize(), request.getHeaders());
                                 }
                             }
                         }

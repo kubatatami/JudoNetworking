@@ -3,6 +3,8 @@ package com.github.kubatatami.judonetworking.caches;
 import com.github.kubatatami.judonetworking.internals.results.CacheResult;
 
 import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,7 +18,7 @@ public interface MemoryCache {
 
     CacheResult get(int methodId, Object params[], int cacheLifeTime, int cacheSize);
 
-    void put(int methodId, Object params[], Object object, int cacheSize);
+    void put(int methodId, Object params[], Object object, int cacheSize, Map<String, List<String>> headers);
 
     void clearCache();
 

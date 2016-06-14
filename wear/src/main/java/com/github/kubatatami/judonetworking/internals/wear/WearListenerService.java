@@ -6,11 +6,6 @@ import android.os.Process;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.WearableListenerService;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -18,13 +13,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import okio.BufferedSink;
 
 public class WearListenerService extends WearableListenerService {
 
     protected MessageUtils messageUtils;
 
-    protected static OkHttpClient okHttpClient  = new OkHttpClient();
+    protected static OkHttpClient okHttpClient = new OkHttpClient();
 
     @Override
     public void onCreate() {
@@ -92,10 +92,11 @@ public class WearListenerService extends WearableListenerService {
 
     protected DataLayerHttpTransportLayer.WearResponse send(final DataLayerHttpTransportLayer.WearRequest request) throws IOException {
         RequestBody requestBody = null;
-        OkHttpClient client = okHttpClient.clone();
-        client.setConnectTimeout(request.getConnectTimeout(), TimeUnit.MILLISECONDS);
-        client.setReadTimeout(request.getReadTimeout(), TimeUnit.MILLISECONDS);
-        client.setFollowRedirects(request.isFollowRedirects());
+        OkHttpClient.Builder clientBuilder = okHttpClient.newBuilder();
+        clientBuilder.connectTimeout(request.getConnectTimeout(), TimeUnit.MILLISECONDS)
+                .readTimeout(request.getReadTimeout(), TimeUnit.MILLISECONDS)
+                .followRedirects(request.isFollowRedirects())
+                .followSslRedirects(request.isFollowRedirects());
         Request.Builder builder = new Request.Builder();
         if (request.getBody() != null && request.getBody().length > 0) {
             requestBody = new RequestBody() {
@@ -121,7 +122,7 @@ public class WearListenerService extends WearableListenerService {
         }
         builder.url(request.getUrl());
         long realRequestTime = System.currentTimeMillis();
-        Response response = client.newCall(builder.build()).execute();
+        Response response = clientBuilder.build().newCall(builder.build()).execute();
         realRequestTime = System.currentTimeMillis() - realRequestTime;
         DataLayerHttpTransportLayer.WearResponse wearResponse = new DataLayerHttpTransportLayer.WearResponse();
         wearResponse.setSuccessful(response.isSuccessful());
@@ -139,5 +140,9 @@ public class WearListenerService extends WearableListenerService {
 
     public static OkHttpClient getOkHttpClient() {
         return okHttpClient;
+    }
+
+    public static void setOkHttpClient(OkHttpClient okHttpClient) {
+        WearListenerService.okHttpClient = okHttpClient;
     }
 }

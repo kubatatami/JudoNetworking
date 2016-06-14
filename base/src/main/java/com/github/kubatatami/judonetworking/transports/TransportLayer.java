@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 /**
  * Created with IntelliJ IDEA.
@@ -48,11 +47,6 @@ public abstract class TransportLayer {
 
     protected void longLog(String tag, String message, JudoLogger.LogLevel level) {
         JudoLogger.longLog(tag, message, level);
-    }
-
-    protected static String convertStreamToString(InputStream is) {
-        Scanner s = new Scanner(is).useDelimiter("\\A");
-        return s.hasNext() ? s.next() : "";
     }
 
 }

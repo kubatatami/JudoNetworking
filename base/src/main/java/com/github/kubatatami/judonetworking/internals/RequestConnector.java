@@ -12,7 +12,6 @@ import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
-import com.github.kubatatami.judonetworking.exceptions.VerifyModelException;
 import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
 import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.internals.results.CacheResult;
@@ -26,12 +25,10 @@ import com.github.kubatatami.judonetworking.internals.virtuals.VirtualCallback;
 import com.github.kubatatami.judonetworking.internals.virtuals.VirtualServerInfo;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.transports.TransportLayer;
-import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -217,6 +214,7 @@ public class RequestConnector {
                 if (localCacheObject.result) {
                     if (request.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                         request.invokeStart(new CacheInfo(true, localCacheObject.time));
+                        request.setHeaders(localCacheObject.headers);
                         timeStat.tickCacheTime();
                         if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
                             localCacheObject.object = rpc.getClonner().clone(localCacheObject.object);
@@ -227,9 +225,14 @@ public class RequestConnector {
                     CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), cacheLevel);
                     localCacheObject = rpc.getDiskCache().get(cacheMethod, Arrays.deepToString(request.getArgs()), request.getLocalCacheLifeTime());
                     if (localCacheObject.result) {
-                        rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), localCacheObject.object, request.getLocalCacheSize());
+                        rpc.getMemoryCache().put(request.getMethodId(),
+                                request.getArgs(),
+                                localCacheObject.object,
+                                request.getLocalCacheSize(),
+                                localCacheObject.headers);
                         if (request.getLocalCacheOnlyOnErrorMode().equals(LocalCache.OnlyOnError.NO)) {
                             request.invokeStart(new CacheInfo(true, localCacheObject.time));
+                            request.setHeaders(localCacheObject.headers);
                             timeStat.tickCacheTime();
                             return localCacheObject.object;
                         }
@@ -271,7 +274,7 @@ public class RequestConnector {
             }
 
             if ((rpc.isCacheEnabled() && request.isLocalCacheable())) {
-                rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), result.result, request.getLocalCacheSize());
+                rpc.getMemoryCache().put(request.getMethodId(), request.getArgs(), result.result, request.getLocalCacheSize(), request.getHeaders());
                 if (rpc.getCacheMode() == Endpoint.CacheMode.CLONE) {
                     result.result = rpc.getClonner().clone(result.result);
                 }
@@ -279,7 +282,7 @@ public class RequestConnector {
                 if (cacheLevel != LocalCache.CacheLevel.MEMORY_ONLY) {
 
                     CacheMethod cacheMethod = new CacheMethod(CacheMethod.getMethodId(request.getMethod()), request.getName(), request.getMethod().getDeclaringClass().getSimpleName(), rpc.getUrl(), cacheLevel);
-                    rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getLocalCacheSize());
+                    rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getLocalCacheSize(), request.getHeaders());
                 }
             }
 

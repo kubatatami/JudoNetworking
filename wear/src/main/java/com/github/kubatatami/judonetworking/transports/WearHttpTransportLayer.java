@@ -10,19 +10,25 @@ import com.github.kubatatami.judonetworking.utils.NetworkUtils;
 
 import java.lang.reflect.Method;
 
+import okhttp3.OkHttpClient;
+
 /**
  * Created by Kuba on 04/10/15.
  */
 public class WearHttpTransportLayer extends HttpTransportLayer {
 
-    Context context;
+    private final Context context;
 
-    OkHttpTransportLayer okHttpTransportLayer = new OkHttpTransportLayer();
+    private final OkHttpTransportLayer okHttpTransportLayer;
 
-    DataLayerHttpTransportLayer dataLayerHttpTransportLayer;
+    private final DataLayerHttpTransportLayer dataLayerHttpTransportLayer;
 
     public WearHttpTransportLayer(Context context) {
+        this(context, new OkHttpClient());
+    }
+    public WearHttpTransportLayer(Context context, OkHttpClient okHttpClient) {
         this.context = context;
+        okHttpTransportLayer = new OkHttpTransportLayer(okHttpClient);
         dataLayerHttpTransportLayer = new DataLayerHttpTransportLayer(context);
     }
 

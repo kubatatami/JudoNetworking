@@ -10,12 +10,6 @@ import com.github.kubatatami.judonetworking.internals.stats.TimeStat;
 import com.github.kubatatami.judonetworking.internals.streams.RequestOutputStream;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
-import com.squareup.okhttp.Call;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
-import com.squareup.okhttp.Response;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.Call;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 import okio.BufferedSink;
 
 /**
@@ -37,27 +37,34 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
     protected OkHttpConnectionModifier okHttpConnectionModifier;
 
-    protected OkHttpClient baseClient = new OkHttpClient();
+    protected final OkHttpClient baseClient;
 
-    protected void initSetup(OkHttpClient client, Request.Builder builder, ProtocolController.RequestInfo requestInfo,
-                             int timeout, TimeStat timeStat) throws Exception {
-        client.setFollowRedirects(followRedirection);
-        client.setFollowSslRedirects(followRedirection);
+    public OkHttpTransportLayer() {
+        this(new OkHttpClient());
+    }
+
+    public OkHttpTransportLayer(OkHttpClient baseClient) {
+        this.baseClient = baseClient;
+    }
+
+    protected OkHttpClient initSetup(OkHttpClient.Builder clientBuilder, Request.Builder builder, ProtocolController.RequestInfo requestInfo,
+                                     int timeout, TimeStat timeStat) throws Exception {
+        clientBuilder.followRedirects(followRedirection).followSslRedirects(followRedirection);
 
         if (requestInfo.mimeType != null) {
             builder.addHeader("Content-Type", requestInfo.mimeType);
         }
-        client.setConnectTimeout(connectTimeout, TimeUnit.MILLISECONDS);
+        clientBuilder.connectTimeout(connectTimeout, TimeUnit.MILLISECONDS);
 
         if (timeout == 0) {
             timeout = methodTimeout;
         }
         timeStat.setTimeout(timeout);
-        client.setReadTimeout(timeout, TimeUnit.MILLISECONDS);
+        clientBuilder.readTimeout(timeout, TimeUnit.MILLISECONDS);
 
 
         if (okHttpConnectionModifier != null) {
-            okHttpConnectionModifier.modify(client, builder);
+            okHttpConnectionModifier.modify(clientBuilder, builder);
         }
 
         if (requestInfo.customHeaders != null) {
@@ -65,6 +72,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                 builder.addHeader(entry.getKey(), entry.getValue());
             }
         }
+        return clientBuilder.build();
     }
 
     protected Response sendRequest(OkHttpClient client, Request.Builder builder, final ProtocolController.RequestInfo requestInfo,
@@ -96,13 +104,11 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
             }
             if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
                 if (requestBody != null) {
-                    longLog("Request(" + requestInfo.url + ")", convertStreamToString(requestInfo.entity.getContent()), JudoLogger.LogLevel.INFO);
-                    requestInfo.entity.reset();
+                    longLog("Request(" + requestInfo.url + ")", requestInfo.entity.getLog(), JudoLogger.LogLevel.INFO);
                 } else {
                     longLog("Request", requestInfo.url, JudoLogger.LogLevel.INFO);
                 }
             }
-
 
             if (method != null) {
                 HttpMethod ann = ReflectionCache.getAnnotationInherited(method, HttpMethod.class);
@@ -111,7 +117,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                 }
             }
 
-            if (com.squareup.okhttp.internal.http.HttpMethod.requiresRequestBody(methodName) && requestBody == null) {
+            if (okhttp3.internal.http.HttpMethod.requiresRequestBody(methodName) && requestBody == null) {
                 requestBody = new RequestBody() {
                     @Override
                     public MediaType contentType() {
@@ -181,12 +187,11 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                            int timeout, TimeStat timeStat, int debugFlags, Method method) throws JudoException {
         try {
             OkHttpBuilder builder = new OkHttpBuilder();
-            OkHttpClient client = baseClient.clone();
             builder.url(requestInfo.url);
             if (Thread.currentThread().isInterrupted()) {
                 return null;
             }
-            initSetup(client, builder, requestInfo, timeout, timeStat);
+            OkHttpClient client = initSetup(baseClient.newBuilder(), builder, requestInfo, timeout, timeStat);
 
             logRequestHeaders(requestName, debugFlags, builder);
 
@@ -245,7 +250,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
     @Override
     public void setMaxConnections(int max) {
-        baseClient.getDispatcher().setMaxRequests(max);
+        baseClient.dispatcher().setMaxRequests(max);
     }
 
     public void setOkHttpConnectionModifier(OkHttpConnectionModifier okHttpConnectionModifier) {
@@ -254,7 +259,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
     public interface OkHttpConnectionModifier {
 
-        void modify(OkHttpClient client, Request.Builder builder);
+        void modify(OkHttpClient.Builder clientBuilder, Request.Builder builder);
 
     }
 
@@ -279,20 +284,12 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
         @Override
         public InputStream getStream() throws ConnectionException {
-            try {
-                return response.body().byteStream();
-            } catch (IOException e) {
-                throw new ConnectionException(e);
-            }
+            return response.body().byteStream();
         }
 
         @Override
         public int getContentLength() {
-            try {
-                return (int) response.body().contentLength();
-            } catch (IOException e) {
-                throw new ConnectionException(e);
-            }
+            return (int) response.body().contentLength();
         }
 
         public Map<String, List<String>> getHeaders() {
@@ -325,7 +322,6 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
         }
     }
-
 
     public OkHttpClient getOkHttpClient() {
         return baseClient;

@@ -1,14 +1,15 @@
 package com.github.kubatatami.judonetworking.transports;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.squareup.okhttp.Authenticator;
-import com.squareup.okhttp.Interceptor;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 
 import java.io.IOException;
-import java.net.Proxy;
+
+import okhttp3.Authenticator;
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.Route;
 
 /**
  * Created by Kuba on 16/10/15.
@@ -48,7 +49,7 @@ public abstract class OkHttpOAuth2 {
 
     protected Authenticator oAuthAuthenticator = new Authenticator() {
         @Override
-        public Request authenticate(Proxy proxy, Response response) throws IOException {
+        public Request authenticate(Route route, Response response) throws IOException {
             if (lastTokenValid && canDoTokenRequest()) {
                 boolean createToken = false;
                 if (tokenAsyncResult == null || tokenAsyncResult.isDone()) {
@@ -69,16 +70,11 @@ public abstract class OkHttpOAuth2 {
             }
             return null;
         }
-
-        @Override
-        public Request authenticateProxy(Proxy proxy, Response response) throws IOException {
-            return null;
-        }
     };
 
-    public void prepareOkHttpToOAuth(OkHttpClient okHttpClient) {
+    public void prepareOkHttpToOAuth(OkHttpClient.Builder okHttpClient) {
         okHttpClient.networkInterceptors().add(oAuthInterceptor);
-        okHttpClient.setAuthenticator(oAuthAuthenticator);
+        okHttpClient.authenticator(oAuthAuthenticator);
     }
 
     public void setOAuthToken(String tokenType, String accessToken) {
