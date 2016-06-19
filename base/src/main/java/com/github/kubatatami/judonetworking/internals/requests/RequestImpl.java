@@ -279,13 +279,25 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     }
 
     public LocalCache.CacheLevel getLocalCacheLevel() {
-        return getLocalCache().cacheLevel();
+        LocalCache.CacheLevel level = getLocalCache().cacheLevel();
+        if (level.equals(LocalCache.CacheLevel.DEFAULT)) {
+            return rpc.getDefaultMethodCacheLevel();
+        } else {
+            return level;
+        }
     }
-
 
     public LocalCache.OnlyOnError getLocalCacheOnlyOnErrorMode() {
         LocalCache localCache = getLocalCache();
-        return localCache != null ? localCache.onlyOnError() : LocalCache.OnlyOnError.NO;
+        if(localCache == null){
+            return LocalCache.OnlyOnError.NO;
+        }
+        LocalCache.OnlyOnError onlyOnError = localCache.onlyOnError();
+        if (onlyOnError.equals(LocalCache.OnlyOnError.DEFAULT)) {
+            return rpc.getDefaultMethodCacheOnlyOnErrorMode();
+        } else {
+            return onlyOnError;
+        }
     }
 
     public long getWeight() {

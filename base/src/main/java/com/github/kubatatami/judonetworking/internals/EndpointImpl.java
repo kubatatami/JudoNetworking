@@ -113,6 +113,9 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     private int defaultMethodCacheSize = LocalCache.INFINITE;
 
+    private LocalCache.CacheLevel defaultMethodCacheLevel = LocalCache.CacheLevel.MEMORY_ONLY;
+
+    private LocalCache.OnlyOnError defaultMethodCacheOnlyOnErrorMode = LocalCache.OnlyOnError.NO;
 
     public EndpointImpl(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         init(context, protocolController, transportLayer, url);
@@ -606,5 +609,25 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @Override
     public void setDefaultMethodCacheSize(int millis) {
         this.defaultMethodCacheSize = millis;
+    }
+
+    @Override
+    public LocalCache.CacheLevel getDefaultMethodCacheLevel() {
+        return defaultMethodCacheLevel;
+    }
+
+    @Override
+    public void setDefaultMethodCacheLevel(LocalCache.CacheLevel defaultMethodCacheLevel) {
+        this.defaultMethodCacheLevel = defaultMethodCacheLevel;
+    }
+
+    @Override
+    public LocalCache.OnlyOnError getDefaultMethodCacheOnlyOnErrorMode() {
+        return defaultMethodCacheOnlyOnErrorMode;
+    }
+
+    @Override
+    public void setDefaultMethodCacheOnlyOnErrorMode(LocalCache.OnlyOnError defaultMethodCacheOnlyOnErrorMode) {
+        this.defaultMethodCacheOnlyOnErrorMode = defaultMethodCacheOnlyOnErrorMode;
     }
 }
