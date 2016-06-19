@@ -28,14 +28,8 @@ public abstract class OkHttpOAuth2 {
         @Override
         public Response intercept(Chain chain) throws IOException {
             Request request = chain.request();
+            await();
             if (accessToken != null && tokenType != null) {
-                try {
-                    if (tokenAsyncResult != null) {
-                        tokenAsyncResult.await();
-                    }
-                } catch (InterruptedException e) {
-                    throw new IOException(e);
-                }
                 request = request.newBuilder()
                         .header("Authorization", tokenType + " " + accessToken).build();
             }
@@ -47,6 +41,16 @@ public abstract class OkHttpOAuth2 {
         }
     };
 
+    private void await() throws IOException {
+        try {
+            if (tokenAsyncResult != null) {
+                tokenAsyncResult.await();
+            }
+        } catch (InterruptedException e) {
+            throw new IOException(e);
+        }
+    }
+
     protected Authenticator oAuthAuthenticator = new Authenticator() {
         @Override
         public Request authenticate(Route route, Response response) throws IOException {
@@ -56,11 +60,7 @@ public abstract class OkHttpOAuth2 {
                     tokenAsyncResult = doTokenRequest();
                     createToken = true;
                 }
-                try {
-                    tokenAsyncResult.await();
-                } catch (InterruptedException e) {
-                    throw new IOException(e);
-                }
+                await();
                 if (accessToken != null) {
                     if (createToken) {
                         lastTokenValid = false;
