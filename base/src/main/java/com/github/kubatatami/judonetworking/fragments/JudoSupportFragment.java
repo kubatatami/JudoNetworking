@@ -1,8 +1,10 @@
 package com.github.kubatatami.judonetworking.fragments;
 
-import android.os.Handler;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.view.View;
 
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
@@ -18,11 +20,17 @@ import com.github.kubatatami.judonetworking.stateful.StatefulController;
 public class JudoSupportFragment extends DialogFragment implements StatefulController {
 
     private String mWho;
+    private boolean destroyedView;
 
-    private Handler handler = new Handler();
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        destroyedView = false;
+    }
 
     @Override
     public void onDestroyView() {
+        destroyedView = true;
         super.onDestroyView();
         StatefulCache.removeAllControllersCallbacks(getWho());
     }
@@ -36,27 +44,29 @@ public class JudoSupportFragment extends DialogFragment implements StatefulContr
     }
 
     protected boolean connectCallback(BaseCallback<?>... callbacks) {
+        destroyedView = false;
         return StatefulCache.connectControllerCallbacks(this, callbacks);
     }
 
     protected boolean connectCallback(int id, BaseCallback<?> callback) {
+        destroyedView = false;
         return StatefulCache.connectControllerCallback(this, id, callback);
     }
 
     protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {
-        return new StatefulCallback<>(this, callback);
+        return new StatefulCallback<>(this, destroyedView ? null : callback);
     }
 
     protected <T> StatefulCallback<T> generateCallback(int id, Callback<T> callback) {
-        return new StatefulCallback<>(this, id, callback);
+        return new StatefulCallback<>(this, id, destroyedView ? null : callback);
     }
 
     protected <T> StatefulBatch<T> generateCallback(Batch<T> batch) {
-        return new StatefulBatch<>(this, batch);
+        return new StatefulBatch<>(this, destroyedView ? null : batch);
     }
 
     protected <T> StatefulBatch<T> generateCallback(int id, Batch<T> batch) {
-        return new StatefulBatch<>(this, id, batch);
+        return new StatefulBatch<>(this, id, destroyedView ? null : batch);
     }
 
     public void cancelRequest(int id) {

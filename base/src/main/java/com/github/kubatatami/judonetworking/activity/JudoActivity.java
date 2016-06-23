@@ -17,6 +17,7 @@ import com.github.kubatatami.judonetworking.stateful.StatefulController;
 public class JudoActivity extends Activity implements StatefulController {
 
     private String id;
+    private boolean destroyed;
 
     static String UNIQUE_ACTIVITY_ID = "UNIQUE_ACTIVITY_ID";
 
@@ -48,6 +49,7 @@ public class JudoActivity extends Activity implements StatefulController {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        destroyed = true;
         if (isFinishing()) {
             StatefulCache.removeAllStatefulCallbacks(getWho());
         } else {
@@ -64,19 +66,19 @@ public class JudoActivity extends Activity implements StatefulController {
     }
 
     protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {
-        return new StatefulCallback<>(this, callback);
+        return new StatefulCallback<>(this, destroyed ? null : callback);
     }
 
     protected <T> StatefulCallback<T> generateCallback(int id, Callback<T> callback) {
-        return new StatefulCallback<>(this, id, callback);
+        return new StatefulCallback<>(this, id, destroyed ? null : callback);
     }
 
     protected <T> StatefulBatch<T> generateCallback(Batch<T> batch) {
-        return new StatefulBatch<>(this, batch);
+        return new StatefulBatch<>(this, destroyed ? null : batch);
     }
 
     protected <T> StatefulBatch<T> generateCallback(int id, Batch<T> batch) {
-        return new StatefulBatch<>(this, id, batch);
+        return new StatefulBatch<>(this, id, destroyed ? null : batch);
     }
 
     public void cancelRequest(int id) {
