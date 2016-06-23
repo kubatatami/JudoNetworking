@@ -54,19 +54,19 @@ public class JudoSupportFragment extends DialogFragment implements StatefulContr
     }
 
     protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {
-        return new StatefulCallback<>(this, destroyedView ? null : callback);
+        return new StatefulCallback<>(this, callback, destroyedView);
     }
 
     protected <T> StatefulCallback<T> generateCallback(int id, Callback<T> callback) {
-        return new StatefulCallback<>(this, id, destroyedView ? null : callback);
+        return new StatefulCallback<>(this, id, callback, destroyedView);
     }
 
     protected <T> StatefulBatch<T> generateCallback(Batch<T> batch) {
-        return new StatefulBatch<>(this, destroyedView ? null : batch);
+        return new StatefulBatch<>(this, batch, destroyedView);
     }
 
     protected <T> StatefulBatch<T> generateCallback(int id, Batch<T> batch) {
-        return new StatefulBatch<>(this, id, destroyedView ? null : batch);
+        return new StatefulBatch<>(this, id, batch, destroyedView);
     }
 
     public void cancelRequest(int id) {

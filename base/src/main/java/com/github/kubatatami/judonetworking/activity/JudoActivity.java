@@ -66,19 +66,19 @@ public class JudoActivity extends Activity implements StatefulController {
     }
 
     protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {
-        return new StatefulCallback<>(this, destroyed ? null : callback);
+        return new StatefulCallback<>(this, callback, destroyed);
     }
 
     protected <T> StatefulCallback<T> generateCallback(int id, Callback<T> callback) {
-        return new StatefulCallback<>(this, id, destroyed ? null : callback);
+        return new StatefulCallback<>(this, id, callback, destroyed);
     }
 
     protected <T> StatefulBatch<T> generateCallback(Batch<T> batch) {
-        return new StatefulBatch<>(this, destroyed ? null : batch);
+        return new StatefulBatch<>(this, batch, destroyed);
     }
 
     protected <T> StatefulBatch<T> generateCallback(int id, Batch<T> batch) {
-        return new StatefulBatch<>(this, id, destroyed ? null : batch);
+        return new StatefulBatch<>(this, id, batch, destroyed);
     }
 
     public void cancelRequest(int id) {
