@@ -156,6 +156,15 @@ public class MergeCallback<T> {
         }
 
         @Override
+        public long getStartTimeMillis() {
+            long startTimeMillis = System.currentTimeMillis();
+            for (AsyncResult asyncResult : asyncResultSet) {
+                startTimeMillis = Math.min(startTimeMillis, asyncResult.getStartTimeMillis());
+            }
+            return startTimeMillis;
+        }
+
+        @Override
         public void cancel() {
             cancelAll();
         }

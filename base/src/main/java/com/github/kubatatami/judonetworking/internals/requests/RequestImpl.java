@@ -71,6 +71,8 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     private Map<String, List<String>> headers;
 
+    private long startTimeMillis;
+
     public RequestImpl(Integer id, EndpointImpl rpc, Method method, String name, RequestMethod ann,
                        Object[] args, Type returnType, int timeout, Callback<Object> callback,
                        Serializable additionalControllerData) {
@@ -113,6 +115,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     }
 
     public void invokeStart(CacheInfo cacheInfo) {
+        startTimeMillis = System.currentTimeMillis();
         if (callback != null) {
             rpc.getHandler().post(new AsyncResultSender(this, cacheInfo));
         }
@@ -431,6 +434,11 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     @Override
     public boolean isRunning() {
         return running;
+    }
+
+    @Override
+    public long getStartTimeMillis() {
+        return startTimeMillis;
     }
 
     public void done() {

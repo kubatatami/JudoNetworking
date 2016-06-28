@@ -32,6 +32,11 @@ public class VirtualAsyncResult implements AsyncResult {
     }
 
     @Override
+    public long getStartTimeMillis() {
+        return System.currentTimeMillis();
+    }
+
+    @Override
     public void cancel() {
 
     }

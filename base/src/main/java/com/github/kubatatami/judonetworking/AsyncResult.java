@@ -14,6 +14,8 @@ public interface AsyncResult {
 
     boolean isRunning();
 
+    long getStartTimeMillis();
+
     void cancel();
 
     void await() throws InterruptedException;
