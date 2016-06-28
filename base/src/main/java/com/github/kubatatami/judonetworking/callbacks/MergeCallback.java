@@ -54,7 +54,7 @@ public class MergeCallback<T> {
         if (canceled) {
             return;
         }
-        progressMap.put(callback, progress);
+        progressMap.put(callback, Math.min(100, progress));
         onMergeProgress(calculateProgress());
     }
 
