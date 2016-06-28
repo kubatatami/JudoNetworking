@@ -63,7 +63,7 @@ public class MergeCallback<T> {
         for (int value : progressMap.values()) {
             progress += value;
         }
-        return (int) ((float) progress / (float) requests);
+        return progress / requests;
     }
 
     public final void addSuccess() {
