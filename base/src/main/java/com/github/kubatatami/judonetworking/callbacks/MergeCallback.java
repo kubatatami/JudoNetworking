@@ -14,21 +14,21 @@ import java.util.Set;
  */
 public class MergeCallback<T> {
 
-    int requests;
+    private int requests;
 
-    int finishRequests = 0;
+    private int finishRequests = 0;
 
-    boolean started = false;
+    private boolean started = false;
 
-    boolean canceled = false;
+    private JudoException exception;
 
-    Map<BaseCallback<?>, Integer> progressMap = new HashMap<>();
+    private Map<BaseCallback<?>, Integer> progressMap = new HashMap<>();
 
-    Set<AsyncResult> asyncResultSet = new HashSet<>();
+    private Set<AsyncResult> asyncResultSet = new HashSet<>();
 
-    Callback<T> finalCallback;
+    private Callback<T> finalCallback;
 
-    T result;
+    private T result;
 
     public MergeCallback(int requests) {
         this.requests = requests;
@@ -40,9 +40,6 @@ public class MergeCallback<T> {
     }
 
     public final void addStart(AsyncResult asyncResult) {
-        if (canceled) {
-            return;
-        }
         if (!started) {
             started = true;
             onMergeStart();
@@ -51,9 +48,6 @@ public class MergeCallback<T> {
     }
 
     public final void addProgress(BaseCallback<?> callback, int progress) {
-        if (canceled) {
-            return;
-        }
         progressMap.put(callback, Math.min(100, progress));
         onMergeProgress(calculateProgress());
     }
@@ -67,31 +61,24 @@ public class MergeCallback<T> {
     }
 
     public final void addSuccess() {
-        if (canceled) {
-            return;
-        }
+        finish();
+    }
+
+    private void finish() {
         finishRequests++;
         if (finishRequests == requests) {
-            onMergeSuccess();
+            if(exception == null) {
+                onMergeSuccess();
+            } else {
+                onMergeError(exception);
+            }
             onMergeFinish();
         }
-
     }
 
     public final void addError(JudoException e) {
-        if (canceled) {
-            return;
-        }
-        onMergeError(e);
-        onMergeFinish();
-        cancelAll();
-        canceled = true;
-    }
-
-    private void cancelAll() {
-        for (AsyncResult asyncResult : asyncResultSet) {
-            asyncResult.cancel();
-        }
+        this.exception = e;
+        finish();
     }
 
     public void setResult(T result) {
@@ -130,6 +117,8 @@ public class MergeCallback<T> {
 
     protected class MergeAsyncResult implements AsyncResult {
 
+        boolean canceled = false;
+
         @Override
         public boolean isDone() {
             for (AsyncResult asyncResult : asyncResultSet) {
@@ -167,6 +156,13 @@ public class MergeCallback<T> {
         @Override
         public void cancel() {
             cancelAll();
+        }
+
+        private void cancelAll() {
+            canceled = true;
+            for (AsyncResult asyncResult : asyncResultSet) {
+                asyncResult.cancel();
+            }
         }
 
         @Override
