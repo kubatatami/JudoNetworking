@@ -2,6 +2,7 @@ package com.github.kubatatami.judonetworking.stateful;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
+import com.github.kubatatami.judonetworking.callbacks.AsyncResultCallback;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.callbacks.DecoratorCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -70,6 +71,9 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
     public void setCallback(Callback<T> callback) {
         this.internalCallback = callback;
         if (callback != null) {
+            if (callback instanceof AsyncResultCallback) {
+                ((AsyncResultCallback) callback).setAsyncResult(asyncResult);
+            }
             if (progress > 0) {
                 callback.onProgress(progress);
             }
