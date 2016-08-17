@@ -2,6 +2,7 @@ package com.github.kubatatami.judonetworking.stateful;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
+import com.github.kubatatami.judonetworking.callbacks.AsyncResultCallback;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.callbacks.DecoratorCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -23,12 +24,12 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
 
     private JudoException exception;
 
-    public StatefulCallback(StatefulController controller, Callback<T> callback) {
-        this(controller, callback.getClass().hashCode(), callback);
+    public StatefulCallback(StatefulController controller, Callback<T> callback, boolean destroyed) {
+        this(controller, callback.getClass().hashCode(), callback, destroyed);
     }
 
-    public StatefulCallback(StatefulController controller, int id, Callback<T> callback) {
-        super(callback);
+    public StatefulCallback(StatefulController controller, int id, Callback<T> callback, boolean destroyed) {
+        super(destroyed ? null : callback);
         this.id = id;
         this.who = controller.getWho();
         StatefulCache.addStatefulCallback(who, id, this);
@@ -70,6 +71,9 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
     public void setCallback(Callback<T> callback) {
         this.internalCallback = callback;
         if (callback != null) {
+            if (callback instanceof AsyncResultCallback) {
+                ((AsyncResultCallback) callback).setAsyncResult(asyncResult);
+            }
             if (progress > 0) {
                 callback.onProgress(progress);
             }

@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
 
+import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.caches.DiskCache;
 import com.github.kubatatami.judonetworking.caches.MemoryCache;
@@ -147,6 +148,14 @@ public interface Endpoint extends EndpointBase {
     int getDefaultMethodCacheSize();
 
     void setDefaultMethodCacheSize(int millis);
+
+    LocalCache.CacheLevel getDefaultMethodCacheLevel();
+
+    void setDefaultMethodCacheLevel(LocalCache.CacheLevel level);
+
+    LocalCache.OnlyOnError getDefaultMethodCacheOnlyOnErrorMode();
+
+    void setDefaultMethodCacheOnlyOnErrorMode(LocalCache.OnlyOnError onlyOnError);
 
     /**
      * Created with IntelliJ IDEA.

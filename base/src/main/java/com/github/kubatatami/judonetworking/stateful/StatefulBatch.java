@@ -22,12 +22,12 @@ public final class StatefulBatch<T> extends DecoratorBatch<T> implements Statefu
 
     private JudoException exception;
 
-    public StatefulBatch(StatefulController controller, Batch<T> batch) {
-        this(controller, batch.getClass().hashCode(), batch);
+    public StatefulBatch(StatefulController controller, Batch<T> batch, boolean destroyed) {
+        this(controller, batch.getClass().hashCode(), batch, destroyed);
     }
 
-    public StatefulBatch(StatefulController controller, int id, Batch<T> batch) {
-        super(batch);
+    public StatefulBatch(StatefulController controller, int id, Batch<T> batch, boolean destroyed) {
+        super(destroyed ? null : batch);
         this.id = id;
         this.who = controller.getWho();
         StatefulCache.addStatefulCallback(who, id, this);

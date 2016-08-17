@@ -54,7 +54,7 @@ public class MergeCallback<T> {
         if (canceled) {
             return;
         }
-        progressMap.put(callback, progress);
+        progressMap.put(callback, Math.min(100, progress));
         onMergeProgress(calculateProgress());
     }
 
@@ -63,7 +63,7 @@ public class MergeCallback<T> {
         for (int value : progressMap.values()) {
             progress += value;
         }
-        return (int) ((float) progress / (float) requests);
+        return progress / requests;
     }
 
     public final void addSuccess() {
@@ -153,6 +153,15 @@ public class MergeCallback<T> {
                 }
             }
             return false;
+        }
+
+        @Override
+        public long getStartTimeMillis() {
+            long startTimeMillis = System.currentTimeMillis();
+            for (AsyncResult asyncResult : asyncResultSet) {
+                startTimeMillis = Math.min(startTimeMillis, asyncResult.getStartTimeMillis());
+            }
+            return startTimeMillis;
         }
 
         @Override

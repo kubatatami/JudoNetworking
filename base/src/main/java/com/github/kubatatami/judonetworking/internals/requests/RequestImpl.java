@@ -71,6 +71,8 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     private Map<String, List<String>> headers;
 
+    private long startTimeMillis;
+
     public RequestImpl(Integer id, EndpointImpl rpc, Method method, String name, RequestMethod ann,
                        Object[] args, Type returnType, int timeout, Callback<Object> callback,
                        Serializable additionalControllerData) {
@@ -113,6 +115,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     }
 
     public void invokeStart(CacheInfo cacheInfo) {
+        startTimeMillis = System.currentTimeMillis();
         if (callback != null) {
             rpc.getHandler().post(new AsyncResultSender(this, cacheInfo));
         }
@@ -279,13 +282,25 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     }
 
     public LocalCache.CacheLevel getLocalCacheLevel() {
-        return getLocalCache().cacheLevel();
+        LocalCache.CacheLevel level = getLocalCache().cacheLevel();
+        if (level.equals(LocalCache.CacheLevel.DEFAULT)) {
+            return rpc.getDefaultMethodCacheLevel();
+        } else {
+            return level;
+        }
     }
-
 
     public LocalCache.OnlyOnError getLocalCacheOnlyOnErrorMode() {
         LocalCache localCache = getLocalCache();
-        return localCache != null ? localCache.onlyOnError() : LocalCache.OnlyOnError.NO;
+        if(localCache == null){
+            return LocalCache.OnlyOnError.NO;
+        }
+        LocalCache.OnlyOnError onlyOnError = localCache.onlyOnError();
+        if (onlyOnError.equals(LocalCache.OnlyOnError.DEFAULT)) {
+            return rpc.getDefaultMethodCacheOnlyOnErrorMode();
+        } else {
+            return onlyOnError;
+        }
     }
 
     public long getWeight() {
@@ -419,6 +434,11 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     @Override
     public boolean isRunning() {
         return running;
+    }
+
+    @Override
+    public long getStartTimeMillis() {
+        return startTimeMillis;
     }
 
     public void done() {

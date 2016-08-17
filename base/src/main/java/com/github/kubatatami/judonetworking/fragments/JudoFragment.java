@@ -4,6 +4,9 @@ package com.github.kubatatami.judonetworking.fragments;
 import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.Fragment;
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.view.View;
 
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
@@ -21,9 +24,17 @@ import java.lang.reflect.Field;
 public class JudoFragment extends DialogFragment implements StatefulController {
 
     private String mWho;
+    private boolean destroyedView;
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        destroyedView = false;
+    }
 
     @Override
     public void onDestroyView() {
+        destroyedView = true;
         super.onDestroyView();
         StatefulCache.removeAllControllersCallbacks(getWho());
     }
@@ -37,27 +48,29 @@ public class JudoFragment extends DialogFragment implements StatefulController {
     }
 
     protected boolean connectCallback(BaseCallback<?>... callbacks) {
+        destroyedView = false;
         return StatefulCache.connectControllerCallbacks(this, callbacks);
     }
 
     protected boolean connectCallback(int id, BaseCallback<?> callback) {
+        destroyedView = false;
         return StatefulCache.connectControllerCallback(this, id, callback);
     }
 
     protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {
-        return new StatefulCallback<>(this, callback);
+        return new StatefulCallback<>(this, callback, destroyedView);
     }
 
     protected <T> StatefulCallback<T> generateCallback(int id, Callback<T> callback) {
-        return new StatefulCallback<>(this, id, callback);
+        return new StatefulCallback<>(this, id, callback, destroyedView);
     }
 
     protected <T> StatefulBatch<T> generateCallback(Batch<T> batch) {
-        return new StatefulBatch<>(this, batch);
+        return new StatefulBatch<>(this, batch, destroyedView);
     }
 
     protected <T> StatefulBatch<T> generateCallback(int id, Batch<T> batch) {
-        return new StatefulBatch<>(this, id, batch);
+        return new StatefulBatch<>(this, id, batch, destroyedView);
     }
 
     public void cancelRequest(int id) {
@@ -67,7 +80,7 @@ public class JudoFragment extends DialogFragment implements StatefulController {
     static <T, Z extends T> String getFragmentWho(Activity activity, Class<T> clazz, Z object) {
         try {
             if (!(activity instanceof StatefulController)) {
-                throw new RuntimeException("Activity must be instance of JudoActivity.");
+                throw new RuntimeException("Activity must be instance of StatefulController eg. JudoActivity.");
             }
             Field whoFiled = clazz.getDeclaredField("mWho");
             whoFiled.setAccessible(true);

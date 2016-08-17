@@ -18,13 +18,13 @@ public @interface LocalCache {
 
     boolean enabled() default true;
 
-    CacheLevel cacheLevel() default CacheLevel.MEMORY_ONLY;
+    CacheLevel cacheLevel() default CacheLevel.DEFAULT;
 
     int lifeTime() default DEFAULT;
 
     int size() default DEFAULT;
 
-    OnlyOnError onlyOnError() default OnlyOnError.NO;
+    OnlyOnError onlyOnError() default OnlyOnError.DEFAULT;
 
 
     int DEFAULT = -1;
@@ -32,10 +32,10 @@ public @interface LocalCache {
     int INFINITE = 0;
 
     enum CacheLevel {
-        MEMORY_ONLY, DISK_CACHE, DISK_DATA
+        DEFAULT, MEMORY_ONLY, DISK_CACHE, DISK_DATA
     }
 
     enum OnlyOnError {
-        NO, ON_CONNECTION_ERROR, ON_ALL_ERROR
+        DEFAULT, NO, ON_CONNECTION_ERROR, ON_ALL_ERROR
     }
 }
