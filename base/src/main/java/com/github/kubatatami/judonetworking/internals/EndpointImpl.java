@@ -350,16 +350,16 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     public void startRequest(Request request) {
-        requestCount.incrementAndGet();
+        int count = requestCount.incrementAndGet();
         if (onRequestEventListener != null) {
-            onRequestEventListener.onStart(request, requestCount.get());
+            onRequestEventListener.onStart(request, count);
         }
     }
 
     public void stopRequest(Request request) {
-        requestCount.decrementAndGet();
+        int count = requestCount.decrementAndGet();
         if (onRequestEventListener != null) {
-            onRequestEventListener.onStop(request, requestCount.get());
+            onRequestEventListener.onStop(request, count);
         }
     }
 
