@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class EndpointImpl implements Endpoint, EndpointClassic {
 
@@ -107,7 +108,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     private OnRequestEventListener onRequestEventListener;
 
-    private int requestCount = 0;
+    private AtomicInteger requestCount = new AtomicInteger();
 
     private int defaultMethodCacheLifeTime = LocalCache.INFINITE;
 
@@ -161,7 +162,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     @Override
     public boolean isIdleNow() {
-        return requestCount == 0;
+        return requestCount.get() == 0;
     }
 
     @Override
@@ -349,16 +350,16 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     public void startRequest(Request request) {
-        requestCount++;
+        requestCount.incrementAndGet();
         if (onRequestEventListener != null) {
-            onRequestEventListener.onStart(request, requestCount);
+            onRequestEventListener.onStart(request, requestCount.get());
         }
     }
 
     public void stopRequest(Request request) {
-        requestCount--;
+        requestCount.decrementAndGet();
         if (onRequestEventListener != null) {
-            onRequestEventListener.onStop(request, requestCount);
+            onRequestEventListener.onStop(request, requestCount.get());
         }
     }
 
