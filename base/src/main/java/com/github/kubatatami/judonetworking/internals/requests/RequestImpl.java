@@ -393,7 +393,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     @Override
     public void cancel() {
-        if (done) {
+        if (done || cancelled) {
             return;
         }
         this.cancelled = true;
