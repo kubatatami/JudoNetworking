@@ -52,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class EndpointImpl implements Endpoint, EndpointClassic {
 
@@ -98,6 +97,8 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     private Map<Integer, RequestImpl> singleCallMethods = new HashMap<>();
 
+    private Set<Integer> requestIds = Collections.synchronizedSet(new HashSet<Integer>());
+
     private int id = 0;
 
     private ThreadPoolSizer threadPoolSizer = new DefaultThreadPoolSizer();
@@ -107,8 +108,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     private UrlModifier urlModifier;
 
     private OnRequestEventListener onRequestEventListener;
-
-    private AtomicInteger requestCount = new AtomicInteger();
 
     private int defaultMethodCacheLifeTime = LocalCache.INFINITE;
 
@@ -162,7 +161,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     @Override
     public boolean isIdleNow() {
-        return requestCount.get() == 0;
+        return requestIds.size() == 0;
     }
 
     @Override
@@ -350,16 +349,16 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     public void startRequest(Request request) {
-        int count = requestCount.incrementAndGet();
+        requestIds.add(request.getId());
         if (onRequestEventListener != null) {
-            onRequestEventListener.onStart(request, count);
+            onRequestEventListener.onStart(request, requestIds.size());
         }
     }
 
     public void stopRequest(Request request) {
-        int count = requestCount.decrementAndGet();
+        requestIds.remove(request.getId());
         if (onRequestEventListener != null) {
-            onRequestEventListener.onStop(request, count);
+            onRequestEventListener.onStop(request, requestIds.size());
         }
     }
 
