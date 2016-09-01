@@ -79,7 +79,6 @@ public class AsyncResultSender implements Runnable {
         this.cacheInfo = cacheInfo;
     }
 
-
     public AsyncResultSender(RequestImpl request, Object result) {
         this.result = result;
         this.callback = request.getCallback();

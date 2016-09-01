@@ -19,25 +19,19 @@ public class ViewAdapterCallback<Z, T> extends DefaultCallback<T> {
 
     protected AsyncResult asyncResult;
 
-    protected Z object;
-
     public ViewAdapterCallback(View view) {
         this.view = view;
-    }
-
-    public void setObject(Z object) {
-        this.object = object;
-        cancelRequest(view);
-        viewCache.put(view, this);
     }
 
     @Override
     public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         super.onStart(cacheInfo, asyncResult);
         this.asyncResult = asyncResult;
-        if (viewCache.get(view) != this) {
-            asyncResult.cancel();
+        ViewAdapterCallback oldCallback = viewCache.get(view);
+        if (oldCallback != null && oldCallback != this) {
+            oldCallback.getAsyncResult().cancel();
         }
+        viewCache.put(view, this);
     }
 
     @Override

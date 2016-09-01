@@ -393,7 +393,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     @Override
     public void cancel() {
-        if (done) {
+        if (done || cancelled) {
             return;
         }
         this.cancelled = true;
@@ -416,10 +416,15 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
                 @Override
                 public void run() {
                     callback.onFinish();
-                    rpc.stopRequest(RequestImpl.this);
                 }
             });
         }
+        rpc.getHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                rpc.stopRequest(RequestImpl.this);
+            }
+        });
     }
 
     @Override

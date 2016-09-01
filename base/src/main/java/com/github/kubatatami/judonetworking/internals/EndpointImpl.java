@@ -97,6 +97,8 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     private Map<Integer, RequestImpl> singleCallMethods = new HashMap<>();
 
+    private Set<Integer> requestIds = Collections.synchronizedSet(new HashSet<Integer>());
+
     private int id = 0;
 
     private ThreadPoolSizer threadPoolSizer = new DefaultThreadPoolSizer();
@@ -106,8 +108,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     private UrlModifier urlModifier;
 
     private OnRequestEventListener onRequestEventListener;
-
-    private int requestCount = 0;
 
     private int defaultMethodCacheLifeTime = LocalCache.INFINITE;
 
@@ -161,7 +161,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     @Override
     public boolean isIdleNow() {
-        return requestCount == 0;
+        return requestIds.size() == 0;
     }
 
     @Override
@@ -349,16 +349,16 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     public void startRequest(Request request) {
-        requestCount++;
+        requestIds.add(request.getId());
         if (onRequestEventListener != null) {
-            onRequestEventListener.onStart(request, requestCount);
+            onRequestEventListener.onStart(request, requestIds.size());
         }
     }
 
     public void stopRequest(Request request) {
-        requestCount--;
+        requestIds.remove(request.getId());
         if (onRequestEventListener != null) {
-            onRequestEventListener.onStop(request, requestCount);
+            onRequestEventListener.onStop(request, requestIds.size());
         }
     }
 
