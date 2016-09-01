@@ -44,7 +44,7 @@ public class RequestMultipartEntity implements StreamEntity {
         for (PartFormData part : parts) {
             write(sb, outStream, "--");
             writeLine(sb, outStream, BOUNDARY);
-            write(sb, outStream, "Content-Disposition: form-data; name=\"" + part.getName() + "\";");
+            write(sb, outStream, "Content-Disposition: form-data; name=\"" + part.getName());
             if (part.getFileName() != null && !part.getFileName().isEmpty()) {
                 write(sb, outStream, "filename=\"" + part.getFileName() + "\"");
             }
@@ -56,7 +56,7 @@ public class RequestMultipartEntity implements StreamEntity {
                 writeLine(sb, outStream, "Content-Length: " + part.getSize());
             }
             writeNewLine(sb, outStream);
-            write(sb, outStream, part.getInputStream(), part.getSize());
+            write(sb, outStream, part.getInputStream(), part.getSize(), part.getLogContent());
             writeNewLine(sb, outStream);
         }
         write(sb, outStream, "--");
@@ -65,11 +65,16 @@ public class RequestMultipartEntity implements StreamEntity {
         writeNewLine(sb, outStream);
     }
 
-    private void write(StringBuilder sb, OutputStream outStream, InputStream inputStream, long size) throws IOException {
+    private void write(StringBuilder sb, OutputStream outStream, InputStream inputStream,
+                       long size, boolean showContent) throws IOException {
         if (sb != null) {
-            sb.append("[Binary body size: ");
-            sb.append(size);
-            sb.append("]");
+            if (showContent) {
+                sb.append(FileUtils.convertStreamToString(inputStream));
+            } else {
+                sb.append("[Binary body size: ");
+                sb.append(size);
+                sb.append("]");
+            }
         }
         if (outStream != null) {
             FileUtils.copyStream(outStream, inputStream, size);
@@ -117,26 +122,30 @@ public class RequestMultipartEntity implements StreamEntity {
 
     public static class PartFormData {
 
-        private String name;
+        private final String name;
 
-        private InputStream inputStream;
+        private final InputStream inputStream;
 
-        private String mimeType;
+        private final String mimeType;
 
-        private String fileName;
+        private final String fileName;
 
         private final long size;
 
-        public PartFormData(String name, InputStream inputStream, String mimeType) {
-            this(name, inputStream, mimeType, null, -1);
+        private final boolean logContent;
+
+        public PartFormData(String name, InputStream inputStream, String mimeType, boolean logContent) {
+            this(name, inputStream, mimeType, null, logContent, -1);
         }
 
-        public PartFormData(String name, InputStream inputStream, String mimeType, String fileName, long size) {
+        public PartFormData(String name, InputStream inputStream, String mimeType,
+                            String fileName, boolean logContent, long size) {
             this.name = name;
             this.inputStream = inputStream;
             this.mimeType = mimeType;
             this.fileName = fileName;
             this.size = size;
+            this.logContent = logContent;
         }
 
         public String getName() {
@@ -157,6 +166,10 @@ public class RequestMultipartEntity implements StreamEntity {
 
         public long getSize() {
             return size;
+        }
+
+        public boolean getLogContent() {
+            return logContent;
         }
     }
 }

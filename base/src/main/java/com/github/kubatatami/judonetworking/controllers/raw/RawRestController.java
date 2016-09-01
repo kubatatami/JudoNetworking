@@ -134,7 +134,7 @@ public class RawRestController extends RawController {
                             String name = postAnnotation.value();
                             addFileMultipart(parts, (File) param, name);
                         } else if (param instanceof InputStream) {
-                            parts.add(new PartFormData(postAnnotation.value(), (InputStream) param, postAnnotation.mimeType()));
+                            parts.add(new PartFormData(postAnnotation.value(), (InputStream) param, postAnnotation.mimeType(), false));
                         } else {
                             addStringMultipart(parts, param.toString(), postAnnotation.value(), postAnnotation.mimeType());
                         }
@@ -155,7 +155,7 @@ public class RawRestController extends RawController {
     private void addStringMultipart(List<PartFormData> parts, String data, String name, String mimeType) {
         try {
             InputStream is = new ByteArrayInputStream(data.getBytes("UTF-8"));
-            parts.add(new PartFormData(name, is, mimeType));
+            parts.add(new PartFormData(name, is, mimeType, true));
         } catch (UnsupportedEncodingException e) {
             throw new JudoException("Unsupported encoding exception.", e);
         }
@@ -165,7 +165,7 @@ public class RawRestController extends RawController {
         try {
             FileInputStream fileInputStream = new FileInputStream(file);
             String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(FileUtils.getFileExtension(file));
-            parts.add(new PartFormData(name, fileInputStream, mimeType, file.getName(), file.length()));
+            parts.add(new PartFormData(name, fileInputStream, mimeType, file.getName(), false, file.length()));
         } catch (FileNotFoundException e) {
             throw new JudoException("File is not exist.", e);
         }
