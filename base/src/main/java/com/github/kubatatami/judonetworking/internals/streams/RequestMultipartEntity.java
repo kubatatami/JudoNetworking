@@ -44,7 +44,7 @@ public class RequestMultipartEntity implements StreamEntity {
         for (PartFormData part : parts) {
             write(sb, outStream, "--");
             writeLine(sb, outStream, BOUNDARY);
-            write(sb, outStream, "Content-Disposition: form-data; name=\"" + part.getName());
+            write(sb, outStream, "Content-Disposition: form-data; name=\"" + part.getName() + "\"");
             if (part.getFileName() != null && !part.getFileName().isEmpty()) {
                 write(sb, outStream, "filename=\"" + part.getFileName() + "\"");
             }
