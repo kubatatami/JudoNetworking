@@ -141,6 +141,8 @@ public interface Endpoint extends EndpointBase {
 
     void setUrl(String url);
 
+    String getUrl();
+
     int getDefaultMethodCacheLifeTime();
 
     void setDefaultMethodCacheLifeTime(int millis);

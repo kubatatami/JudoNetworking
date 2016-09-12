@@ -542,6 +542,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         this.clonner = clonner;
     }
 
+    @Override
     public String getUrl() {
         if (urlModifier != null) {
             return urlModifier.createUrl(url);
