@@ -17,6 +17,10 @@ public class ObservableTransaction {
         wrapperObjectList.add(new Pair<ObservableWrapper, Object>(observableWrapper, value));
     }
 
+    public int getPreparedActionsCount() {
+        return wrapperObjectList.size();
+    }
+
     public void commit() {
         for (int i = wrapperObjectList.size() - 1; i >= 0; i--) {
             Pair<ObservableWrapper, Object> pair = wrapperObjectList.get(i);

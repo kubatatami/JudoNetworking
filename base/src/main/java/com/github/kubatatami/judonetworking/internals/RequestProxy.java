@@ -371,6 +371,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         } else {
             this.batchEnabled = false;
             if (batchCallback != null) {
+                RequestImpl.invokeBatchCallbackProgress(rpc, this, 100);
                 RequestImpl.invokeBatchCallback(rpc, this, new Object[]{});
             }
         }
