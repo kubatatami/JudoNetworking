@@ -28,6 +28,8 @@ public class RequestMultipartEntity implements StreamEntity {
     @Override
     public void writeTo(OutputStream outstream) throws IOException {
         write(null, outstream);
+        outstream.flush();
+        outstream.close();
     }
 
     @Override
