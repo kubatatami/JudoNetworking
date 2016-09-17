@@ -45,7 +45,7 @@ public class StringPartFormData implements RequestMultipartEntity.PartFormData {
 
     @Override
     public long getSize() {
-        return data.length;
+        return -1;
     }
 
     @Override
