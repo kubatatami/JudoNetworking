@@ -1,9 +1,6 @@
 package com.github.kubatatami.judonetworking.internals.streams;
 
-import com.github.kubatatami.judonetworking.utils.FileUtils;
-
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -56,7 +53,7 @@ public class RequestMultipartEntity implements StreamEntity {
                 writeLine(sb, outStream, "Content-Length: " + part.getSize());
             }
             writeNewLine(sb, outStream);
-            write(sb, outStream, part.getInputStream(), part.getSize(), part.getLogContent());
+            write(sb, outStream, part);
             writeNewLine(sb, outStream);
         }
         write(sb, outStream, "--");
@@ -65,19 +62,12 @@ public class RequestMultipartEntity implements StreamEntity {
         writeNewLine(sb, outStream);
     }
 
-    private void write(StringBuilder sb, OutputStream outStream, InputStream inputStream,
-                       long size, boolean showContent) throws IOException {
+    private void write(StringBuilder sb, OutputStream outStream, PartFormData part) throws IOException {
         if (sb != null) {
-            if (showContent) {
-                sb.append(FileUtils.convertStreamToString(inputStream));
-            } else {
-                sb.append("[Binary body size: ");
-                sb.append(size);
-                sb.append("]");
-            }
+            part.write(sb);
         }
         if (outStream != null) {
-            FileUtils.copyStream(outStream, inputStream, size);
+            part.write(outStream);
         }
     }
 
@@ -112,7 +102,7 @@ public class RequestMultipartEntity implements StreamEntity {
     @Override
     public void close() throws IOException {
         for (PartFormData part : parts) {
-            part.getInputStream().close();
+            part.close();
         }
     }
 
@@ -120,56 +110,20 @@ public class RequestMultipartEntity implements StreamEntity {
         return "multipart/form-data; boundary=" + BOUNDARY;
     }
 
-    public static class PartFormData {
+    public interface PartFormData {
 
-        private final String name;
+        String getName();
 
-        private final InputStream inputStream;
+        void write(StringBuilder sb);
 
-        private final String mimeType;
+        void write(OutputStream outputStream) throws IOException;
 
-        private final String fileName;
+        long getSize();
 
-        private final long size;
+        void close() throws IOException;
 
-        private final boolean logContent;
+        String getMimeType();
 
-        public PartFormData(String name, InputStream inputStream, String mimeType, boolean logContent, long size) {
-            this(name, inputStream, mimeType, null, logContent, size);
-        }
-
-        public PartFormData(String name, InputStream inputStream, String mimeType,
-                            String fileName, boolean logContent, long size) {
-            this.name = name;
-            this.inputStream = inputStream;
-            this.mimeType = mimeType;
-            this.fileName = fileName;
-            this.size = size;
-            this.logContent = logContent;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public InputStream getInputStream() {
-            return inputStream;
-        }
-
-        public String getMimeType() {
-            return mimeType;
-        }
-
-        public String getFileName() {
-            return fileName;
-        }
-
-        public long getSize() {
-            return size;
-        }
-
-        public boolean getLogContent() {
-            return logContent;
-        }
+        String getFileName();
     }
 }

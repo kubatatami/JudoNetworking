@@ -10,6 +10,9 @@ import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.internals.streams.RequestMultipartEntity;
+import com.github.kubatatami.judonetworking.internals.streams.parts.FilePartFormData;
+import com.github.kubatatami.judonetworking.internals.streams.parts.InputStreamPartFormData;
+import com.github.kubatatami.judonetworking.internals.streams.parts.StringPartFormData;
 import com.github.kubatatami.judonetworking.utils.FileUtils;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
@@ -131,12 +134,11 @@ public class RawRestController extends RawController {
                     Object param = request.getArgs()[i];
                     if (param != null) {
                         if (param instanceof File) {
-                            String name = postAnnotation.value();
-                            addFileMultipart(parts, (File) param, name);
+                            parts.add(new FilePartFormData(postAnnotation.value(), (File) param));
                         } else if (param instanceof InputStream) {
-                            parts.add(new PartFormData(postAnnotation.value(), (InputStream) param, postAnnotation.mimeType(), false, -1));
+                            parts.add(new InputStreamPartFormData(postAnnotation.value(), (InputStream) param, postAnnotation.mimeType()));
                         } else {
-                            addStringMultipart(parts, param.toString(), postAnnotation.value(), postAnnotation.mimeType());
+                            parts.add(new StringPartFormData(postAnnotation.value(), param.toString(), postAnnotation.mimeType()));
                         }
                     }
                 }
@@ -148,27 +150,6 @@ public class RawRestController extends RawController {
             requestInfo.mimeType = RequestMultipartEntity.getMimeType();
         } else {
             throw new JudoException("No @Post file params.");
-        }
-    }
-
-
-    private void addStringMultipart(List<PartFormData> parts, String data, String name, String mimeType) {
-        try {
-            byte[] dataArray = data.getBytes("UTF-8");
-            InputStream is = new ByteArrayInputStream(dataArray);
-            parts.add(new PartFormData(name, is, mimeType, true, dataArray.length));
-        } catch (UnsupportedEncodingException e) {
-            throw new JudoException("Unsupported encoding exception.", e);
-        }
-    }
-
-    private void addFileMultipart(List<PartFormData> parts, File file, String name) {
-        try {
-            FileInputStream fileInputStream = new FileInputStream(file);
-            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(FileUtils.getFileExtension(file));
-            parts.add(new PartFormData(name, fileInputStream, mimeType, file.getName(), false, file.length()));
-        } catch (FileNotFoundException e) {
-            throw new JudoException("File is not exist.", e);
         }
     }
 
