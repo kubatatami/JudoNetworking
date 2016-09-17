@@ -134,7 +134,7 @@ public class RawRestController extends RawController {
                             String name = postAnnotation.value();
                             addFileMultipart(parts, (File) param, name);
                         } else if (param instanceof InputStream) {
-                            parts.add(new PartFormData(postAnnotation.value(), (InputStream) param, postAnnotation.mimeType(), false));
+                            parts.add(new PartFormData(postAnnotation.value(), (InputStream) param, postAnnotation.mimeType(), false, -1));
                         } else {
                             addStringMultipart(parts, param.toString(), postAnnotation.value(), postAnnotation.mimeType());
                         }
@@ -154,8 +154,9 @@ public class RawRestController extends RawController {
 
     private void addStringMultipart(List<PartFormData> parts, String data, String name, String mimeType) {
         try {
-            InputStream is = new ByteArrayInputStream(data.getBytes("UTF-8"));
-            parts.add(new PartFormData(name, is, mimeType, true));
+            byte[] dataArray = data.getBytes("UTF-8");
+            InputStream is = new ByteArrayInputStream(dataArray);
+            parts.add(new PartFormData(name, is, mimeType, true, dataArray.length));
         } catch (UnsupportedEncodingException e) {
             throw new JudoException("Unsupported encoding exception.", e);
         }
