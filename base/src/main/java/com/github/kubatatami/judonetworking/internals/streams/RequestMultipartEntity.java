@@ -1,5 +1,6 @@
 package com.github.kubatatami.judonetworking.internals.streams;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -21,15 +22,15 @@ public class RequestMultipartEntity implements StreamEntity {
     }
 
     @Override
-    public long getContentLength() {
-        return -1;
+    public long getContentLength() throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        write(null, outputStream);
+        return outputStream.size();
     }
 
     @Override
     public void writeTo(OutputStream outstream) throws IOException {
         write(null, outstream);
-        outstream.flush();
-        outstream.close();
     }
 
     @Override

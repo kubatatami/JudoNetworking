@@ -5,7 +5,7 @@ import java.io.OutputStream;
 
 public interface StreamEntity {
 
-    long getContentLength();
+    long getContentLength() throws IOException;
 
     void writeTo(final OutputStream outstream) throws IOException;
 
