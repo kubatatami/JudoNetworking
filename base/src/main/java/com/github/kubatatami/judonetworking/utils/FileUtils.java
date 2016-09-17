@@ -40,6 +40,7 @@ public class FileUtils {
                 remaining -= l;
             }
         }
+        outstream.flush();
     }
 
     public static String convertStreamToString(InputStream is) {
