@@ -25,6 +25,7 @@ import com.github.kubatatami.judonetworking.internals.virtuals.VirtualCallback;
 import com.github.kubatatami.judonetworking.internals.virtuals.VirtualServerInfo;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.transports.TransportLayer;
+import com.github.kubatatami.judonetworking.utils.FileUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -34,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.Scanner;
 
 public class RequestConnector {
 
@@ -51,11 +51,6 @@ public class RequestConnector {
 
     private static void longLog(String tag, String message, JudoLogger.LogLevel level) {
         JudoLogger.longLog(tag, message, level);
-    }
-
-    private static String convertStreamToString(InputStream is) {
-        Scanner s = new Scanner(is).useDelimiter("\\A");
-        return s.hasNext() ? s.next() : "";
     }
 
     private RequestResult sendRequest(RequestImpl request, TimeStat timeStat) {
@@ -86,8 +81,7 @@ public class RequestConnector {
 
                 InputStream connectionStream = conn.getStream();
                 if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
-
-                    String resStr = convertStreamToString(conn.getStream());
+                    String resStr = FileUtils.convertStreamToString(conn.getStream());
                     longLog("Response body(" + request.getName() + ", " + resStr.length() + " Bytes)", resStr, JudoLogger.LogLevel.INFO);
                     connectionStream = new ByteArrayInputStream(resStr.getBytes());
                 }
@@ -412,7 +406,7 @@ public class RequestConnector {
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
 
-                String resStr = convertStreamToString(conn.getStream());
+                String resStr = FileUtils.convertStreamToString(conn.getStream());
                 longLog("Response body(" + requestsName + ", " + resStr.length() + " Bytes)", resStr, JudoLogger.LogLevel.INFO);
                 connectionStream = new ByteArrayInputStream(resStr.getBytes());
             }

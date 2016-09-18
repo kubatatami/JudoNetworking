@@ -171,6 +171,11 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     }
 
     @Override
+    public boolean isStringResult() {
+        return returnType.equals(String.class);
+    }
+
+    @Override
     public String[] getParamNames() {
         return paramNames;
     }

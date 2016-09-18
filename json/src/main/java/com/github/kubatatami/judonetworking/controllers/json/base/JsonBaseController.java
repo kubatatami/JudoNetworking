@@ -9,6 +9,7 @@ import com.github.kubatatami.judonetworking.exceptions.ParseException;
 import com.github.kubatatami.judonetworking.internals.results.ErrorResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
 import com.github.kubatatami.judonetworking.internals.results.RequestSuccessResult;
+import com.github.kubatatami.judonetworking.utils.FileUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,14 +31,14 @@ public abstract class JsonBaseController extends JsonProtocolController {
         return parseResponse(mapper, request, stream);
     }
 
-
     public static RequestResult parseResponse(ObjectMapper mapper, Request request, InputStream stream) {
         try {
             Object res = null;
             try {
                 InputStreamReader inputStreamReader = new InputStreamReader(stream, "UTF-8");
-
-                if (!request.isVoidResult()) {
+                if (request.isStringResult()) {
+                    res = FileUtils.convertStreamToString(stream).replaceAll("\"", "");
+                } else if (!request.isVoidResult()) {
                     res = mapper.readValue(inputStreamReader, mapper.getTypeFactory().constructType(request.getReturnType()));
                 }
                 inputStreamReader.close();
