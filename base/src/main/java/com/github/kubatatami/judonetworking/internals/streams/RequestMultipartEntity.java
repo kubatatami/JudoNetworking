@@ -23,9 +23,9 @@ public class RequestMultipartEntity implements StreamEntity {
 
     @Override
     public long getContentLength() throws IOException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        CountOutputStream outputStream = new CountOutputStream();
         write(null, outputStream);
-        return outputStream.size();
+        return outputStream.getCount();
     }
 
     @Override
