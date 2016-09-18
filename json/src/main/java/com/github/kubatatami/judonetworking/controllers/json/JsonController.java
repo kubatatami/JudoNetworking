@@ -1,8 +1,9 @@
-package com.github.kubatatami.judonetworking.controllers.json.simple;
+package com.github.kubatatami.judonetworking.controllers.json;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.Request;
+import com.github.kubatatami.judonetworking.controllers.json.base.JsonBaseController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 
@@ -20,11 +21,11 @@ import java.util.Map;
  * Time: 21:52
  * To change this template use File | Settings | File Templates.
  */
-public class JsonSimpleController extends JsonSimpleBaseController {
+public class JsonController extends JsonBaseController {
 
     ObjectMapper mapper;
 
-    public JsonSimpleController() {
+    public JsonController() {
         mapper = getMapperInstance();
     }
 

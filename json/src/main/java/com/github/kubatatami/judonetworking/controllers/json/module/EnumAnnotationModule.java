@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.controllers.json;
+package com.github.kubatatami.judonetworking.controllers.json.module;
 
 import android.support.v4.util.LruCache;
 
@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
+import com.github.kubatatami.judonetworking.controllers.json.annotation.JsonDefaultEnum;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.controllers.json;
+package com.github.kubatatami.judonetworking.controllers.json.module;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;

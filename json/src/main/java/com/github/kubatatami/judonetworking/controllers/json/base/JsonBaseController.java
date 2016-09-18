@@ -1,9 +1,8 @@
-package com.github.kubatatami.judonetworking.controllers.json.simple;
+package com.github.kubatatami.judonetworking.controllers.json.base;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.Request;
-import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
@@ -24,7 +23,7 @@ import java.util.Map;
  * Time: 10:42
  * To change this template use File | Settings | File Templates.
  */
-public abstract class JsonSimpleBaseController extends JsonProtocolController {
+public abstract class JsonBaseController extends JsonProtocolController {
 
     @Override
     public RequestResult parseResponse(Request request, InputStream stream, Map<String, List<String>> headers) {

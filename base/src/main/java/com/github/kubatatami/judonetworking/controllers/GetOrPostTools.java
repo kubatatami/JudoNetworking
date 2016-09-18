@@ -2,7 +2,6 @@ package com.github.kubatatami.judonetworking.controllers;
 
 import android.util.Pair;
 
-import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.io.UnsupportedEncodingException;
@@ -19,24 +18,6 @@ import java.util.Collection;
 public class GetOrPostTools {
 
     private GetOrPostTools() {
-    }
-
-    public static String createRequest(Request request, String apiKey, String apiKeyName) throws JudoException {
-        StringBuilder sb = new StringBuilder();
-        int i = 0;
-        if (apiKeyName != null && request.isApiKeyRequired()) {
-            addGetParam(sb, apiKeyName, apiKey, true);
-        }
-        if (request.getArgs() != null) {
-            if (request.getArgs().length != request.getParamNames().length) {
-                throw new JudoException("Wrong param names.");
-            }
-            for (Object arg : request.getArgs()) {
-                addGetParam(sb, request.getParamNames()[i], arg == null ? "" : arg.toString(), true);
-                i++;
-            }
-        }
-        return sb.toString();
     }
 
     public static void addGetParam(StringBuilder sb, Collection<? extends Pair> params, boolean encode) {

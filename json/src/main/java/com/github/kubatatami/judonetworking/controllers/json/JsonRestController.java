@@ -1,9 +1,10 @@
-package com.github.kubatatami.judonetworking.controllers.json.simple;
+package com.github.kubatatami.judonetworking.controllers.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.controllers.json.JsonProtocolController;
+import com.github.kubatatami.judonetworking.controllers.json.base.JsonProtocolController;
+import com.github.kubatatami.judonetworking.controllers.json.base.JsonBaseController;
 import com.github.kubatatami.judonetworking.controllers.raw.RawRestController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.results.RequestResult;
@@ -31,11 +32,11 @@ import java.util.Map;
  * Time: 20:32
  * To change this template use File | Settings | File Templates.
  */
-public class JsonSimpleRestController extends RawRestController {
+public class JsonRestController extends RawRestController {
 
     protected ObjectMapper mapper;
 
-    public JsonSimpleRestController() {
+    public JsonRestController() {
         mapper = JsonProtocolController.getMapperInstance();
     }
 
@@ -45,7 +46,7 @@ public class JsonSimpleRestController extends RawRestController {
 
     @Override
     public RequestResult parseResponse(Request request, InputStream stream, Map<String, List<String>> headers) {
-        return JsonSimpleBaseController.parseResponse(mapper, request, stream);
+        return JsonBaseController.parseResponse(mapper, request, stream);
     }
 
     @Override

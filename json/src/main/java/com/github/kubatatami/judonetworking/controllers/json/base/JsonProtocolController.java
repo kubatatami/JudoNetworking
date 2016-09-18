@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.controllers.json;
+package com.github.kubatatami.judonetworking.controllers.json.base;
 
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -10,9 +10,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
-import com.github.kubatatami.judonetworking.exceptions.HttpException;
-import com.github.kubatatami.judonetworking.exceptions.JudoException;
-import com.github.kubatatami.judonetworking.exceptions.ProtocolException;
+import com.github.kubatatami.judonetworking.controllers.json.module.BooleanModule;
+import com.github.kubatatami.judonetworking.controllers.json.module.EnumAnnotationModule;
 
 import java.io.Serializable;
 

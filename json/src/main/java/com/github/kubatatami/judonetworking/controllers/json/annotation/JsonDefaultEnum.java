@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.controllers.json;
+package com.github.kubatatami.judonetworking.controllers.json.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
