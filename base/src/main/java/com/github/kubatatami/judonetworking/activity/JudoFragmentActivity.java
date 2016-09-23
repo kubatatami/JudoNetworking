@@ -50,14 +50,14 @@ public abstract class JudoFragmentActivity extends FragmentActivity implements S
     }
 
     @Override
-    public void onResume() {
+    protected void onResume() {
         super.onResume();
         active = true;
         onConnectCallbacks(new CallbacksConnector(this));
     }
 
     @Override
-    public void onPause() {
+    protected void onPause() {
         super.onPause();
         active = false;
         StatefulCache.removeAllControllersCallbacks(getWho());

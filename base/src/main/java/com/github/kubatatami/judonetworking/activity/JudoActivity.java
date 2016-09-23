@@ -57,14 +57,14 @@ public abstract class JudoActivity extends Activity implements StatefulControlle
     }
 
     @Override
-    public void onResume() {
+    protected void onResume() {
         super.onResume();
         active = true;
         onConnectCallbacks(new CallbacksConnector(this));
     }
 
     @Override
-    public void onPause() {
+    protected void onPause() {
         super.onPause();
         active = false;
         StatefulCache.removeAllControllersCallbacks(getWho());
