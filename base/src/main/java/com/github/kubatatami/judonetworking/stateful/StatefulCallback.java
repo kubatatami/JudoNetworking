@@ -24,12 +24,12 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
 
     private JudoException exception;
 
-    public StatefulCallback(StatefulController controller, Callback<T> callback, boolean destroyed) {
-        this(controller, callback.getClass().hashCode(), callback, destroyed);
+    public StatefulCallback(StatefulController controller, Callback<T> callback, boolean active) {
+        this(controller, callback.getClass().hashCode(), callback, active);
     }
 
-    public StatefulCallback(StatefulController controller, int id, Callback<T> callback, boolean destroyed) {
-        super(destroyed ? null : callback);
+    public StatefulCallback(StatefulController controller, int id, Callback<T> callback, boolean active) {
+        super(active ? callback : null);
         this.id = id;
         this.who = controller.getWho();
         StatefulCache.addStatefulCallback(who, id, this);

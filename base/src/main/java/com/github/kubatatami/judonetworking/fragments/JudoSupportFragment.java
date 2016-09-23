@@ -1,13 +1,10 @@
 package com.github.kubatatami.judonetworking.fragments;
 
-import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
-import android.view.View;
 
+import com.github.kubatatami.judonetworking.CallbacksConnector;
 import com.github.kubatatami.judonetworking.batches.Batch;
-import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.stateful.StatefulBatch;
 import com.github.kubatatami.judonetworking.stateful.StatefulCache;
@@ -17,22 +14,28 @@ import com.github.kubatatami.judonetworking.stateful.StatefulController;
 /**
  * Created by Kuba on 01/07/15.
  */
-public class JudoSupportFragment extends DialogFragment implements StatefulController {
+public abstract class JudoSupportFragment extends DialogFragment implements StatefulController {
 
     private String mWho;
-    private boolean destroyedView;
+
+    private boolean active;
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        destroyedView = false;
+    public void onResume() {
+        super.onResume();
+        active = true;
+        onConnectCallbacks(new CallbacksConnector(this));
     }
 
     @Override
-    public void onDestroyView() {
-        destroyedView = true;
-        super.onDestroyView();
+    public void onPause() {
+        super.onPause();
+        active = false;
         StatefulCache.removeAllControllersCallbacks(getWho());
+    }
+
+    @Override
+    public void onConnectCallbacks(CallbacksConnector connector) {
     }
 
     @Override
@@ -43,30 +46,20 @@ public class JudoSupportFragment extends DialogFragment implements StatefulContr
         }
     }
 
-    protected boolean connectCallback(BaseCallback<?>... callbacks) {
-        destroyedView = false;
-        return StatefulCache.connectControllerCallbacks(this, callbacks);
-    }
-
-    protected boolean connectCallback(int id, BaseCallback<?> callback) {
-        destroyedView = false;
-        return StatefulCache.connectControllerCallback(this, id, callback);
-    }
-
     protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {
-        return new StatefulCallback<>(this, callback, destroyedView);
+        return new StatefulCallback<>(this, callback, active);
     }
 
     protected <T> StatefulCallback<T> generateCallback(int id, Callback<T> callback) {
-        return new StatefulCallback<>(this, id, callback, destroyedView);
+        return new StatefulCallback<>(this, id, callback, active);
     }
 
     protected <T> StatefulBatch<T> generateCallback(Batch<T> batch) {
-        return new StatefulBatch<>(this, batch, destroyedView);
+        return new StatefulBatch<>(this, batch, active);
     }
 
     protected <T> StatefulBatch<T> generateCallback(int id, Batch<T> batch) {
-        return new StatefulBatch<>(this, id, batch, destroyedView);
+        return new StatefulBatch<>(this, id, batch, active);
     }
 
     public void cancelRequest(int id) {

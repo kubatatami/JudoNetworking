@@ -3,8 +3,8 @@ package com.github.kubatatami.judonetworking.activity;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 
+import com.github.kubatatami.judonetworking.CallbacksConnector;
 import com.github.kubatatami.judonetworking.batches.Batch;
-import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.stateful.StatefulBatch;
 import com.github.kubatatami.judonetworking.stateful.StatefulCache;
@@ -14,10 +14,11 @@ import com.github.kubatatami.judonetworking.stateful.StatefulController;
 /**
  * Created by Kuba on 01/07/15.
  */
-public class JudoFragmentActivity extends FragmentActivity implements StatefulController {
+public abstract class JudoFragmentActivity extends FragmentActivity implements StatefulController {
 
     private String id;
-    private boolean destroyed;
+
+    private boolean active;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,36 +44,43 @@ public class JudoFragmentActivity extends FragmentActivity implements StatefulCo
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        destroyed = true;
         if (isFinishing()) {
             StatefulCache.removeAllStatefulCallbacks(getWho());
-        } else {
-            StatefulCache.removeAllControllersCallbacks(getWho());
         }
     }
 
-    protected boolean connectCallback(BaseCallback<?>... callbacks) {
-        return StatefulCache.connectControllerCallbacks(this, callbacks);
+    @Override
+    public void onResume() {
+        super.onResume();
+        active = true;
+        onConnectCallbacks(new CallbacksConnector(this));
     }
 
-    protected boolean connectCallback(int id, BaseCallback<?> callback) {
-        return StatefulCache.connectControllerCallback(this, id, callback);
+    @Override
+    public void onPause() {
+        super.onPause();
+        active = false;
+        StatefulCache.removeAllControllersCallbacks(getWho());
+    }
+
+    @Override
+    public void onConnectCallbacks(CallbacksConnector connector) {
     }
 
     protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {
-        return new StatefulCallback<>(this, callback, destroyed);
+        return new StatefulCallback<>(this, callback, active);
     }
 
     protected <T> StatefulCallback<T> generateCallback(int id, Callback<T> callback) {
-        return new StatefulCallback<>(this, id, callback, destroyed);
+        return new StatefulCallback<>(this, id, callback, active);
     }
 
     protected <T> StatefulBatch<T> generateCallback(Batch<T> batch) {
-        return new StatefulBatch<>(this, batch, destroyed);
+        return new StatefulBatch<>(this, batch, active);
     }
 
     protected <T> StatefulBatch<T> generateCallback(int id, Batch<T> batch) {
-        return new StatefulBatch<>(this, id, batch, destroyed);
+        return new StatefulBatch<>(this, id, batch, active);
     }
 
     public void cancelRequest(int id) {
