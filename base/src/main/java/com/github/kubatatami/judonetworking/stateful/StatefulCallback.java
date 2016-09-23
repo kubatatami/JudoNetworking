@@ -20,6 +20,8 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
 
     private boolean consume = false;
 
+    private boolean finishedSuccessfully = false;
+
     private T data;
 
     private JudoException exception;
@@ -39,6 +41,7 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
     public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
         consume = false;
+        finishedSuccessfully = false;
         data = null;
         exception = null;
         super.onStart(cacheInfo, asyncResult);
@@ -62,6 +65,7 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
     @Override
     public void onSuccess(T result) {
         this.data = result;
+        this.finishedSuccessfully = true;
         super.onSuccess(result);
     }
 
@@ -84,7 +88,7 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
                 callback.onProgress(progress);
             }
             if (!consume) {
-                if (data != null) {
+                if (finishedSuccessfully) {
                     this.internalCallback.onSuccess(data);
                     onFinish();
                 } else if (exception != null) {
