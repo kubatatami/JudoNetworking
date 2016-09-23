@@ -60,6 +60,12 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
     }
 
     @Override
+    public void onSuccess(T result) {
+        this.data = result;
+        super.onSuccess(result);
+    }
+
+    @Override
     public void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
