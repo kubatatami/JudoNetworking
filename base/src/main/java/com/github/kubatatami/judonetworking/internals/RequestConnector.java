@@ -74,7 +74,7 @@ public class RequestConnector {
                 lossCheck();
                 EndpointImpl.checkThread();
                 delay(request.getDelay());
-
+                EndpointImpl.checkThread();
                 TransportLayer.Connection conn = transportLayer.send(request.getName(), controller, requestInfo, request.getTimeout(), timeStat,
                         rpc.getDebugFlags(), request.getMethod());
                 EndpointImpl.checkThread();
