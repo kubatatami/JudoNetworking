@@ -362,6 +362,7 @@ public class RequestConnector {
                     final TimeStat timeStat = new TimeStat(progressObserver);
                     if (!request.isCancelled()) {
                         RequestResult result = sendRequest(request, timeStat);
+                        timeStat.tickEndTime();
                         if (rpc.isTimeProfiler()) {
                             if (result.error != null) {
                                 refreshErrorStat(request.getName(), timeStat.getMethodTime());
