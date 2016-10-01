@@ -1,7 +1,5 @@
 package com.github.kubatatami.judonetworking.transports;
 
-import com.github.kubatatami.judonetworking.AsyncResult;
-
 import java.io.IOException;
 
 import okhttp3.Authenticator;
@@ -20,55 +18,32 @@ public abstract class OkHttpOAuth2 {
 
     protected String accessToken;
 
-    protected AsyncResult tokenAsyncResult;
-
-    protected boolean lastTokenValid = true;
-
     protected Interceptor oAuthInterceptor = new Interceptor() {
         @Override
         public Response intercept(Chain chain) throws IOException {
-            Request request = chain.request();
-            await();
-            if (accessToken != null && tokenType != null) {
-                request = request.newBuilder()
-                        .header("Authorization", tokenType + " " + accessToken).build();
+            synchronized (this) {
+                Request request = chain.request();
+                if (accessToken != null && tokenType != null) {
+                    request = request.newBuilder()
+                            .header("Authorization", tokenType + " " + accessToken).build();
+                }
+                return chain.proceed(request);
             }
-            Response response = chain.proceed(request);
-            if (response.isSuccessful()) {
-                lastTokenValid = true;
-            }
-            return response;
         }
     };
-
-    private void await() throws IOException {
-        try {
-            if (tokenAsyncResult != null) {
-                tokenAsyncResult.await();
-            }
-        } catch (InterruptedException e) {
-            throw new IOException(e);
-        }
-    }
 
     protected Authenticator oAuthAuthenticator = new Authenticator() {
         @Override
         public Request authenticate(Route route, Response response) throws IOException {
-            if (lastTokenValid && canDoTokenRequest()) {
-                boolean createToken = false;
-                if (tokenAsyncResult == null || tokenAsyncResult.isDone()) {
-                    tokenAsyncResult = doTokenRequest();
-                    createToken = true;
-                }
-                await();
-                if (accessToken != null) {
-                    if (createToken) {
-                        lastTokenValid = false;
+            synchronized (this) {
+                if (canDoTokenRequest()) {
+                    doTokenRequest();
+                    if (accessToken != null) {
+                        return response.request();
                     }
-                    return response.request();
                 }
+                return null;
             }
-            return null;
         }
     };
 
@@ -82,7 +57,7 @@ public abstract class OkHttpOAuth2 {
         this.accessToken = accessToken;
     }
 
-    protected abstract AsyncResult doTokenRequest();
+    protected abstract void doTokenRequest();
 
     protected abstract boolean canDoTokenRequest();
 
