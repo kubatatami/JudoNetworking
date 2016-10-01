@@ -18,7 +18,6 @@ public class MethodStat implements Serializable {
 
     public long errors = 0;
 
-
     @Override
     public String toString() {
         return "requestCount=" + requestCount +

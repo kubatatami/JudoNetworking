@@ -7,7 +7,10 @@ import com.github.kubatatami.judonetworking.caches.DiskCache;
 import com.github.kubatatami.judonetworking.caches.MemoryCache;
 import com.github.kubatatami.judonetworking.clonners.Clonner;
 import com.github.kubatatami.judonetworking.internals.EndpointBase;
+import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
 import com.github.kubatatami.judonetworking.threads.ThreadPoolSizer;
+
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -158,6 +161,8 @@ public interface Endpoint extends EndpointBase {
     LocalCache.OnlyOnError getDefaultMethodCacheOnlyOnErrorMode();
 
     void setDefaultMethodCacheOnlyOnErrorMode(LocalCache.OnlyOnError onlyOnError);
+
+    Map<String, MethodStat> getTimeProfilerStats();
 
     /**
      * Created with IntelliJ IDEA.
