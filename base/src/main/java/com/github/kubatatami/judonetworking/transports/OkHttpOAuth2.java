@@ -35,9 +35,12 @@ public abstract class OkHttpOAuth2 {
     protected Authenticator oAuthAuthenticator = new Authenticator() {
         @Override
         public Request authenticate(Route route, Response response) throws IOException {
+            String prevAccessToken = accessToken;
             synchronized (this) {
                 if (canDoTokenRequest()) {
-                    doTokenRequest();
+                    if(prevAccessToken.equals(accessToken)) {
+                        doTokenRequest();
+                    }
                     if (accessToken != null) {
                         return response.request();
                     }
