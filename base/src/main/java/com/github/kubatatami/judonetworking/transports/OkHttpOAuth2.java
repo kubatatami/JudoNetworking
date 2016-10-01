@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking.transports;
 
+import com.github.kubatatami.judonetworking.AsyncResult;
+
 import java.io.IOException;
 
 import okhttp3.Authenticator;
@@ -38,8 +40,12 @@ public abstract class OkHttpOAuth2 {
             String prevAccessToken = accessToken;
             synchronized (this) {
                 if (canDoTokenRequest()) {
-                    if(prevAccessToken.equals(accessToken)) {
-                        doTokenRequest();
+                    if (prevAccessToken.equals(accessToken)) {
+                        try {
+                            doTokenRequest().await();
+                        } catch (InterruptedException e) {
+                            throw new IOException(e);
+                        }
                     }
                     if (accessToken != null) {
                         return response.request();
@@ -60,7 +66,7 @@ public abstract class OkHttpOAuth2 {
         this.accessToken = accessToken;
     }
 
-    protected abstract void doTokenRequest();
+    protected abstract AsyncResult doTokenRequest();
 
     protected abstract boolean canDoTokenRequest();
 
