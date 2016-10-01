@@ -16,15 +16,20 @@ import okhttp3.Route;
  */
 public abstract class OkHttpOAuth2 {
 
-    protected String tokenType;
+    private String tokenType;
 
-    protected String accessToken;
+    private String accessToken;
 
-    protected Interceptor oAuthInterceptor = new Interceptor() {
+    private long tokenLifeTime;
+
+    private Interceptor oAuthInterceptor = new Interceptor() {
         @Override
         public Response intercept(Chain chain) throws IOException {
             synchronized (this) {
                 Request request = chain.request();
+                if (tokenLifeTime != 0 && tokenLifeTime < System.currentTimeMillis()) {
+                    callForToken();
+                }
                 if (accessToken != null && tokenType != null) {
                     request = request.newBuilder()
                             .header("Authorization", tokenType + " " + accessToken).build();
@@ -34,18 +39,14 @@ public abstract class OkHttpOAuth2 {
         }
     };
 
-    protected Authenticator oAuthAuthenticator = new Authenticator() {
+    private Authenticator oAuthAuthenticator = new Authenticator() {
         @Override
         public Request authenticate(Route route, Response response) throws IOException {
             String prevAccessToken = accessToken;
             synchronized (this) {
                 if (canDoTokenRequest()) {
                     if (prevAccessToken.equals(accessToken)) {
-                        try {
-                            doTokenRequest().await();
-                        } catch (InterruptedException e) {
-                            throw new IOException(e);
-                        }
+                        callForToken();
                     }
                     if (accessToken != null) {
                         return response.request();
@@ -56,6 +57,14 @@ public abstract class OkHttpOAuth2 {
         }
     };
 
+    private void callForToken() throws IOException {
+        try {
+            doTokenRequest().await();
+        } catch (InterruptedException e) {
+            throw new IOException(e);
+        }
+    }
+
     public void prepareOkHttpToOAuth(OkHttpClient.Builder okHttpClient) {
         okHttpClient.networkInterceptors().add(oAuthInterceptor);
         okHttpClient.authenticator(oAuthAuthenticator);
@@ -64,6 +73,22 @@ public abstract class OkHttpOAuth2 {
     public void setOAuthToken(String tokenType, String accessToken) {
         this.tokenType = tokenType;
         this.accessToken = accessToken;
+    }
+
+    public void setTokenLifeTime(long tokenLifeTime) {
+        this.tokenLifeTime = tokenLifeTime;
+    }
+
+    public String getTokenType() {
+        return tokenType;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public long getTokenLifeTime() {
+        return tokenLifeTime;
     }
 
     protected abstract AsyncResult doTokenRequest();
