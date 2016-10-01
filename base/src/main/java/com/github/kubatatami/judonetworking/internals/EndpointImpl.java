@@ -258,7 +258,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         }
     }
 
-
     @Override
     @SuppressWarnings("unchecked")
     public <T> AsyncResult callInBatch(final Class<T> obj, final Batch<T> batch) {
@@ -326,7 +325,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     public RequestConnector getRequestConnector() {
         return requestConnector;
     }
-
 
     @Override
     public void setBatchTimeoutMode(BatchTimeoutMode mode) {
@@ -411,7 +409,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         return cacheEnabled;
     }
 
-
     public void setMemoryCache(MemoryCache memoryCache) {
         this.memoryCache = memoryCache;
     }
@@ -421,11 +418,9 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         this.diskCache = diskCache;
     }
 
-
     public DiskCache getDiskCache() {
         return diskCache;
     }
-
 
     public MemoryCache getMemoryCache() {
         return memoryCache;
@@ -519,7 +514,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         } catch (IOException e) {
             JudoLogger.log(e);
         }
-
     }
 
     CacheMode getCacheMode() {
@@ -630,5 +624,10 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @Override
     public void setDefaultMethodCacheOnlyOnErrorMode(LocalCache.OnlyOnError defaultMethodCacheOnlyOnErrorMode) {
         this.defaultMethodCacheOnlyOnErrorMode = defaultMethodCacheOnlyOnErrorMode;
+    }
+
+    @Override
+    public Map<String, MethodStat> getTimeProfilerStats() {
+        return stats;
     }
 }

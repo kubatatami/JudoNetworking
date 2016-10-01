@@ -74,7 +74,7 @@ public class RequestConnector {
                 lossCheck();
                 EndpointImpl.checkThread();
                 delay(request.getDelay());
-
+                EndpointImpl.checkThread();
                 TransportLayer.Connection conn = transportLayer.send(request.getName(), controller, requestInfo, request.getTimeout(), timeStat,
                         rpc.getDebugFlags(), request.getMethod());
                 EndpointImpl.checkThread();
@@ -362,6 +362,14 @@ public class RequestConnector {
                     final TimeStat timeStat = new TimeStat(progressObserver);
                     if (!request.isCancelled()) {
                         RequestResult result = sendRequest(request, timeStat);
+                        timeStat.tickEndTime();
+                        if (rpc.isTimeProfiler()) {
+                            if (result.error != null) {
+                                refreshErrorStat(request.getName(), timeStat.getMethodTime());
+                            } else {
+                                refreshStat(request.getName(), timeStat.getMethodTime());
+                            }
+                        }
                         results.add(result);
                     }
                 }
@@ -420,15 +428,7 @@ public class RequestConnector {
             timeStat.tickParseTime();
             conn.close();
             timeStat.tickEndTime();
-            if (rpc.isTimeProfiler()) {
-
-                for (RequestImpl request : requests) {
-                    refreshStat(request.getName(), timeStat.getMethodTime() / requests.size());
-                }
-                rpc.saveStat();
-            }
-
-
+            calcTimeProfiler(requests, timeStat);
             if ((rpc.getDebugFlags() & Endpoint.TIME_DEBUG) > 0) {
                 timeStat.logTime("End batch request(" + requestsName.substring(1) + "):");
             }
@@ -441,6 +441,15 @@ public class RequestConnector {
             }
             RequestProxy.addToExceptionMessage(requestsName.substring(1), e);
             throw e;
+        }
+    }
+
+    private void calcTimeProfiler(List<RequestImpl> requests, TimeStat timeStat) {
+        if (rpc.isTimeProfiler()) {
+            for (RequestImpl request : requests) {
+                refreshStat(request.getName(), timeStat.getMethodTime() / requests.size());
+            }
+            rpc.saveStat();
         }
     }
 

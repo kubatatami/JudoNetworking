@@ -20,16 +20,18 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
 
     private boolean consume = false;
 
+    private boolean finishedSuccessfully = false;
+
     private T data;
 
     private JudoException exception;
 
-    public StatefulCallback(StatefulController controller, Callback<T> callback, boolean destroyed) {
-        this(controller, callback.getClass().hashCode(), callback, destroyed);
+    public StatefulCallback(StatefulController controller, Callback<T> callback, boolean active) {
+        this(controller, callback.getClass().hashCode(), callback, active);
     }
 
-    public StatefulCallback(StatefulController controller, int id, Callback<T> callback, boolean destroyed) {
-        super(destroyed ? null : callback);
+    public StatefulCallback(StatefulController controller, int id, Callback<T> callback, boolean active) {
+        super(active ? callback : null);
         this.id = id;
         this.who = controller.getWho();
         StatefulCache.addStatefulCallback(who, id, this);
@@ -39,6 +41,7 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
     public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
         consume = false;
+        finishedSuccessfully = false;
         data = null;
         exception = null;
         super.onStart(cacheInfo, asyncResult);
@@ -60,6 +63,13 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
     }
 
     @Override
+    public void onSuccess(T result) {
+        this.data = result;
+        this.finishedSuccessfully = true;
+        super.onSuccess(result);
+    }
+
+    @Override
     public void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
@@ -78,7 +88,7 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
                 callback.onProgress(progress);
             }
             if (!consume) {
-                if (data != null) {
+                if (finishedSuccessfully) {
                     this.internalCallback.onSuccess(data);
                     onFinish();
                 } else if (exception != null) {

@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking.activity;
 import android.app.Activity;
 import android.os.Bundle;
 
+import com.github.kubatatami.judonetworking.CallbacksConnector;
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
@@ -14,10 +15,11 @@ import com.github.kubatatami.judonetworking.stateful.StatefulController;
 /**
  * Created by Kuba on 01/07/15.
  */
-public class JudoActivity extends Activity implements StatefulController {
+public abstract class JudoActivity extends Activity implements StatefulController {
 
     private String id;
-    private boolean destroyed;
+
+    private boolean active;
 
     static String UNIQUE_ACTIVITY_ID = "UNIQUE_ACTIVITY_ID";
 
@@ -49,12 +51,27 @@ public class JudoActivity extends Activity implements StatefulController {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        destroyed = true;
         if (isFinishing()) {
             StatefulCache.removeAllStatefulCallbacks(getWho());
-        } else {
-            StatefulCache.removeAllControllersCallbacks(getWho());
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        active = true;
+        onConnectCallbacks(new CallbacksConnector(this));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        active = false;
+        StatefulCache.removeAllControllersCallbacks(getWho());
+    }
+
+    @Override
+    public void onConnectCallbacks(CallbacksConnector connector) {
     }
 
     protected boolean connectCallback(BaseCallback<?>... callbacks) {
@@ -66,19 +83,19 @@ public class JudoActivity extends Activity implements StatefulController {
     }
 
     protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {
-        return new StatefulCallback<>(this, callback, destroyed);
+        return new StatefulCallback<>(this, callback, active);
     }
 
     protected <T> StatefulCallback<T> generateCallback(int id, Callback<T> callback) {
-        return new StatefulCallback<>(this, id, callback, destroyed);
+        return new StatefulCallback<>(this, id, callback, active);
     }
 
     protected <T> StatefulBatch<T> generateCallback(Batch<T> batch) {
-        return new StatefulBatch<>(this, batch, destroyed);
+        return new StatefulBatch<>(this, batch, active);
     }
 
     protected <T> StatefulBatch<T> generateCallback(int id, Batch<T> batch) {
-        return new StatefulBatch<>(this, id, batch, destroyed);
+        return new StatefulBatch<>(this, id, batch, active);
     }
 
     public void cancelRequest(int id) {
