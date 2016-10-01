@@ -146,9 +146,6 @@ public class AsyncResultSender implements Runnable {
             if (request.isCancelled()) {
                 return;
             }
-            if (type == Type.RESULT || type == Type.ERROR) {
-                request.done();
-            }
             switch (type) {
                 case START:
                     request.start();
@@ -179,14 +176,12 @@ public class AsyncResultSender implements Runnable {
             }
             if (type == Type.RESULT || type == Type.ERROR) {
                 callback.onFinish();
+                request.done();
             }
         } else if (requestProxy != null && requestProxy.getBatchCallback() != null) {
             Batch<?> transaction = requestProxy.getBatchCallback();
             if (requestProxy.isCancelled()) {
                 return;
-            }
-            if (type == Type.RESULT || type == Type.ERROR) {
-                requestProxy.done();
             }
             switch (type) {
                 case START:
@@ -218,8 +213,8 @@ public class AsyncResultSender implements Runnable {
             }
             if (type == Type.RESULT || type == Type.ERROR) {
                 transaction.onFinish();
+                requestProxy.done();
                 requestProxy.clearBatchCallback();
-
             }
         } else if (requests != null && type == Type.PROGRESS) {
             for (RequestImpl batchRequest : requests) {
