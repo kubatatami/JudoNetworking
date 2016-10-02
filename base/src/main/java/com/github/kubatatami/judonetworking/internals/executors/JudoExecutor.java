@@ -16,6 +16,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class JudoExecutor extends ThreadPoolExecutor {
 
+    private static final int CORE_POOL_SIZE = 2;
+
     protected int threadPriority = Process.THREAD_PRIORITY_BACKGROUND;
 
     protected Endpoint endpoint;
@@ -35,7 +37,7 @@ public class JudoExecutor extends ThreadPoolExecutor {
     };
 
     public JudoExecutor(Endpoint endpoint) {
-        super(48, Integer.MAX_VALUE, 30, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+        super(CORE_POOL_SIZE, Integer.MAX_VALUE, 30, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
         this.endpoint = endpoint;
         setThreadFactory(threadFactory);
         prestartAllCoreThreads();

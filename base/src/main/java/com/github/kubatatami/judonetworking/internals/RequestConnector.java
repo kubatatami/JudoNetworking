@@ -282,24 +282,17 @@ public class RequestConnector {
                     rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getLocalCacheSize(), request.getHeaders());
                 }
             }
-
             return result.result;
         } catch (JudoException e) {
             refreshErrorStat(request.getName());
             throw e;
         }
-
     }
 
     public List<RequestResult> callBatch(List<RequestImpl> requests, ProgressObserver progressObserver, Integer timeout) throws JudoException {
         final List<RequestResult> results = new ArrayList<>(requests.size());
-
-
         if (requests.size() > 0) {
-
-
             if (rpc.getProtocolController().isBatchSupported()) {
-
                 List<RequestImpl> copyRequest = new ArrayList<>(requests);
                 VirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(requests.get(0).getMethod().getDeclaringClass());
                 if (virtualServerInfo != null) {
@@ -361,30 +354,52 @@ public class RequestConnector {
                 synchronized (progressObserver) {
                     progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (requests.size() - 1) * TimeStat.TICKS);
                 }
-                for (final RequestImpl request : requests) {
-                    final TimeStat timeStat = new TimeStat(progressObserver);
-                    if (!request.isCancelled()) {
-                        RequestResult result = sendRequest(request, timeStat);
-                        timeStat.tickEndTime();
-                        if (rpc.isTimeProfiler()) {
-                            if (result.error != null) {
-                                refreshErrorStat(request.getName());
-                            } else {
-                                refreshStat(request.getName(),
-                                        timeStat.getMethodTime(),
-                                        timeStat.getAllTime()
-                                );
-                            }
-                        }
-                        results.add(result);
-                    }
-                }
-
+                final TimeStat timeStat = new TimeStat(progressObserver);
+                sendBatchAsNormalRequests(requests, timeStat, results);
             }
         }
         return results;
     }
 
+    private void sendBatchAsNormalRequests(List<RequestImpl> requests, TimeStat timeStat, List<RequestResult> results) {
+        List<Thread> threads = new ArrayList<>();
+        for (final RequestImpl request : requests) {
+            if (!request.isCancelled()) {
+                threads.add(sendBatchAsNormalRequest(request, results, timeStat));
+            }
+        }
+        for (Thread thread : threads) {
+            try {
+                thread.wait();
+            } catch (InterruptedException e) {
+                throw new JudoException(e);
+            }
+        }
+    }
+
+    private Thread sendBatchAsNormalRequest(final RequestImpl request, final List<RequestResult> results, final TimeStat timeStat) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                RequestResult result = sendRequest(request, timeStat);
+                timeStat.tickEndTime();
+                if (rpc.isTimeProfiler()) {
+                    if (result.error != null) {
+                        refreshErrorStat(request.getName());
+                    } else {
+                        refreshStat(request.getName(),
+                                timeStat.getMethodTime(),
+                                timeStat.getAllTime()
+                        );
+                    }
+                }
+                results.add(result);
+                Thread.currentThread().notifyAll();
+            }
+        });
+        thread.start();
+        return thread;
+    }
 
     private void delay(int requestDelay) {
         int delay = rpc.getDelay() + requestDelay;
@@ -461,7 +476,6 @@ public class RequestConnector {
             rpc.saveStat();
         }
     }
-
 
     private void lossCheck() throws JudoException {
         float percentLoss = rpc.getPercentLoss();
