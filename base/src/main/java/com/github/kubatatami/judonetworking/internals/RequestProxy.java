@@ -17,7 +17,6 @@ import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.exceptions.ParseException;
 import com.github.kubatatami.judonetworking.internals.batches.BatchProgressObserver;
-import com.github.kubatatami.judonetworking.internals.batches.BatchTask;
 import com.github.kubatatami.judonetworking.internals.cache.CacheMethod;
 import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.internals.results.CacheResult;
@@ -418,15 +417,6 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         });
         handleBatchResponse(batches, batchCallback, responses);
     }
-
-    public List<List<RequestImpl>> assignRequestsToConnections(List<RequestImpl> list, final int partsNo) {
-        if (rpc.isTimeProfiler()) {
-            return BatchTask.timeAssignRequests(list, partsNo);
-        } else {
-            return BatchTask.simpleAssignRequests(list, partsNo);
-        }
-    }
-
 
     protected int calculateTimeout(List<RequestImpl> batches) {
         int timeout = 0;
