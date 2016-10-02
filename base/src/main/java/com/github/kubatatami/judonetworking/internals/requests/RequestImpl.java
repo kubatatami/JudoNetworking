@@ -310,7 +310,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     public long getWeight() {
         if (rpc.getStats().containsKey(name)) {
-            return Math.max(rpc.getStats().get(name).avgTime, 1);
+            return Math.max(rpc.getStats().get(name).methodTime, 1);
         } else {
             return timeout / 2;
         }

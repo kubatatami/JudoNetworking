@@ -260,7 +260,10 @@ public class RequestConnector {
 
 
             if (rpc.isTimeProfiler()) {
-                refreshStat(request.getName(), timeStat.getMethodTime());
+                refreshStat(request.getName(),
+                        timeStat.getMethodTime(),
+                        timeStat.getAllTime()
+                );
             }
 
             if ((rpc.getDebugFlags() & Endpoint.TIME_DEBUG) > 0) {
@@ -282,7 +285,7 @@ public class RequestConnector {
 
             return result.result;
         } catch (JudoException e) {
-            refreshErrorStat(request.getName(), request.getTimeout());
+            refreshErrorStat(request.getName());
             throw e;
         }
 
@@ -365,9 +368,12 @@ public class RequestConnector {
                         timeStat.tickEndTime();
                         if (rpc.isTimeProfiler()) {
                             if (result.error != null) {
-                                refreshErrorStat(request.getName(), timeStat.getMethodTime());
+                                refreshErrorStat(request.getName());
                             } else {
-                                refreshStat(request.getName(), timeStat.getMethodTime());
+                                refreshStat(request.getName(),
+                                        timeStat.getMethodTime(),
+                                        timeStat.getAllTime()
+                                );
                             }
                         }
                         results.add(result);
@@ -436,7 +442,7 @@ public class RequestConnector {
             return responses;
         } catch (JudoException e) {
             for (RequestImpl request : requests) {
-                refreshErrorStat(request.getName(), request.getTimeout());
+                refreshErrorStat(request.getName());
                 rpc.saveStat();
             }
             RequestProxy.addToExceptionMessage(requestsName.substring(1), e);
@@ -447,7 +453,10 @@ public class RequestConnector {
     private void calcTimeProfiler(List<RequestImpl> requests, TimeStat timeStat) {
         if (rpc.isTimeProfiler()) {
             for (RequestImpl request : requests) {
-                refreshStat(request.getName(), timeStat.getMethodTime() / requests.size());
+                refreshStat(request.getName(),
+                        timeStat.getMethodTime() / requests.size(),
+                        timeStat.getAllTime() / requests.size()
+                );
             }
             rpc.saveStat();
         }
@@ -473,16 +482,16 @@ public class RequestConnector {
         return stat;
     }
 
-    private void refreshStat(String method, long time) {
+    private void refreshStat(String method, long methodTime, long allTime) {
         MethodStat stat = getStat(method);
-        stat.avgTime = ((stat.avgTime * stat.requestCount) + time) / (stat.requestCount + 1);
+        stat.methodTime = ((stat.methodTime * stat.requestCount) + methodTime) / (stat.requestCount + 1);
+        stat.allTime = ((stat.allTime * stat.requestCount) + allTime) / (stat.requestCount + 1);
         stat.requestCount++;
         rpc.saveStat();
     }
 
-    private void refreshErrorStat(String method, long timeout) {
+    private void refreshErrorStat(String method) {
         MethodStat stat = getStat(method);
-        stat.avgTime = ((stat.avgTime * stat.requestCount) + timeout) / (stat.requestCount + 1);
         stat.errors++;
         stat.requestCount++;
         rpc.saveStat();
