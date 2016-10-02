@@ -370,9 +370,7 @@ public class RequestConnector {
         }
         for (Thread thread : threads) {
             try {
-                synchronized (thread) {
-                    thread.wait();
-                }
+                thread.join();
             } catch (InterruptedException e) {
                 throw new JudoException(e);
             }
@@ -395,9 +393,8 @@ public class RequestConnector {
                         );
                     }
                 }
-                results.add(result);
-                synchronized (Thread.currentThread()) {
-                    Thread.currentThread().notifyAll();
+                synchronized (results) {
+                    results.add(result);
                 }
             }
         });
