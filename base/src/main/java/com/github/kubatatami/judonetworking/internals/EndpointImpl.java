@@ -28,10 +28,7 @@ import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
 import com.github.kubatatami.judonetworking.internals.virtuals.VirtualServerInfo;
 import com.github.kubatatami.judonetworking.logs.ErrorLogger;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
-import com.github.kubatatami.judonetworking.threads.DefaultThreadPoolSizer;
-import com.github.kubatatami.judonetworking.threads.ThreadPoolSizer;
 import com.github.kubatatami.judonetworking.transports.TransportLayer;
-import com.github.kubatatami.judonetworking.utils.NetworkUtils;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.io.File;
@@ -100,8 +97,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     private Set<Integer> requestIds = Collections.synchronizedSet(new HashSet<Integer>());
 
     private int id = 0;
-
-    private ThreadPoolSizer threadPoolSizer = new DefaultThreadPoolSizer();
 
     private JudoExecutor executorService = new JudoExecutor(this);
 
@@ -563,14 +558,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     public void setThreadPriority(int threadPriority) {
         executorService.setThreadPriority(threadPriority);
-    }
-
-    public void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer) {
-        this.threadPoolSizer = threadPoolSizer;
-    }
-
-    public int getBestConnectionsSize() {
-        return this.threadPoolSizer.getThreadPoolSize(context, NetworkUtils.getActiveNetworkInfo(context));
     }
 
     public void setUrlModifier(UrlModifier urlModifier) {

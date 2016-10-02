@@ -448,61 +448,10 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
 
         try {
             rpc.getHandler().post(new AsyncResultSender(new ArrayList<>(batches)));
-            int connections = rpc.getBestConnectionsSize() - (rpc.getExecutorService().getActiveCount() - 1);
-            connections = Math.max(Math.min(connections, batches.size()), 1);
-            if (connections > 1) {
-
-                List<List<RequestImpl>> requestParts = assignRequestsToConnections(batches, connections);
-
-                final List<BatchTask> tasks = new ArrayList<>(connections);
-
-                progressObserver.setMaxProgress((requestParts.size() + cacheObjects.size()) * TimeStat.TICKS);
-                if (cacheObjects.size() > 0) {
-                    progressObserver.progressTick(cacheObjects.size() * TimeStat.TICKS);
-                }
-
-                for (List<RequestImpl> requests : requestParts) {
-
-                    BatchTask task = new BatchTask(rpc, progressObserver, calculateTimeout(requests), requests);
-                    tasks.add(task);
-                }
-                for (BatchTask task : tasks) {
-                    task.execute();
-                }
-                Runnable waitAndMergeTask = new Runnable() {
-                    @Override
-                    public void run() {
-                        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-                        try {
-                            for (BatchTask task : tasks) {
-                                task.join();
-                                JudoException ex = task.getEx();
-                                if (ex != null) {
-                                    throw ex;
-                                } else {
-                                    responses.addAll(task.getResponse());
-                                }
-                            }
-                            Collections.sort(responses);
-                            receiveResponse(batches, responses, cacheObjects);
-                        } catch (final JudoException e) {
-                            responses.clear();
-                            for (RequestImpl request : batches) {
-                                responses.add(new ErrorResult(request.getId(), e));
-                            }
-                            Collections.sort(responses);
-                            receiveResponse(batches, responses, cacheObjects);
-                        }
-                    }
-                };
-                new Thread(waitAndMergeTask, "JudoNetworking WaitAndMergeTask").start();
-
-            } else {
-                progressObserver.setMaxProgress(TimeStat.TICKS);
-                responses.addAll(rpc.getRequestConnector().callBatch(batches, progressObserver, calculateTimeout(batches)));
-                Collections.sort(responses);
-                receiveResponse(batches, responses, cacheObjects);
-            }
+            progressObserver.setMaxProgress(TimeStat.TICKS);
+            responses.addAll(rpc.getRequestConnector().callBatch(batches, progressObserver, calculateTimeout(batches)));
+            Collections.sort(responses);
+            receiveResponse(batches, responses, cacheObjects);
         } catch (final JudoException e) {
             for (RequestImpl request : batches) {
                 responses.add(new ErrorResult(request.getId(), e));
@@ -510,7 +459,6 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
             Collections.sort(responses);
             receiveResponse(batches, responses, cacheObjects);
         }
-
     }
 
     protected void handleBatchResponse(List<RequestImpl> requests, Batch batch, List<RequestResult> responses) {

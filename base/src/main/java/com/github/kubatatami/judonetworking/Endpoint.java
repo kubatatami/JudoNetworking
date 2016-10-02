@@ -8,7 +8,6 @@ import com.github.kubatatami.judonetworking.caches.MemoryCache;
 import com.github.kubatatami.judonetworking.clonners.Clonner;
 import com.github.kubatatami.judonetworking.internals.EndpointBase;
 import com.github.kubatatami.judonetworking.internals.stats.MethodStat;
-import com.github.kubatatami.judonetworking.threads.ThreadPoolSizer;
 
 import java.util.Map;
 
@@ -139,8 +138,6 @@ public interface Endpoint extends EndpointBase {
     void setDiskCache(DiskCache diskCache);
 
     void clearCache();
-
-    void setThreadPoolSizer(ThreadPoolSizer threadPoolSizer);
 
     void setUrl(String url);
 
