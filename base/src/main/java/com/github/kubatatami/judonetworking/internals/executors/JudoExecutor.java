@@ -35,7 +35,7 @@ public class JudoExecutor extends ThreadPoolExecutor {
     };
 
     public JudoExecutor(Endpoint endpoint) {
-        super(2, Integer.MAX_VALUE, 30, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+        super(48, Integer.MAX_VALUE, 30, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
         this.endpoint = endpoint;
         setThreadFactory(threadFactory);
         prestartAllCoreThreads();
