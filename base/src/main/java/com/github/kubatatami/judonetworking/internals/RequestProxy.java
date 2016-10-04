@@ -586,8 +586,10 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 rpc.getHandler().post(new Runnable() {
                     @Override
                     public void run() {
-                        batchCallback.onFinish();
-                        clearBatchCallback();
+                        if (batchCallback != null) {
+                            batchCallback.onFinish();
+                            clearBatchCallback();
+                        }
                     }
                 });
             }
