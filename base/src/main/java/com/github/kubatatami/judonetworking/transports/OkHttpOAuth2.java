@@ -22,20 +22,23 @@ public abstract class OkHttpOAuth2 {
 
     private long tokenLifeTime;
 
+    private AsyncResult asyncResult;
+
     private Interceptor oAuthInterceptor = new Interceptor() {
         @Override
         public Response intercept(Chain chain) throws IOException {
-            synchronized (this) {
-                Request request = chain.request();
-                if (tokenLifeTime != 0 && tokenLifeTime < System.currentTimeMillis()) {
-                    callForToken();
-                }
-                if (accessToken != null && tokenType != null) {
-                    request = request.newBuilder()
-                            .header("Authorization", tokenType + " " + accessToken).build();
-                }
-                return chain.proceed(request);
+            if (asyncResult != null) {
+                await();
             }
+            Request request = chain.request();
+            if (tokenLifeTime != 0 && tokenLifeTime < System.currentTimeMillis()) {
+                callForToken();
+            }
+            if (accessToken != null && tokenType != null) {
+                request = request.newBuilder()
+                        .header("Authorization", tokenType + " " + accessToken).build();
+            }
+            return chain.proceed(request);
         }
     };
 
@@ -58,8 +61,13 @@ public abstract class OkHttpOAuth2 {
     };
 
     private void callForToken() throws IOException {
+        asyncResult = doTokenRequest();
+        await();
+    }
+
+    private void await() throws IOException {
         try {
-            doTokenRequest().await();
+            asyncResult.await();
         } catch (InterruptedException e) {
             throw new IOException(e);
         }
