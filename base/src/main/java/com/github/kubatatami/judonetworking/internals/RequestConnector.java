@@ -6,6 +6,7 @@ import android.util.Base64;
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.Endpoint;
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.annotations.Base64Param;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
@@ -284,7 +285,7 @@ public class RequestConnector {
             }
             return result.result;
         } catch (JudoException e) {
-            refreshErrorStat(request.getName());
+            refreshErrorStat(request);
             throw e;
         }
     }
@@ -385,7 +386,7 @@ public class RequestConnector {
                 timeStat.tickEndTime();
                 if (rpc.isTimeProfiler()) {
                     if (result.error != null) {
-                        refreshErrorStat(request.getName());
+                        refreshErrorStat(request);
                     } else {
                         refreshStat(request.getName(),
                                 timeStat.getMethodTime(),
@@ -458,7 +459,7 @@ public class RequestConnector {
             return responses;
         } catch (JudoException e) {
             for (RequestImpl request : requests) {
-                refreshErrorStat(request.getName());
+                refreshErrorStat(request);
                 rpc.saveStat();
             }
             RequestProxy.addToExceptionMessage(requestsName.substring(1), e);
@@ -505,11 +506,13 @@ public class RequestConnector {
         rpc.saveStat();
     }
 
-    private void refreshErrorStat(String method) {
-        MethodStat stat = getStat(method);
-        stat.errors++;
-        stat.requestCount++;
-        rpc.saveStat();
+    private void refreshErrorStat(Request request) {
+        if (!request.isCancelled()) {
+            MethodStat stat = getStat(request.getName());
+            stat.errors++;
+            stat.requestCount++;
+            rpc.saveStat();
+        }
     }
 
     public void setConnectTimeout(int connectTimeout) {
