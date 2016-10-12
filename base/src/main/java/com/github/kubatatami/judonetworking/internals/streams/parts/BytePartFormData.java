@@ -13,10 +13,13 @@ public class BytePartFormData implements RequestMultipartEntity.PartFormData {
 
     private final String mimeType;
 
-    public BytePartFormData(String name, byte[] bytes, String mimeType) {
+    private final String fileName;
+
+    public BytePartFormData(String name, byte[] bytes, String mimeType, String fileName) {
         this.name = name;
         this.bytes = bytes;
         this.mimeType = mimeType;
+        this.fileName = fileName;
     }
 
     @Override
@@ -51,6 +54,6 @@ public class BytePartFormData implements RequestMultipartEntity.PartFormData {
 
     @Override
     public String getFileName() {
-        return null;
+        return fileName;
     }
 }

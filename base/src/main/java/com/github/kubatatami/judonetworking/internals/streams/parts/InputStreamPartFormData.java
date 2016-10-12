@@ -15,10 +15,13 @@ public class InputStreamPartFormData implements RequestMultipartEntity.PartFormD
 
     private final String mimeType;
 
-    public InputStreamPartFormData(String name, InputStream inputStream, String mimeType) {
+    private final String fileName;
+
+    public InputStreamPartFormData(String name, InputStream inputStream, String mimeType, String fileName) {
         this.name = name;
         this.inputStream = inputStream;
         this.mimeType = mimeType;
+        this.fileName = fileName;
     }
 
     @Override
@@ -53,6 +56,6 @@ public class InputStreamPartFormData implements RequestMultipartEntity.PartFormD
 
     @Override
     public String getFileName() {
-        return null;
+        return fileName;
     }
 }

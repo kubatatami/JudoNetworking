@@ -15,12 +15,15 @@ public class StringPartFormData implements RequestMultipartEntity.PartFormData {
 
     private final String mimeType;
 
+    private final String fileName;
+
     private final byte[] data;
 
-    public StringPartFormData(String name, String value, String mimeType) {
+    public StringPartFormData(String name, String value, String mimeType, String fileName) {
         this.name = name;
         this.value = value;
         this.mimeType = mimeType;
+        this.fileName = fileName;
         try {
             this.data = value.getBytes("UTF-8");
         } catch (UnsupportedEncodingException e) {
@@ -60,6 +63,6 @@ public class StringPartFormData implements RequestMultipartEntity.PartFormData {
 
     @Override
     public String getFileName() {
-        return null;
+        return fileName;
     }
 }

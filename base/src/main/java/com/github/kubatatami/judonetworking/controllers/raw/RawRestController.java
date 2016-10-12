@@ -134,14 +134,16 @@ public class RawRestController extends RawController {
                     Post postAnnotation = (Post) annotation;
                     Object param = request.getArgs()[i];
                     if (param != null) {
+                        FileName fileNameAnnotation = ReflectionCache.getParameterAnnotation(request.getMethod(), i, FileName.class);
+                        String fileName = fileNameAnnotation == null ? null : fileNameAnnotation.value();
                         if (param instanceof File) {
                             parts.add(new FilePartFormData(postAnnotation.value(), (File) param));
                         } else if (param instanceof InputStream) {
-                            parts.add(new InputStreamPartFormData(postAnnotation.value(), (InputStream) param, postAnnotation.mimeType()));
+                            parts.add(new InputStreamPartFormData(postAnnotation.value(), (InputStream) param, postAnnotation.mimeType(), fileName));
                         } else if (param instanceof byte[]) {
-                            parts.add(new BytePartFormData(postAnnotation.value(), (byte[]) param, postAnnotation.mimeType()));
+                            parts.add(new BytePartFormData(postAnnotation.value(), (byte[]) param, postAnnotation.mimeType(), fileName));
                         } else {
-                            parts.add(new StringPartFormData(postAnnotation.value(), param.toString(), postAnnotation.mimeType()));
+                            parts.add(new StringPartFormData(postAnnotation.value(), param.toString(), postAnnotation.mimeType(), fileName));
                         }
                     }
                 }
@@ -322,6 +324,13 @@ public class RawRestController extends RawController {
         String value() default "";
 
         String mimeType() default "";
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface FileName {
+
+        String value() default "";
     }
 
     @Retention(RetentionPolicy.RUNTIME)
