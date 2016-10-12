@@ -10,6 +10,7 @@ import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.internals.streams.RequestMultipartEntity;
+import com.github.kubatatami.judonetworking.internals.streams.parts.BytePartFormData;
 import com.github.kubatatami.judonetworking.internals.streams.parts.FilePartFormData;
 import com.github.kubatatami.judonetworking.internals.streams.parts.InputStreamPartFormData;
 import com.github.kubatatami.judonetworking.internals.streams.parts.StringPartFormData;
@@ -137,6 +138,8 @@ public class RawRestController extends RawController {
                             parts.add(new FilePartFormData(postAnnotation.value(), (File) param));
                         } else if (param instanceof InputStream) {
                             parts.add(new InputStreamPartFormData(postAnnotation.value(), (InputStream) param, postAnnotation.mimeType()));
+                        } else if (param instanceof byte[]) {
+                            parts.add(new BytePartFormData(postAnnotation.value(), (byte[]) param, postAnnotation.mimeType()));
                         } else {
                             parts.add(new StringPartFormData(postAnnotation.value(), param.toString(), postAnnotation.mimeType()));
                         }
