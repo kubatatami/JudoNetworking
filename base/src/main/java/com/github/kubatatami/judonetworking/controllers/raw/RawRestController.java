@@ -138,6 +138,8 @@ public class RawRestController extends RawController {
                         String fileName = fileNameAnnotation == null ? null : fileNameAnnotation.value();
                         if (param instanceof File) {
                             parts.add(new FilePartFormData(postAnnotation.value(), (File) param));
+                        } else if (param instanceof PartFormData) {
+                            parts.add((PartFormData)param);
                         } else if (param instanceof InputStream) {
                             parts.add(new InputStreamPartFormData(postAnnotation.value(), (InputStream) param, postAnnotation.mimeType(), fileName));
                         } else if (param instanceof byte[]) {

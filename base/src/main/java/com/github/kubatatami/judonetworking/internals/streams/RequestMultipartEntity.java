@@ -1,6 +1,5 @@
 package com.github.kubatatami.judonetworking.internals.streams;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -45,7 +44,7 @@ public class RequestMultipartEntity implements StreamEntity {
             write(sb, outStream, "--");
             writeLine(sb, outStream, BOUNDARY);
             write(sb, outStream, "Content-Disposition: form-data; name=\"" + part.getName() + "\"");
-            if (part.getFileName() != null && !part.getFileName().isEmpty()) {
+            if (part.getFileName() != null) {
                 write(sb, outStream, "; filename=\"" + part.getFileName() + "\"");
             }
             writeNewLine(sb, outStream);
