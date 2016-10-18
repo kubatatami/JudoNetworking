@@ -18,18 +18,18 @@ import java.lang.ref.WeakReference;
  * Time: 11:40
  */
 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-public class FragmentCallback<T, Z extends Fragment & ViewStateFragment> extends DefaultCallback<T> {
+public class FragmentCallback<T> extends DefaultCallback<T> {
 
-    private final WeakReference<Z> fragment;
+    private final WeakReference<? extends Fragment> fragment;
 
     private AsyncResult asyncResult;
 
-    public FragmentCallback(Z fragment) {
+    public <Z extends Fragment & ViewStateFragment> FragmentCallback(Z fragment) {
         this.fragment = new WeakReference<>(fragment);
     }
 
     private boolean isFragmentActive() {
-        return fragment.get() != null && fragment.get().getActivity() != null && !fragment.get().isViewDestroyed();
+        return fragment.get() != null && fragment.get().getActivity() != null && !((ViewStateFragment)fragment.get()).isViewDestroyed();
     }
 
     @Override

@@ -15,13 +15,13 @@ import java.lang.ref.WeakReference;
  * Date: 23.04.2013
  * Time: 11:40
  */
-public class SupportFragmentCallback<T, Z extends Fragment & ViewStateFragment> extends DefaultCallback<T> {
+public class SupportFragmentCallback<T> extends DefaultCallback<T> {
 
-    private final WeakReference<Z> fragment;
+    private final WeakReference<? extends Fragment> fragment;
 
     private AsyncResult asyncResult;
 
-    public SupportFragmentCallback(Z fragment) {
+    public <Z extends Fragment & ViewStateFragment> SupportFragmentCallback(Z fragment) {
         this.fragment = new WeakReference<>(fragment);
     }
 
@@ -36,7 +36,7 @@ public class SupportFragmentCallback<T, Z extends Fragment & ViewStateFragment> 
     }
 
     private boolean isFragmentActive() {
-        return fragment.get() != null && fragment.get().getActivity() != null && !fragment.get().isViewDestroyed();
+        return fragment.get() != null && fragment.get().getActivity() != null && !((ViewStateFragment)fragment.get()).isViewDestroyed();
     }
 
     @Override
