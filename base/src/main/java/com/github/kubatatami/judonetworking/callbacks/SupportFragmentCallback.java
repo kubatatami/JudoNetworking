@@ -5,6 +5,7 @@ import android.support.v4.app.Fragment;
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.fragments.ViewStateFragment;
 
 import java.lang.ref.WeakReference;
 
@@ -14,13 +15,13 @@ import java.lang.ref.WeakReference;
  * Date: 23.04.2013
  * Time: 11:40
  */
-public class SupportFragmentCallback<T> extends DefaultCallback<T> {
+public class SupportFragmentCallback<T, Z extends Fragment & ViewStateFragment> extends DefaultCallback<T> {
 
-    private final WeakReference<Fragment> fragment;
+    private final WeakReference<Z> fragment;
 
     private AsyncResult asyncResult;
 
-    public SupportFragmentCallback(Fragment fragment) {
+    public SupportFragmentCallback(Z fragment) {
         this.fragment = new WeakReference<>(fragment);
     }
 
@@ -35,7 +36,7 @@ public class SupportFragmentCallback<T> extends DefaultCallback<T> {
     }
 
     private boolean isFragmentActive() {
-        return fragment.get() != null && fragment.get().getActivity() != null && fragment.get().getView() != null;
+        return fragment.get() != null && fragment.get().getActivity() != null && !fragment.get().isViewDestroyed();
     }
 
     @Override

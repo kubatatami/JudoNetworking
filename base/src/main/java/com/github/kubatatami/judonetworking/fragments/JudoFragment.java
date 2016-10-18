@@ -4,6 +4,8 @@ package com.github.kubatatami.judonetworking.fragments;
 import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.Fragment;
+import android.os.Bundle;
+import android.view.View;
 
 import com.github.kubatatami.judonetworking.CallbacksConnector;
 import com.github.kubatatami.judonetworking.batches.Batch;
@@ -18,11 +20,30 @@ import java.lang.reflect.Field;
 /**
  * Created by Kuba on 01/07/15.
  */
-public abstract class JudoFragment extends DialogFragment implements StatefulController {
+public abstract class JudoFragment extends DialogFragment implements StatefulController, ViewStateFragment {
 
     private String mWho;
 
     private boolean active;
+
+    private boolean viewDestroyed;
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        viewDestroyed = false;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        viewDestroyed = true;
+    }
+
+    @Override
+    public boolean isViewDestroyed() {
+        return viewDestroyed;
+    }
 
     @Override
     public void onResume() {
