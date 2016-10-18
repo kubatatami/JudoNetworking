@@ -6,6 +6,7 @@ import android.support.v4.app.FragmentManager;
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.callbacks.MergeCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.fragments.ViewStateFragment;
 
 import java.lang.ref.WeakReference;
 
@@ -17,24 +18,17 @@ import java.lang.ref.WeakReference;
  */
 public abstract class SupportFragmentBatch<T> extends DefaultBatch<T> implements FragmentManager.OnBackStackChangedListener {
 
-
-    private final WeakReference<Fragment> fragment;
-
-    private final WeakReference<FragmentManager> manager;
+    private final WeakReference<? extends Fragment> fragment;
 
     private AsyncResult asyncResult;
 
-    public SupportFragmentBatch(Fragment fragment) {
+    public <Z extends Fragment & ViewStateFragment> SupportFragmentBatch(Z fragment) {
         this(null, fragment);
     }
 
-    protected SupportFragmentBatch(MergeCallback mergeCallback, Fragment fragment) {
+    protected <Z extends Fragment & ViewStateFragment> SupportFragmentBatch(MergeCallback mergeCallback, Z fragment) {
         super(mergeCallback);
         this.fragment = new WeakReference<>(fragment);
-        this.manager = new WeakReference<>(fragment.getFragmentManager());
-        if (manager.get() != null) {
-            manager.get().addOnBackStackChangedListener(this);
-        }
     }
 
 
@@ -48,9 +42,6 @@ public abstract class SupportFragmentBatch<T> extends DefaultBatch<T> implements
     protected void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
-            if (manager.get() != null) {
-                manager.get().removeOnBackStackChangedListener(this);
-            }
         }
     }
 
@@ -112,13 +103,10 @@ public abstract class SupportFragmentBatch<T> extends DefaultBatch<T> implements
         } else {
             tryCancel();
         }
-        if (manager.get() != null) {
-            manager.get().removeOnBackStackChangedListener(this);
-        }
     }
 
-    protected boolean isActive() {
-        return fragment.get() != null && fragment.get().getActivity() != null;
+    private boolean isActive() {
+        return fragment.get() != null && fragment.get().getActivity() != null && !((ViewStateFragment)fragment.get()).isViewDestroyed();
     }
 
     public void onSafeStart(AsyncResult asyncResult) {
