@@ -118,6 +118,9 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         this.checkUpdateOnGet = checkUpdateOnGet;
     }
 
+    public boolean isSet() {
+        return object != null;
+    }
 
     public T get() {
         if (checkUpdateOnGet) {
@@ -154,8 +157,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
     }
 
     public boolean set(T object, boolean notify, long dataSetTime) {
-
-        if (setOnlyWhenDifferentHash && this.object != null && object != null && object.hashCode() == this.object.hashCode()) {
+        if (setOnlyWhenDifferentHash && isSet() && object != null && object.hashCode() == this.object.hashCode()) {
             return false;
         }
 
@@ -181,7 +183,6 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
     }
 
     public void startCheckUpdatePeriodically(long period, final boolean forceUpdate) {
-
         if (timer != null && this.period == period) {
             return;
         }
@@ -218,7 +219,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
 
     public void notifyObservers(ObservableTransaction transaction) {
         if (transaction == null) {
-            if (object != null || notifyOnNull) {
+            if (isSet() || notifyOnNull) {
                 Runnable runnable = new Runnable() {
                     @Override
                     public void run() {
