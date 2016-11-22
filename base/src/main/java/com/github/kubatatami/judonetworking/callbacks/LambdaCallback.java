@@ -4,7 +4,7 @@ import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
-public class LambdaCallback<T> implements Callback<T> {
+public class LambdaCallback<T> extends DefaultCallback<T> {
 
     BinaryOperator<T> onSuccess;
 
@@ -49,6 +49,7 @@ public class LambdaCallback<T> implements Callback<T> {
 
     @Override
     public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
+        super.onStart(cacheInfo, asyncResult);
         if (onStart != null) {
             onStart.invoke(cacheInfo, asyncResult);
         }
@@ -56,6 +57,7 @@ public class LambdaCallback<T> implements Callback<T> {
 
     @Override
     public void onProgress(int progress) {
+        super.onProgress(progress);
         if (onProgress != null) {
             onProgress.invoke(progress);
         }
@@ -63,6 +65,7 @@ public class LambdaCallback<T> implements Callback<T> {
 
     @Override
     public void onSuccess(T result) {
+        super.onSuccess(result);
         if (onSuccess != null) {
             onSuccess.invoke(result);
         }
@@ -70,6 +73,7 @@ public class LambdaCallback<T> implements Callback<T> {
 
     @Override
     public void onError(JudoException e) {
+        super.onError(e);
         if (onError != null) {
             onError.invoke(e);
         }
@@ -77,22 +81,23 @@ public class LambdaCallback<T> implements Callback<T> {
 
     @Override
     public void onFinish() {
+        super.onFinish();
         if (onFinish != null) {
             onFinish.invoke();
         }
     }
 
-    interface VoidOperator {
+    public interface VoidOperator {
 
         void invoke();
     }
 
-    interface BinaryOperator<T> {
+    public interface BinaryOperator<T> {
 
         void invoke(T first);
     }
 
-    interface DualOperator<T, Z> {
+    public interface DualOperator<T, Z> {
 
         void invoke(T first, Z second);
     }
