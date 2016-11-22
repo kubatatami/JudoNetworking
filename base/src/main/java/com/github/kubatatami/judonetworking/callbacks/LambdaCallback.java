@@ -38,8 +38,8 @@ public class LambdaCallback<T> extends DefaultCallback<T> {
         this.onFinish = onFinish;
     }
 
-    public LambdaCallback(BinaryOperator<T> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress,
-                          DualOperator<CacheInfo, AsyncResult> onStart, VoidOperator onFinish) {
+    public LambdaCallback(BinaryOperator<T> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress, VoidOperator onFinish,
+                          DualOperator<CacheInfo, AsyncResult> onStart) {
         this.onSuccess = onSuccess;
         this.onError = onError;
         this.onProgress = onProgress;
