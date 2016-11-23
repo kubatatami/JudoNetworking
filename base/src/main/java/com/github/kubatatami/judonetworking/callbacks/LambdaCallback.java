@@ -111,37 +111,37 @@ public class LambdaCallback<T> extends DefaultCallback<T> {
         public Builder() {
         }
 
-        public Builder onSuccess(BinaryOperator<T> val) {
+        public Builder<T> onSuccess(BinaryOperator<T> val) {
             onSuccess = val;
             return this;
         }
 
-        public Builder onSuccess(DualOperator<T, AsyncResult> val) {
+        public Builder<T> onSuccess(DualOperator<T, AsyncResult> val) {
             onSuccessWithAsyncResult = val;
             return this;
         }
 
-        public Builder onError(BinaryOperator<JudoException> val) {
+        public Builder<T> onError(BinaryOperator<JudoException> val) {
             onError = val;
             return this;
         }
 
-        public Builder onProgress(BinaryOperator<Integer> val) {
+        public Builder<T> onProgress(BinaryOperator<Integer> val) {
             onProgress = val;
             return this;
         }
 
-        public Builder onStart(DualOperator<CacheInfo, AsyncResult> val) {
+        public Builder<T> onStart(DualOperator<CacheInfo, AsyncResult> val) {
             onStart = val;
             return this;
         }
 
-        public Builder onFinish(VoidOperator val) {
+        public Builder<T> onFinish(VoidOperator val) {
             onFinish = val;
             return this;
         }
 
-        public Builder onFinish(BinaryOperator<AsyncResult> val) {
+        public Builder<T> onFinish(BinaryOperator<AsyncResult> val) {
             onFinishWithAsyncResult = val;
             return this;
         }
