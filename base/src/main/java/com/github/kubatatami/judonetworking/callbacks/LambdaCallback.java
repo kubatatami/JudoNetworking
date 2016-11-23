@@ -146,7 +146,7 @@ public class LambdaCallback<T> extends DefaultCallback<T> {
             return this;
         }
 
-        public LambdaCallback build() {
+        public LambdaCallback<T> build() {
             return new LambdaCallback<>(this);
         }
     }
