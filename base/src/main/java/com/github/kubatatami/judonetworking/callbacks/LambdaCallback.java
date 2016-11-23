@@ -14,7 +14,7 @@ public class LambdaCallback<T> extends DefaultCallback<T> {
 
     DualOperator<CacheInfo, AsyncResult> onStart;
 
-    VoidOperator onFinish;
+    BinaryOperator<AsyncResult> onFinish;
 
     public LambdaCallback(BinaryOperator<T> onSuccess) {
         this.onSuccess = onSuccess;
@@ -31,14 +31,14 @@ public class LambdaCallback<T> extends DefaultCallback<T> {
         this.onProgress = onProgress;
     }
 
-    public LambdaCallback(BinaryOperator<T> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress, VoidOperator onFinish) {
+    public LambdaCallback(BinaryOperator<T> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress, BinaryOperator<AsyncResult> onFinish) {
         this.onSuccess = onSuccess;
         this.onError = onError;
         this.onProgress = onProgress;
         this.onFinish = onFinish;
     }
 
-    public LambdaCallback(BinaryOperator<T> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress, VoidOperator onFinish,
+    public LambdaCallback(BinaryOperator<T> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress, BinaryOperator<AsyncResult> onFinish,
                           DualOperator<CacheInfo, AsyncResult> onStart) {
         this.onSuccess = onSuccess;
         this.onError = onError;
@@ -83,13 +83,8 @@ public class LambdaCallback<T> extends DefaultCallback<T> {
     public void onFinish() {
         super.onFinish();
         if (onFinish != null) {
-            onFinish.invoke();
+            onFinish.invoke(getAsyncResult());
         }
-    }
-
-    public interface VoidOperator {
-
-        void invoke();
     }
 
     public interface BinaryOperator<T> {
