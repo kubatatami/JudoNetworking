@@ -6,22 +6,35 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 public class LambdaCallback<T> extends DefaultCallback<T> {
 
-    BinaryOperator<T> onSuccess;
+    private BinaryOperator<T> onSuccess;
 
-    BinaryOperator<JudoException> onError;
+    private DualOperator<T, AsyncResult> onSuccessWithAsyncResult;
 
-    BinaryOperator<Integer> onProgress;
+    private BinaryOperator<JudoException> onError;
 
-    DualOperator<CacheInfo, AsyncResult> onStart;
+    private BinaryOperator<Integer> onProgress;
 
-    BinaryOperator<AsyncResult> onFinish;
+    private DualOperator<CacheInfo, AsyncResult> onStart;
+
+    private VoidOperator onFinish;
+
+    private BinaryOperator<AsyncResult> onFinishWithAsyncResult;
 
     public LambdaCallback(BinaryOperator<T> onSuccess) {
         this.onSuccess = onSuccess;
     }
 
+    public LambdaCallback(DualOperator<T, AsyncResult> onSuccess) {
+        this.onSuccessWithAsyncResult = onSuccess;
+    }
+
     public LambdaCallback(BinaryOperator<T> onSuccess, BinaryOperator<JudoException> onError) {
         this.onSuccess = onSuccess;
+        this.onError = onError;
+    }
+
+    public LambdaCallback(DualOperator<T, AsyncResult> onSuccess, BinaryOperator<JudoException> onError) {
+        this.onSuccessWithAsyncResult = onSuccess;
         this.onError = onError;
     }
 
@@ -31,20 +44,64 @@ public class LambdaCallback<T> extends DefaultCallback<T> {
         this.onProgress = onProgress;
     }
 
-    public LambdaCallback(BinaryOperator<T> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress, BinaryOperator<AsyncResult> onFinish) {
-        this.onSuccess = onSuccess;
+    public LambdaCallback(DualOperator<T, AsyncResult> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress) {
+        this.onSuccessWithAsyncResult = onSuccess;
         this.onError = onError;
         this.onProgress = onProgress;
-        this.onFinish = onFinish;
     }
 
-    public LambdaCallback(BinaryOperator<T> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress, BinaryOperator<AsyncResult> onFinish,
+    public LambdaCallback(BinaryOperator<T> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress, VoidOperator onFinish,
                           DualOperator<CacheInfo, AsyncResult> onStart) {
         this.onSuccess = onSuccess;
         this.onError = onError;
         this.onProgress = onProgress;
         this.onStart = onStart;
         this.onFinish = onFinish;
+    }
+
+    public LambdaCallback(DualOperator<T, AsyncResult> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress, VoidOperator onFinish,
+                          DualOperator<CacheInfo, AsyncResult> onStart) {
+        this.onSuccessWithAsyncResult = onSuccess;
+        this.onError = onError;
+        this.onProgress = onProgress;
+        this.onStart = onStart;
+        this.onFinish = onFinish;
+    }
+
+    public LambdaCallback(BinaryOperator<T> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress,
+                          BinaryOperator<AsyncResult> onFinish) {
+        this.onSuccess = onSuccess;
+        this.onError = onError;
+        this.onProgress = onProgress;
+        this.onFinishWithAsyncResult = onFinish;
+    }
+
+    public LambdaCallback(DualOperator<T, AsyncResult> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress,
+                          BinaryOperator<AsyncResult> onFinish) {
+        this.onSuccessWithAsyncResult = onSuccess;
+        this.onError = onError;
+        this.onProgress = onProgress;
+        this.onFinishWithAsyncResult = onFinish;
+    }
+
+    public LambdaCallback(BinaryOperator<T> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress,
+                          BinaryOperator<AsyncResult> onFinish,
+                          DualOperator<CacheInfo, AsyncResult> onStart) {
+        this.onSuccess = onSuccess;
+        this.onError = onError;
+        this.onProgress = onProgress;
+        this.onStart = onStart;
+        this.onFinishWithAsyncResult = onFinish;
+    }
+
+    public LambdaCallback(DualOperator<T, AsyncResult> onSuccess, BinaryOperator<JudoException> onError, BinaryOperator<Integer> onProgress,
+                          BinaryOperator<AsyncResult> onFinish,
+                          DualOperator<CacheInfo, AsyncResult> onStart) {
+        this.onSuccessWithAsyncResult = onSuccess;
+        this.onError = onError;
+        this.onProgress = onProgress;
+        this.onStart = onStart;
+        this.onFinishWithAsyncResult = onFinish;
     }
 
     @Override
@@ -69,6 +126,9 @@ public class LambdaCallback<T> extends DefaultCallback<T> {
         if (onSuccess != null) {
             onSuccess.invoke(result);
         }
+        if (onSuccessWithAsyncResult != null) {
+            onSuccessWithAsyncResult.invoke(result, getAsyncResult());
+        }
     }
 
     @Override
@@ -83,17 +143,25 @@ public class LambdaCallback<T> extends DefaultCallback<T> {
     public void onFinish() {
         super.onFinish();
         if (onFinish != null) {
-            onFinish.invoke(getAsyncResult());
+            onFinish.invoke();
         }
+        if (onFinishWithAsyncResult != null) {
+            onFinishWithAsyncResult.invoke(getAsyncResult());
+        }
+    }
+
+    public interface VoidOperator<T> {
+
+        void invoke();
     }
 
     public interface BinaryOperator<T> {
 
-        void invoke(T first);
+        void invoke(T t);
     }
 
     public interface DualOperator<T, Z> {
 
-        void invoke(T first, Z second);
+        void invoke(T t, Z u);
     }
 }
