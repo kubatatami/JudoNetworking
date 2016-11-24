@@ -27,7 +27,7 @@ public abstract class OkHttpOAuth2 {
         public Response intercept(Chain chain) throws IOException {
             Request request = chain.request();
             synchronized (this) {
-                if (tokenLifeTime != 0 && tokenLifeTime < System.currentTimeMillis()) {
+                if (canDoTokenRequest() && needNewToken()) {
                     callForToken();
                 }
                 if (accessToken != null && tokenType != null) {
@@ -38,6 +38,14 @@ public abstract class OkHttpOAuth2 {
             return chain.proceed(request);
         }
     };
+
+    private boolean needNewToken() {
+        return accessToken == null || tokenExpired();
+    }
+
+    private boolean tokenExpired() {
+        return tokenLifeTime != 0 && tokenLifeTime < System.currentTimeMillis();
+    }
 
     private Authenticator oAuthAuthenticator = new Authenticator() {
         @Override
