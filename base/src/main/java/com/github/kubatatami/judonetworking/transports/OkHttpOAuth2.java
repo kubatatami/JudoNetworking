@@ -53,7 +53,7 @@ public abstract class OkHttpOAuth2 {
             String prevAccessToken = accessToken;
             synchronized (this) {
                 if (canDoTokenRequest()) {
-                    if (prevAccessToken.equals(accessToken)) {
+                    if (prevAccessToken == null || prevAccessToken.equals(accessToken)) {
                         callForToken();
                     }
                     if (accessToken != null) {
