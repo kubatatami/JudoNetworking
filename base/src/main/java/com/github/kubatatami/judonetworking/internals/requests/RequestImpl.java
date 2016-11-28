@@ -7,6 +7,7 @@ import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.annotations.ApiKeyRequired;
 import com.github.kubatatami.judonetworking.annotations.Delay;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
+import com.github.kubatatami.judonetworking.annotations.RejectOnMonkeyTest;
 import com.github.kubatatami.judonetworking.annotations.RequestMethod;
 import com.github.kubatatami.judonetworking.annotations.SingleCall;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
@@ -297,7 +298,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     public LocalCache.OnlyOnError getLocalCacheOnlyOnErrorMode() {
         LocalCache localCache = getLocalCache();
-        if(localCache == null){
+        if (localCache == null) {
             return LocalCache.OnlyOnError.NO;
         }
         LocalCache.OnlyOnError onlyOnError = localCache.onlyOnError();
@@ -402,7 +403,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
             return;
         }
         this.cancelled = true;
-        synchronized(this) {
+        synchronized (this) {
             notifyAll();
         }
         if ((rpc.getDebugFlags() & Endpoint.CANCEL_DEBUG) > 0) {
@@ -488,4 +489,13 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
         this.future = future;
     }
 
+    public boolean isRejectOnMonkeyTest() {
+        if (method != null) {
+            RejectOnMonkeyTest ann = ReflectionCache.getAnnotationInherited(method, RejectOnMonkeyTest.class);
+            if (ann != null) {
+                return ann.enabled();
+            }
+        }
+        return false;
+    }
 }

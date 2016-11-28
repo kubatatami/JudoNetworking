@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.internals;
 
 
+import android.app.ActivityManager;
 import android.util.Base64;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
@@ -55,23 +56,16 @@ public class RequestConnector {
     }
 
     private RequestResult sendRequest(RequestImpl request, TimeStat timeStat) {
-        return sendRequest(request, timeStat, false);
-    }
-
-    private RequestResult sendRequest(RequestImpl request, TimeStat timeStat, boolean ignoreTokenError) {
         try {
             RequestResult result;
             ProtocolController controller = rpc.getProtocolController();
             result = handleVirtualServerRequest(request, timeStat);
-            if (result != null) {
-                if (result.error != null) {
-                    return result;
-                }
-            } else {
+            if (result == null) {
                 ProtocolController.RequestInfo requestInfo = controller.createRequest(
                         request.getCustomUrl() == null ? rpc.getUrl() : request.getCustomUrl(),
                         request);
                 timeStat.tickCreateTime();
+                throwErrorOnMonkey(request);
                 lossCheck();
                 EndpointImpl.checkThread();
                 delay(request.getDelay());
@@ -112,7 +106,6 @@ public class RequestConnector {
         result[org.length] = added;
         return result;
     }
-
 
     private RequestResult handleVirtualServerRequest(RequestImpl request, TimeStat timeStat) throws JudoException {
         try {
@@ -425,6 +418,7 @@ public class RequestConnector {
 
             ProtocolController.RequestInfo requestInfo = controller.createRequests(rpc.getUrl(), (List) requests);
             timeStat.tickCreateTime();
+            List<RequestResult> monkeyResponses = removeErrorOnMonkeyRequests(requests);
             lossCheck();
             int maxDelay = 0;
             for (RequestImpl request : requests) {
@@ -447,6 +441,7 @@ public class RequestConnector {
                 request.setHeaders(conn.getHeaders());
             }
             responses = controller.parseResponses((List) requests, stream, conn.getHeaders());
+            responses.addAll(monkeyResponses);
             EndpointImpl.checkThread();
             timeStat.tickParseTime();
             conn.close();
@@ -467,6 +462,19 @@ public class RequestConnector {
         }
     }
 
+    private List<RequestResult> removeErrorOnMonkeyRequests(List<RequestImpl> requests) {
+        List<RequestResult> responses = new ArrayList<>();
+        for (int i = requests.size(); i >= 0; i--) {
+            try {
+                throwErrorOnMonkey(requests.get(i));
+            } catch (ConnectionException ex) {
+                requests.remove(i);
+                responses.add(new ErrorResult(requests.get(i).getId(), ex));
+            }
+        }
+        return responses;
+    }
+
     private void calcTimeProfiler(List<RequestImpl> requests, TimeStat timeStat) {
         if (rpc.isTimeProfiler()) {
             for (RequestImpl request : requests) {
@@ -476,6 +484,12 @@ public class RequestConnector {
                 );
             }
             rpc.saveStat();
+        }
+    }
+
+    private void throwErrorOnMonkey(RequestImpl request) throws JudoException {
+        if (ActivityManager.isUserAMonkey() && request.isRejectOnMonkeyTest()) {
+            throw new ConnectionException("Rejected during monkey test.");
         }
     }
 
