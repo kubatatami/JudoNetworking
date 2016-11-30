@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking.callbacks;
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.stateful.StatefulCache;
 
 /**
  * Created with IntelliJ IDEA.
@@ -72,7 +73,7 @@ public interface Callback<T> extends BaseCallback<T> {
             return new LambdaCallback<>(this);
         }
 
-        private static class LambdaCallback<T> extends DefaultCallback<T> {
+        private static class LambdaCallback<T> extends DefaultCallback<T> implements Identifiable {
 
             private BinaryOperator<T> onSuccess;
 
@@ -144,6 +145,17 @@ public interface Callback<T> extends BaseCallback<T> {
                 }
             }
 
+            @Override
+            public int getId() {
+                return StatefulCache.calcHashCode(
+                        onStart,
+                        onProgress,
+                        onSuccess,
+                        onSuccessWithAsyncResult,
+                        onError,
+                        onFinish,
+                        onFinishWithAsyncResult);
+            }
         }
 
         public interface VoidOperator<T> {
