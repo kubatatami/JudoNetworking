@@ -15,7 +15,7 @@ public interface Callback<T> extends BaseCallback<T> {
 
     void onStart(CacheInfo cacheInfo, AsyncResult asyncResult);
 
-    final class Builder<T> {
+    class Builder<T> {
 
         BinaryOperator<T> onSuccess;
 
@@ -73,7 +73,7 @@ public interface Callback<T> extends BaseCallback<T> {
             return new LambdaCallback<>(this);
         }
 
-        private static class LambdaCallback<T> extends DefaultCallback<T> implements Identifiable {
+        public static class LambdaCallback<T> extends DefaultCallback<T> implements Identifiable {
 
             private BinaryOperator<T> onSuccess;
 
