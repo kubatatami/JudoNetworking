@@ -89,7 +89,7 @@ public interface Callback<T> extends BaseCallback<T> {
 
             private BinaryOperator<AsyncResult> onFinishWithAsyncResult;
 
-            LambdaCallback(Builder<T> builder) {
+            public LambdaCallback(Builder<T> builder) {
                 onSuccess = builder.onSuccess;
                 onSuccessWithAsyncResult = builder.onSuccessWithAsyncResult;
                 onError = builder.onError;
