@@ -15,7 +15,8 @@ public interface Callback<T> extends BaseCallback<T> {
 
     void onStart(CacheInfo cacheInfo, AsyncResult asyncResult);
 
-    class Builder<T> {
+    @SuppressWarnings("unchecked")
+    class Builder<T, Z extends Builder<T, ?>> {
 
         BinaryOperator<T> onSuccess;
 
@@ -31,42 +32,42 @@ public interface Callback<T> extends BaseCallback<T> {
 
         BinaryOperator<AsyncResult> onFinishWithAsyncResult;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder<T> onSuccess(BinaryOperator<T> val) {
+        public Z onSuccess(BinaryOperator<T> val) {
             onSuccess = val;
-            return this;
+            return (Z) this;
         }
 
-        public Builder<T> onSuccess(DualOperator<T, AsyncResult> val) {
+        public Z onSuccess(DualOperator<T, AsyncResult> val) {
             onSuccessWithAsyncResult = val;
-            return this;
+            return (Z) this;
         }
 
-        public Builder<T> onError(BinaryOperator<JudoException> val) {
+        public Z onError(BinaryOperator<JudoException> val) {
             onError = val;
-            return this;
+            return (Z) this;
         }
 
-        public Builder<T> onProgress(BinaryOperator<Integer> val) {
+        public Z onProgress(BinaryOperator<Integer> val) {
             onProgress = val;
-            return this;
+            return (Z) this;
         }
 
-        public Builder<T> onStart(DualOperator<CacheInfo, AsyncResult> val) {
+        public Z onStart(DualOperator<CacheInfo, AsyncResult> val) {
             onStart = val;
-            return this;
+            return (Z) this;
         }
 
-        public Builder<T> onFinish(VoidOperator val) {
+        public Z onFinish(VoidOperator val) {
             onFinish = val;
-            return this;
+            return (Z) this;
         }
 
-        public Builder<T> onFinish(BinaryOperator<AsyncResult> val) {
+        public Z onFinish(BinaryOperator<AsyncResult> val) {
             onFinishWithAsyncResult = val;
-            return this;
+            return (Z) this;
         }
 
         public LambdaCallback<T> build() {
@@ -89,7 +90,7 @@ public interface Callback<T> extends BaseCallback<T> {
 
             private BinaryOperator<AsyncResult> onFinishWithAsyncResult;
 
-            public LambdaCallback(Builder<T> builder) {
+            public LambdaCallback(Builder<T, ?> builder) {
                 onSuccess = builder.onSuccess;
                 onSuccessWithAsyncResult = builder.onSuccessWithAsyncResult;
                 onError = builder.onError;
@@ -155,6 +156,10 @@ public interface Callback<T> extends BaseCallback<T> {
                         onError,
                         onFinish,
                         onFinishWithAsyncResult);
+            }
+
+            public static <T> Builder<T, Builder<T, ?>> builder() {
+                return new Builder<>();
             }
         }
 
