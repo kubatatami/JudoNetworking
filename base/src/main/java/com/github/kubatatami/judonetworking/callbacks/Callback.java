@@ -158,9 +158,10 @@ public interface Callback<T> extends BaseCallback<T> {
                         onFinishWithAsyncResult);
             }
 
-            public static <T> Builder<T, Builder<T, ?>> builder() {
-                return new Builder<>();
-            }
+        }
+
+        public static <T> Builder<T, Builder<T, ?>> builder() {
+            return new Builder<>();
         }
 
         public interface VoidOperator<T> {
