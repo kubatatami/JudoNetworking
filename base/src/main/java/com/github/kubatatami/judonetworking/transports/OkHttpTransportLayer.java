@@ -212,6 +212,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
             if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
                 longLog("Response code(" + requestName + ")", response.code() + "", JudoLogger.LogLevel.DEBUG);
+                longLog("Response protocol(" + requestName + ")", response.protocol().toString(), JudoLogger.LogLevel.DEBUG);
             }
             return new OkConnection(response);
 
