@@ -105,14 +105,18 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
         call.enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                result.ex = e;
-                result.notify();
+                synchronized (result) {
+                    result.ex = e;
+                    result.notify();
+                }
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                result.response = response;
-                result.notify();
+                synchronized (result) {
+                    result.response = response;
+                    result.notify();
+                }
             }
         });
         result.wait();
