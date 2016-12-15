@@ -119,7 +119,9 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
                 }
             }
         });
-        result.wait();
+        synchronized (result) {
+            result.wait();
+        }
         if (result.ex != null) {
             checkThreadCancelled(result.ex);
         }
