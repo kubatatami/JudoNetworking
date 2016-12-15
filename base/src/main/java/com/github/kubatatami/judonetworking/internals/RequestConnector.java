@@ -56,6 +56,7 @@ public class RequestConnector {
     }
 
     private RequestResult sendRequest(RequestImpl request, TimeStat timeStat) {
+        TransportLayer.Connection conn = null;
         try {
             RequestResult result;
             ProtocolController controller = rpc.getProtocolController();
@@ -70,7 +71,7 @@ public class RequestConnector {
                 EndpointImpl.checkThread();
                 delay(request.getDelay());
                 EndpointImpl.checkThread();
-                TransportLayer.Connection conn = transportLayer.send(request.getName(), controller, requestInfo, request.getTimeout(), timeStat,
+                conn = transportLayer.send(request.getName(), controller, requestInfo, request.getTimeout(), timeStat,
                         rpc.getDebugFlags(), request.getMethod());
                 EndpointImpl.checkThread();
 
@@ -90,13 +91,16 @@ public class RequestConnector {
                 } catch (Exception ignored) {
                 }
                 timeStat.tickParseTime();
-                conn.close();
             }
             return result;
         } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
         } catch (Exception e) {
             return new ErrorResult(request.getId(), new JudoException(e));
+        } finally {
+            if (conn != null) {
+                conn.close();
+            }
         }
     }
 
@@ -408,7 +412,7 @@ public class RequestConnector {
     }
 
     public List<RequestResult> callRealBatch(List<RequestImpl> requests, ProgressObserver progressObserver, Integer timeout, String requestsName) throws JudoException {
-
+        TransportLayer.Connection conn = null;
         try {
 
             ProtocolController controller = rpc.getProtocolController();
@@ -426,7 +430,7 @@ public class RequestConnector {
             }
             EndpointImpl.checkThread();
             delay(maxDelay);
-            TransportLayer.Connection conn = transportLayer.send(requestsName, controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null);
+            conn = transportLayer.send(requestsName, controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null);
             EndpointImpl.checkThread();
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
@@ -444,7 +448,6 @@ public class RequestConnector {
             responses.addAll(monkeyResponses);
             EndpointImpl.checkThread();
             timeStat.tickParseTime();
-            conn.close();
             timeStat.tickEndTime();
             calcTimeProfiler(requests, timeStat);
             if ((rpc.getDebugFlags() & Endpoint.TIME_DEBUG) > 0) {
@@ -459,6 +462,10 @@ public class RequestConnector {
             }
             RequestProxy.addToExceptionMessage(requestsName.substring(1), e);
             throw e;
+        } finally {
+            if (conn != null) {
+                conn.close();
+            }
         }
     }
 
