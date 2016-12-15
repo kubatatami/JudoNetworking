@@ -160,10 +160,6 @@ public interface Callback<T> extends BaseCallback<T> {
 
         }
 
-        public static <T> Builder<T, Builder<T, ?>> builder() {
-            return new Builder<>();
-        }
-
         public interface VoidOperator<T> {
 
             void invoke();
