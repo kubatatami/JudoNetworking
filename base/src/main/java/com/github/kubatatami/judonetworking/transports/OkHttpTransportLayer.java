@@ -320,7 +320,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
         @Override
         public void close() {
-
+            response.close();
         }
     }
 
