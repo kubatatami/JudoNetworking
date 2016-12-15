@@ -32,7 +32,7 @@ public interface Callback<T> extends BaseCallback<T> {
 
         BinaryOperator<AsyncResult> onFinishWithAsyncResult;
 
-        private Builder() {
+        public Builder() {
         }
 
         public Z onSuccess(BinaryOperator<T> val) {
