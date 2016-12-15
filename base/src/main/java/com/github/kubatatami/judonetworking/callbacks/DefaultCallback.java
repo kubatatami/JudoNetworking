@@ -47,7 +47,4 @@ public class DefaultCallback<T> implements Callback<T>, AsyncResultCallback {
         this.asyncResult = asyncResult;
     }
 
-    public static <T> Builder<T, Builder<T, ?>> builder() {
-        return new Builder<>();
-    }
 }
