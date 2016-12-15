@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -99,28 +100,49 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
         }
     }
 
-    private Response handleResponse(TimeStat timeStat, RequestBody requestBody, Call call) throws IOException {
-        Response response;
-        try {
-            response = call.execute();
-        } catch (IOException ex) {
-            if (Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
-                JudoExecutor.ConnectionThread thread = (JudoExecutor.ConnectionThread) Thread.currentThread();
-                if (thread.isCanceled()) {
-                    thread.resetCanceled();
-                    throw new CancelException(thread.getName());
-                } else {
-                    throw ex;
-                }
-            } else {
-                throw ex;
+    private Response handleResponse(TimeStat timeStat, RequestBody requestBody, Call call) throws IOException, InterruptedException {
+        final OkHttpAsyncResult result = new OkHttpAsyncResult();
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                result.ex = e;
+                result.notify();
             }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                result.response = response;
+                result.notify();
+            }
+        });
+        result.wait();
+        if (result.ex != null) {
+            checkThreadCancelled(result.ex);
         }
         timeStat.tickConnectionTime();
         if (requestBody != null) {
             timeStat.tickSendTime();
         }
-        return response;
+        return result.response;
+    }
+
+    private static class OkHttpAsyncResult {
+        Response response;
+        IOException ex;
+    }
+
+    private void checkThreadCancelled(IOException ex) throws IOException {
+        if (Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
+            JudoExecutor.ConnectionThread thread = (JudoExecutor.ConnectionThread) Thread.currentThread();
+            if (thread.isCanceled()) {
+                thread.resetCanceled();
+                throw new CancelException(thread.getName());
+            } else {
+                throw ex;
+            }
+        } else {
+            throw ex;
+        }
     }
 
     private void attachCanceller(final Call call) {
