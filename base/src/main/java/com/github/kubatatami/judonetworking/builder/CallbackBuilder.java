@@ -127,7 +127,7 @@ public class CallbackBuilder<T, Z extends CallbackBuilder<T, ?>> {
             if (onSuccessWithAsyncResult != null) {
                 onSuccessWithAsyncResult.invoke(result, getAsyncResult());
             }
-            if (onSuccessWithAsyncResult != null) {
+            if (onSuccessWithCacheInfo != null) {
                 onSuccessWithCacheInfo.invoke(result, getCacheInfo());
             }
         }
