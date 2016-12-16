@@ -24,6 +24,8 @@ public class CallbackBuilder<T, Z extends CallbackBuilder<T, ?>> {
 
     BinaryOperator<AsyncResult> onFinishWithAsyncResult;
 
+    DualOperator<T, CacheInfo> onSuccessWithCacheInfo;
+
     public CallbackBuilder() {
     }
 
@@ -34,6 +36,11 @@ public class CallbackBuilder<T, Z extends CallbackBuilder<T, ?>> {
 
     public Z onSuccess(DualOperator<T, AsyncResult> val) {
         onSuccessWithAsyncResult = val;
+        return (Z) this;
+    }
+
+    public Z onSuccessWithCacheInfo(DualOperator<T, CacheInfo> val) {
+        onSuccessWithCacheInfo = val;
         return (Z) this;
     }
 
@@ -72,6 +79,8 @@ public class CallbackBuilder<T, Z extends CallbackBuilder<T, ?>> {
 
         private DualOperator<T, AsyncResult> onSuccessWithAsyncResult;
 
+        private DualOperator<T, CacheInfo> onSuccessWithCacheInfo;
+
         private BinaryOperator<JudoException> onError;
 
         private BinaryOperator<Integer> onProgress;
@@ -90,6 +99,7 @@ public class CallbackBuilder<T, Z extends CallbackBuilder<T, ?>> {
             onStart = builder.onStart;
             onFinish = builder.onFinish;
             onFinishWithAsyncResult = builder.onFinishWithAsyncResult;
+            onSuccessWithCacheInfo = builder.onSuccessWithCacheInfo;
         }
 
         @Override
@@ -116,6 +126,9 @@ public class CallbackBuilder<T, Z extends CallbackBuilder<T, ?>> {
             }
             if (onSuccessWithAsyncResult != null) {
                 onSuccessWithAsyncResult.invoke(result, getAsyncResult());
+            }
+            if (onSuccessWithAsyncResult != null) {
+                onSuccessWithCacheInfo.invoke(result, getCacheInfo());
             }
         }
 

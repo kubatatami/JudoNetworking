@@ -13,10 +13,12 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 public class DefaultCallback<T> implements Callback<T>, AsyncResultCallback {
 
     private AsyncResult asyncResult;
+    private CacheInfo cacheInfo;
 
     @Override
     public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
+        this.cacheInfo = cacheInfo;
     }
 
     @Override
@@ -45,6 +47,16 @@ public class DefaultCallback<T> implements Callback<T>, AsyncResultCallback {
     @Override
     public final void setAsyncResult(AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
+    }
+
+    @Override
+    public CacheInfo getCacheInfo() {
+        return cacheInfo;
+    }
+
+    @Override
+    public void setCacheInfo(CacheInfo cacheInfo) {
+        this.cacheInfo = cacheInfo;
     }
 
 }

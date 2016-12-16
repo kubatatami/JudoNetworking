@@ -12,6 +12,8 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
 
     private AsyncResult asyncResult;
 
+    private CacheInfo cacheInfo;
+
     private final int id;
 
     private final String who;
@@ -40,6 +42,7 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
     @Override
     public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
+        this.cacheInfo = cacheInfo;
         consume = false;
         finishedSuccessfully = false;
         data = null;
@@ -83,6 +86,7 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
         if (callback != null) {
             if (callback instanceof AsyncResultCallback) {
                 ((AsyncResultCallback) callback).setAsyncResult(asyncResult);
+                ((AsyncResultCallback) callback).setCacheInfo(cacheInfo);
             }
             if (progress > 0) {
                 callback.onProgress(progress);

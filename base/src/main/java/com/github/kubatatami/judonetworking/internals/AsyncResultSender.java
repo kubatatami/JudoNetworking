@@ -151,6 +151,7 @@ public class AsyncResultSender implements Runnable {
                     request.start();
                     if (callback instanceof AsyncResultCallback) {
                         ((DefaultCallback) callback).setAsyncResult(request);
+                        ((DefaultCallback) callback).setCacheInfo(cacheInfo);
                     }
                     callback.onStart(cacheInfo, request);
                     break;
