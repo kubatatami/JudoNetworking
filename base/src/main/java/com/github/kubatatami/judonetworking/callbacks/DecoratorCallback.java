@@ -78,7 +78,7 @@ public class DecoratorCallback<T> extends CallbackBuilder.LambdaCallback<T> {
         }
     }
 
-    class Builder<T> extends CallbackBuilder<T, Builder<T>> {
+    public static class Builder<T> extends CallbackBuilder<T, Builder<T>> {
 
         protected Callback<T> internalCallback;
 
