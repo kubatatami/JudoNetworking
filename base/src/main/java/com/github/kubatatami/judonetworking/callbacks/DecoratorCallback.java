@@ -28,6 +28,7 @@ public class DecoratorCallback<T> extends CallbackBuilder.LambdaCallback<T> {
 
     @Override
     public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
+        super.onStart(cacheInfo, asyncResult);
         if (internalCallback != null) {
             internalCallback.onStart(cacheInfo, asyncResult);
         }
@@ -37,7 +38,19 @@ public class DecoratorCallback<T> extends CallbackBuilder.LambdaCallback<T> {
     }
 
     @Override
+    public void onProgress(int progress) {
+        super.onProgress(progress);
+        if (internalCallback != null) {
+            internalCallback.onProgress(progress);
+        }
+        if (internalMergeCallback != null) {
+            internalMergeCallback.addProgress(this, progress);
+        }
+    }
+
+    @Override
     public void onSuccess(T result) {
+        super.onSuccess(result);
         if (internalCallback != null) {
             internalCallback.onSuccess(result);
         }
@@ -48,6 +61,7 @@ public class DecoratorCallback<T> extends CallbackBuilder.LambdaCallback<T> {
 
     @Override
     public void onError(JudoException e) {
+        super.onError(e);
         if (internalCallback != null) {
             internalCallback.onError(e);
         }
@@ -58,18 +72,9 @@ public class DecoratorCallback<T> extends CallbackBuilder.LambdaCallback<T> {
 
     @Override
     public void onFinish() {
+        super.onFinish();
         if (internalCallback != null) {
             internalCallback.onFinish();
-        }
-    }
-
-    @Override
-    public void onProgress(int progress) {
-        if (internalCallback != null) {
-            internalCallback.onProgress(progress);
-        }
-        if (internalMergeCallback != null) {
-            internalMergeCallback.addProgress(this, progress);
         }
     }
 
