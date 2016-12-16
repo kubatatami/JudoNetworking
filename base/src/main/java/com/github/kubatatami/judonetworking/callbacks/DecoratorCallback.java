@@ -2,16 +2,21 @@ package com.github.kubatatami.judonetworking.callbacks;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
+import com.github.kubatatami.judonetworking.builder.CallbackBuilder;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**
  * Created by Kuba on 19/03/15.
  */
-public class DecoratorCallback<T> extends DefaultCallback<T> {
+public class DecoratorCallback<T> extends CallbackBuilder.LambdaCallback<T> {
 
     protected Callback<T> internalCallback;
 
     protected MergeCallback internalMergeCallback;
+
+    public DecoratorCallback(CallbackBuilder<T, ?> builder) {
+        super(builder);
+    }
 
     public DecoratorCallback(Callback<T> callback) {
         this.internalCallback = callback;
@@ -65,6 +70,26 @@ public class DecoratorCallback<T> extends DefaultCallback<T> {
         }
         if (internalMergeCallback != null) {
             internalMergeCallback.addProgress(this, progress);
+        }
+    }
+
+    class Builder<T> extends CallbackBuilder<T, Builder<T>> {
+
+        protected Callback<T> internalCallback;
+
+        protected MergeCallback internalMergeCallback;
+
+        public Builder(Callback<T> callback) {
+            this.internalCallback = callback;
+        }
+
+        public Builder(MergeCallback callback) {
+            this.internalMergeCallback = callback;
+        }
+
+        @Override
+        public DecoratorCallback<T> build() {
+            return new DecoratorCallback<>(this);
         }
     }
 }

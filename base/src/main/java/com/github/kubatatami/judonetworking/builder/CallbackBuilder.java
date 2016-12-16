@@ -91,6 +91,9 @@ public class CallbackBuilder<T, Z extends CallbackBuilder<T, ?>> {
 
         private BinaryOperator<AsyncResult> onFinishWithAsyncResult;
 
+        public LambdaCallback() {
+        }
+
         public LambdaCallback(CallbackBuilder<T, ?> builder) {
             onSuccess = builder.onSuccess;
             onSuccessWithAsyncResult = builder.onSuccessWithAsyncResult;

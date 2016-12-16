@@ -18,6 +18,10 @@ public class FragmentCallback<T> extends CallbackBuilder.LambdaCallback<T> {
 
     private final WeakReference<ViewStateFragment> fragment;
 
+    public FragmentCallback(ViewStateFragment fragment) {
+        this.fragment = new WeakReference<>(fragment);
+    }
+
     public FragmentCallback(Builder<T> builder) {
         super(builder);
         this.fragment = new WeakReference<>(builder.fragment);
