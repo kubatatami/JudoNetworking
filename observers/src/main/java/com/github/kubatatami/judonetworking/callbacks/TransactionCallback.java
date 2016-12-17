@@ -11,6 +11,8 @@ public class TransactionCallback<T> extends DecoratorCallback<T> {
 
     public TransactionCallback(Builder<T> builder) {
         super(builder);
+        this.wrapper = builder.wrapper;
+        this.transaction = builder.transaction;
     }
 
     public TransactionCallback(ObservableWrapper<T> wrapper, ObservableTransaction transaction) {
