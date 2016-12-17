@@ -46,7 +46,7 @@ public class DefaultDiskCache implements DiskCache {
     }
 
     @Override
-    public void put(CacheMethod method, String hash, Object object, int cacheSize,  Map<String, List<String>> headers) {
+    public void put(CacheMethod method, String hash, Object object, int cacheSize, Map<String, List<String>> headers) {
         try {
             File dir = getCacheDir(method);
             File file = new File(getCacheDir(method), hash + "");

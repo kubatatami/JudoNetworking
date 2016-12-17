@@ -17,7 +17,7 @@ public interface DiskCache {
 
     CacheResult get(CacheMethod method, String hash, int cacheLifeTime);
 
-    void put(CacheMethod method, String hash, Object object, int maxSize,  Map<String, List<String>> headers);
+    void put(CacheMethod method, String hash, Object object, int maxSize, Map<String, List<String>> headers);
 
     void clearCache();
 

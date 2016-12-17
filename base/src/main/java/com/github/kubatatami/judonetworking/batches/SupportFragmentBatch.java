@@ -106,7 +106,7 @@ public abstract class SupportFragmentBatch<T> extends DefaultBatch<T> implements
     }
 
     private boolean isActive() {
-        return fragment.get() != null && fragment.get().getActivity() != null && !((ViewStateFragment)fragment.get()).isViewDestroyed();
+        return fragment.get() != null && fragment.get().getActivity() != null && !((ViewStateFragment) fragment.get()).isViewDestroyed();
     }
 
     public void onSafeStart(AsyncResult asyncResult) {

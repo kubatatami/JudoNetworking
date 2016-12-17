@@ -133,7 +133,9 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
     }
 
     private static class OkHttpAsyncResult {
+
         Response response;
+
         IOException ex;
     }
 

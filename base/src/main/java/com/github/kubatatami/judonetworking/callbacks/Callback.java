@@ -15,6 +15,6 @@ public interface Callback<T> extends BaseCallback<T> {
     void onStart(CacheInfo cacheInfo, AsyncResult asyncResult);
 
     class Builder<T> extends CallbackBuilder<T, Callback.Builder<T>> {
-        
+
     }
 }

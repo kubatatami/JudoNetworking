@@ -115,7 +115,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     public EndpointImpl(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         init(context, protocolController, transportLayer, url);
     }
-    
+
     private void init(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         this.requestConnector = new RequestConnector(this, transportLayer);
         this.context = context;

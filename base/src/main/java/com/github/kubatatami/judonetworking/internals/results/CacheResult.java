@@ -20,7 +20,7 @@ public class CacheResult implements Serializable {
 
     }
 
-    public CacheResult(Object object, boolean result, Long time,  Map<String, List<String>> headers) {
+    public CacheResult(Object object, boolean result, Long time, Map<String, List<String>> headers) {
         this.object = object;
         this.result = result;
         this.time = time;

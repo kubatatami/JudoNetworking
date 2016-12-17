@@ -13,6 +13,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 public class DefaultCallback<T> implements Callback<T>, AsyncResultCallback, CacheInfoCallback {
 
     private AsyncResult asyncResult;
+
     private CacheInfo cacheInfo;
 
     @Override

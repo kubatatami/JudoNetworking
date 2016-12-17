@@ -10,7 +10,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.stateful.StatefulCache;
 
 @SuppressWarnings("unchecked")
-public class BatchBuilder<T, Z extends Builder<Object[], ?>> extends Builder<Object[], Z> {
+public class BatchBuilder<T, Z extends ResultBuilder<Object[], ?>> extends ResultBuilder<Object[], Z> {
 
     protected BinaryOperator<AsyncResult> onStart;
 
