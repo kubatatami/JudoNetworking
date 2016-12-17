@@ -84,6 +84,9 @@ public class DecoratorCallback<T> extends CallbackBuilder.LambdaCallback<T> {
 
         protected MergeCallback internalMergeCallback;
 
+        public Builder() {
+        }
+
         public Builder(Callback<T> callback) {
             this.internalCallback = callback;
         }
