@@ -1,61 +1,56 @@
 package com.github.kubatatami.judonetworking.builder;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.CacheInfo;
+import com.github.kubatatami.judonetworking.batches.DefaultBatch;
 import com.github.kubatatami.judonetworking.builder.operators.BinaryOperator;
 import com.github.kubatatami.judonetworking.builder.operators.DualOperator;
 import com.github.kubatatami.judonetworking.builder.operators.VoidOperator;
-import com.github.kubatatami.judonetworking.callbacks.DefaultCallback;
 import com.github.kubatatami.judonetworking.callbacks.Identifiable;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.stateful.StatefulCache;
 
 @SuppressWarnings("unchecked")
-public class CallbackBuilder<T, Z extends Builder<T, ?>> extends  Builder<T, Z>{
+public class BatchBuilder<T, Z extends Builder<Object[], ?>> extends Builder<Object[], Z> {
 
-    protected DualOperator<CacheInfo, AsyncResult> onStart;
+    protected BinaryOperator<AsyncResult> onStart;
 
-    protected DualOperator<T, CacheInfo> onSuccessWithCacheInfo;
+    protected BinaryOperator<T> run;
 
-    public CallbackBuilder() {
-    }
+    protected BinaryOperator<T> runNonFatal;
 
-    public Z onSuccessWithCacheInfo(DualOperator<T, CacheInfo> val) {
-        onSuccessWithCacheInfo = val;
-        return (Z) this;
-    }
-
-    public Z onStart(DualOperator<CacheInfo, AsyncResult> val) {
+    public Z onStart(BinaryOperator<AsyncResult> val) {
         onStart = val;
         return (Z) this;
     }
 
-    public LambdaCallback<T> build() {
-        return new LambdaCallback<>(this);
+    public LambdaBatch<T> build() {
+        return new LambdaBatch<>(this);
     }
 
-    public static class LambdaCallback<T> extends DefaultCallback<T> implements Identifiable {
+    public static class LambdaBatch<T> extends DefaultBatch<T> implements Identifiable {
 
-        private BinaryOperator<T> onSuccess;
+        private BinaryOperator<Object[]> onSuccess;
 
-        private DualOperator<T, AsyncResult> onSuccessWithAsyncResult;
-
-        private DualOperator<T, CacheInfo> onSuccessWithCacheInfo;
+        private DualOperator<Object[], AsyncResult> onSuccessWithAsyncResult;
 
         private BinaryOperator<JudoException> onError;
 
         private BinaryOperator<Integer> onProgress;
 
-        private DualOperator<CacheInfo, AsyncResult> onStart;
+        private BinaryOperator<AsyncResult> onStart;
 
         private VoidOperator onFinish;
 
         private BinaryOperator<AsyncResult> onFinishWithAsyncResult;
 
-        public LambdaCallback() {
+        private BinaryOperator<T> run;
+
+        private BinaryOperator<T> runNonFatal;
+
+        public LambdaBatch() {
         }
 
-        public LambdaCallback(CallbackBuilder<T, ?> builder) {
+        public LambdaBatch(BatchBuilder<T, ?> builder) {
             onSuccess = builder.onSuccess;
             onSuccessWithAsyncResult = builder.onSuccessWithAsyncResult;
             onError = builder.onError;
@@ -63,14 +58,31 @@ public class CallbackBuilder<T, Z extends Builder<T, ?>> extends  Builder<T, Z>{
             onStart = builder.onStart;
             onFinish = builder.onFinish;
             onFinishWithAsyncResult = builder.onFinishWithAsyncResult;
-            onSuccessWithCacheInfo = builder.onSuccessWithCacheInfo;
+            run = builder.run;
+            runNonFatal = builder.runNonFatal;
         }
 
         @Override
-        public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
-            super.onStart(cacheInfo, asyncResult);
+        public void run(T api) {
+            super.run(api);
+            if (run != null) {
+                run.invoke(api);
+            }
+        }
+
+        @Override
+        public void runNonFatal(T api) {
+            super.runNonFatal(api);
+            if (runNonFatal != null) {
+                runNonFatal.invoke(api);
+            }
+        }
+
+        @Override
+        public void onStart(AsyncResult asyncResult) {
+            super.onStart(asyncResult);
             if (onStart != null) {
-                onStart.invoke(cacheInfo, asyncResult);
+                onStart.invoke(asyncResult);
             }
         }
 
@@ -83,16 +95,13 @@ public class CallbackBuilder<T, Z extends Builder<T, ?>> extends  Builder<T, Z>{
         }
 
         @Override
-        public void onSuccess(T result) {
+        public void onSuccess(Object[] result) {
             super.onSuccess(result);
             if (onSuccess != null) {
                 onSuccess.invoke(result);
             }
             if (onSuccessWithAsyncResult != null) {
                 onSuccessWithAsyncResult.invoke(result, getAsyncResult());
-            }
-            if (onSuccessWithCacheInfo != null) {
-                onSuccessWithCacheInfo.invoke(result, getCacheInfo());
             }
         }
 
@@ -122,7 +131,6 @@ public class CallbackBuilder<T, Z extends Builder<T, ?>> extends  Builder<T, Z>{
                     onProgress,
                     onSuccess,
                     onSuccessWithAsyncResult,
-                    onSuccessWithCacheInfo,
                     onError,
                     onFinish,
                     onFinishWithAsyncResult);

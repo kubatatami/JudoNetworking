@@ -10,7 +10,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  * Date: 07.01.2013
  * Time: 10:55
  */
-public class DefaultCallback<T> implements Callback<T>, AsyncResultCallback {
+public class DefaultCallback<T> implements Callback<T>, AsyncResultCallback, CacheInfoCallback {
 
     private AsyncResult asyncResult;
     private CacheInfo cacheInfo;

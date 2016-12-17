@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.batches;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
+import com.github.kubatatami.judonetworking.builder.BatchBuilder;
 import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
 
 /**
@@ -17,4 +18,7 @@ public interface Batch<T> extends BaseCallback<Object[]> {
 
     void runNonFatal(final T api);
 
+    class Builder<T> extends BatchBuilder<T, Batch.Builder<T>> {
+
+    }
 }

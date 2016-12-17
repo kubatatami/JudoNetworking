@@ -1,7 +1,6 @@
 package com.github.kubatatami.judonetworking.batches;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.callbacks.AsyncResultCallback;
 import com.github.kubatatami.judonetworking.callbacks.MergeCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -17,8 +16,6 @@ public abstract class DefaultBatch<T> implements Batch<T>, AsyncResultCallback {
     MergeCallback mergeCallback;
 
     private AsyncResult asyncResult;
-
-    private CacheInfo cacheInfo;
 
     public DefaultBatch() {
     }
@@ -79,13 +76,4 @@ public abstract class DefaultBatch<T> implements Batch<T>, AsyncResultCallback {
         this.asyncResult = asyncResult;
     }
 
-    @Override
-    public CacheInfo getCacheInfo() {
-        return cacheInfo;
-    }
-
-    @Override
-    public void setCacheInfo(CacheInfo cacheInfo) {
-        this.cacheInfo = cacheInfo;
-    }
 }

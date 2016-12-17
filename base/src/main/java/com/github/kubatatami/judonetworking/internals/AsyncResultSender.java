@@ -5,8 +5,8 @@ import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.annotations.HandleException;
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.callbacks.AsyncResultCallback;
+import com.github.kubatatami.judonetworking.callbacks.CacheInfoCallback;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
-import com.github.kubatatami.judonetworking.callbacks.DefaultCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.requests.RequestImpl;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
@@ -150,8 +150,10 @@ public class AsyncResultSender implements Runnable {
                 case START:
                     request.start();
                     if (callback instanceof AsyncResultCallback) {
-                        ((DefaultCallback) callback).setAsyncResult(request);
-                        ((DefaultCallback) callback).setCacheInfo(cacheInfo);
+                        ((AsyncResultCallback) callback).setAsyncResult(request);
+                    }
+                    if (callback instanceof CacheInfoCallback) {
+                        ((CacheInfoCallback) callback).setCacheInfo(cacheInfo);
                     }
                     callback.onStart(cacheInfo, request);
                     break;
@@ -188,7 +190,7 @@ public class AsyncResultSender implements Runnable {
                 case START:
                     requestProxy.start();
                     if (callback instanceof AsyncResultCallback) {
-                        ((DefaultCallback) callback).setAsyncResult(request);
+                        ((AsyncResultCallback) callback).setAsyncResult(request);
                     }
                     transaction.onStart(requestProxy);
                     break;
