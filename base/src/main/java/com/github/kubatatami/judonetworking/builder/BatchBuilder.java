@@ -23,6 +23,16 @@ public class BatchBuilder<T, Z extends Builder<Object[], ?>> extends Builder<Obj
         return (Z) this;
     }
 
+    public Z run(BinaryOperator<T> val) {
+        run = val;
+        return (Z) this;
+    }
+
+    public Z runNonFatal(BinaryOperator<T> val) {
+        runNonFatal = val;
+        return (Z) this;
+    }
+
     public LambdaBatch<T> build() {
         return new LambdaBatch<>(this);
     }
