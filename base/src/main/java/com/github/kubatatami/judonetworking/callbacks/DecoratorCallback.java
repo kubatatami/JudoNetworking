@@ -14,8 +14,10 @@ public class DecoratorCallback<T> extends CallbackBuilder.LambdaCallback<T> {
 
     protected MergeCallback internalMergeCallback;
 
-    public DecoratorCallback(CallbackBuilder<T, ?> builder) {
+    public DecoratorCallback(Builder<T> builder) {
         super(builder);
+        this.internalCallback = builder.internalCallback;
+        this.internalMergeCallback = builder.internalMergeCallback;
     }
 
     public DecoratorCallback(Callback<T> callback) {
