@@ -34,7 +34,7 @@ public class CallbackBuilder<T, Z extends CallbackBuilder<T, ?>> {
         return (Z) this;
     }
 
-    public Z onSuccess(DualOperator<T, AsyncResult> val) {
+    public Z onSuccessWithAsyncResult(DualOperator<T, AsyncResult> val) {
         onSuccessWithAsyncResult = val;
         return (Z) this;
     }
