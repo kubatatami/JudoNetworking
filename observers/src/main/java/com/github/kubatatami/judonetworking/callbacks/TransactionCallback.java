@@ -25,6 +25,7 @@ public class TransactionCallback<T> extends DecoratorCallback<T> {
 
     @Override
     public void onSuccess(T result) {
+        super.onSuccess(result);
         wrapper.set(result, transaction);
     }
 
