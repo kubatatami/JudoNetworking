@@ -1,8 +1,8 @@
-package com.github.kubatatami.judonetworking.builder;
+package com.github.kubatatami.judonetworking.builders;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.builder.operators.BinaryOperator;
-import com.github.kubatatami.judonetworking.builder.operators.DualOperator;
+import com.github.kubatatami.judonetworking.builders.operators.BinaryOperator;
+import com.github.kubatatami.judonetworking.builders.operators.DualOperator;
 
 @SuppressWarnings("unchecked")
 public abstract class ResultBuilder<T, Z extends Builder<T, ?>> extends Builder<T, Z> {

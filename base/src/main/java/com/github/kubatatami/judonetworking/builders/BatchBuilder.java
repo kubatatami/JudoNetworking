@@ -1,10 +1,10 @@
-package com.github.kubatatami.judonetworking.builder;
+package com.github.kubatatami.judonetworking.builders;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.batches.DefaultBatch;
-import com.github.kubatatami.judonetworking.builder.operators.BinaryOperator;
-import com.github.kubatatami.judonetworking.builder.operators.DualOperator;
-import com.github.kubatatami.judonetworking.builder.operators.VoidOperator;
+import com.github.kubatatami.judonetworking.builders.operators.BinaryOperator;
+import com.github.kubatatami.judonetworking.builders.operators.DualOperator;
+import com.github.kubatatami.judonetworking.builders.operators.VoidOperator;
 import com.github.kubatatami.judonetworking.callbacks.Identifiable;
 import com.github.kubatatami.judonetworking.callbacks.MergeCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;

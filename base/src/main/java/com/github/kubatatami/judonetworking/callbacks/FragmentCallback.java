@@ -2,7 +2,7 @@ package com.github.kubatatami.judonetworking.callbacks;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
-import com.github.kubatatami.judonetworking.builder.CallbackBuilder;
+import com.github.kubatatami.judonetworking.builders.CallbackBuilder;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.fragments.ViewStateFragment;
 

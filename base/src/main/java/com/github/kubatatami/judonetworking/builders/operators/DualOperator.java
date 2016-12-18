@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.builder.operators;
+package com.github.kubatatami.judonetworking.builders.operators;
 
 public interface DualOperator<T, Z> {
 
