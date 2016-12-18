@@ -35,5 +35,9 @@ public class WrapBatch<T, S> extends WrapBatchBuilder.LambdaBatch<T, S> {
             super(outerCallback);
         }
 
+        public WrapBatch<T, S> build() {
+            return new WrapBatch<>(this);
+        }
+
     }
 }
