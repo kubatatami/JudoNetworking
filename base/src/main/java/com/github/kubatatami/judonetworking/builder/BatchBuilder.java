@@ -6,6 +6,7 @@ import com.github.kubatatami.judonetworking.builder.operators.BinaryOperator;
 import com.github.kubatatami.judonetworking.builder.operators.DualOperator;
 import com.github.kubatatami.judonetworking.builder.operators.VoidOperator;
 import com.github.kubatatami.judonetworking.callbacks.Identifiable;
+import com.github.kubatatami.judonetworking.callbacks.MergeCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.stateful.StatefulCache;
 
@@ -17,6 +18,15 @@ public class BatchBuilder<T, Z extends ResultBuilder<Object[], ?>> extends Resul
     protected BinaryOperator<T> run;
 
     protected BinaryOperator<T> runNonFatal;
+
+    protected MergeCallback<T> mergeCallback;
+
+    public BatchBuilder() {
+    }
+
+    public BatchBuilder(MergeCallback<T> mergeCallback) {
+        this.mergeCallback = mergeCallback;
+    }
 
     public Z onStart(BinaryOperator<AsyncResult> val) {
         onStart = val;
@@ -61,6 +71,7 @@ public class BatchBuilder<T, Z extends ResultBuilder<Object[], ?>> extends Resul
         }
 
         public LambdaBatch(BatchBuilder<T, ?> builder) {
+            super(builder.mergeCallback);
             onSuccess = builder.onSuccess;
             onSuccessWithAsyncResult = builder.onSuccessWithAsyncResult;
             onError = builder.onError;
