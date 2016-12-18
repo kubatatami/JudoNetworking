@@ -72,8 +72,11 @@ public abstract class WrapBuilder<T, S, Z extends WrapBuilder<T, S, ?>> extends 
 
         @Override
         public void onSuccess(T result) {
-            if (hasCallback() && onSuccess != null) {
-                outerCallback.onSuccess(onSuccess.invoke(result));
+            if (onSuccess != null) {
+                S newResult = onSuccess.invoke(result);
+                if (hasCallback()) {
+                    outerCallback.onSuccess(newResult);
+                }
             }
         }
 

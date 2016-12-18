@@ -107,8 +107,11 @@ public abstract class WrapBatchBuilder<T, S, Z extends WrapBatchBuilder<T, S, ?>
 
         @Override
         public void onSuccess(Object[] result) {
-            if (hasCallback() && onSuccess != null) {
-                outerCallback.onSuccess(onSuccess.invoke(result));
+            if (onSuccess != null) {
+                S newResult = onSuccess.invoke(result);
+                if (hasCallback()) {
+                    outerCallback.onSuccess(newResult);
+                }
             }
         }
 
