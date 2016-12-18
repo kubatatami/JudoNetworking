@@ -19,12 +19,12 @@ public class BatchBuilder<T, Z extends ResultBuilder<Object[], ?>> extends Resul
 
     protected BinaryOperator<T> runNonFatal;
 
-    protected MergeCallback<T> mergeCallback;
+    protected MergeCallback<?> mergeCallback;
 
     public BatchBuilder() {
     }
 
-    public BatchBuilder(MergeCallback<T> mergeCallback) {
+    public BatchBuilder(MergeCallback<?> mergeCallback) {
         this.mergeCallback = mergeCallback;
     }
 

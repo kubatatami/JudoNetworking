@@ -24,7 +24,7 @@ public interface Batch<T> extends BaseCallback<Object[]> {
         public Builder() {
         }
 
-        public Builder(MergeCallback<T> mergeCallback) {
+        public Builder(MergeCallback<?> mergeCallback) {
             super(mergeCallback);
         }
     }

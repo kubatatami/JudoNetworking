@@ -14,21 +14,21 @@ import java.util.Set;
  */
 public class MergeCallback<T> {
 
-    int requests;
+    private int requests;
 
-    int finishRequests = 0;
+    private int finishRequests = 0;
 
-    boolean started = false;
+    private boolean started = false;
 
-    boolean canceled = false;
+    private boolean canceled = false;
 
-    Map<BaseCallback<?>, Integer> progressMap = new HashMap<>();
+    private Map<BaseCallback<?>, Integer> progressMap = new HashMap<>();
 
-    Set<AsyncResult> asyncResultSet = new HashSet<>();
+    private Set<AsyncResult> asyncResultSet = new HashSet<>();
 
-    Callback<T> finalCallback;
+    private Callback<T> finalCallback;
 
-    T result;
+    private T result;
 
     public MergeCallback(int requests) {
         this.requests = requests;
