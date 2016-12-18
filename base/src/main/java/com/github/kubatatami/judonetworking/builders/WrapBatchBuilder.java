@@ -10,11 +10,15 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.stateful.StatefulCache;
 
 @SuppressWarnings("unchecked")
-public abstract class WrapBatchBuilder<S, Z extends WrapBatchBuilder<S, ?>> extends Builder<Object[], Z> {
+public abstract class WrapBatchBuilder<T, S, Z extends WrapBatchBuilder<T, S, ?>> extends Builder<Object[], Z> {
 
     protected BinaryOperator<AsyncResult> onStart;
 
     protected BinaryFunction<Object[], S> onSuccess;
+
+    protected BinaryOperator<T> run;
+
+    protected BinaryOperator<T> runNonFatal;
 
     protected Callback<S> outerCallback;
 
@@ -27,6 +31,16 @@ public abstract class WrapBatchBuilder<S, Z extends WrapBatchBuilder<S, ?>> exte
 
     public Z onStart(BinaryOperator<AsyncResult> val) {
         onStart = val;
+        return (Z) this;
+    }
+
+    public Z run(BinaryOperator<T> val) {
+        run = val;
+        return (Z) this;
+    }
+
+    public Z runNonFatal(BinaryOperator<T> val) {
+        runNonFatal = val;
         return (Z) this;
     }
 
@@ -43,6 +57,10 @@ public abstract class WrapBatchBuilder<S, Z extends WrapBatchBuilder<S, ?>> exte
 
         private Callback<S> outerCallback;
 
+        private BinaryOperator<T> run;
+
+        private BinaryOperator<T> runNonFatal;
+
         public LambdaBatch() {
         }
 
@@ -50,11 +68,13 @@ public abstract class WrapBatchBuilder<S, Z extends WrapBatchBuilder<S, ?>> exte
             this.outerCallback = outerCallback;
         }
 
-        public LambdaBatch(WrapBatchBuilder<S, ?> builder) {
+        public LambdaBatch(WrapBatchBuilder<T, S, ?> builder) {
             super(builder);
             this.onStart = builder.onStart;
             this.onSuccess = builder.onSuccess;
             this.outerCallback = builder.outerCallback;
+            run = builder.run;
+            runNonFatal = builder.runNonFatal;
         }
 
         protected Boolean hasCallback() {
@@ -68,6 +88,20 @@ public abstract class WrapBatchBuilder<S, Z extends WrapBatchBuilder<S, ?>> exte
             }
             if (hasCallback()) {
                 outerCallback.onStart(new CacheInfo(false, 0L), asyncResult);
+            }
+        }
+
+        @Override
+        public void run(T api) {
+            if (run != null) {
+                run.invoke(api);
+            }
+        }
+
+        @Override
+        public void runNonFatal(T api) {
+            if (runNonFatal != null) {
+                runNonFatal.invoke(api);
             }
         }
 
@@ -105,7 +139,7 @@ public abstract class WrapBatchBuilder<S, Z extends WrapBatchBuilder<S, ?>> exte
         @Override
         public int getId() {
             return StatefulCache.calcHashCode(
-                    onStart, super.getId());
+                    onStart, run, runNonFatal, onSuccess, super.getId());
         }
     }
 

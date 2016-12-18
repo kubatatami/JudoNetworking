@@ -12,21 +12,21 @@ public class WrapBatch<T, S> extends WrapBatchBuilder.LambdaBatch<T, S> {
         super(outerCallback);
     }
 
-    public WrapBatch(WrapBatchBuilder<S, ?> builder) {
+    public WrapBatch(WrapBatchBuilder<T, S, ?> builder) {
         super(builder);
     }
 
     @Override
     public void run(T api) {
-
+        super.run(api);
     }
 
     @Override
     public void runNonFatal(T api) {
-
+        super.runNonFatal(api);
     }
 
-    public static class Builder<T, S> extends WrapBatchBuilder<S, Builder<T, S>> {
+    public static class Builder<T, S> extends WrapBatchBuilder<T, S, Builder<T, S>> {
 
         public Builder() {
         }
