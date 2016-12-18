@@ -7,7 +7,7 @@ import com.github.kubatatami.judonetworking.builder.operators.BinaryFunction;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.stateful.StatefulCache;
 
-public abstract class WrapCallback<T, S> extends WrapBuilder.LambdaCallback<T, S> {
+public class WrapCallback<T, S> extends WrapBuilder.LambdaCallback<T, S> {
 
     private Callback<S> outerCallback;
 
@@ -85,5 +85,10 @@ public abstract class WrapCallback<T, S> extends WrapBuilder.LambdaCallback<T, S
             onSuccess = val;
             return this;
         }
+
+        public WrapCallback<T, S> build() {
+            return new WrapCallback<>(this);
+        }
+
     }
 }
