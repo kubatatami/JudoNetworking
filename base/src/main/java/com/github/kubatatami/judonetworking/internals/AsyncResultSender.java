@@ -245,12 +245,14 @@ public class AsyncResultSender implements Runnable {
                         }
                     }
                 }
-                rpc.getHandler().post(new Runnable() {
-                    @Override
-                    public void run() {
-                        rpc.stopRequest(request);
-                    }
-                });
+                if (request != null) {
+                    rpc.getHandler().post(new Runnable() {
+                        @Override
+                        public void run() {
+                            rpc.stopRequest(request);
+                        }
+                    });
+                }
                 break;
         }
 
