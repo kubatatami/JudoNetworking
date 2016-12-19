@@ -96,6 +96,8 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     private Set<Integer> requestIds = Collections.synchronizedSet(new HashSet<Integer>());
 
+    private Set<String> requestNames = Collections.synchronizedSet(new HashSet<String>());
+
     private int id = 0;
 
     private JudoExecutor executorService = new JudoExecutor(this);
@@ -156,6 +158,11 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     @Override
     public boolean isIdleNow() {
+        if ((getDebugFlags() & Endpoint.INTERNAL_DEBUG) > 0) {
+            for (String name : requestNames) {
+                JudoLogger.longLog("Request in progress", name, JudoLogger.LogLevel.DEBUG);
+            }
+        }
         return requestIds.size() == 0;
     }
 
@@ -343,6 +350,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     public void startRequest(Request request) {
         requestIds.add(request.getId());
+        requestNames.add(request.getName());
         if (onRequestEventListener != null) {
             onRequestEventListener.onStart(request, requestIds.size());
         }
@@ -350,6 +358,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     public void stopRequest(Request request) {
         requestIds.remove(request.getId());
+        requestNames.remove(request.getName());
         if (onRequestEventListener != null) {
             onRequestEventListener.onStop(request, requestIds.size());
         }

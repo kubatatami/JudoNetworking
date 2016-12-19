@@ -131,7 +131,6 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     }
 
     protected AsyncResult performAsyncRequest(RequestImpl request) throws Exception {
-
         synchronized (batchRequests) {
             if (batchEnabled) {
                 request.setBatchFatal(batchFatal);
@@ -149,7 +148,6 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 }
                 return request;
             }
-
         }
     }
 
