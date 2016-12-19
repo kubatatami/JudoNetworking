@@ -146,7 +146,7 @@ public class AsyncResultSender implements Runnable {
             if (request.isCancelled()) {
                 return;
             }
-            JudoLogger.log("Send request event(" + request.getName() + ":" + request.getId() + "):" + type, JudoLogger.LogLevel.DEBUG);
+            JudoLogger.log("Send request event(" + request.getName() + ":" + request.getId() + "):" + type, JudoLogger.LogLevel.VERBOSE);
             switch (type) {
                 case START:
                     request.start();
@@ -187,7 +187,7 @@ public class AsyncResultSender implements Runnable {
             if (requestProxy.isCancelled()) {
                 return;
             }
-            JudoLogger.log("Send batch event:" + type, JudoLogger.LogLevel.DEBUG);
+            JudoLogger.log("Send batch event:" + type, JudoLogger.LogLevel.VERBOSE);
             switch (type) {
                 case START:
                     requestProxy.start();
@@ -241,11 +241,12 @@ public class AsyncResultSender implements Runnable {
                     synchronized (rpc.getSingleCallMethods()) {
                         boolean result = rpc.getSingleCallMethods().remove(methodId) != null;
                         if (result && (rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                            JudoLogger.log("Request " + request.getName() + "(" + methodId + ")" + " removed from SingleCall queue.", JudoLogger.LogLevel.DEBUG);
+                            JudoLogger.log("Request " + request.getName() + "(" + methodId + ")" + " removed from SingleCall queue.", JudoLogger.LogLevel.VERBOSE);
                         }
                     }
                 }
                 if (request != null) {
+                    JudoLogger.log("Send stop request event(" + request.getName() + ":" + request.getId() + ")", JudoLogger.LogLevel.VERBOSE);
                     rpc.getHandler().post(new Runnable() {
                         @Override
                         public void run() {
