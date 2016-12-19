@@ -146,117 +146,140 @@ public class AsyncResultSender implements Runnable {
             if (request.isCancelled()) {
                 return;
             }
-            JudoLogger.log("Send request event(" + request.getName() + ":" + request.getId() + "):" + type, JudoLogger.LogLevel.VERBOSE);
-            switch (type) {
-                case START:
-                    request.start();
-                    if (callback instanceof AsyncResultCallback) {
-                        ((AsyncResultCallback) callback).setAsyncResult(request);
-                    }
-                    if (callback instanceof CacheInfoCallback) {
-                        ((CacheInfoCallback) callback).setCacheInfo(cacheInfo);
-                    }
-                    callback.onStart(cacheInfo, request);
-                    break;
-                case RESULT:
-                    callback.onSuccess(result);
-                    break;
-                case ERROR:
-                    Method handleMethod = findHandleMethod(callback.getClass(), e.getClass());
-                    logError(request.getName(), e);
-                    if (handleMethod != null) {
-                        try {
-                            handleMethod.invoke(callback, e);
-                        } catch (Exception invokeException) {
-                            throw new RuntimeException(invokeException);
-                        }
-                    } else {
-                        callback.onError(e);
-                    }
-                    break;
-                case PROGRESS:
-                    callback.onProgress(progress);
-                    break;
-            }
-            if (type == Type.RESULT || type == Type.ERROR) {
-                callback.onFinish();
-                request.done();
-            }
+            sendRequestEvent();
         } else if (requestProxy != null && requestProxy.getBatchCallback() != null) {
             Batch<?> transaction = requestProxy.getBatchCallback();
             if (requestProxy.isCancelled()) {
                 return;
             }
-            JudoLogger.log("Send batch event:" + type, JudoLogger.LogLevel.VERBOSE);
-            switch (type) {
-                case START:
-                    requestProxy.start();
-                    if (callback instanceof AsyncResultCallback) {
-                        ((AsyncResultCallback) callback).setAsyncResult(request);
-                    }
-                    transaction.onStart(requestProxy);
-                    break;
-                case RESULT:
-                    transaction.onSuccess(results);
-                    break;
-                case ERROR:
-                    Method handleMethod = findHandleMethod(transaction.getClass(), e.getClass());
-                    logError("Batch", e);
-                    if (handleMethod != null) {
-                        try {
-                            handleMethod.invoke(transaction, e);
-                        } catch (Exception invokeException) {
-                            throw new RuntimeException(invokeException);
-                        }
-                    } else {
-                        transaction.onError(e);
-                    }
-                    break;
-                case PROGRESS:
-                    transaction.onProgress(progress);
-                    break;
-            }
-            if (type == Type.RESULT || type == Type.ERROR) {
-                transaction.onFinish();
-                requestProxy.done();
-                requestProxy.clearBatchCallback();
-            }
-        } else if (requests != null && type == Type.PROGRESS) {
-            for (RequestImpl batchRequest : requests) {
-                if (batchRequest.getCallback() != null) {
+            sendBatchEvent(transaction);
+        } else if (requests != null) {
+            sendRequestsEvent();
+        }
+    }
+
+    private void cleanResources() {
+        removeFromSingleCallMethods();
+        sendStopRequest();
+    }
+
+    private void sendRequestsEvent() {
+        for (RequestImpl batchRequest : requests) {
+            if (batchRequest.getCallback() != null) {
+                if (type == Type.PROGRESS) {
                     batchRequest.getCallback().onProgress(progress);
-                }
-            }
-        } else if (requests != null && type == Type.START) {
-            for (RequestImpl batchRequest : requests) {
-                if (batchRequest.getCallback() != null) {
+                } else if (type == Type.START) {
                     batchRequest.getCallback().onStart(cacheInfo, batchRequest);
                 }
             }
         }
+    }
+
+    private void sendStopRequest() {
+        if (request != null) {
+            JudoLogger.log("Send stop request event(" + request.getName() + ":" + request.getId() + ")", JudoLogger.LogLevel.VERBOSE);
+            rpc.getHandler().post(new Runnable() {
+                @Override
+                public void run() {
+                    rpc.stopRequest(request);
+                }
+            });
+        }
+    }
+
+    private void removeFromSingleCallMethods() {
+        if (methodId != null) {
+            synchronized (rpc.getSingleCallMethods()) {
+                boolean result = rpc.getSingleCallMethods().remove(methodId) != null;
+                if (result && (rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
+                    JudoLogger.log("Request " + request.getName() + "(" + methodId + ")" + " removed from SingleCall queue.", JudoLogger.LogLevel.VERBOSE);
+                }
+            }
+        }
+    }
+
+    private void sendBatchEvent(Batch<?> transaction) {
+        JudoLogger.log("Send batch event:" + type, JudoLogger.LogLevel.VERBOSE);
         switch (type) {
-            case ERROR:
+            case START:
+                requestProxy.start();
+                if (callback instanceof AsyncResultCallback) {
+                    ((AsyncResultCallback) callback).setAsyncResult(request);
+                }
+                transaction.onStart(requestProxy);
+                break;
             case RESULT:
-                if (methodId != null) {
-                    synchronized (rpc.getSingleCallMethods()) {
-                        boolean result = rpc.getSingleCallMethods().remove(methodId) != null;
-                        if (result && (rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                            JudoLogger.log("Request " + request.getName() + "(" + methodId + ")" + " removed from SingleCall queue.", JudoLogger.LogLevel.VERBOSE);
-                        }
+                transaction.onSuccess(results);
+                doneBatch(transaction);
+                break;
+            case ERROR:
+                Method handleMethod = findHandleMethod(transaction.getClass(), e.getClass());
+                logError("Batch", e);
+                if (handleMethod != null) {
+                    try {
+                        handleMethod.invoke(transaction, e);
+                    } catch (Exception invokeException) {
+                        throw new RuntimeException(invokeException);
                     }
+                } else {
+                    transaction.onError(e);
                 }
-                if (request != null) {
-                    JudoLogger.log("Send stop request event(" + request.getName() + ":" + request.getId() + ")", JudoLogger.LogLevel.VERBOSE);
-                    rpc.getHandler().post(new Runnable() {
-                        @Override
-                        public void run() {
-                            rpc.stopRequest(request);
-                        }
-                    });
-                }
+                doneBatch(transaction);
+                break;
+            case PROGRESS:
+                transaction.onProgress(progress);
                 break;
         }
+    }
 
+    private void doneBatch(Batch<?> transaction) {
+        transaction.onFinish();
+        requestProxy.done();
+        requestProxy.clearBatchCallback();
+        cleanResources();
+    }
+
+    private void sendRequestEvent() {
+        JudoLogger.log("Send request event(" + request.getName() + ":" + request.getId() + "):" + type, JudoLogger.LogLevel.VERBOSE);
+        switch (type) {
+            case START:
+                request.start();
+                if (callback instanceof AsyncResultCallback) {
+                    ((AsyncResultCallback) callback).setAsyncResult(request);
+                }
+                if (callback instanceof CacheInfoCallback) {
+                    ((CacheInfoCallback) callback).setCacheInfo(cacheInfo);
+                }
+                callback.onStart(cacheInfo, request);
+                break;
+            case RESULT:
+                callback.onSuccess(result);
+                doneRequest();
+                break;
+            case ERROR:
+                Method handleMethod = findHandleMethod(callback.getClass(), e.getClass());
+                logError(request.getName(), e);
+                if (handleMethod != null) {
+                    try {
+                        handleMethod.invoke(callback, e);
+                    } catch (Exception invokeException) {
+                        throw new RuntimeException(invokeException);
+                    }
+                } else {
+                    callback.onError(e);
+                }
+                doneRequest();
+                break;
+            case PROGRESS:
+                callback.onProgress(progress);
+                break;
+        }
+    }
+
+    private void doneRequest() {
+        callback.onFinish();
+        request.done();
+        cleanResources();
     }
 
     protected void logError(String requestName, Exception ex) {
