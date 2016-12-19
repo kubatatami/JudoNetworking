@@ -11,6 +11,7 @@ import com.github.kubatatami.judonetworking.annotations.RejectOnMonkeyTest;
 import com.github.kubatatami.judonetworking.annotations.RequestMethod;
 import com.github.kubatatami.judonetworking.annotations.SingleCall;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
+import com.github.kubatatami.judonetworking.callbacks.DefaultCallback;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.AsyncResultSender;
@@ -88,7 +89,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
         this.ann = ann;
         this.args = args;
         this.returnType = returnType;
-        this.callback = callback;
+        this.callback = callback == null ? new DefaultCallback<>() : callback;
         this.additionalControllerData = additionalControllerData;
         this.paramNames = ann.paramNames();
     }
