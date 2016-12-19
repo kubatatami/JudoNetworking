@@ -425,12 +425,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
                 }
             });
         }
-        rpc.getHandler().post(new Runnable() {
-            @Override
-            public void run() {
-                rpc.stopRequest(RequestImpl.this);
-            }
-        });
+        rpc.stopRequest(RequestImpl.this);
     }
 
     @Override

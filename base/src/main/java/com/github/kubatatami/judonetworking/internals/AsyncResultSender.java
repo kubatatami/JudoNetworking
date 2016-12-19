@@ -177,12 +177,8 @@ public class AsyncResultSender implements Runnable {
 
     private void sendStopRequest() {
         JudoLogger.log("Send stop request event(" + request.getName() + ":" + request.getId() + ")", JudoLogger.LogLevel.VERBOSE);
-        rpc.getHandler().post(new Runnable() {
-            @Override
-            public void run() {
-                rpc.stopRequest(request);
-            }
-        });
+        rpc.stopRequest(request);
+
     }
 
     private void removeFromSingleCallMethods() {

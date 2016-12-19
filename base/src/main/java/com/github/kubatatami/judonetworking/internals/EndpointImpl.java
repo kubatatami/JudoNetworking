@@ -357,12 +357,17 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         }
     }
 
-    public void stopRequest(Request request) {
+    public void stopRequest(final Request request) {
         requestIds.remove(request.getId());
         JudoLogger.log("Remove request(" + request.getName() + ":" + request.getId() + ")", JudoLogger.LogLevel.DEBUG);
         requestNames.remove(request.getName());
         if (onRequestEventListener != null) {
-            onRequestEventListener.onStop(request, requestIds.size());
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    onRequestEventListener.onStop(request, requestIds.size());
+                }
+            });
         }
     }
 
