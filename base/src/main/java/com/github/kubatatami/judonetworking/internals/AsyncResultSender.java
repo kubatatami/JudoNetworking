@@ -158,7 +158,7 @@ public class AsyncResultSender implements Runnable {
         }
     }
 
-    private void cleanResources() {
+    private void cleanRequestResources() {
         removeFromSingleCallMethods();
         sendStopRequest();
     }
@@ -176,15 +176,13 @@ public class AsyncResultSender implements Runnable {
     }
 
     private void sendStopRequest() {
-        if (request != null) {
-            JudoLogger.log("Send stop request event(" + request.getName() + ":" + request.getId() + ")", JudoLogger.LogLevel.VERBOSE);
-            rpc.getHandler().post(new Runnable() {
-                @Override
-                public void run() {
-                    rpc.stopRequest(request);
-                }
-            });
-        }
+        JudoLogger.log("Send stop request event(" + request.getName() + ":" + request.getId() + ")", JudoLogger.LogLevel.VERBOSE);
+        rpc.getHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                rpc.stopRequest(request);
+            }
+        });
     }
 
     private void removeFromSingleCallMethods() {
@@ -236,7 +234,6 @@ public class AsyncResultSender implements Runnable {
         transaction.onFinish();
         requestProxy.done();
         requestProxy.clearBatchCallback();
-        cleanResources();
     }
 
     private void sendRequestEvent() {
@@ -279,7 +276,7 @@ public class AsyncResultSender implements Runnable {
     private void doneRequest() {
         callback.onFinish();
         request.done();
-        cleanResources();
+        cleanRequestResources();
     }
 
     protected void logError(String requestName, Exception ex) {
