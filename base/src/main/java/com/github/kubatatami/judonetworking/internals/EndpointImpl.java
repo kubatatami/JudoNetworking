@@ -350,6 +350,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     public void startRequest(Request request) {
         requestIds.add(request.getId());
+        JudoLogger.longLog("Add request", request.getName(), JudoLogger.LogLevel.DEBUG);
         requestNames.add(request.getName());
         if (onRequestEventListener != null) {
             onRequestEventListener.onStart(request, requestIds.size());
@@ -358,6 +359,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     public void stopRequest(Request request) {
         requestIds.remove(request.getId());
+        JudoLogger.longLog("Remove request", request.getName(), JudoLogger.LogLevel.DEBUG);
         requestNames.remove(request.getName());
         if (onRequestEventListener != null) {
             onRequestEventListener.onStop(request, requestIds.size());

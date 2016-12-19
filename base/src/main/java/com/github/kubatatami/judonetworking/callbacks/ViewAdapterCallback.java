@@ -17,8 +17,6 @@ public class ViewAdapterCallback<Z, T> extends DefaultCallback<T> {
 
     protected final View view;
 
-    protected AsyncResult asyncResult;
-
     public ViewAdapterCallback(View view) {
         this.view = view;
     }
@@ -26,7 +24,6 @@ public class ViewAdapterCallback<Z, T> extends DefaultCallback<T> {
     @Override
     public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         super.onStart(cacheInfo, asyncResult);
-        this.asyncResult = asyncResult;
         ViewAdapterCallback oldCallback = viewCache.get(view);
         if (oldCallback != null && oldCallback != this) {
             oldCallback.getAsyncResult().cancel();
@@ -45,8 +42,8 @@ public class ViewAdapterCallback<Z, T> extends DefaultCallback<T> {
 
     public static void cancelRequest(View view) {
         if (viewCache.containsKey(view)) {
-            if (viewCache.get(view).asyncResult != null) {
-                viewCache.get(view).asyncResult.cancel();
+            if (viewCache.get(view).getAsyncResult() != null) {
+                viewCache.get(view).getAsyncResult().cancel();
             }
             viewCache.remove(view);
         }
