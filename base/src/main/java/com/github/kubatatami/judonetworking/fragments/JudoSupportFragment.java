@@ -63,7 +63,7 @@ public abstract class JudoSupportFragment extends DialogFragment implements Stat
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (getActivity().isFinishing()) {
+        if (isRemoving()) {
             StatefulCache.removeAllStatefulCallbacks(getWho());
         }
     }

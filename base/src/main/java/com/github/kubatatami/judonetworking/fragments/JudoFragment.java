@@ -66,7 +66,7 @@ public abstract class JudoFragment extends DialogFragment implements StatefulCon
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (getActivity().isFinishing()) {
+        if (isRemoving()) {
             StatefulCache.removeAllStatefulCallbacks(getWho());
         }
     }
