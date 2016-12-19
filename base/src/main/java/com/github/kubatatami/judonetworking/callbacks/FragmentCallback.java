@@ -90,6 +90,10 @@ public class FragmentCallback<T> extends CallbackBuilder.LambdaCallback<T> {
             this.fragment = fragment;
         }
 
+        @Override
+        public FragmentCallback<T> build() {
+            return new FragmentCallback<>(this);
+        }
     }
 
 }
