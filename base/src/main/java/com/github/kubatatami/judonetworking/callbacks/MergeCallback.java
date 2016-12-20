@@ -165,6 +165,20 @@ public class MergeCallback<T> {
         }
 
         @Override
+        public long getEndTimeMillis() {
+            long endTimeMillis = 0;
+            for (AsyncResult asyncResult : asyncResultSet) {
+                endTimeMillis = Math.max(endTimeMillis, asyncResult.getEndTimeMillis());
+            }
+            return endTimeMillis;
+        }
+
+        @Override
+        public long getTotalTimeMillis() {
+            return getEndTimeMillis() - getStartTimeMillis();
+        }
+
+        @Override
         public void cancel() {
             cancelAll();
         }

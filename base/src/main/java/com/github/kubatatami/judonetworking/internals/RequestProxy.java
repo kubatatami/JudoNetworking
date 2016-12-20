@@ -62,6 +62,10 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
 
     private long startTimeMillis;
 
+    private long endTimeMillis;
+
+    private long totalTimeMillis;
+
     public RequestProxy(EndpointImpl rpc, EndpointImpl.BatchMode mode, Batch<?> batchCallback) {
         this.rpc = rpc;
         this.mode = mode;
@@ -620,8 +624,20 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         return startTimeMillis;
     }
 
+    @Override
+    public long getEndTimeMillis() {
+        return endTimeMillis;
+    }
+
+    @Override
+    public long getTotalTimeMillis() {
+        return totalTimeMillis;
+    }
+
     public void done() {
         synchronized (this) {
+            this.endTimeMillis = System.currentTimeMillis();
+            this.totalTimeMillis = this.endTimeMillis - this.startTimeMillis;
             this.done = true;
             this.running = false;
             notifyAll();

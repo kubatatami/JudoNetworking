@@ -74,6 +74,10 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     private long startTimeMillis;
 
+    private long endTimeMillis;
+
+    private long totalTimeMillis;
+
     public RequestImpl(Integer id, EndpointImpl rpc, Method method, String name, RequestMethod ann,
                        Object[] args, Type returnType, int timeout, Callback<Object> callback,
                        Serializable additionalControllerData) {
@@ -123,11 +127,18 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     }
 
     public void invokeCallbackException(JudoException e) {
+        calcTime();
         rpc.getHandler().post(new AsyncResultSender(this, e));
     }
 
     public void invokeCallback(Object result) {
+        calcTime();
         rpc.getHandler().post(new AsyncResultSender(this, result));
+    }
+
+    private void calcTime() {
+        endTimeMillis = System.currentTimeMillis();
+        totalTimeMillis = endTimeMillis - startTimeMillis;
     }
 
     public static void invokeBatchCallbackStart(final EndpointImpl rpc, RequestProxy requestProxy) {
@@ -450,6 +461,16 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     @Override
     public long getStartTimeMillis() {
         return startTimeMillis;
+    }
+
+    @Override
+    public long getEndTimeMillis() {
+        return 0;
+    }
+
+    @Override
+    public long getTotalTimeMillis() {
+        return 0;
     }
 
     public void done() {
