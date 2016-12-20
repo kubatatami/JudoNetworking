@@ -16,6 +16,10 @@ public interface AsyncResult {
 
     long getStartTimeMillis();
 
+    long getEndTimeMillis();
+
+    long getTotalTimeMillis();
+
     void cancel();
 
     void await() throws InterruptedException;
