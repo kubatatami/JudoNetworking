@@ -1,7 +1,9 @@
 package com.github.kubatatami.judonetworking.callbacks;
 
+import com.github.kubatatami.judonetworking.AsyncResult;
+
+import java.util.HashMap;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 public class CallbackCache {
 
@@ -9,7 +11,7 @@ public class CallbackCache {
 
     private AsyncResultCallback callback;
 
-    private static final Map<Integer, AsyncResultCallback> itemCache = new WeakHashMap<>();
+    private static final Map<Integer, AsyncResultCallback> itemCache = new HashMap<>();
 
     public CallbackCache(Object item, AsyncResultCallback callback) {
         cancelRequest(item);
@@ -37,8 +39,9 @@ public class CallbackCache {
     public static void cancelRequest(Object item) {
         int itemHash = item.hashCode();
         if (itemCache.containsKey(itemHash)) {
-            if (itemCache.get(itemHash).getAsyncResult() != null) {
-                itemCache.get(itemHash).getAsyncResult().cancel();
+            AsyncResult asyncResult = itemCache.get(itemHash).getAsyncResult();
+            if (asyncResult != null) {
+                asyncResult.cancel();
             }
             itemCache.remove(itemHash);
         }
