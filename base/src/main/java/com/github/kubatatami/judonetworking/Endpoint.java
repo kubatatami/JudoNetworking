@@ -73,7 +73,7 @@ public interface Endpoint extends EndpointBase {
      * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
-    <T> AsyncResult callInBatch(final Class<T> apiInterface, Batch.Builder<T> builder);
+    <T, Z extends Batch.Builder<T>> AsyncResult callInBatch(final Class<T> apiInterface, final Z builder);
 
     /**
      * Create batch request.
@@ -90,7 +90,7 @@ public interface Endpoint extends EndpointBase {
      * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
-    <T> AsyncResult callAsyncInBatch(final Class<T> apiInterface, final Batch.Builder<T> builder);
+    <T, Z extends Batch.Builder<T>> AsyncResult callAsyncInBatch(final Class<T> apiInterface, final Z builder);
 
     /**
      * @param mode

@@ -290,7 +290,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     @Override
-    public <T> AsyncResult callInBatch(Class<T> apiInterface, Batch.Builder<T> builder) {
+    public <T, Z extends Batch.Builder<T>> AsyncResult callInBatch(Class<T> apiInterface, Z builder) {
         return callInBatch(apiInterface, builder.build());
     }
 
@@ -324,7 +324,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     @Override
-    public <T> AsyncResult callAsyncInBatch(Class<T> apiInterface, Batch.Builder<T> builder) {
+    public <T, Z extends Batch.Builder<T>> AsyncResult callAsyncInBatch(Class<T> apiInterface, Z builder) {
         return callAsyncInBatch(apiInterface, builder.build());
     }
 
