@@ -29,7 +29,7 @@ public class CallbackCache {
     }
 
     public boolean cancel() {
-        if (itemCache.containsKey(hash) && !validCallback()) {
+        if (!validCallback()) {
             callback.getAsyncResult().cancel();
             return true;
         }
