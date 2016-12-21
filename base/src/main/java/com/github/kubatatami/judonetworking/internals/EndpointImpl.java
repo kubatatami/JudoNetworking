@@ -11,6 +11,7 @@ import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.annotations.IgnoreNullParam;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.batches.Batch;
+import com.github.kubatatami.judonetworking.builders.BatchBuilder;
 import com.github.kubatatami.judonetworking.caches.DefaultDiskCache;
 import com.github.kubatatami.judonetworking.caches.DefaultMemoryCache;
 import com.github.kubatatami.judonetworking.caches.DiskCache;
@@ -290,7 +291,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     @Override
-    public <T, Z extends Batch.Builder<T>> AsyncResult callInBatch(Class<T> apiInterface, Z builder) {
+    public <T> AsyncResult callInBatch(Class<T> apiInterface, BatchBuilder<T> builder) {
         return callInBatch(apiInterface, builder.build());
     }
 
@@ -324,7 +325,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     @Override
-    public <T, Z extends Batch.Builder<T>> AsyncResult callAsyncInBatch(Class<T> apiInterface, Z builder) {
+    public <T> AsyncResult callAsyncInBatch(Class<T> apiInterface, BatchBuilder<T> builder) {
         return callAsyncInBatch(apiInterface, builder.build());
     }
 

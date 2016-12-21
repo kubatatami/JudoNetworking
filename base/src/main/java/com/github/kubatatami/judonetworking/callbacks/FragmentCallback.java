@@ -2,7 +2,7 @@ package com.github.kubatatami.judonetworking.callbacks;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
-import com.github.kubatatami.judonetworking.builders.CallbackBuilder;
+import com.github.kubatatami.judonetworking.builders.DefaultCallbackBuilder;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.fragments.ViewStateFragment;
 
@@ -14,7 +14,7 @@ import java.lang.ref.WeakReference;
  * Date: 23.04.2013
  * Time: 11:40
  */
-public class FragmentCallback<T> extends CallbackBuilder.LambdaCallback<T> {
+public class FragmentCallback<T> extends DefaultCallbackBuilder.LambdaCallback<T> {
 
     private final WeakReference<ViewStateFragment> fragment;
 
@@ -82,7 +82,7 @@ public class FragmentCallback<T> extends CallbackBuilder.LambdaCallback<T> {
         }
     }
 
-    public static class Builder<T> extends CallbackBuilder<T, Builder<T>> {
+    public static class Builder<T> extends DefaultCallbackBuilder<T, Builder<T>> {
 
         private ViewStateFragment fragment;
 

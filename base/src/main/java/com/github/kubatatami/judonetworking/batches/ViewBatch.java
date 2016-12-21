@@ -3,14 +3,14 @@ package com.github.kubatatami.judonetworking.batches;
 import android.view.View;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.builders.BatchBuilder;
+import com.github.kubatatami.judonetworking.builders.DefaultBatchBuilder;
 import com.github.kubatatami.judonetworking.callbacks.CallbackCache;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**
  * Created by Kuba on 23/05/14.
  */
-public class ViewBatch<T> extends BatchBuilder.LambdaBatch<T> {
+public class ViewBatch<T> extends DefaultBatchBuilder.LambdaBatch<T> {
 
     private CallbackCache callbackCache;
 
@@ -59,7 +59,7 @@ public class ViewBatch<T> extends BatchBuilder.LambdaBatch<T> {
         CallbackCache.cancelRequest(view);
     }
 
-    public static class Builder<T> extends BatchBuilder<T, ViewBatch.Builder<T>> {
+    public static class Builder<T> extends DefaultBatchBuilder<T, Builder<T>> {
 
         private View view;
 

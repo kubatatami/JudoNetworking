@@ -4,13 +4,13 @@ import android.view.View;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
-import com.github.kubatatami.judonetworking.builders.CallbackBuilder;
+import com.github.kubatatami.judonetworking.builders.DefaultCallbackBuilder;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**
  * Created by Kuba on 23/05/14.
  */
-public class ViewCallback<T> extends CallbackBuilder.LambdaCallback<T> {
+public class ViewCallback<T> extends DefaultCallbackBuilder.LambdaCallback<T> {
 
     private CallbackCache callbackCache;
 
@@ -58,7 +58,7 @@ public class ViewCallback<T> extends CallbackBuilder.LambdaCallback<T> {
         CallbackCache.cancelRequest(view);
     }
 
-    public static class Builder<T> extends CallbackBuilder<T, Callback.Builder<T>> {
+    public static class Builder<T> extends DefaultCallbackBuilder<T, Callback.Builder<T>> {
 
         private View view;
 

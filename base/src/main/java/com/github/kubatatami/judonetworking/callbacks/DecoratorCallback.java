@@ -2,13 +2,13 @@ package com.github.kubatatami.judonetworking.callbacks;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
-import com.github.kubatatami.judonetworking.builders.CallbackBuilder;
+import com.github.kubatatami.judonetworking.builders.DefaultCallbackBuilder;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 /**
  * Created by Kuba on 19/03/15.
  */
-public class DecoratorCallback<T> extends CallbackBuilder.LambdaCallback<T> {
+public class DecoratorCallback<T> extends DefaultCallbackBuilder.LambdaCallback<T> {
 
     protected Callback<T> internalCallback;
 
@@ -80,7 +80,7 @@ public class DecoratorCallback<T> extends CallbackBuilder.LambdaCallback<T> {
         }
     }
 
-    public static class Builder<T> extends CallbackBuilder<T, Builder<T>> {
+    public static class Builder<T> extends DefaultCallbackBuilder<T, Builder<T>> {
 
         protected Callback<T> internalCallback;
 
