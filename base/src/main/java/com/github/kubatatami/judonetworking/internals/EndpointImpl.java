@@ -263,7 +263,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @Override
     @SuppressWarnings("unchecked")
     public <T> AsyncResult callInBatch(final Class<T> obj, final Batch<T> batch) {
-
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
             try {
                 StackTraceElement stackTraceElement = RequestProxy.getExternalStacktrace(Thread.currentThread().getStackTrace());
@@ -291,9 +290,13 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     @Override
+    public <T> AsyncResult callInBatch(Class<T> apiInterface, Batch.Builder<T> builder) {
+        return callInBatch(apiInterface, builder.build());
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public <T> AsyncResult callAsyncInBatch(final Class<T> obj, final Batch<T> batch) {
-
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
             try {
                 StackTraceElement stackTraceElement = RequestProxy.getExternalStacktrace(Thread.currentThread().getStackTrace());
@@ -318,6 +321,11 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
             }
         });
         return pr;
+    }
+
+    @Override
+    public <T> AsyncResult callAsyncInBatch(Class<T> apiInterface, Batch.Builder<T> builder) {
+        return callAsyncInBatch(apiInterface, builder.build());
     }
 
     public Handler getHandler() {
