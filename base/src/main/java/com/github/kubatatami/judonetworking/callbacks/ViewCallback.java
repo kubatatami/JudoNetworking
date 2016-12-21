@@ -21,6 +21,7 @@ public class ViewCallback<T> extends DefaultCallbackBuilder.LambdaCallback<T> {
 
     @Override
     public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
+        setAsyncResult(asyncResult);
         if (!callbackCache.cancel()) {
             super.onStart(cacheInfo, asyncResult);
         }

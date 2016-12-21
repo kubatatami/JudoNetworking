@@ -21,6 +21,7 @@ public class ViewBatch<T> extends DefaultBatchBuilder.LambdaBatch<T> {
 
     @Override
     public final void onStart(AsyncResult asyncResult) {
+        setAsyncResult(asyncResult);
         if (!callbackCache.cancel()) {
             super.onStart(asyncResult);
         }
