@@ -12,9 +12,9 @@ public class CallbackCache {
     private static final Map<Integer, AsyncResultCallback> itemCache = new WeakHashMap<>();
 
     public CallbackCache(Object item, AsyncResultCallback callback) {
+        cancelRequest(item);
         this.callback = callback;
         this.hash = item.hashCode();
-        cancelRequest(hash);
         itemCache.put(hash, callback);
     }
 
