@@ -11,7 +11,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.stateful.StatefulCache;
 
 @SuppressWarnings("unchecked")
-public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends ResultBuilder<T, Z> {
+public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends ResultBuilder<T, Z> implements CallbackBuilder<T> {
 
     protected DualOperator<CacheInfo, AsyncResult> onStart;
 

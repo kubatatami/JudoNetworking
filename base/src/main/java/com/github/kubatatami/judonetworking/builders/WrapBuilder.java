@@ -9,7 +9,7 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.stateful.StatefulCache;
 
 @SuppressWarnings("unchecked")
-public abstract class WrapBuilder<T, S, Z extends WrapBuilder<T, S, ?>> extends Builder<T, Z> {
+public abstract class WrapBuilder<T, S, Z extends WrapBuilder<T, S, ?>> extends Builder<T, Z> implements CallbackBuilder<T> {
 
     protected DualOperator<CacheInfo, AsyncResult> onStart;
 

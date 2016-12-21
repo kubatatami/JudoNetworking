@@ -24,6 +24,7 @@ public class WrapCallback<T, S> extends WrapBuilder.LambdaCallback<T, S> {
             super(outerCallback);
         }
 
+        @Override
         public WrapCallback<T, S> build() {
             return new WrapCallback<>(this);
         }
