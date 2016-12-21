@@ -58,7 +58,7 @@ public class ViewCallback<T> extends DefaultCallbackBuilder.LambdaCallback<T> {
         CallbackCache.cancelRequest(view);
     }
 
-    public static class Builder<T> extends DefaultCallbackBuilder<T, Callback.Builder<T>> {
+    public static class Builder<T> extends DefaultCallbackBuilder<T, Builder<T>> {
 
         private View view;
 
