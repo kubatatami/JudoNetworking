@@ -19,7 +19,7 @@ public class CallbackCache {
     }
 
     public boolean consume() {
-        if (callback.equals(itemCache.get(hash))) {
+        if (validCallback()) {
             itemCache.remove(hash);
             return true;
         }
@@ -27,7 +27,7 @@ public class CallbackCache {
     }
 
     public boolean cancel() {
-        if (!callback.equals(itemCache.get(hash))) {
+        if (itemCache.containsKey(hash) && !validCallback()) {
             callback.getAsyncResult().cancel();
             return true;
         }
@@ -42,5 +42,9 @@ public class CallbackCache {
             }
             itemCache.remove(itemHash);
         }
+    }
+
+    private boolean validCallback() {
+        return callback.equals(itemCache.get(hash));
     }
 }
