@@ -11,6 +11,7 @@ import com.github.kubatatami.judonetworking.annotations.NameSuffix;
 import com.github.kubatatami.judonetworking.annotations.RequestMethod;
 import com.github.kubatatami.judonetworking.annotations.SingleCall;
 import com.github.kubatatami.judonetworking.batches.Batch;
+import com.github.kubatatami.judonetworking.builders.CallbackBuilder;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
@@ -272,6 +273,9 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         Type returnType = Void.class;
         if (args.length > 0 && args[args.length - 1] instanceof Callback) {
             callback = (Callback<Object>) args[args.length - 1];
+            returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
+        } else if (args.length > 0 && args[args.length - 1] instanceof CallbackBuilder) {
+            callback = ((CallbackBuilder<Object>) args[args.length - 1]).build();
             returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
         } else {
             Type[] genericTypes = m.getGenericParameterTypes();
