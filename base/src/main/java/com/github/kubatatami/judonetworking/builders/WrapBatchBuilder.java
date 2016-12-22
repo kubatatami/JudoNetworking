@@ -73,8 +73,8 @@ public abstract class WrapBatchBuilder<T, S, Z extends WrapBatchBuilder<T, S, ?>
             this.onStart = builder.onStart;
             this.onSuccess = builder.onSuccess;
             this.outerCallback = builder.outerCallback;
-            run = builder.run;
-            runNonFatal = builder.runNonFatal;
+            this.run = builder.run;
+            this.runNonFatal = builder.runNonFatal;
         }
 
         protected Boolean hasCallback() {
@@ -107,11 +107,12 @@ public abstract class WrapBatchBuilder<T, S, Z extends WrapBatchBuilder<T, S, ?>
 
         @Override
         public void onSuccess(Object[] result) {
+            S newResult = null;
             if (onSuccess != null) {
-                S newResult = onSuccess.invoke(result);
-                if (hasCallback()) {
-                    outerCallback.onSuccess(newResult);
-                }
+                newResult = onSuccess.invoke(result);
+            }
+            if (hasCallback()) {
+                outerCallback.onSuccess(newResult);
             }
         }
 
