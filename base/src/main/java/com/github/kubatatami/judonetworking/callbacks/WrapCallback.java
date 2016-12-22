@@ -15,10 +15,11 @@ public class WrapCallback<T, S> extends WrapBuilder.LambdaCallback<T, S> {
         super(builder);
     }
 
-    public static class Builder<T, S> extends WrapBuilder<T, S, Builder<T, S>> {
+    public static <T, S> Builder<T, S> builder(Callback<S> outerCallback) {
+        return new Builder<>(outerCallback);
+    }
 
-        public Builder() {
-        }
+    public static class Builder<T, S> extends WrapBuilder<T, S, Builder<T, S>> {
 
         public Builder(Callback<S> outerCallback) {
             super(outerCallback);

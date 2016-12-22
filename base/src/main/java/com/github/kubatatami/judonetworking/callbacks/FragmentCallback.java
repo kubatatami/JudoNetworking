@@ -82,6 +82,10 @@ public class FragmentCallback<T> extends DefaultCallbackBuilder.LambdaCallback<T
         }
     }
 
+    public static <T> Builder<T> builder(ViewStateFragment fragment) {
+        return new Builder<>(fragment);
+    }
+
     public static class Builder<T> extends DefaultCallbackBuilder<T, Builder<T>> {
 
         private ViewStateFragment fragment;

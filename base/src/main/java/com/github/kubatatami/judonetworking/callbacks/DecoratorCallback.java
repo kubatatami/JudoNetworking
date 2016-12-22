@@ -80,6 +80,10 @@ public class DecoratorCallback<T> extends DefaultCallbackBuilder.LambdaCallback<
         }
     }
 
+    public static <T> Builder<T> builder(Callback<T> internalCallback) {
+        return new Builder<>(internalCallback);
+    }
+
     public static class Builder<T> extends DefaultCallbackBuilder<T, Builder<T>> {
 
         protected Callback<T> internalCallback;

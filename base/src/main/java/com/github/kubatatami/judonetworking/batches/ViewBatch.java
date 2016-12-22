@@ -60,6 +60,10 @@ public class ViewBatch<T> extends DefaultBatchBuilder.LambdaBatch<T> {
         CallbackCache.cancelRequest(view);
     }
 
+    public static <T> Builder<T> builder(View view) {
+        return new Builder<>(view);
+    }
+
     public static class Builder<T> extends DefaultBatchBuilder<T, Builder<T>> {
 
         private View view;

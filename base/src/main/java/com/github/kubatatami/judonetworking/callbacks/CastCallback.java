@@ -34,20 +34,20 @@ public class CastCallback<T extends S, S> extends WrapBuilder.LambdaCallback<T, 
         }
     }
 
+    public static <T extends S, S> Builder<T, S> builder(Callback<S> outerCallback) {
+        return new Builder<>(outerCallback);
+    }
+
     public static class Builder<T extends S, S> extends WrapBuilder<T, S, Builder<T, S>> {
 
         private BinaryFunction<T, S> onSuccess;
 
-        private Callback<S> outerCallback;;
-
-        public Builder() {
-        }
+        private Callback<S> outerCallback;
 
         public Builder(Callback<S> outerCallback) {
             super(outerCallback);
             this.outerCallback = outerCallback;
         }
-
 
         @Override
         public Builder<T, S> onSuccess(BinaryFunction<T, S> val) {
