@@ -21,7 +21,7 @@ public class GetOrPostTools {
     }
 
     public static void addGetParam(StringBuilder sb, Collection<? extends Pair> params, boolean encode) {
-        for(Pair pair : params){
+        for (Pair pair : params) {
             addGetParam(sb, pair.first.toString(), pair.second.toString(), encode);
         }
     }

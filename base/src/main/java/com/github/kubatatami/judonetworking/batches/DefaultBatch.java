@@ -13,14 +13,14 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  */
 public abstract class DefaultBatch<T> implements Batch<T>, AsyncResultCallback {
 
-    MergeCallback mergeCallback;
+    private MergeCallback<?> mergeCallback;
 
     private AsyncResult asyncResult;
 
     public DefaultBatch() {
     }
 
-    public DefaultBatch(MergeCallback mergeCallback) {
+    public DefaultBatch(MergeCallback<?> mergeCallback) {
         this.mergeCallback = mergeCallback;
     }
 
@@ -75,4 +75,5 @@ public abstract class DefaultBatch<T> implements Batch<T>, AsyncResultCallback {
     public final void setAsyncResult(AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
     }
+
 }

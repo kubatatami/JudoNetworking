@@ -42,6 +42,8 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
     protected final OkHttpClient baseClient;
 
+    protected boolean experimentalAsync = false;
+
     public OkHttpTransportLayer() {
         this(new OkHttpClient());
     }
@@ -92,7 +94,11 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
             requestBody = createEmptyRequestBody(requestInfo, requestBody, methodName);
             final Call call = client.newCall(builder.method(methodName, requestBody).build());
             attachCanceller(call);
-            return handleResponse(timeStat, requestBody, call);
+            if (experimentalAsync) {
+                return handleResponseExperimental(timeStat, requestBody, call);
+            } else {
+                return handleResponse(timeStat, requestBody, call);
+            }
         } finally {
             if (requestInfo.entity != null) {
                 requestInfo.entity.close();
@@ -101,6 +107,20 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
     }
 
     private Response handleResponse(TimeStat timeStat, RequestBody requestBody, Call call) throws IOException, InterruptedException {
+        Response response = null;
+        try {
+            response = call.execute();
+        } catch (IOException ex) {
+            checkThreadCancelled(ex);
+        }
+        timeStat.tickConnectionTime();
+        if (requestBody != null) {
+            timeStat.tickSendTime();
+        }
+        return response;
+    }
+
+    private Response handleResponseExperimental(TimeStat timeStat, RequestBody requestBody, Call call) throws IOException, InterruptedException {
         final OkHttpAsyncResult result = new OkHttpAsyncResult();
         call.enqueue(new Callback() {
             @Override
@@ -133,7 +153,9 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
     }
 
     private static class OkHttpAsyncResult {
+
         Response response;
+
         IOException ex;
     }
 
@@ -310,6 +332,14 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
     public void setOkHttpConnectionModifier(OkHttpConnectionModifier okHttpConnectionModifier) {
         this.okHttpConnectionModifier = okHttpConnectionModifier;
+    }
+
+    public boolean isExperimentalAsync() {
+        return experimentalAsync;
+    }
+
+    public void setExperimentalAsync(boolean experimentalAsync) {
+        this.experimentalAsync = experimentalAsync;
     }
 
     public interface OkHttpConnectionModifier {

@@ -1,11 +1,8 @@
 package com.github.kubatatami.judonetworking.callbacks;
 
-import android.annotation.TargetApi;
-import android.app.Fragment;
-import android.os.Build;
-
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
+import com.github.kubatatami.judonetworking.builders.DefaultCallbackBuilder;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.fragments.ViewStateFragment;
 
@@ -17,35 +14,36 @@ import java.lang.ref.WeakReference;
  * Date: 23.04.2013
  * Time: 11:40
  */
-@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-public class FragmentCallback<T> extends DefaultCallback<T> {
+public class FragmentCallback<T> extends DefaultCallbackBuilder.LambdaCallback<T> {
 
-    private final WeakReference<? extends Fragment> fragment;
+    private final WeakReference<ViewStateFragment> fragment;
 
-    private AsyncResult asyncResult;
-
-    public <Z extends Fragment & ViewStateFragment> FragmentCallback(Z fragment) {
+    public FragmentCallback(ViewStateFragment fragment) {
         this.fragment = new WeakReference<>(fragment);
     }
 
-    private boolean isFragmentActive() {
-        return fragment.get() != null && fragment.get().getActivity() != null && !((ViewStateFragment)fragment.get()).isViewDestroyed();
+    public FragmentCallback(Builder<T> builder) {
+        super(builder);
+        this.fragment = new WeakReference<>(builder.fragment);
     }
 
     @Override
     public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
-        this.asyncResult = asyncResult;
         if (isFragmentActive()) {
-            onSafeStart(cacheInfo, asyncResult);
+            super.onStart(cacheInfo, asyncResult);
         } else {
             tryCancel();
         }
     }
 
+    private boolean isFragmentActive() {
+        return fragment.get() != null && fragment.get().getActivity() != null && !fragment.get().isViewDestroyed();
+    }
+
     @Override
     public final void onSuccess(T result) {
         if (isFragmentActive()) {
-            onSafeSuccess(result);
+            super.onSuccess(result);
         } else {
             tryCancel();
         }
@@ -54,7 +52,7 @@ public class FragmentCallback<T> extends DefaultCallback<T> {
     @Override
     public final void onError(JudoException e) {
         if (isFragmentActive()) {
-            onSafeError(e);
+            super.onError(e);
         } else {
             tryCancel();
         }
@@ -63,7 +61,7 @@ public class FragmentCallback<T> extends DefaultCallback<T> {
     @Override
     public final void onProgress(int progress) {
         if (isFragmentActive()) {
-            onSafeProgress(progress);
+            super.onProgress(progress);
         } else {
             tryCancel();
         }
@@ -72,36 +70,34 @@ public class FragmentCallback<T> extends DefaultCallback<T> {
     @Override
     public final void onFinish() {
         if (isFragmentActive()) {
-            onSafeFinish();
+            super.onFinish();
         } else {
             tryCancel();
         }
     }
 
     protected void tryCancel() {
-        if (asyncResult != null) {
-            asyncResult.cancel();
+        if (getAsyncResult() != null) {
+            getAsyncResult().cancel();
         }
     }
 
-    public void onSafeStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
-
+    public static <T> Builder<T> builder(ViewStateFragment fragment) {
+        return new Builder<>(fragment);
     }
 
-    public void onSafeProgress(int progress) {
+    public static class Builder<T> extends DefaultCallbackBuilder<T, Builder<T>> {
 
-    }
+        private ViewStateFragment fragment;
 
-    public void onSafeSuccess(T result) {
+        public Builder(ViewStateFragment fragment) {
+            this.fragment = fragment;
+        }
 
-    }
-
-    public void onSafeFinish() {
-
-    }
-
-    public void onSafeError(JudoException e) {
-
+        @Override
+        public FragmentCallback<T> build() {
+            return new FragmentCallback<>(this);
+        }
     }
 
 }

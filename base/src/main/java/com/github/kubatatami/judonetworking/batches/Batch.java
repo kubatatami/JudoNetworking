@@ -1,7 +1,9 @@
 package com.github.kubatatami.judonetworking.batches;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
+import com.github.kubatatami.judonetworking.builders.DefaultBatchBuilder;
 import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
+import com.github.kubatatami.judonetworking.callbacks.MergeCallback;
 
 /**
  * Created with IntelliJ IDEA.
@@ -17,4 +19,13 @@ public interface Batch<T> extends BaseCallback<Object[]> {
 
     void runNonFatal(final T api);
 
+    class Builder<T> extends DefaultBatchBuilder<T, Builder<T>> {
+
+        public Builder() {
+        }
+
+        public Builder(MergeCallback<?> mergeCallback) {
+            super(mergeCallback);
+        }
+    }
 }

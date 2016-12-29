@@ -1,9 +1,6 @@
 package com.github.kubatatami.judonetworking.batches;
 
-import android.annotation.TargetApi;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.os.Build;
+import android.support.v4.app.FragmentManager;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.callbacks.MergeCallback;
@@ -18,18 +15,17 @@ import java.lang.ref.WeakReference;
  * Date: 11.02.2013
  * Time: 22:48
  */
-@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 public abstract class FragmentBatch<T> extends DefaultBatch<T> implements FragmentManager.OnBackStackChangedListener {
 
-    private final WeakReference<? extends Fragment> fragment;
+    private final WeakReference<ViewStateFragment> fragment;
 
     private AsyncResult asyncResult;
 
-    public <Z extends Fragment & ViewStateFragment> FragmentBatch(Z fragment) {
+    public FragmentBatch(ViewStateFragment fragment) {
         this(null, fragment);
     }
 
-    protected <Z extends Fragment & ViewStateFragment> FragmentBatch(MergeCallback mergeCallback, Z fragment) {
+    protected FragmentBatch(MergeCallback mergeCallback, ViewStateFragment fragment) {
         super(mergeCallback);
         this.fragment = new WeakReference<>(fragment);
     }
@@ -46,7 +42,6 @@ public abstract class FragmentBatch<T> extends DefaultBatch<T> implements Fragme
             asyncResult.cancel();
         }
     }
-
 
     @Override
     public final void onStart(AsyncResult asyncResult) {
@@ -108,7 +103,7 @@ public abstract class FragmentBatch<T> extends DefaultBatch<T> implements Fragme
     }
 
     private boolean isActive() {
-        return fragment.get() != null && fragment.get().getActivity() != null && !((ViewStateFragment)fragment.get()).isViewDestroyed();
+        return fragment.get() != null && fragment.get().getActivity() != null && !fragment.get().isViewDestroyed();
     }
 
     public void onSafeStart(AsyncResult asyncResult) {

@@ -11,6 +11,7 @@ import com.github.kubatatami.judonetworking.annotations.NameSuffix;
 import com.github.kubatatami.judonetworking.annotations.RequestMethod;
 import com.github.kubatatami.judonetworking.annotations.SingleCall;
 import com.github.kubatatami.judonetworking.batches.Batch;
+import com.github.kubatatami.judonetworking.builders.CallbackBuilder;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
@@ -61,6 +62,10 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     protected Batch<?> batchCallback;
 
     private long startTimeMillis;
+
+    private long endTimeMillis;
+
+    private long totalTimeMillis;
 
     public RequestProxy(EndpointImpl rpc, EndpointImpl.BatchMode mode, Batch<?> batchCallback) {
         this.rpc = rpc;
@@ -131,7 +136,6 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     }
 
     protected AsyncResult performAsyncRequest(RequestImpl request) throws Exception {
-
         synchronized (batchRequests) {
             if (batchEnabled) {
                 request.setBatchFatal(batchFatal);
@@ -149,7 +153,6 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 }
                 return request;
             }
-
         }
     }
 
@@ -198,32 +201,8 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 } else {
                     request = callAsync(getNextId(), m, name, args, ReflectionCache.getGenericParameterTypes(m), timeout, ann);
                     rpc.filterNullArgs(request);
-                    if (request.getSingleCall() != null) {
-                        if (rpc.getSingleCallMethods().containsKey(CacheMethod.getMethodId(m))) {
-                            SingleCall.SingleMode mode = request.getSingleCall().mode();
-
-                            if (mode == SingleCall.SingleMode.CANCEL_NEW) {
-                                if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                                    JudoLogger.log("Request " + name + " rejected - SingleCall.", JudoLogger.LogLevel.DEBUG);
-                                }
-                                request.cancel();
-                                return request;
-                            }
-                            if (mode == SingleCall.SingleMode.CANCEL_OLD) {
-                                RequestImpl oldRequest = rpc.getSingleCallMethods().get(CacheMethod.getMethodId(m));
-                                if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                                    JudoLogger.log("Request " + oldRequest.getName() + " rejected - SingleCall.", JudoLogger.LogLevel.DEBUG);
-                                }
-                                oldRequest.cancel();
-                                synchronized (rpc.getSingleCallMethods()) {
-                                    rpc.getSingleCallMethods().put(request.getMethodId(), request);
-                                }
-                            }
-                        } else {
-                            synchronized (rpc.getSingleCallMethods()) {
-                                rpc.getSingleCallMethods().put(request.getMethodId(), request);
-                            }
-                        }
+                    if (registerSingleCallMethod(m, request, name)) {
+                        return request;
                     }
                     rpc.startRequest(request);
                     performAsyncRequest(request);
@@ -252,6 +231,37 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         }
     }
 
+    private boolean registerSingleCallMethod(Method m, RequestImpl request, String name) {
+        if (request.getSingleCall() != null) {
+            if (rpc.getSingleCallMethods().containsKey(CacheMethod.getMethodId(m))) {
+                SingleCall.SingleMode mode = request.getSingleCall().mode();
+
+                if (mode == SingleCall.SingleMode.CANCEL_NEW) {
+                    if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
+                        JudoLogger.log("Request " + name + " rejected - SingleCall.", JudoLogger.LogLevel.DEBUG);
+                    }
+                    request.cancel();
+                    return true;
+                }
+                if (mode == SingleCall.SingleMode.CANCEL_OLD) {
+                    RequestImpl oldRequest = rpc.getSingleCallMethods().get(CacheMethod.getMethodId(m));
+                    if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
+                        JudoLogger.log("Request " + oldRequest.getName() + " rejected - SingleCall.", JudoLogger.LogLevel.DEBUG);
+                    }
+                    oldRequest.cancel();
+                    synchronized (rpc.getSingleCallMethods()) {
+                        rpc.getSingleCallMethods().put(request.getMethodId(), request);
+                    }
+                }
+            } else {
+                synchronized (rpc.getSingleCallMethods()) {
+                    rpc.getSingleCallMethods().put(request.getMethodId(), request);
+                }
+            }
+        }
+        return false;
+    }
+
     protected synchronized int getNextId() {
         return ++id;
     }
@@ -263,6 +273,9 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         Type returnType = Void.class;
         if (args.length > 0 && args[args.length - 1] instanceof Callback) {
             callback = (Callback<Object>) args[args.length - 1];
+            returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
+        } else if (args.length > 0 && args[args.length - 1] instanceof CallbackBuilder) {
+            callback = ((CallbackBuilder<Object>) args[args.length - 1]).build();
             returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
         } else {
             Type[] genericTypes = m.getGenericParameterTypes();
@@ -575,7 +588,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     public void cancel() {
         if (!cancelled) {
             this.cancelled = true;
-            synchronized(this) {
+            synchronized (this) {
                 notifyAll();
             }
             for (RequestImpl request : batchRequests) {
@@ -620,8 +633,20 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         return startTimeMillis;
     }
 
+    @Override
+    public long getEndTimeMillis() {
+        return endTimeMillis;
+    }
+
+    @Override
+    public long getTotalTimeMillis() {
+        return totalTimeMillis;
+    }
+
     public void done() {
         synchronized (this) {
+            this.endTimeMillis = System.currentTimeMillis();
+            this.totalTimeMillis = this.endTimeMillis - this.startTimeMillis;
             this.done = true;
             this.running = false;
             notifyAll();

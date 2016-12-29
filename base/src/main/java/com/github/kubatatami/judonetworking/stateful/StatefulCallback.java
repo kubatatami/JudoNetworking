@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking.stateful;
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.callbacks.AsyncResultCallback;
+import com.github.kubatatami.judonetworking.callbacks.CacheInfoCallback;
 import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.callbacks.DecoratorCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -11,6 +12,8 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
 public final class StatefulCallback<T> extends DecoratorCallback<T> implements Stateful<Callback<T>> {
 
     private AsyncResult asyncResult;
+
+    private CacheInfo cacheInfo;
 
     private final int id;
 
@@ -40,6 +43,7 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
     @Override
     public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
+        this.cacheInfo = cacheInfo;
         consume = false;
         finishedSuccessfully = false;
         data = null;
@@ -83,6 +87,9 @@ public final class StatefulCallback<T> extends DecoratorCallback<T> implements S
         if (callback != null) {
             if (callback instanceof AsyncResultCallback) {
                 ((AsyncResultCallback) callback).setAsyncResult(asyncResult);
+            }
+            if (callback instanceof CacheInfoCallback) {
+                ((CacheInfoCallback) callback).setCacheInfo(cacheInfo);
             }
             if (progress > 0) {
                 callback.onProgress(progress);

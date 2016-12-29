@@ -11,6 +11,7 @@ import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.annotations.IgnoreNullParam;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.batches.Batch;
+import com.github.kubatatami.judonetworking.builders.BatchBuilder;
 import com.github.kubatatami.judonetworking.caches.DefaultDiskCache;
 import com.github.kubatatami.judonetworking.caches.DefaultMemoryCache;
 import com.github.kubatatami.judonetworking.caches.DiskCache;
@@ -96,6 +97,8 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     private Set<Integer> requestIds = Collections.synchronizedSet(new HashSet<Integer>());
 
+    private Set<String> requestNames = Collections.synchronizedSet(new HashSet<String>());
+
     private int id = 0;
 
     private JudoExecutor executorService = new JudoExecutor(this);
@@ -115,7 +118,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     public EndpointImpl(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         init(context, protocolController, transportLayer, url);
     }
-    
+
     private void init(Context context, ProtocolController protocolController, TransportLayer transportLayer, String url) {
         this.requestConnector = new RequestConnector(this, transportLayer);
         this.context = context;
@@ -156,6 +159,11 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     @Override
     public boolean isIdleNow() {
+        if ((getDebugFlags() & Endpoint.INTERNAL_DEBUG) > 0) {
+            for (String name : requestNames) {
+                JudoLogger.longLog("Request in progress", name, JudoLogger.LogLevel.DEBUG);
+            }
+        }
         return requestIds.size() == 0;
     }
 
@@ -256,7 +264,6 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @Override
     @SuppressWarnings("unchecked")
     public <T> AsyncResult callInBatch(final Class<T> obj, final Batch<T> batch) {
-
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
             try {
                 StackTraceElement stackTraceElement = RequestProxy.getExternalStacktrace(Thread.currentThread().getStackTrace());
@@ -284,9 +291,13 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     @Override
+    public <T> AsyncResult callInBatch(Class<T> apiInterface, BatchBuilder<T> builder) {
+        return callInBatch(apiInterface, builder.build());
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public <T> AsyncResult callAsyncInBatch(final Class<T> obj, final Batch<T> batch) {
-
         if ((getDebugFlags() & REQUEST_LINE_DEBUG) > 0) {
             try {
                 StackTraceElement stackTraceElement = RequestProxy.getExternalStacktrace(Thread.currentThread().getStackTrace());
@@ -311,6 +322,11 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
             }
         });
         return pr;
+    }
+
+    @Override
+    public <T> AsyncResult callAsyncInBatch(Class<T> apiInterface, BatchBuilder<T> builder) {
+        return callAsyncInBatch(apiInterface, builder.build());
     }
 
     public Handler getHandler() {
@@ -343,15 +359,24 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     public void startRequest(Request request) {
         requestIds.add(request.getId());
+        JudoLogger.log("Add request(" + request.getName() + ":" + request.getId() + ")", JudoLogger.LogLevel.VERBOSE);
+        requestNames.add(request.getName());
         if (onRequestEventListener != null) {
             onRequestEventListener.onStart(request, requestIds.size());
         }
     }
 
-    public void stopRequest(Request request) {
+    public void stopRequest(final Request request) {
         requestIds.remove(request.getId());
+        JudoLogger.log("Remove request(" + request.getName() + ":" + request.getId() + ")", JudoLogger.LogLevel.VERBOSE);
+        requestNames.remove(request.getName());
         if (onRequestEventListener != null) {
-            onRequestEventListener.onStop(request, requestIds.size());
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    onRequestEventListener.onStop(request, requestIds.size());
+                }
+            });
         }
     }
 

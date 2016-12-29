@@ -3,6 +3,7 @@ package com.github.kubatatami.judonetworking;
 
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.batches.Batch;
+import com.github.kubatatami.judonetworking.builders.BatchBuilder;
 import com.github.kubatatami.judonetworking.caches.DiskCache;
 import com.github.kubatatami.judonetworking.caches.MemoryCache;
 import com.github.kubatatami.judonetworking.clonners.Clonner;
@@ -70,11 +71,27 @@ public interface Endpoint extends EndpointBase {
     /**
      * Create batch request.
      *
+     * @param builder        Batch builder
+     * @return Batch thread useful for synchronized wait
+     */
+    <T> AsyncResult callInBatch(final Class<T> apiInterface, final BatchBuilder<T> builder);
+
+    /**
+     * Create batch request.
+     *
      * @param apiInterface API interface class
      * @param batch        Batch callback
      * @return Batch thread useful for synchronized wait
      */
     <T> AsyncResult callAsyncInBatch(final Class<T> apiInterface, final Batch<T> batch);
+
+    /**
+     * Create batch request.
+     *
+     * @param builder        Batch builder
+     * @return Batch thread useful for synchronized wait
+     */
+    <T> AsyncResult callAsyncInBatch(final Class<T> apiInterface, final BatchBuilder<T> builder);
 
     /**
      * @param mode

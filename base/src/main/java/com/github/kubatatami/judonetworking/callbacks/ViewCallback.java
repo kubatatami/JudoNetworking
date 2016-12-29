@@ -4,107 +4,77 @@ import android.view.View;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
+import com.github.kubatatami.judonetworking.builders.DefaultCallbackBuilder;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
-
-import java.util.Map;
-import java.util.WeakHashMap;
 
 /**
  * Created by Kuba on 23/05/14.
  */
-public class ViewCallback<T> extends DefaultCallback<T> {
+public class ViewCallback<T> extends DefaultCallbackBuilder.LambdaCallback<T> {
 
-    protected static final Map<Integer, ViewCallback> viewCache = new WeakHashMap<>();
+    private CallbackCache callbackCache;
 
-    protected final int viewHash;
-
-    protected AsyncResult asyncResult;
-
-    public ViewCallback(View view) {
-        this.viewHash = view.hashCode();
-        cancelRequest(viewHash);
-        viewCache.put(viewHash, this);
+    public ViewCallback(Builder<T> builder) {
+        super(builder);
+        this.callbackCache = new CallbackCache(builder.view, this);
     }
 
     @Override
     public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
-        super.onStart(cacheInfo, asyncResult);
-        this.asyncResult = asyncResult;
-        if (viewCache.get(viewHash) != this) {
-            asyncResult.cancel();
+        setAsyncResult(asyncResult);
+        if (!callbackCache.cancel()) {
+            super.onStart(cacheInfo, asyncResult);
         }
-        onSafeStart(cacheInfo, asyncResult);
     }
 
     @Override
     public final void onSuccess(T result) {
-        if (viewCache.get(viewHash) != this) {
-            asyncResult.cancel();
-        } else {
-            onSafeSuccess(result);
+        if (!callbackCache.cancel()) {
+            super.onSuccess(result);
         }
     }
 
     @Override
     public final void onError(JudoException e) {
-        if (viewCache.get(viewHash) != this) {
-            asyncResult.cancel();
-        } else {
-            onSafeError(e);
+        if (!callbackCache.cancel()) {
+            super.onError(e);
         }
     }
 
     @Override
     public final void onProgress(int progress) {
-        if (viewCache.get(viewHash) != this) {
-            asyncResult.cancel();
-        } else {
-            onSafeProgress(progress);
+        if (!callbackCache.cancel()) {
+            super.onProgress(progress);
         }
     }
 
     @Override
     public final void onFinish() {
-        super.onFinish();
-        if (viewCache.containsKey(viewHash) && viewCache.get(viewHash) == this) {
-            viewCache.remove(viewHash);
-            onSafeFinish();
+        if (callbackCache.consume()) {
+            super.onFinish();
         }
     }
 
     public static void cancelRequest(View view) {
-        cancelRequest(view.hashCode());
+        CallbackCache.cancelRequest(view);
     }
 
+    public static <T> Builder<T> builder(View view) {
+        return new Builder<>(view);
+    }
 
-    public static void cancelRequest(int viewHash) {
-        if (viewCache.containsKey(viewHash)) {
-            if (viewCache.get(viewHash).asyncResult != null) {
-                viewCache.get(viewHash).asyncResult.cancel();
-            }
-            viewCache.remove(viewHash);
+    public static class Builder<T> extends DefaultCallbackBuilder<T, Builder<T>> {
+
+        private View view;
+
+        public Builder(View view) {
+            this.view = view;
         }
-    }
 
-
-    public void onSafeStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
-
-    }
-
-    public void onSafeProgress(int progress) {
-
-    }
-
-    public void onSafeSuccess(T result) {
-
-    }
-
-    public void onSafeFinish() {
-
-    }
-
-    public void onSafeError(JudoException e) {
-
+        @Override
+        public ViewCallback<T> build() {
+            return new ViewCallback<>(this);
+        }
     }
 
 }
