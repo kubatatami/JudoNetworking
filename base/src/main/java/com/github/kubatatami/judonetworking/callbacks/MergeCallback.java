@@ -1,6 +1,9 @@
 package com.github.kubatatami.judonetworking.callbacks;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
+import com.github.kubatatami.judonetworking.builders.operators.BinaryOperator;
+import com.github.kubatatami.judonetworking.builders.operators.VoidFunction;
+import com.github.kubatatami.judonetworking.builders.operators.VoidOperator;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.util.HashMap;
@@ -28,7 +31,25 @@ public class MergeCallback<T> {
 
     private Callback<T> finalCallback;
 
-    private T result;
+    private BinaryOperator<JudoException> onError;
+
+    private BinaryOperator<Integer> onProgress;
+
+    private VoidOperator onFinish;
+
+    private VoidOperator onStart;
+
+    private VoidFunction<T> onSuccess;
+
+    public MergeCallback(Builder<T> builder) {
+        this.requests = builder.requests;
+        this.finalCallback = builder.callback;
+        this.onError = builder.onError;
+        this.onProgress = builder.onProgress;
+        this.onFinish = builder.onFinish;
+        this.onStart = builder.onStart;
+        this.onSuccess = builder.onSuccess;
+    }
 
     public MergeCallback(int requests) {
         this.requests = requests;
@@ -58,7 +79,7 @@ public class MergeCallback<T> {
         onMergeProgress(calculateProgress());
     }
 
-    protected final int calculateProgress() {
+    private int calculateProgress() {
         int progress = 0;
         for (int value : progressMap.values()) {
             progress += value;
@@ -75,7 +96,6 @@ public class MergeCallback<T> {
             onMergeSuccess();
             onMergeFinish();
         }
-
     }
 
     public final void addError(JudoException e) {
@@ -94,41 +114,112 @@ public class MergeCallback<T> {
         }
     }
 
-    public void setResult(T result) {
-        this.result = result;
-    }
-
-    protected void onMergeStart() {
+    private void onMergeStart() {
+        if (onStart != null) {
+            onStart.invoke();
+        }
         if (finalCallback != null) {
             finalCallback.onStart(null, new MergeAsyncResult());
         }
     }
 
-    protected void onMergeProgress(int progress) {
+    private void onMergeProgress(int progress) {
+        if (onProgress != null) {
+            onProgress.invoke(progress);
+        }
         if (finalCallback != null) {
             finalCallback.onProgress(progress);
         }
     }
 
-    protected void onMergeSuccess() {
+    private void onMergeSuccess() {
+        T result = null;
+        if (onSuccess != null) {
+            result = onSuccess.invoke();
+        }
         if (finalCallback != null) {
             finalCallback.onSuccess(result);
         }
     }
 
-    protected void onMergeError(JudoException e) {
+    private void onMergeError(JudoException e) {
+        if (onError != null) {
+            onError.invoke(e);
+        }
         if (finalCallback != null) {
             finalCallback.onError(e);
         }
     }
 
-    protected void onMergeFinish() {
+    private void onMergeFinish() {
+        if (onFinish != null) {
+            onFinish.invoke();
+        }
         if (finalCallback != null) {
             finalCallback.onFinish();
         }
     }
 
-    protected class MergeAsyncResult implements AsyncResult {
+    public static <T> Builder<T> builder(int requests) {
+        return new Builder<>(requests);
+    }
+
+    public static class Builder<T> {
+
+        private int requests;
+
+        private Callback<T> callback;
+
+        private BinaryOperator<JudoException> onError;
+
+        private BinaryOperator<Integer> onProgress;
+
+        private VoidOperator onFinish;
+
+        private VoidOperator onStart;
+
+        private VoidFunction<T> onSuccess;
+
+        public Builder(int requests) {
+            this.requests = requests;
+        }
+
+        public Builder<T> callback(Callback<T> callback) {
+            this.callback = callback;
+            return this;
+        }
+
+        public Builder<T> onError(BinaryOperator<JudoException> val) {
+            this.onError = val;
+            return this;
+        }
+
+        public Builder<T> onProgress(BinaryOperator<Integer> val) {
+            this.onProgress = val;
+            return this;
+        }
+
+        public Builder<T> onSuccess(VoidFunction<T> val) {
+            this.onSuccess = val;
+            return this;
+        }
+
+        public Builder<T> onStart(VoidOperator val) {
+            this.onStart = val;
+            return this;
+        }
+
+        public Builder<T> onFinish(VoidOperator val) {
+            this.onFinish = val;
+            return this;
+        }
+
+        public MergeCallback<T> build() {
+            return new MergeCallback<>(this);
+        }
+    }
+
+    private class MergeAsyncResult implements AsyncResult {
 
         @Override
         public boolean isDone() {
