@@ -1,13 +1,11 @@
 package com.github.kubatatami.judonetworking.batches;
 
-import android.annotation.TargetApi;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.os.Build;
+import android.support.v4.app.FragmentManager;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.callbacks.MergeCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.fragments.ViewStateFragment;
 
 import java.lang.ref.WeakReference;
 
@@ -17,27 +15,19 @@ import java.lang.ref.WeakReference;
  * Date: 11.02.2013
  * Time: 22:48
  */
-@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 public abstract class FragmentBatch<T> extends DefaultBatch<T> implements FragmentManager.OnBackStackChangedListener {
 
-
-    private final WeakReference<Fragment> fragment;
-
-    private final WeakReference<FragmentManager> manager;
+    private final WeakReference<ViewStateFragment> fragment;
 
     private AsyncResult asyncResult;
 
-    public FragmentBatch(Fragment fragment) {
+    public FragmentBatch(ViewStateFragment fragment) {
         this(null, fragment);
     }
 
-    protected FragmentBatch(MergeCallback mergeCallback, Fragment fragment) {
+    protected FragmentBatch(MergeCallback mergeCallback, ViewStateFragment fragment) {
         super(mergeCallback);
         this.fragment = new WeakReference<>(fragment);
-        this.manager = new WeakReference<>(fragment.getFragmentManager());
-        if (manager.get() != null) {
-            manager.get().addOnBackStackChangedListener(this);
-        }
     }
 
     @Override
@@ -50,12 +40,8 @@ public abstract class FragmentBatch<T> extends DefaultBatch<T> implements Fragme
     protected void tryCancel() {
         if (asyncResult != null) {
             asyncResult.cancel();
-            if (manager.get() != null) {
-                manager.get().removeOnBackStackChangedListener(this);
-            }
         }
     }
-
 
     @Override
     public final void onStart(AsyncResult asyncResult) {
@@ -114,13 +100,10 @@ public abstract class FragmentBatch<T> extends DefaultBatch<T> implements Fragme
         } else {
             tryCancel();
         }
-        if (manager.get() != null) {
-            manager.get().removeOnBackStackChangedListener(this);
-        }
     }
 
-    protected boolean isActive() {
-        return fragment.get() != null && fragment.get().getActivity() != null;
+    private boolean isActive() {
+        return fragment.get() != null && fragment.get().getActivity() != null && !fragment.get().isViewDestroyed();
     }
 
     public void onSafeStart(AsyncResult asyncResult) {

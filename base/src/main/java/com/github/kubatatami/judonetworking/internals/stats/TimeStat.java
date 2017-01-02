@@ -123,7 +123,7 @@ public class TimeStat {
         allTime = System.currentTimeMillis() - startTime;
     }
 
-    long getAllTime() {
+    public long getAllTime() {
         return allTime;
     }
 

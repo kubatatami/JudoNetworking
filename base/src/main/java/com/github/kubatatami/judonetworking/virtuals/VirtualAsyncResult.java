@@ -10,10 +10,15 @@ import java.util.Map;
  */
 public class VirtualAsyncResult implements AsyncResult {
 
-    Map<String, List<String>> headers;
+    private Map<String, List<String>> headers;
+
+    private final long startTimeMillis;
+
+    private final long endTimeMillis;
 
     public VirtualAsyncResult(Map<String, List<String>> headers) {
         this.headers = headers;
+        startTimeMillis = endTimeMillis = System.currentTimeMillis();
     }
 
     @Override
@@ -33,7 +38,17 @@ public class VirtualAsyncResult implements AsyncResult {
 
     @Override
     public long getStartTimeMillis() {
-        return System.currentTimeMillis();
+        return startTimeMillis;
+    }
+
+    @Override
+    public long getEndTimeMillis() {
+        return endTimeMillis;
+    }
+
+    @Override
+    public long getTotalTimeMillis() {
+        return 0;
     }
 
     @Override

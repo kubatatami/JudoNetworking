@@ -10,13 +10,16 @@ import com.github.kubatatami.judonetworking.exceptions.JudoException;
  * Date: 07.01.2013
  * Time: 10:55
  */
-public class DefaultCallback<T> implements Callback<T>, AsyncResultCallback {
+public class DefaultCallback<T> implements Callback<T>, AsyncResultCallback, CacheInfoCallback {
 
     private AsyncResult asyncResult;
+
+    private CacheInfo cacheInfo;
 
     @Override
     public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
+        this.cacheInfo = cacheInfo;
     }
 
     @Override
@@ -46,4 +49,15 @@ public class DefaultCallback<T> implements Callback<T>, AsyncResultCallback {
     public final void setAsyncResult(AsyncResult asyncResult) {
         this.asyncResult = asyncResult;
     }
+
+    @Override
+    public CacheInfo getCacheInfo() {
+        return cacheInfo;
+    }
+
+    @Override
+    public void setCacheInfo(CacheInfo cacheInfo) {
+        this.cacheInfo = cacheInfo;
+    }
+
 }

@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking.transports;
 
+import android.support.annotation.NonNull;
+
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
@@ -23,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -38,6 +41,8 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
     protected OkHttpConnectionModifier okHttpConnectionModifier;
 
     protected final OkHttpClient baseClient;
+
+    protected boolean experimentalAsync = false;
 
     public OkHttpTransportLayer() {
         this(new OkHttpClient());
@@ -82,104 +87,175 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
         try {
             if (requestInfo.entity != null) {
                 methodName = "POST";
-                requestBody = new RequestBody() {
-                    @Override
-                    public MediaType contentType() {
-                        return MediaType.parse(requestInfo.mimeType != null ? requestInfo.mimeType : "");
-                    }
-
-                    @Override
-                    public void writeTo(BufferedSink sink) throws IOException {
-                        OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
-                                new RequestOutputStream(sink.outputStream(), timeStat,
-                                        requestInfo.entity.getContentLength()) : sink.outputStream();
-                        requestInfo.entity.writeTo(stream);
-                    }
-
-                    @Override
-                    public long contentLength() throws IOException {
-                        return requestInfo.entity.getContentLength();
-                    }
-                };
+                requestBody = createRequestBody(requestInfo, timeStat);
             }
-            if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
-                if (requestBody != null) {
-                    longLog("Request(" + requestInfo.url + ")", requestInfo.entity.getLog(), JudoLogger.LogLevel.INFO);
-                } else {
-                    longLog("Request", requestInfo.url, JudoLogger.LogLevel.INFO);
-                }
-            }
-
-            if (method != null) {
-                HttpMethod ann = ReflectionCache.getAnnotationInherited(method, HttpMethod.class);
-                if (ann != null) {
-                    methodName = ann.value();
-                }
-            }
-
-            if (okhttp3.internal.http.HttpMethod.requiresRequestBody(methodName) && requestBody == null) {
-                requestBody = new RequestBody() {
-                    @Override
-                    public MediaType contentType() {
-                        return MediaType.parse(requestInfo.mimeType != null ? requestInfo.mimeType : "");
-
-                    }
-
-                    @Override
-                    public void writeTo(BufferedSink sink) throws IOException {
-
-                    }
-
-                    @Override
-                    public long contentLength() throws IOException {
-                        return 0;
-                    }
-                };
-            }
-
+            logRequest(requestInfo, debugFlags, requestBody);
+            methodName = changeHttpMethod(method, methodName);
+            requestBody = createEmptyRequestBody(requestInfo, requestBody, methodName);
             final Call call = client.newCall(builder.method(methodName, requestBody).build());
-            if (Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
-                JudoExecutor.ConnectionThread connectionThread = (JudoExecutor.ConnectionThread) Thread.currentThread();
-                connectionThread.setCanceller(new JudoExecutor.ConnectionThread.Canceller() {
-                    @Override
-                    public void cancel() {
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                call.cancel();
-                            }
-                        }).start();
-                    }
-                });
+            attachCanceller(call);
+            if (experimentalAsync) {
+                return handleResponseExperimental(timeStat, requestBody, call);
+            } else {
+                return handleResponse(timeStat, requestBody, call);
             }
-            Response response;
-            try {
-                response = call.execute();
-            } catch (IOException ex) {
-                if (Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
-                    JudoExecutor.ConnectionThread thread = (JudoExecutor.ConnectionThread) Thread.currentThread();
-                    if (thread.isCanceled()) {
-                        thread.resetCanceled();
-                        throw new CancelException(thread.getName());
-                    } else {
-                        throw ex;
-                    }
-                } else {
-                    throw ex;
-                }
-            }
-            timeStat.tickConnectionTime();
-            if (requestBody != null) {
-                timeStat.tickSendTime();
-            }
-            return response;
         } finally {
-
             if (requestInfo.entity != null) {
                 requestInfo.entity.close();
             }
         }
+    }
 
+    private Response handleResponse(TimeStat timeStat, RequestBody requestBody, Call call) throws IOException, InterruptedException {
+        Response response = null;
+        try {
+            response = call.execute();
+        } catch (IOException ex) {
+            checkThreadCancelled(ex);
+        }
+        timeStat.tickConnectionTime();
+        if (requestBody != null) {
+            timeStat.tickSendTime();
+        }
+        return response;
+    }
+
+    private Response handleResponseExperimental(TimeStat timeStat, RequestBody requestBody, Call call) throws IOException, InterruptedException {
+        final OkHttpAsyncResult result = new OkHttpAsyncResult();
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                synchronized (result) {
+                    result.ex = e;
+                    result.notify();
+                }
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                synchronized (result) {
+                    result.response = response;
+                    result.notify();
+                }
+            }
+        });
+        synchronized (result) {
+            result.wait();
+        }
+        if (result.ex != null) {
+            checkThreadCancelled(result.ex);
+        }
+        timeStat.tickConnectionTime();
+        if (requestBody != null) {
+            timeStat.tickSendTime();
+        }
+        return result.response;
+    }
+
+    private static class OkHttpAsyncResult {
+
+        Response response;
+
+        IOException ex;
+    }
+
+    private void checkThreadCancelled(IOException ex) throws IOException {
+        if (Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
+            JudoExecutor.ConnectionThread thread = (JudoExecutor.ConnectionThread) Thread.currentThread();
+            if (thread.isCanceled()) {
+                thread.resetCanceled();
+                throw new CancelException(thread.getName());
+            } else {
+                throw ex;
+            }
+        } else {
+            throw ex;
+        }
+    }
+
+    private void attachCanceller(final Call call) {
+        if (Thread.currentThread() instanceof JudoExecutor.ConnectionThread) {
+            JudoExecutor.ConnectionThread connectionThread = (JudoExecutor.ConnectionThread) Thread.currentThread();
+            connectionThread.setCanceller(new JudoExecutor.ConnectionThread.Canceller() {
+                @Override
+                public void cancel() {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            call.cancel();
+                        }
+                    }).start();
+                }
+            });
+        }
+    }
+
+    @NonNull
+    private RequestBody createRequestBody(final ProtocolController.RequestInfo requestInfo, final TimeStat timeStat) {
+        RequestBody requestBody;
+        requestBody = new RequestBody() {
+            @Override
+            public MediaType contentType() {
+                return MediaType.parse(requestInfo.mimeType != null ? requestInfo.mimeType : "");
+            }
+
+            @Override
+            public void writeTo(BufferedSink sink) throws IOException {
+                OutputStream stream = requestInfo.entity.getContentLength() > 0 ?
+                        new RequestOutputStream(sink.outputStream(), timeStat,
+                                requestInfo.entity.getContentLength()) : sink.outputStream();
+                requestInfo.entity.writeTo(stream);
+            }
+
+            @Override
+            public long contentLength() throws IOException {
+                return requestInfo.entity.getContentLength();
+            }
+        };
+        return requestBody;
+    }
+
+    private RequestBody createEmptyRequestBody(final ProtocolController.RequestInfo requestInfo, RequestBody requestBody, String methodName) {
+        if (okhttp3.internal.http.HttpMethod.requiresRequestBody(methodName) && requestBody == null) {
+            requestBody = new RequestBody() {
+                @Override
+                public MediaType contentType() {
+                    return MediaType.parse(requestInfo.mimeType != null ? requestInfo.mimeType : "");
+
+                }
+
+                @Override
+                public void writeTo(BufferedSink sink) throws IOException {
+
+                }
+
+                @Override
+                public long contentLength() throws IOException {
+                    return 0;
+                }
+            };
+        }
+        return requestBody;
+    }
+
+    private String changeHttpMethod(Method method, String methodName) {
+        if (method != null) {
+            HttpMethod ann = ReflectionCache.getAnnotationInherited(method, HttpMethod.class);
+            if (ann != null) {
+                methodName = ann.value();
+            }
+        }
+        return methodName;
+    }
+
+    private void logRequest(ProtocolController.RequestInfo requestInfo, int debugFlags, RequestBody requestBody) throws IOException {
+        if ((debugFlags & Endpoint.REQUEST_DEBUG) > 0) {
+            if (requestBody != null) {
+                longLog("Request(" + requestInfo.url + ")", requestInfo.entity.getLog(), JudoLogger.LogLevel.INFO);
+            } else {
+                longLog("Request", requestInfo.url, JudoLogger.LogLevel.INFO);
+            }
+        }
     }
 
     @Override
@@ -212,6 +288,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
             if ((debugFlags & Endpoint.RESPONSE_DEBUG) > 0) {
                 longLog("Response code(" + requestName + ")", response.code() + "", JudoLogger.LogLevel.DEBUG);
+                longLog("Response protocol(" + requestName + ")", response.protocol().toString(), JudoLogger.LogLevel.DEBUG);
             }
             return new OkConnection(response);
 
@@ -255,6 +332,14 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
     public void setOkHttpConnectionModifier(OkHttpConnectionModifier okHttpConnectionModifier) {
         this.okHttpConnectionModifier = okHttpConnectionModifier;
+    }
+
+    public boolean isExperimentalAsync() {
+        return experimentalAsync;
+    }
+
+    public void setExperimentalAsync(boolean experimentalAsync) {
+        this.experimentalAsync = experimentalAsync;
     }
 
     public interface OkHttpConnectionModifier {
@@ -319,7 +404,7 @@ public class OkHttpTransportLayer extends HttpTransportLayer {
 
         @Override
         public void close() {
-
+            response.close();
         }
     }
 

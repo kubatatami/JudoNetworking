@@ -5,7 +5,6 @@ import android.os.Process;
 
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
-import com.github.kubatatami.judonetworking.threads.DefaultThreadPoolSizer;
 
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
@@ -16,6 +15,8 @@ import java.util.concurrent.TimeUnit;
  * Created by Kuba on 19/05/14.
  */
 public class JudoExecutor extends ThreadPoolExecutor {
+
+    private static final int CORE_POOL_SIZE = 2;
 
     protected int threadPriority = Process.THREAD_PRIORITY_BACKGROUND;
 
@@ -36,7 +37,7 @@ public class JudoExecutor extends ThreadPoolExecutor {
     };
 
     public JudoExecutor(Endpoint endpoint) {
-        super(DefaultThreadPoolSizer.DEFAULT_CONNECTIONS, Integer.MAX_VALUE, 30, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+        super(CORE_POOL_SIZE, Integer.MAX_VALUE, 30, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
         this.endpoint = endpoint;
         setThreadFactory(threadFactory);
         prestartAllCoreThreads();

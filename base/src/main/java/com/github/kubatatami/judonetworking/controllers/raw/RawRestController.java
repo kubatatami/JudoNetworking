@@ -10,6 +10,10 @@ import com.github.kubatatami.judonetworking.controllers.ProtocolController;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.streams.RequestInputStreamEntity;
 import com.github.kubatatami.judonetworking.internals.streams.RequestMultipartEntity;
+import com.github.kubatatami.judonetworking.internals.streams.parts.BytePartFormData;
+import com.github.kubatatami.judonetworking.internals.streams.parts.FilePartFormData;
+import com.github.kubatatami.judonetworking.internals.streams.parts.InputStreamPartFormData;
+import com.github.kubatatami.judonetworking.internals.streams.parts.StringPartFormData;
 import com.github.kubatatami.judonetworking.utils.FileUtils;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
@@ -130,13 +134,18 @@ public class RawRestController extends RawController {
                     Post postAnnotation = (Post) annotation;
                     Object param = request.getArgs()[i];
                     if (param != null) {
+                        FileName fileNameAnnotation = ReflectionCache.getParameterAnnotation(request.getMethod(), i, FileName.class);
+                        String fileName = fileNameAnnotation == null ? null : fileNameAnnotation.value();
                         if (param instanceof File) {
-                            String name = postAnnotation.value();
-                            addFileMultipart(parts, (File) param, name);
+                            parts.add(new FilePartFormData(postAnnotation.value(), (File) param));
+                        } else if (param instanceof PartFormData) {
+                            parts.add((PartFormData) param);
                         } else if (param instanceof InputStream) {
-                            parts.add(new PartFormData(postAnnotation.value(), (InputStream) param, postAnnotation.mimeType()));
+                            parts.add(new InputStreamPartFormData(postAnnotation.value(), (InputStream) param, postAnnotation.mimeType(), fileName));
+                        } else if (param instanceof byte[]) {
+                            parts.add(new BytePartFormData(postAnnotation.value(), (byte[]) param, postAnnotation.mimeType(), fileName));
                         } else {
-                            addStringMultipart(parts, param.toString(), postAnnotation.value(), postAnnotation.mimeType());
+                            parts.add(new StringPartFormData(postAnnotation.value(), param.toString(), postAnnotation.mimeType(), fileName));
                         }
                     }
                 }
@@ -148,26 +157,6 @@ public class RawRestController extends RawController {
             requestInfo.mimeType = RequestMultipartEntity.getMimeType();
         } else {
             throw new JudoException("No @Post file params.");
-        }
-    }
-
-
-    private void addStringMultipart(List<PartFormData> parts, String data, String name, String mimeType) {
-        try {
-            InputStream is = new ByteArrayInputStream(data.getBytes("UTF-8"));
-            parts.add(new PartFormData(name, is, mimeType));
-        } catch (UnsupportedEncodingException e) {
-            throw new JudoException("Unsupported encoding exception.", e);
-        }
-    }
-
-    private void addFileMultipart(List<PartFormData> parts, File file, String name) {
-        try {
-            FileInputStream fileInputStream = new FileInputStream(file);
-            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(FileUtils.getFileExtension(file));
-            parts.add(new PartFormData(name, fileInputStream, mimeType, file.getName(), file.length()));
-        } catch (FileNotFoundException e) {
-            throw new JudoException("File is not exist.", e);
         }
     }
 
@@ -337,6 +326,13 @@ public class RawRestController extends RawController {
         String value() default "";
 
         String mimeType() default "";
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface FileName {
+
+        String value() default "";
     }
 
     @Retention(RetentionPolicy.RUNTIME)

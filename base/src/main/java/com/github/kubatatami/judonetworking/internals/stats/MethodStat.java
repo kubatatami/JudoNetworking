@@ -14,15 +14,17 @@ public class MethodStat implements Serializable {
 
     public long requestCount = 0;
 
-    public long avgTime = 0;
+    public long methodTime = 0;
+
+    public long allTime = 0;
 
     public long errors = 0;
-
 
     @Override
     public String toString() {
         return "requestCount=" + requestCount +
-                ", avgTime=" + avgTime +
+                ", methodTime=" + methodTime +
+                ", allTime=" + allTime +
                 ", errors=" + errors;
     }
 }

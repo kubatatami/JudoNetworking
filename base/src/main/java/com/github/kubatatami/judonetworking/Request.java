@@ -22,6 +22,8 @@ public interface Request {
 
     boolean isVoidResult();
 
+    boolean isStringResult();
+
     String[] getParamNames();
 
     boolean isAllowEmptyResult();
@@ -39,4 +41,5 @@ public interface Request {
     int getMethodId();
 
     Method getMethod();
+
 }

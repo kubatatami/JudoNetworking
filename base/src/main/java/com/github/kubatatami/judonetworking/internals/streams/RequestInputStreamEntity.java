@@ -71,8 +71,6 @@ public class RequestInputStreamEntity implements StreamEntity {
             throw new IllegalArgumentException("Output stream may not be null");
         }
         FileUtils.copyStream(outstream, content, length);
-        outstream.flush();
-        outstream.close();
     }
 
     @Override

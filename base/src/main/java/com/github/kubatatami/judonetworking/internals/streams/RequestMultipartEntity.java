@@ -1,9 +1,6 @@
 package com.github.kubatatami.judonetworking.internals.streams;
 
-import com.github.kubatatami.judonetworking.utils.FileUtils;
-
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.List;
@@ -24,8 +21,10 @@ public class RequestMultipartEntity implements StreamEntity {
     }
 
     @Override
-    public long getContentLength() {
-        return -1;
+    public long getContentLength() throws IOException {
+        CountOutputStream outputStream = new CountOutputStream();
+        write(null, outputStream);
+        return outputStream.getCount();
     }
 
     @Override
@@ -44,9 +43,9 @@ public class RequestMultipartEntity implements StreamEntity {
         for (PartFormData part : parts) {
             write(sb, outStream, "--");
             writeLine(sb, outStream, BOUNDARY);
-            write(sb, outStream, "Content-Disposition: form-data; name=\"" + part.getName() + "\";");
-            if (part.getFileName() != null && !part.getFileName().isEmpty()) {
-                write(sb, outStream, "filename=\"" + part.getFileName() + "\"");
+            write(sb, outStream, "Content-Disposition: form-data; name=\"" + part.getName() + "\"");
+            if (part.getFileName() != null) {
+                write(sb, outStream, "; filename=\"" + part.getFileName() + "\"");
             }
             writeNewLine(sb, outStream);
             if (part.getMimeType() != null && !part.getMimeType().isEmpty()) {
@@ -56,7 +55,7 @@ public class RequestMultipartEntity implements StreamEntity {
                 writeLine(sb, outStream, "Content-Length: " + part.getSize());
             }
             writeNewLine(sb, outStream);
-            write(sb, outStream, part.getInputStream(), part.getSize());
+            write(sb, outStream, part);
             writeNewLine(sb, outStream);
         }
         write(sb, outStream, "--");
@@ -65,14 +64,12 @@ public class RequestMultipartEntity implements StreamEntity {
         writeNewLine(sb, outStream);
     }
 
-    private void write(StringBuilder sb, OutputStream outStream, InputStream inputStream, long size) throws IOException {
+    private void write(StringBuilder sb, OutputStream outStream, PartFormData part) throws IOException {
         if (sb != null) {
-            sb.append("[Binary body size: ");
-            sb.append(size);
-            sb.append("]");
+            part.write(sb);
         }
         if (outStream != null) {
-            FileUtils.copyStream(outStream, inputStream, size);
+            part.write(outStream);
         }
     }
 
@@ -107,7 +104,7 @@ public class RequestMultipartEntity implements StreamEntity {
     @Override
     public void close() throws IOException {
         for (PartFormData part : parts) {
-            part.getInputStream().close();
+            part.close();
         }
     }
 
@@ -115,48 +112,20 @@ public class RequestMultipartEntity implements StreamEntity {
         return "multipart/form-data; boundary=" + BOUNDARY;
     }
 
-    public static class PartFormData {
+    public interface PartFormData {
 
-        private String name;
+        String getName();
 
-        private InputStream inputStream;
+        void write(StringBuilder sb);
 
-        private String mimeType;
+        void write(OutputStream outputStream) throws IOException;
 
-        private String fileName;
+        long getSize();
 
-        private final long size;
+        void close() throws IOException;
 
-        public PartFormData(String name, InputStream inputStream, String mimeType) {
-            this(name, inputStream, mimeType, null, -1);
-        }
+        String getMimeType();
 
-        public PartFormData(String name, InputStream inputStream, String mimeType, String fileName, long size) {
-            this.name = name;
-            this.inputStream = inputStream;
-            this.mimeType = mimeType;
-            this.fileName = fileName;
-            this.size = size;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public InputStream getInputStream() {
-            return inputStream;
-        }
-
-        public String getMimeType() {
-            return mimeType;
-        }
-
-        public String getFileName() {
-            return fileName;
-        }
-
-        public long getSize() {
-            return size;
-        }
+        String getFileName();
     }
 }

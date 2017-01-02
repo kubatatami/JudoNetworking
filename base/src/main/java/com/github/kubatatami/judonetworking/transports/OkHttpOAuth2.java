@@ -16,61 +16,62 @@ import okhttp3.Route;
  */
 public abstract class OkHttpOAuth2 {
 
-    protected String tokenType;
+    private String tokenType;
 
-    protected String accessToken;
+    private String accessToken;
 
-    protected AsyncResult tokenAsyncResult;
+    private long tokenLifeTime;
 
-    protected boolean lastTokenValid = true;
-
-    protected Interceptor oAuthInterceptor = new Interceptor() {
+    private Interceptor oAuthInterceptor = new Interceptor() {
         @Override
         public Response intercept(Chain chain) throws IOException {
             Request request = chain.request();
-            await();
-            if (accessToken != null && tokenType != null) {
-                request = request.newBuilder()
-                        .header("Authorization", tokenType + " " + accessToken).build();
+            synchronized (this) {
+                if (canDoTokenRequest() && needNewToken()) {
+                    callForToken();
+                }
+                if (accessToken != null && tokenType != null) {
+                    request = request.newBuilder()
+                            .header("Authorization", tokenType + " " + accessToken).build();
+                }
             }
-            Response response = chain.proceed(request);
-            if (response.isSuccessful()) {
-                lastTokenValid = true;
-            }
-            return response;
+            return chain.proceed(request);
         }
     };
 
-    private void await() throws IOException {
-        try {
-            if (tokenAsyncResult != null) {
-                tokenAsyncResult.await();
+    private boolean needNewToken() {
+        return accessToken == null || tokenExpired();
+    }
+
+    private boolean tokenExpired() {
+        return tokenLifeTime != 0 && tokenLifeTime < System.currentTimeMillis();
+    }
+
+    private Authenticator oAuthAuthenticator = new Authenticator() {
+        @Override
+        public Request authenticate(Route route, Response response) throws IOException {
+            String prevAccessToken = accessToken;
+            synchronized (this) {
+                if (canDoTokenRequest()) {
+                    if (prevAccessToken != null && prevAccessToken.equals(accessToken)) {
+                        callForToken();
+                    }
+                    if (accessToken != null) {
+                        return response.request();
+                    }
+                }
+                return null;
             }
+        }
+    };
+
+    private void callForToken() throws IOException {
+        try {
+            doTokenRequest().await();
         } catch (InterruptedException e) {
             throw new IOException(e);
         }
     }
-
-    protected Authenticator oAuthAuthenticator = new Authenticator() {
-        @Override
-        public Request authenticate(Route route, Response response) throws IOException {
-            if (lastTokenValid && canDoTokenRequest()) {
-                boolean createToken = false;
-                if (tokenAsyncResult == null || tokenAsyncResult.isDone()) {
-                    tokenAsyncResult = doTokenRequest();
-                    createToken = true;
-                }
-                await();
-                if (accessToken != null) {
-                    if (createToken) {
-                        lastTokenValid = false;
-                    }
-                    return response.request();
-                }
-            }
-            return null;
-        }
-    };
 
     public void prepareOkHttpToOAuth(OkHttpClient.Builder okHttpClient) {
         okHttpClient.networkInterceptors().add(oAuthInterceptor);
@@ -80,6 +81,22 @@ public abstract class OkHttpOAuth2 {
     public void setOAuthToken(String tokenType, String accessToken) {
         this.tokenType = tokenType;
         this.accessToken = accessToken;
+    }
+
+    public void setTokenLifeTime(long tokenLifeTime) {
+        this.tokenLifeTime = tokenLifeTime;
+    }
+
+    public String getTokenType() {
+        return tokenType;
+    }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
+
+    public long getTokenLifeTime() {
+        return tokenLifeTime;
     }
 
     protected abstract AsyncResult doTokenRequest();

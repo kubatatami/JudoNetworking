@@ -23,9 +23,12 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
 
     private final DataLayerHttpTransportLayer dataLayerHttpTransportLayer;
 
+    private boolean directNetworkEnabled = true;
+
     public WearHttpTransportLayer(Context context) {
         this(context, new OkHttpClient());
     }
+
     public WearHttpTransportLayer(Context context, OkHttpClient okHttpClient) {
         this.context = context;
         okHttpTransportLayer = new OkHttpTransportLayer(okHttpClient);
@@ -33,7 +36,7 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
     }
 
     protected HttpTransportLayer getTransportLayer() {
-        if (NetworkUtils.isDirectNetworkAvailable(context)) {
+        if (directNetworkEnabled && NetworkUtils.isDirectNetworkAvailable(context)) {
             return okHttpTransportLayer;
         } else {
             return dataLayerHttpTransportLayer;
@@ -81,5 +84,9 @@ public class WearHttpTransportLayer extends HttpTransportLayer {
 
     public DataLayerHttpTransportLayer getDataLayerHttpTransportLayer() {
         return dataLayerHttpTransportLayer;
+    }
+
+    public void setDirectNetworkEnabled(boolean directNetworkEnabled) {
+        this.directNetworkEnabled = directNetworkEnabled;
     }
 }

@@ -1,11 +1,13 @@
 package com.github.kubatatami.judonetworking.internals;
 
 
+import android.app.ActivityManager;
 import android.util.Base64;
 
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.Endpoint;
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.annotations.Base64Param;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.controllers.ProtocolController;
@@ -25,6 +27,7 @@ import com.github.kubatatami.judonetworking.internals.virtuals.VirtualCallback;
 import com.github.kubatatami.judonetworking.internals.virtuals.VirtualServerInfo;
 import com.github.kubatatami.judonetworking.logs.JudoLogger;
 import com.github.kubatatami.judonetworking.transports.TransportLayer;
+import com.github.kubatatami.judonetworking.utils.FileUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -34,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.Scanner;
 
 public class RequestConnector {
 
@@ -53,41 +55,29 @@ public class RequestConnector {
         JudoLogger.longLog(tag, message, level);
     }
 
-    private static String convertStreamToString(InputStream is) {
-        Scanner s = new Scanner(is).useDelimiter("\\A");
-        return s.hasNext() ? s.next() : "";
-    }
-
     private RequestResult sendRequest(RequestImpl request, TimeStat timeStat) {
-        return sendRequest(request, timeStat, false);
-    }
-
-    private RequestResult sendRequest(RequestImpl request, TimeStat timeStat, boolean ignoreTokenError) {
+        TransportLayer.Connection conn = null;
         try {
             RequestResult result;
             ProtocolController controller = rpc.getProtocolController();
             result = handleVirtualServerRequest(request, timeStat);
-            if (result != null) {
-                if (result.error != null) {
-                    return result;
-                }
-            } else {
+            if (result == null) {
                 ProtocolController.RequestInfo requestInfo = controller.createRequest(
                         request.getCustomUrl() == null ? rpc.getUrl() : request.getCustomUrl(),
                         request);
                 timeStat.tickCreateTime();
+                throwErrorOnMonkey(request);
                 lossCheck();
                 EndpointImpl.checkThread();
                 delay(request.getDelay());
-
-                TransportLayer.Connection conn = transportLayer.send(request.getName(), controller, requestInfo, request.getTimeout(), timeStat,
+                EndpointImpl.checkThread();
+                conn = transportLayer.send(request.getName(), controller, requestInfo, request.getTimeout(), timeStat,
                         rpc.getDebugFlags(), request.getMethod());
                 EndpointImpl.checkThread();
 
                 InputStream connectionStream = conn.getStream();
                 if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
-
-                    String resStr = convertStreamToString(conn.getStream());
+                    String resStr = FileUtils.convertStreamToString(conn.getStream());
                     longLog("Response body(" + request.getName() + ", " + resStr.length() + " Bytes)", resStr, JudoLogger.LogLevel.INFO);
                     connectionStream = new ByteArrayInputStream(resStr.getBytes());
                 }
@@ -101,13 +91,16 @@ public class RequestConnector {
                 } catch (Exception ignored) {
                 }
                 timeStat.tickParseTime();
-                conn.close();
             }
             return result;
         } catch (JudoException e) {
             return new ErrorResult(request.getId(), e);
         } catch (Exception e) {
             return new ErrorResult(request.getId(), new JudoException(e));
+        } finally {
+            if (conn != null) {
+                conn.close();
+            }
         }
     }
 
@@ -117,7 +110,6 @@ public class RequestConnector {
         result[org.length] = added;
         return result;
     }
-
 
     private RequestResult handleVirtualServerRequest(RequestImpl request, TimeStat timeStat) throws JudoException {
         try {
@@ -266,7 +258,10 @@ public class RequestConnector {
 
 
             if (rpc.isTimeProfiler()) {
-                refreshStat(request.getName(), timeStat.getMethodTime());
+                refreshStat(request.getName(),
+                        timeStat.getMethodTime(),
+                        timeStat.getAllTime()
+                );
             }
 
             if ((rpc.getDebugFlags() & Endpoint.TIME_DEBUG) > 0) {
@@ -285,24 +280,17 @@ public class RequestConnector {
                     rpc.getDiskCache().put(cacheMethod, Arrays.deepToString(request.getArgs()), result.result, request.getLocalCacheSize(), request.getHeaders());
                 }
             }
-
             return result.result;
         } catch (JudoException e) {
-            refreshErrorStat(request.getName(), request.getTimeout());
+            refreshErrorStat(request);
             throw e;
         }
-
     }
 
     public List<RequestResult> callBatch(List<RequestImpl> requests, ProgressObserver progressObserver, Integer timeout) throws JudoException {
         final List<RequestResult> results = new ArrayList<>(requests.size());
-
-
         if (requests.size() > 0) {
-
-
             if (rpc.getProtocolController().isBatchSupported()) {
-
                 List<RequestImpl> copyRequest = new ArrayList<>(requests);
                 VirtualServerInfo virtualServerInfo = rpc.getVirtualServers().get(requests.get(0).getMethod().getDeclaringClass());
                 if (virtualServerInfo != null) {
@@ -364,19 +352,53 @@ public class RequestConnector {
                 synchronized (progressObserver) {
                     progressObserver.setMaxProgress(progressObserver.getMaxProgress() + (requests.size() - 1) * TimeStat.TICKS);
                 }
-                for (final RequestImpl request : requests) {
-                    final TimeStat timeStat = new TimeStat(progressObserver);
-                    if (!request.isCancelled()) {
-                        RequestResult result = sendRequest(request, timeStat);
-                        results.add(result);
-                    }
-                }
-
+                final TimeStat timeStat = new TimeStat(progressObserver);
+                sendBatchAsNormalRequests(requests, timeStat, results);
             }
         }
         return results;
     }
 
+    private void sendBatchAsNormalRequests(List<RequestImpl> requests, TimeStat timeStat, List<RequestResult> results) {
+        List<Thread> threads = new ArrayList<>();
+        for (final RequestImpl request : requests) {
+            if (!request.isCancelled()) {
+                threads.add(sendBatchAsNormalRequest(request, results, timeStat));
+            }
+        }
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new JudoException(e);
+            }
+        }
+    }
+
+    private Thread sendBatchAsNormalRequest(final RequestImpl request, final List<RequestResult> results, final TimeStat timeStat) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                RequestResult result = sendRequest(request, timeStat);
+                timeStat.tickEndTime();
+                if (rpc.isTimeProfiler()) {
+                    if (result.error != null) {
+                        refreshErrorStat(request);
+                    } else {
+                        refreshStat(request.getName(),
+                                timeStat.getMethodTime(),
+                                timeStat.getAllTime()
+                        );
+                    }
+                }
+                synchronized (results) {
+                    results.add(result);
+                }
+            }
+        });
+        thread.start();
+        return thread;
+    }
 
     private void delay(int requestDelay) {
         int delay = rpc.getDelay() + requestDelay;
@@ -390,7 +412,7 @@ public class RequestConnector {
     }
 
     public List<RequestResult> callRealBatch(List<RequestImpl> requests, ProgressObserver progressObserver, Integer timeout, String requestsName) throws JudoException {
-
+        TransportLayer.Connection conn = null;
         try {
 
             ProtocolController controller = rpc.getProtocolController();
@@ -400,6 +422,7 @@ public class RequestConnector {
 
             ProtocolController.RequestInfo requestInfo = controller.createRequests(rpc.getUrl(), (List) requests);
             timeStat.tickCreateTime();
+            List<RequestResult> monkeyResponses = removeErrorOnMonkeyRequests(requests);
             lossCheck();
             int maxDelay = 0;
             for (RequestImpl request : requests) {
@@ -407,12 +430,12 @@ public class RequestConnector {
             }
             EndpointImpl.checkThread();
             delay(maxDelay);
-            TransportLayer.Connection conn = transportLayer.send(requestsName, controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null);
+            conn = transportLayer.send(requestsName, controller, requestInfo, timeout, timeStat, rpc.getDebugFlags(), null);
             EndpointImpl.checkThread();
             InputStream connectionStream = conn.getStream();
             if ((rpc.getDebugFlags() & Endpoint.RESPONSE_DEBUG) > 0) {
 
-                String resStr = convertStreamToString(conn.getStream());
+                String resStr = FileUtils.convertStreamToString(conn.getStream());
                 longLog("Response body(" + requestsName + ", " + resStr.length() + " Bytes)", resStr, JudoLogger.LogLevel.INFO);
                 connectionStream = new ByteArrayInputStream(resStr.getBytes());
             }
@@ -422,19 +445,11 @@ public class RequestConnector {
                 request.setHeaders(conn.getHeaders());
             }
             responses = controller.parseResponses((List) requests, stream, conn.getHeaders());
+            responses.addAll(monkeyResponses);
             EndpointImpl.checkThread();
             timeStat.tickParseTime();
-            conn.close();
             timeStat.tickEndTime();
-            if (rpc.isTimeProfiler()) {
-
-                for (RequestImpl request : requests) {
-                    refreshStat(request.getName(), timeStat.getMethodTime() / requests.size());
-                }
-                rpc.saveStat();
-            }
-
-
+            calcTimeProfiler(requests, timeStat);
             if ((rpc.getDebugFlags() & Endpoint.TIME_DEBUG) > 0) {
                 timeStat.logTime("End batch request(" + requestsName.substring(1) + "):");
             }
@@ -442,14 +457,48 @@ public class RequestConnector {
             return responses;
         } catch (JudoException e) {
             for (RequestImpl request : requests) {
-                refreshErrorStat(request.getName(), request.getTimeout());
+                refreshErrorStat(request);
                 rpc.saveStat();
             }
             RequestProxy.addToExceptionMessage(requestsName.substring(1), e);
             throw e;
+        } finally {
+            if (conn != null) {
+                conn.close();
+            }
         }
     }
 
+    private List<RequestResult> removeErrorOnMonkeyRequests(List<RequestImpl> requests) {
+        List<RequestResult> responses = new ArrayList<>();
+        for (int i = requests.size(); i >= 0; i--) {
+            try {
+                throwErrorOnMonkey(requests.get(i));
+            } catch (ConnectionException ex) {
+                requests.remove(i);
+                responses.add(new ErrorResult(requests.get(i).getId(), ex));
+            }
+        }
+        return responses;
+    }
+
+    private void calcTimeProfiler(List<RequestImpl> requests, TimeStat timeStat) {
+        if (rpc.isTimeProfiler()) {
+            for (RequestImpl request : requests) {
+                refreshStat(request.getName(),
+                        timeStat.getMethodTime() / requests.size(),
+                        timeStat.getAllTime() / requests.size()
+                );
+            }
+            rpc.saveStat();
+        }
+    }
+
+    private void throwErrorOnMonkey(RequestImpl request) throws JudoException {
+        if (ActivityManager.isUserAMonkey() && request.isRejectOnMonkeyTest()) {
+            throw new ConnectionException("Rejected during monkey test.");
+        }
+    }
 
     private void lossCheck() throws JudoException {
         float percentLoss = rpc.getPercentLoss();
@@ -470,19 +519,21 @@ public class RequestConnector {
         return stat;
     }
 
-    private void refreshStat(String method, long time) {
+    private void refreshStat(String method, long methodTime, long allTime) {
         MethodStat stat = getStat(method);
-        stat.avgTime = ((stat.avgTime * stat.requestCount) + time) / (stat.requestCount + 1);
+        stat.methodTime = ((stat.methodTime * stat.requestCount) + methodTime) / (stat.requestCount + 1);
+        stat.allTime = ((stat.allTime * stat.requestCount) + allTime) / (stat.requestCount + 1);
         stat.requestCount++;
         rpc.saveStat();
     }
 
-    private void refreshErrorStat(String method, long timeout) {
-        MethodStat stat = getStat(method);
-        stat.avgTime = ((stat.avgTime * stat.requestCount) + timeout) / (stat.requestCount + 1);
-        stat.errors++;
-        stat.requestCount++;
-        rpc.saveStat();
+    private void refreshErrorStat(Request request) {
+        if (!request.isCancelled()) {
+            MethodStat stat = getStat(request.getName());
+            stat.errors++;
+            stat.requestCount++;
+            rpc.saveStat();
+        }
     }
 
     public void setConnectTimeout(int connectTimeout) {

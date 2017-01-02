@@ -1,13 +1,10 @@
 package com.github.kubatatami.judonetworking.callbacks;
 
-import android.annotation.TargetApi;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.os.Build;
-
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
+import com.github.kubatatami.judonetworking.builders.DefaultCallbackBuilder;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.fragments.ViewStateFragment;
 
 import java.lang.ref.WeakReference;
 
@@ -17,37 +14,36 @@ import java.lang.ref.WeakReference;
  * Date: 23.04.2013
  * Time: 11:40
  */
-@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-public class FragmentCallback<T> extends DefaultCallback<T> implements FragmentManager.OnBackStackChangedListener {
+public class FragmentCallback<T> extends DefaultCallbackBuilder.LambdaCallback<T> {
 
-    private final WeakReference<Fragment> fragment;
+    private final WeakReference<ViewStateFragment> fragment;
 
-    private final WeakReference<FragmentManager> manager;
-
-    private AsyncResult asyncResult;
-
-    public FragmentCallback(Fragment fragment) {
+    public FragmentCallback(ViewStateFragment fragment) {
         this.fragment = new WeakReference<>(fragment);
-        this.manager = new WeakReference<>(fragment.getFragmentManager());
-        if (manager.get() != null) {
-            manager.get().addOnBackStackChangedListener(this);
-        }
+    }
+
+    public FragmentCallback(Builder<T> builder) {
+        super(builder);
+        this.fragment = new WeakReference<>(builder.fragment);
     }
 
     @Override
     public final void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
-        this.asyncResult = asyncResult;
-        if (fragment.get() != null && fragment.get().getActivity() != null) {
-            onSafeStart(cacheInfo, asyncResult);
+        if (isFragmentActive()) {
+            super.onStart(cacheInfo, asyncResult);
         } else {
             tryCancel();
         }
     }
 
+    private boolean isFragmentActive() {
+        return fragment.get() != null && fragment.get().getActivity() != null && !fragment.get().isViewDestroyed();
+    }
+
     @Override
     public final void onSuccess(T result) {
-        if (fragment.get() != null && fragment.get().getActivity() != null) {
-            onSafeSuccess(result);
+        if (isFragmentActive()) {
+            super.onSuccess(result);
         } else {
             tryCancel();
         }
@@ -55,8 +51,8 @@ public class FragmentCallback<T> extends DefaultCallback<T> implements FragmentM
 
     @Override
     public final void onError(JudoException e) {
-        if (fragment.get() != null && fragment.get().getActivity() != null) {
-            onSafeError(e);
+        if (isFragmentActive()) {
+            super.onError(e);
         } else {
             tryCancel();
         }
@@ -64,8 +60,8 @@ public class FragmentCallback<T> extends DefaultCallback<T> implements FragmentM
 
     @Override
     public final void onProgress(int progress) {
-        if (fragment.get() != null && fragment.get().getActivity() != null) {
-            onSafeProgress(progress);
+        if (isFragmentActive()) {
+            super.onProgress(progress);
         } else {
             tryCancel();
         }
@@ -73,50 +69,35 @@ public class FragmentCallback<T> extends DefaultCallback<T> implements FragmentM
 
     @Override
     public final void onFinish() {
-        if (fragment.get() != null && fragment.get().getActivity() != null) {
-            onSafeFinish();
+        if (isFragmentActive()) {
+            super.onFinish();
         } else {
             tryCancel();
-        }
-        if (manager.get() != null) {
-            manager.get().removeOnBackStackChangedListener(this);
         }
     }
 
     protected void tryCancel() {
-        if (asyncResult != null) {
-            asyncResult.cancel();
-            if (manager.get() != null) {
-                manager.get().removeOnBackStackChangedListener(this);
-            }
+        if (getAsyncResult() != null) {
+            getAsyncResult().cancel();
         }
     }
 
-    public void onSafeStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
-
+    public static <T> Builder<T> builder(ViewStateFragment fragment) {
+        return new Builder<>(fragment);
     }
 
-    public void onSafeProgress(int progress) {
+    public static class Builder<T> extends DefaultCallbackBuilder<T, Builder<T>> {
 
-    }
+        private ViewStateFragment fragment;
 
-    public void onSafeSuccess(T result) {
+        public Builder(ViewStateFragment fragment) {
+            this.fragment = fragment;
+        }
 
-    }
-
-    public void onSafeFinish() {
-
-    }
-
-    public void onSafeError(JudoException e) {
-
-    }
-
-
-    @Override
-    public void onBackStackChanged() {
-        if (fragment.get() != null && fragment.get().getActivity() == null) {
-            tryCancel();
+        @Override
+        public FragmentCallback<T> build() {
+            return new FragmentCallback<>(this);
         }
     }
+
 }

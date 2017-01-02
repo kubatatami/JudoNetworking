@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking.stateful;
 
 import com.github.kubatatami.judonetworking.callbacks.BaseCallback;
+import com.github.kubatatami.judonetworking.callbacks.Identifiable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,7 +56,7 @@ public class StatefulCache {
     public static boolean connectControllerCallbacks(StatefulController controller, BaseCallback<?>... callbacks) {
         boolean result = false;
         for (BaseCallback<?> callback : callbacks) {
-            result |= connectControllerCallback(controller, callback.getClass().hashCode(), callback);
+            result |= connectControllerCallback(controller, StatefulCache.getCallbackId(callback), callback);
         }
         return result;
     }
@@ -78,6 +79,24 @@ public class StatefulCache {
                 fragmentCallbackMap.get(id).tryCancel();
             }
         }
+    }
+
+    public static int getCallbackId(Object callback) {
+        if (callback instanceof Identifiable) {
+            return ((Identifiable) callback).getId();
+        } else {
+            return callback.getClass().hashCode();
+        }
+    }
+
+    public static int calcHashCode(Object... objects) {
+        int result = 0;
+        for (Object obj : objects) {
+            if (obj != null) {
+                result += obj.getClass().hashCode();
+            }
+        }
+        return result;
     }
 
 }

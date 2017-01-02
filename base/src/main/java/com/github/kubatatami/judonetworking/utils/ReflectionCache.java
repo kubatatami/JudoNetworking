@@ -95,7 +95,7 @@ public class ReflectionCache {
     public static <T extends Annotation> T getParameterAnnotation(Method method, int param, Class<T> annotationClass) {
         Annotation[][] annotations = getParameterAnnotations(method);
         for (Annotation annotation : annotations[param]) {
-            if (annotation.getClass().isInstance(annotationClass)) {
+            if (annotationClass.isInstance(annotation)) {
                 return (T) annotation;
             }
         }
