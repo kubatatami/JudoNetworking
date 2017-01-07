@@ -11,7 +11,13 @@ public class AddObserverResult<T> {
         this.observer = observer;
     }
 
-    public void deleteObserverOnDestroy(ObservableController controller) {
+    public AddObserverResult<T> deleteObserverOnDestroy(ObservableController controller) {
+        controller.addObserverToDelete(observableWrapper, observer);
+        return this;
+    }
 
+    public AddObserverResult<T> notifyObservers() {
+        observableWrapper.notifyObservers();
+        return this;
     }
 }
