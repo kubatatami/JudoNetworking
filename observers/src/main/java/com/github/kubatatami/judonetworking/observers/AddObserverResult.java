@@ -16,8 +16,8 @@ public class AddObserverResult<T> {
         return this;
     }
 
-    public AddObserverResult<T> notifyObservers() {
-        observableWrapper.notifyObservers();
+    public AddObserverResult<T> notifyNow() {
+        observer.onUpdate(observableWrapper.get());
         return this;
     }
 }
