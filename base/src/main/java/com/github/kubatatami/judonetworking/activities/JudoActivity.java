@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.activity;
+package com.github.kubatatami.judonetworking.activities;
 
 import android.app.Activity;
 import android.os.Bundle;

@@ -16,7 +16,7 @@ import java.util.TimerTask;
 public class ObservableWrapper<T> extends DefaultCallback<T> {
     protected T object = null;
     protected final Handler handler = new Handler(Looper.getMainLooper());
-    protected final List<WrapObserver<T>> observers = new ArrayList<>();
+    protected final List<WrapperObserver<T>> observers = new ArrayList<>();
     protected ObservableWrapperListener<T> listener = null;
     protected boolean notifyInUiThread = true;
     protected long dataSetTime = 0;
@@ -63,11 +63,11 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         return true;
     }
 
-    public void addObserver(WrapObserver<T> observer) {
-        addObserver(observer, true);
+    public AddObserverResult addObserver(WrapperObserver<T> observer) {
+        return addObserver(observer, true);
     }
 
-    public void addObserver(WrapObserver<T> observer, boolean notify) {
+    public AddObserverResult addObserver(WrapperObserver<T> observer, boolean notify) {
         boolean add = true;
         if (listener != null) {
             add = listener.onAddObserver(this, observer);
@@ -77,13 +77,14 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
             if (notify) {
                 T obj = get();
                 if (obj != null || notifyOnNull) {
-                    observer.update(obj);
+                    observer.onUpdate(obj);
                 }
             }
         }
+        return new AddObserverResult<>(this, observer);
     }
 
-    public void deleteObserver(WrapObserver<T> observer) {
+    public void deleteObserver(WrapperObserver<T> observer) {
         boolean delete = true;
         if (listener != null) {
             delete = listener.onDeleteObserver(this, observer);
@@ -224,7 +225,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
                     @Override
                     public void run() {
                         for (int i = observers.size() - 1; i >= 0; i--) {
-                            observers.get(i).update(object);
+                            observers.get(i).onUpdate(object);
                         }
                     }
                 };

@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.observers;
+package com.github.kubatatami.judonetworking.adapters;
 
 import android.content.Context;
 import android.util.Pair;
@@ -8,6 +8,9 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
+import com.github.kubatatami.judonetworking.observers.ExceptionHandler;
+import com.github.kubatatami.judonetworking.observers.HolderCallback;
+import com.github.kubatatami.judonetworking.observers.HolderView;
 import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 
 import java.lang.reflect.Constructor;
@@ -255,7 +258,7 @@ public class ObserverAdapterHelper {
     }
 
 
-    static Method getMethod(String fieldName, Class<?> objectClass) throws NoSuchFieldException {
+    public static Method getMethod(String fieldName, Class<?> objectClass) throws NoSuchFieldException {
         Method finalMethod = null;
         while (objectClass != null && finalMethod == null) {
             for (Method method : objectClass.getDeclaredMethods()) {

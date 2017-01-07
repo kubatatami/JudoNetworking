@@ -13,6 +13,7 @@ import android.widget.Adapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.github.kubatatami.judonetworking.adapters.ObserverAdapterHelper;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 
 import java.lang.reflect.Method;
@@ -30,9 +31,12 @@ import java.util.regex.Pattern;
  * Time: 22:23
  */
 public class ObserverHelper {
-    private List<Pair<ObservableWrapper, WrapObserver>> dataObservers = new ArrayList<>();
+
+    private Map<ObservableWrapper, WrapperObserver> observersToDeleteOnDestroy = new HashMap<>();
+
+    private List<Pair<ObservableWrapper, WrapperObserver>> dataObservers = new ArrayList<>();
     private List<Pair<Adapter, DataSetObserver>> dataAdapters = new ArrayList<>();
-    private Map<View, Pair<ObservableWrapper, WrapObserver>> viewObservers = new HashMap<>();
+    private Map<View, Pair<ObservableWrapper, WrapperObserver>> viewObservers = new HashMap<>();
 
     private static final String splitter = "\\.";
     private static final Pattern pattern = Pattern.compile("\\[[^\\]]*\\]");
@@ -142,9 +146,9 @@ public class ObserverHelper {
 
                 final List<ObservableWrapper> results = findObservablesByTag(tag);
 
-                WrapObserver observer = new WrapObserver() {
+                WrapperObserver observer = new WrapperObserver() {
                     @Override
-                    public void update(Object data) {
+                    public void onUpdate(Object data) {
                         try {
                             if (view instanceof TextView) {
                                 TextView textView = (TextView) view;
@@ -232,9 +236,9 @@ public class ObserverHelper {
                 final Object wrapperOrAdapter = observerMethod.field.get(ObserverHelper.dataObject);
                 if (wrapperOrAdapter instanceof ObservableWrapper) {
                     final ObservableWrapper wrapper = (ObservableWrapper) wrapperOrAdapter;
-                    WrapObserver observer = new WrapObserver() {
+                    WrapperObserver observer = new WrapperObserver() {
                         @Override
-                        public void update(Object data) {
+                        public void onUpdate(Object data) {
                             try {
                                 if (data != null || wrapper.isNotifyOnNull()) {
                                     observerMethod.method.invoke(object, data);
@@ -347,13 +351,13 @@ public class ObserverHelper {
 
     @SuppressWarnings("unchecked")
     public void stop() {
-        for (Pair<ObservableWrapper, WrapObserver> pair : dataObservers) {
+        for (Pair<ObservableWrapper, WrapperObserver> pair : dataObservers) {
             pair.first.deleteObserver(pair.second);
         }
         for (Pair<Adapter, DataSetObserver> pair : dataAdapters) {
             pair.first.unregisterDataSetObserver(pair.second);
         }
-        for (Pair<ObservableWrapper, WrapObserver> pair : viewObservers.values()) {
+        for (Pair<ObservableWrapper, WrapperObserver> pair : viewObservers.values()) {
             pair.first.deleteObserver(pair.second);
         }
 
@@ -362,5 +366,14 @@ public class ObserverHelper {
         viewObservers.clear();
     }
 
+    public void addObserverToDelete(ObservableWrapper<?> observableWrapper, WrapperObserver<?> observer) {
+        observersToDeleteOnDestroy.put(observableWrapper, observer);
+    }
 
+    public void onDestroy() {
+        for (Map.Entry<ObservableWrapper, WrapperObserver> entry : observersToDeleteOnDestroy.entrySet()) {
+            //noinspection unchecked
+            entry.getKey().deleteObserver(entry.getValue());
+        }
+    }
 }

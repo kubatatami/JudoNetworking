@@ -19,12 +19,12 @@ public class ObservableWrapperListener<T> implements ObservableWrapperListenerIn
     }
 
     @Override
-    public boolean onAddObserver(ObservableWrapper<T> wrapper, WrapObserver<T> observer) {
+    public boolean onAddObserver(ObservableWrapper<T> wrapper, WrapperObserver<T> observer) {
         return true;
     }
 
     @Override
-    public boolean onDeleteObserver(ObservableWrapper<T> wrapper, WrapObserver<T> observer) {
+    public boolean onDeleteObserver(ObservableWrapper<T> wrapper, WrapperObserver<T> observer) {
         return true;
     }
 

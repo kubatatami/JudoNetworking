@@ -216,7 +216,7 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
         });
     }
 
-    protected enum Level {
+    public enum Level {
         CACHE, DATA
     }
 

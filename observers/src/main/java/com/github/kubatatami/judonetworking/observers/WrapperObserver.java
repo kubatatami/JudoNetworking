@@ -6,8 +6,8 @@ package com.github.kubatatami.judonetworking.observers;
  * Date: 07.02.2013
  * Time: 11:01
  */
-public interface WrapObserver<T> {
+public interface WrapperObserver<T> {
 
-    void update(T data);
+    void onUpdate(T data);
 
 }
