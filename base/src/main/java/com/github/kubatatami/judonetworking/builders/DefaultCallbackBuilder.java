@@ -13,6 +13,8 @@ import com.github.kubatatami.judonetworking.stateful.StatefulCache;
 @SuppressWarnings("unchecked")
 public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends ResultBuilder<T, Z> implements CallbackBuilder<T> {
 
+    protected VoidOperator onStartWithoutParams;
+
     protected DualOperator<CacheInfo, AsyncResult> onStart;
 
     protected DualOperator<T, CacheInfo> onSuccessWithCacheInfo;
@@ -22,6 +24,11 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
 
     public Z onSuccessWithCacheInfo(DualOperator<T, CacheInfo> val) {
         onSuccessWithCacheInfo = val;
+        return (Z) this;
+    }
+
+    public Z onStart(VoidOperator val) {
+        onStartWithoutParams = val;
         return (Z) this;
     }
 
@@ -46,6 +53,8 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
 
         private BinaryOperator<Integer> onProgress;
 
+        private VoidOperator onStartWithoutParams;
+
         private DualOperator<CacheInfo, AsyncResult> onStart;
 
         private VoidOperator onFinish;
@@ -60,6 +69,7 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
             onSuccessWithAsyncResult = builder.onSuccessWithAsyncResult;
             onError = builder.onError;
             onProgress = builder.onProgress;
+            onStartWithoutParams = builder.onStartWithoutParams;
             onStart = builder.onStart;
             onFinish = builder.onFinish;
             onFinishWithAsyncResult = builder.onFinishWithAsyncResult;
@@ -69,6 +79,9 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
         @Override
         public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
             super.onStart(cacheInfo, asyncResult);
+            if (onStartWithoutParams != null) {
+                onStartWithoutParams.invoke();
+            }
             if (onStart != null) {
                 onStart.invoke(cacheInfo, asyncResult);
             }
