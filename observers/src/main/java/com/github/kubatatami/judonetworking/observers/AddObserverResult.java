@@ -17,7 +17,10 @@ public class AddObserverResult<T> {
     }
 
     public AddObserverResult<T> notifyNow() {
-        observer.onUpdate(observableWrapper.get());
+        T item = observableWrapper.get();
+        if (item != null || observableWrapper.isNotifyOnNull()) {
+            observer.onUpdate(item);
+        }
         return this;
     }
 }
