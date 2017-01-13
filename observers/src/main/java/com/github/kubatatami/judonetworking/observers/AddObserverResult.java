@@ -11,13 +11,16 @@ public class AddObserverResult<T> {
         this.observer = observer;
     }
 
-    public AddObserverResult<T> deleteObserverOnDestroy(ObservableController controller) {
+    public AddObserverResult<T> deleteOnDestroy(ObservableController controller) {
         controller.addObserverToDelete(observableWrapper, observer);
         return this;
     }
 
     public AddObserverResult<T> notifyNow() {
-        observer.onUpdate(observableWrapper.get());
+        T item = observableWrapper.get();
+        if (item != null || observableWrapper.isNotifyOnNull()) {
+            observer.onUpdate(item);
+        }
         return this;
     }
 }

@@ -1,7 +1,5 @@
 package com.github.kubatatami.judonetworking.fragments;
 
-import android.app.Activity;
-
 import com.github.kubatatami.judonetworking.observers.ObservableController;
 import com.github.kubatatami.judonetworking.observers.ObservableWrapper;
 import com.github.kubatatami.judonetworking.observers.ObserverHelper;
@@ -15,29 +13,11 @@ import com.github.kubatatami.judonetworking.observers.WrapperObserver;
  */
 public class ObserverSupportFragment extends JudoSupportFragment implements ObservableController {
 
-    private ObserverHelper observerHelper;
+    private ObserverHelper observerHelper = new ObserverHelper();
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        observerHelper = new ObserverHelper(activity);
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        observerHelper.start(this, getView());
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        observerHelper.stop();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public void onDestroyView() {
+        super.onDestroyView();
         observerHelper.onDestroy();
     }
 
