@@ -501,7 +501,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
                 try {
                     fileStream = new FileInputStream(statFile);
                     os = new ObjectInputStream(fileStream);
-                    stats = (Map<String, MethodStat>) os.readObject();
+                    stats = Collections.synchronizedMap((Map<String, MethodStat>) os.readObject());
 
                 } catch (Exception e) {
                     JudoLogger.log(e);
