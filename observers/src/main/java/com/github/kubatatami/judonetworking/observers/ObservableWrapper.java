@@ -64,7 +64,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
     }
 
     public AddObserverResult addObserver(WrapperObserver<T> observer) {
-        return addObserver(observer, true);
+        return addObserver(observer, false);
     }
 
     public AddObserverResult addObserver(WrapperObserver<T> observer, boolean notify) {
