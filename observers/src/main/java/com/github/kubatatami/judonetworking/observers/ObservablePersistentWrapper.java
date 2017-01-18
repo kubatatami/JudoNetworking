@@ -195,6 +195,10 @@ public abstract class ObservablePersistentWrapper<T> extends ObservableWrapper<T
         return result;
     }
 
+    public void saveCurrent() {
+        saveData(object);
+    }
+
     public static void removeAllDataSync(Context context) {
         removeAllDataSync(defaultLevel, context);
     }
