@@ -21,6 +21,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
     protected boolean notifyInUiThread = true;
     protected long dataSetTime = 0;
     protected long updateTime = 0;
+    protected boolean notifyOnError = true;
     protected boolean notifyOnNull = false;
     protected boolean forceUpdateOnNetworkStateChange = false;
     protected boolean checkNetworkState = false;
@@ -49,7 +50,14 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
 
     @Override
     public void onSuccess(T result) {
-        set(result);
+        set(result, !notifyOnError);
+    }
+
+    @Override
+    public void onFinish() {
+        if (notifyOnError) {
+            notifyObservers();
+        }
     }
 
     protected final Runnable updateRunnable = new Runnable() {
@@ -271,5 +279,13 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
 
     public void setNotifyInUiThread(boolean notifyInUiThread) {
         this.notifyInUiThread = notifyInUiThread;
+    }
+
+    public boolean isNotifyOnError() {
+        return notifyOnError;
+    }
+
+    public void setNotifyOnError(boolean notifyOnError) {
+        this.notifyOnError = notifyOnError;
     }
 }
