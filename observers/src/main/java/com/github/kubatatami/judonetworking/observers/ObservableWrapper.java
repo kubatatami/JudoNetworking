@@ -123,8 +123,9 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         return checkUpdateOnGet;
     }
 
-    public void setCheckUpdateOnGet(boolean checkUpdateOnGet) {
+    public ObservableWrapper<T> setCheckUpdateOnGet(boolean checkUpdateOnGet) {
         this.checkUpdateOnGet = checkUpdateOnGet;
+        return this;
     }
 
     public boolean isSet() {
@@ -187,13 +188,14 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         transaction.add(this, object);
     }
 
-    public void startCheckUpdatePeriodically(long period) {
+    public ObservableWrapper<T> startCheckUpdatePeriodically(long period) {
         startCheckUpdatePeriodically(period, false);
+        return this;
     }
 
-    public void startCheckUpdatePeriodically(long period, final boolean forceUpdate) {
+    public ObservableWrapper<T> startCheckUpdatePeriodically(long period, final boolean forceUpdate) {
         if (timer != null && this.period == period) {
-            return;
+            return this;
         }
         stopCheckUpdatePeriodically();
         timer = new Timer(true);
@@ -208,14 +210,16 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
                 }
             }
         }, period, period);
+        return this;
     }
 
-    public void stopCheckUpdatePeriodically() {
+    public ObservableWrapper<T> stopCheckUpdatePeriodically() {
         if (timer != null) {
             timer.cancel();
             timer.purge();
             timer = null;
         }
+        return this;
     }
 
     public long getDataSetTime() {
@@ -249,8 +253,9 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         }
     }
 
-    public void setListener(ObservableWrapperListener<T> listener) {
+    public ObservableWrapper<T> setListener(ObservableWrapperListener<T> listener) {
         this.listener = listener;
+        return this;
     }
 
     public int getObserversCount() {
@@ -261,31 +266,36 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         return updateTime;
     }
 
-    public void setUpdateTime(long updateTime) {
+    public ObservableWrapper<T> setUpdateTime(long updateTime) {
         this.updateTime = updateTime;
+        return this;
     }
 
     public boolean isNotifyOnNull() {
         return notifyOnNull;
     }
 
-    public void setNotifyOnNull(boolean notifyOnNull) {
+    public ObservableWrapper<T> setNotifyOnNull(boolean notifyOnNull) {
         this.notifyOnNull = notifyOnNull;
+        return this;
     }
 
-    public void setOnlyWhenDifferentHash(boolean setOnlyWhenDifferentHash) {
+    public ObservableWrapper<T> setOnlyWhenDifferentHash(boolean setOnlyWhenDifferentHash) {
         this.setOnlyWhenDifferentHash = setOnlyWhenDifferentHash;
+        return this;
     }
 
-    public void setNotifyInUiThread(boolean notifyInUiThread) {
+    public ObservableWrapper<T> setNotifyInUiThread(boolean notifyInUiThread) {
         this.notifyInUiThread = notifyInUiThread;
+        return this;
     }
 
     public boolean isNotifyOnError() {
         return notifyOnError;
     }
 
-    public void setNotifyOnError(boolean notifyOnError) {
+    public ObservableWrapper<T> setNotifyOnError(boolean notifyOnError) {
         this.notifyOnError = notifyOnError;
+        return this;
     }
 }
