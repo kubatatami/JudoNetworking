@@ -1,7 +1,9 @@
 package com.github.kubatatami.judonetworking.observers;
 
-import java.util.HashMap;
-import java.util.Map;
+import android.support.v4.util.Pair;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -11,16 +13,16 @@ import java.util.Map;
  */
 public class ObserverHelper {
 
-    private Map<ObservableWrapper, WrapperObserver> observersToDeleteOnDestroy = new HashMap<>();
+    private List<Pair<ObservableWrapper, WrapperObserver>> observersToDeleteOnDestroy = new ArrayList<>();
 
     public void addObserverToDelete(ObservableWrapper<?> observableWrapper, WrapperObserver<?> observer) {
-        observersToDeleteOnDestroy.put(observableWrapper, observer);
+        observersToDeleteOnDestroy.add(new Pair<ObservableWrapper, WrapperObserver>(observableWrapper, observer));
     }
 
     public void onDestroy() {
-        for (Map.Entry<ObservableWrapper, WrapperObserver> entry : observersToDeleteOnDestroy.entrySet()) {
+        for (Pair<ObservableWrapper, WrapperObserver> pair : observersToDeleteOnDestroy) {
             //noinspection unchecked
-            entry.getKey().deleteObserver(entry.getValue());
+            pair.first.deleteObserver(pair.second);
         }
     }
 
