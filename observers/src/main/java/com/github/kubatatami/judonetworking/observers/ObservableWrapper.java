@@ -269,15 +269,15 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         }
     }
 
-    public ObservableWrapper<T> connect(WrapperObserver<T> observer, ObservableController controller) {
-        return connect(observer, controller, false);
+    public ObservableWrapper<T> connect(ObservableController controller, WrapperObserver<T> observer) {
+        return connect(controller, observer, false);
     }
 
-    public ObservableWrapper<T> connectAndNotify(WrapperObserver<T> observer, ObservableController controller) {
-        return connect(observer, controller, true);
+    public ObservableWrapper<T> connectAndNotify(ObservableController controller, WrapperObserver<T> observer) {
+        return connect(controller, observer, true);
     }
 
-    private ObservableWrapper<T> connect(WrapperObserver<T> observer, ObservableController controller, boolean notify) {
+    private ObservableWrapper<T> connect(ObservableController controller, WrapperObserver<T> observer, boolean notify) {
         addObserver(observer, notify).deleteOnDestroy(controller);
         return this;
     }
