@@ -14,21 +14,37 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class ObservableWrapper<T> extends DefaultCallback<T> {
+
     protected T object = null;
+
     protected final Handler handler = new Handler(Looper.getMainLooper());
+
     protected final List<WrapperObserver<T>> observers = new ArrayList<>();
+
     protected ObservableWrapperListener<T> listener = null;
+
     protected boolean notifyInUiThread = true;
+
     protected long dataSetTime = 0;
+
     protected long updateTime = 0;
+
     protected boolean notifyOnError = true;
+
     protected boolean notifyOnNull = false;
+
     protected boolean forceUpdateOnNetworkStateChange = false;
+
     protected boolean checkNetworkState = false;
+
     protected boolean checkUpdateOnGet = false;
+
     protected boolean firstNetworkState = true;
+
     protected boolean setOnlyWhenDifferentHash = false;
+
     protected long period = 0;
+
     protected Timer timer;
 
     protected NetworkUtils.NetworkStateListener networkStateListener = new NetworkUtils.NetworkStateListener() {
@@ -251,6 +267,19 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         } else {
             transaction.add(this, object);
         }
+    }
+
+    private ObservableWrapper<T> connect(WrapperObserver<T> observer, ObservableController controller) {
+        return connect(observer, controller, false);
+    }
+
+    private ObservableWrapper<T> connectAndNotify(WrapperObserver<T> observer, ObservableController controller) {
+        return connect(observer, controller, true);
+    }
+
+    private ObservableWrapper<T> connect(WrapperObserver<T> observer, ObservableController controller, boolean notify) {
+        addObserver(observer, notify).deleteOnDestroy(controller);
+        return this;
     }
 
     public ObservableWrapper<T> setListener(ObservableWrapperListener<T> listener) {
