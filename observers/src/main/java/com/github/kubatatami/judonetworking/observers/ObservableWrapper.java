@@ -269,11 +269,11 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         }
     }
 
-    private ObservableWrapper<T> connect(WrapperObserver<T> observer, ObservableController controller) {
+    public ObservableWrapper<T> connect(WrapperObserver<T> observer, ObservableController controller) {
         return connect(observer, controller, false);
     }
 
-    private ObservableWrapper<T> connectAndNotify(WrapperObserver<T> observer, ObservableController controller) {
+    public ObservableWrapper<T> connectAndNotify(WrapperObserver<T> observer, ObservableController controller) {
         return connect(observer, controller, true);
     }
 
