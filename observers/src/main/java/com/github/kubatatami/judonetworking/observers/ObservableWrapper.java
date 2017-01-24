@@ -71,7 +71,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
 
     @Override
     public void onFinish() {
-        if (notifyOnError) {
+        if (notifyOnError && !getAsyncResult().isCancelled()) {
             notifyObservers();
         }
     }
