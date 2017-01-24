@@ -461,12 +461,12 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     @Override
     public long getEndTimeMillis() {
-        return 0;
+        return endTimeMillis;
     }
 
     @Override
     public long getTotalTimeMillis() {
-        return 0;
+        return totalTimeMillis;
     }
 
     public void done() {

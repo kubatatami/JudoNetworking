@@ -645,8 +645,6 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
 
     public void done() {
         synchronized (this) {
-            this.endTimeMillis = System.currentTimeMillis();
-            this.totalTimeMillis = this.endTimeMillis - this.startTimeMillis;
             this.done = true;
             this.running = false;
             notifyAll();
@@ -664,5 +662,10 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
 
     public void clearBatchCallback() {
         batchCallback = null;
+    }
+
+    public void calcTime() {
+        this.endTimeMillis = System.currentTimeMillis();
+        this.totalTimeMillis = this.endTimeMillis - this.startTimeMillis;
     }
 }
