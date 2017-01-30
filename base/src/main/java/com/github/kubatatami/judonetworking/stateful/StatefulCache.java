@@ -33,6 +33,13 @@ public class StatefulCache {
         }
     }
 
+    public static void removeAll(String who, boolean isRemoving) {
+        if (isRemoving) {
+            StatefulCache.removeAllStatefulCallbacks(who);
+        } else {
+            StatefulCache.removeAllControllersCallbacks(who);
+        }
+    }
 
     public static void removeAllControllersCallbacks(String who) {
         if (callbacksMap.containsKey(who)) {

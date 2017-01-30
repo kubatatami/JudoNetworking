@@ -38,6 +38,7 @@ public abstract class JudoFragment extends DialogFragment implements StatefulCon
     public void onDestroyView() {
         super.onDestroyView();
         viewDestroyed = true;
+        StatefulCache.removeAll(getWho(), isRemoving());
     }
 
     @Override
@@ -56,7 +57,7 @@ public abstract class JudoFragment extends DialogFragment implements StatefulCon
     public void onPause() {
         super.onPause();
         active = false;
-        StatefulCache.removeAllControllersCallbacks(getWho());
+        StatefulCache.removeAll(getWho(), isRemoving());
     }
 
     @Override
@@ -66,9 +67,7 @@ public abstract class JudoFragment extends DialogFragment implements StatefulCon
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (getActivity().isFinishing()) {
-            StatefulCache.removeAllStatefulCallbacks(getWho());
-        }
+        StatefulCache.removeAll(getWho(), isRemoving());
     }
 
     protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {
