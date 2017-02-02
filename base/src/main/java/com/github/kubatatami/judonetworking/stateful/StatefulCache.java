@@ -55,6 +55,7 @@ public class StatefulCache {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(who);
             for (Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()) {
                 entry.getValue().tryCancel();
+                entry.getValue().setCallback(null);
             }
             callbacksMap.remove(who);
         }
