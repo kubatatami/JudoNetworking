@@ -25,8 +25,8 @@ public class StatefulCache {
     }
 
     private static void clearAndCancelCallback(Stateful stateful) {
-        stateful.tryCancel();
         stateful.setCallback(null);
+        stateful.tryCancel();
     }
 
     public static void endStatefulCallback(String who, int id) {
