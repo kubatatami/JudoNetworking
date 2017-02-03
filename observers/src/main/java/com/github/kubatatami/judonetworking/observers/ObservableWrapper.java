@@ -114,7 +114,9 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
             delete = listener.onDeleteObserver(this, observer);
         }
         if (delete) {
-            observers.remove(observer);
+            if (!observers.remove(observer)) {
+                throw new IllegalStateException("This is not the observer added earlier.");
+            }
         }
     }
 
