@@ -24,6 +24,7 @@ public class ObserverHelper {
             //noinspection unchecked
             pair.first.deleteObserver(pair.second);
         }
+        observersToDeleteOnDestroy.clear();
     }
 
 }
