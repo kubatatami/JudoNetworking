@@ -14,10 +14,12 @@ public class RxRequestStatus<T> implements AsyncResult {
     private AsyncResult asyncResult;
 
     public RxRequestStatus(AsyncResult asyncResult, int progress) {
+        this.asyncResult = asyncResult;
         this.progress = progress;
     }
 
     public RxRequestStatus(AsyncResult asyncResult, T result) {
+        this.asyncResult = asyncResult;
         this.result = result;
     }
 
