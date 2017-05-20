@@ -21,7 +21,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -179,12 +178,7 @@ public class RawRestController extends RawController {
                 requestInfo.mimeType = mimeType;
             }
             try {
-                requestInfo.entity = new RequestInputStreamEntity(new FileInputStream(file) {
-                    @Override
-                    public synchronized void reset() throws IOException {
-                        getChannel().position(0);
-                    }
-                }, file.length());
+                requestInfo.entity = new RequestInputStreamEntity(new FileInputStream(file), file.length());
             } catch (FileNotFoundException e) {
                 throw new JudoException("File is not exist.", e);
             }
