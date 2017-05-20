@@ -39,7 +39,6 @@ import java.io.OutputStream;
  */
 public class RequestInputStreamEntity implements StreamEntity {
 
-
     private final InputStream content;
 
     private final long length;
@@ -70,11 +69,7 @@ public class RequestInputStreamEntity implements StreamEntity {
         if (outstream == null) {
             throw new IllegalArgumentException("Output stream may not be null");
         }
-        if (outstream instanceof CountOutputStream && length > 0) {
-            ((CountOutputStream) outstream).addBytes(length);
-        } else {
-            FileUtils.copyStream(outstream, content, length);
-        }
+        FileUtils.copyStreamOrCountBytes(outstream, content, length);
     }
 
     @Override

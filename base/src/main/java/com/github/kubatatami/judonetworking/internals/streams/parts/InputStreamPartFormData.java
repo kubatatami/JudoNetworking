@@ -36,7 +36,7 @@ public class InputStreamPartFormData implements RequestMultipartEntity.PartFormD
 
     @Override
     public void write(OutputStream outputStream) throws IOException {
-        FileUtils.copyStream(outputStream, inputStream, getSize());
+        FileUtils.copyStreamOrCountBytes(outputStream, inputStream, getSize());
     }
 
     @Override
