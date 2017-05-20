@@ -5,7 +5,7 @@ import com.github.kubatatami.judonetworking.AsyncResult;
 import java.util.List;
 import java.util.Map;
 
-public class RxRequestStatus<T> implements AsyncResult {
+public class RxRequestStatus<T> {
 
     private int progress;
 
@@ -23,47 +23,34 @@ public class RxRequestStatus<T> implements AsyncResult {
         this.result = result;
     }
 
-    @Override
     public boolean isDone() {
-        return asyncResult.isDone();
+        return result != null;
     }
 
-    @Override
     public boolean isCancelled() {
         return asyncResult.isCancelled();
     }
 
-    @Override
     public boolean isRunning() {
         return asyncResult.isRunning();
     }
 
-    @Override
     public long getStartTimeMillis() {
         return asyncResult.getStartTimeMillis();
     }
 
-    @Override
     public long getEndTimeMillis() {
         return asyncResult.getEndTimeMillis();
     }
 
-    @Override
     public long getTotalTimeMillis() {
         return asyncResult.getTotalTimeMillis();
     }
 
-    @Override
     public void cancel() {
         asyncResult.cancel();
     }
 
-    @Override
-    public void await() throws InterruptedException {
-        asyncResult.await();
-    }
-
-    @Override
     public Map<String, List<String>> getHeaders() {
         return asyncResult.getHeaders();
     }
