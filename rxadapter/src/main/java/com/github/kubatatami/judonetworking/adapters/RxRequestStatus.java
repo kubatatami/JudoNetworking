@@ -20,6 +20,7 @@ public class RxRequestStatus<T> implements AsyncResult {
 
     public RxRequestStatus(AsyncResult asyncResult, T result) {
         this.asyncResult = asyncResult;
+        this.progress = 100;
         this.result = result;
     }
 
