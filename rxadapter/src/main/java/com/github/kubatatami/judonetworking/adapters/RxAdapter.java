@@ -17,7 +17,7 @@ public class RxAdapter implements JudoAdapter {
 
     @Override
     public boolean canHandle(Type type) {
-        return type.equals(Observable.class);
+        return type instanceof ParameterizedType && ((ParameterizedType) type).getRawType().equals(Observable.class);
     }
 
     @Override
