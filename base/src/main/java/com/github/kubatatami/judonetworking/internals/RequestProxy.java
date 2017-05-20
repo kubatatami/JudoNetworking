@@ -5,14 +5,13 @@ import android.util.Pair;
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.Endpoint;
+import com.github.kubatatami.judonetworking.adapters.JudoAdapter;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.annotations.NamePrefix;
 import com.github.kubatatami.judonetworking.annotations.NameSuffix;
 import com.github.kubatatami.judonetworking.annotations.RequestMethod;
 import com.github.kubatatami.judonetworking.annotations.SingleCall;
 import com.github.kubatatami.judonetworking.batches.Batch;
-import com.github.kubatatami.judonetworking.builders.CallbackBuilder;
-import com.github.kubatatami.judonetworking.callbacks.Callback;
 import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.ConnectionException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
@@ -32,7 +31,6 @@ import com.github.kubatatami.judonetworking.utils.ReflectionCache;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -199,13 +197,17 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                     rpc.startRequest(request);
                     return rpc.getRequestConnector().call(request);
                 } else {
-                    request = callAsync(getNextId(), m, name, args, ReflectionCache.getGenericParameterTypes(m), timeout, ann);
+                    MethodInfo methodInfo = getMethodInfo(m.getReturnType(), args, ReflectionCache.getGenericParameterTypes(m));
+                    request = new RequestImpl(id, rpc, m, name, ann, methodInfo.getArgs(), methodInfo.getResultType(),
+                            timeout, methodInfo.getCallback(), rpc.getProtocolController().getAdditionalRequestData());
+                    ann.modifier().newInstance().modify(request);
                     rpc.filterNullArgs(request);
                     if (registerSingleCallMethod(m, request, name)) {
                         return request;
                     }
                     rpc.startRequest(request);
                     performAsyncRequest(request);
+
                     return request;
                 }
             } else {
@@ -267,37 +269,13 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     }
 
     @SuppressWarnings("unchecked")
-    protected RequestImpl callAsync(int id, Method m, String name, Object[] args, Type[] types, int timeout, RequestMethod ann) throws Exception {
-        Object[] newArgs;
-        Callback<Object> callback = null;
-        Type returnType = Void.class;
-        if (args.length > 0 && args[args.length - 1] instanceof Callback) {
-            callback = (Callback<Object>) args[args.length - 1];
-            returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
-        } else if (args.length > 0 && args[args.length - 1] instanceof CallbackBuilder) {
-            callback = ((CallbackBuilder<Object>) args[args.length - 1]).build();
-            returnType = ((ParameterizedType) types[args.length - 1]).getActualTypeArguments()[0];
-        } else {
-            Type[] genericTypes = m.getGenericParameterTypes();
-            if (genericTypes.length > 0 && genericTypes[genericTypes.length - 1] instanceof ParameterizedType) {
-                ParameterizedType parameterizedType = (ParameterizedType) genericTypes[genericTypes.length - 1];
-                if (parameterizedType.getRawType().equals(Callback.class)) {
-                    returnType = parameterizedType.getActualTypeArguments()[0];
-                }
-            }
+    private MethodInfo getMethodInfo(Class<?> returnType, Object[] args, Type[] types) {
+        JudoAdapter adapter = rpc.getAdapters().get(returnType);
+        if (adapter == null) {
+            throw new JudoException("No adapter register for type " + returnType.getName());
         }
-        if (args.length > 1) {
-            newArgs = new Object[args.length - 1];
-            System.arraycopy(args, 0, newArgs, 0, args.length - 1);
-        } else {
-            newArgs = null;
-        }
-
-        RequestImpl request = new RequestImpl(id, rpc, m, name, ann, newArgs, returnType, timeout, callback, rpc.getProtocolController().getAdditionalRequestData());
-        ann.modifier().newInstance().modify(request);
-        return request;
+        return adapter.getMethodInfo(args, types);
     }
-
 
     public void callBatch() {
         List<RequestImpl> batches;

@@ -1,6 +1,7 @@
 package com.github.kubatatami.judonetworking;
 
 
+import com.github.kubatatami.judonetworking.adapters.JudoAdapter;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.batches.Batch;
 import com.github.kubatatami.judonetworking.builders.BatchBuilder;
@@ -177,6 +178,8 @@ public interface Endpoint extends EndpointBase {
     void setDefaultMethodCacheOnlyOnErrorMode(LocalCache.OnlyOnError onlyOnError);
 
     Map<String, MethodStat> getTimeProfilerStats();
+
+    void registerAdapter(JudoAdapter adapter);
 
     /**
      * Created with IntelliJ IDEA.
