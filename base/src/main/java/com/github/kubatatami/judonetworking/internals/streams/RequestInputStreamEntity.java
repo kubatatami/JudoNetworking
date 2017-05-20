@@ -70,6 +70,7 @@ public class RequestInputStreamEntity implements StreamEntity {
         if (outstream == null) {
             throw new IllegalArgumentException("Output stream may not be null");
         }
+        content.reset();
         FileUtils.copyStream(outstream, content, length);
     }
 

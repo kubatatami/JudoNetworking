@@ -30,7 +30,7 @@ public class RequestOutputStream extends OutputStream {
     @Override
     public void write(int oneByte) throws IOException {
         stream.write(oneByte);
-        timeStat.progressTick(1 / (float) contentSize);
+        timeStat.progressTick(1f / (float) contentSize);
     }
 
     @Override
