@@ -6,17 +6,19 @@ import java.lang.reflect.Type;
 
 public class MethodInfo {
 
-    private final Callback<Object> callback;
+    private final Callback<?> callback;
     private final Type resultType;
     private final Object[] args;
+    private final Object returnObject;
 
-    public MethodInfo(Callback<Object> callback, Type resultType, Object[] args) {
+    public MethodInfo(Callback<?> callback, Type resultType, Object[] args, Object returnObject) {
         this.callback = callback;
         this.resultType = resultType;
         this.args = args;
+        this.returnObject = returnObject;
     }
 
-    public Callback<Object> getCallback() {
+    public Callback<?> getCallback() {
         return callback;
     }
 
@@ -26,5 +28,9 @@ public class MethodInfo {
 
     public Object[] getArgs() {
         return args;
+    }
+
+    public Object getReturnObject() {
+        return returnObject;
     }
 }

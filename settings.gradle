@@ -1,1 +1,1 @@
-include ':base', ':json', ':observers', ':wear'
+include ':base', ':json', ':observers', ':wear', ':rxadapter'

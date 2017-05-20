@@ -7,19 +7,17 @@ import com.github.kubatatami.judonetworking.internals.MethodInfo;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Arrays;
-import java.util.List;
 
 public class JudoCallbackAdapter implements JudoAdapter {
 
     @Override
-    public List<Class<?>> getReturnClass() {
-        return Arrays.asList(AsyncResult.class, Void.class);
+    public boolean canHandle(Type type) {
+        return type.equals(AsyncResult.class) || type.equals(Void.class);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public MethodInfo getMethodInfo(Object[] args, Type[] types) {
+    public MethodInfo getMethodInfo(Type returnType, Object[] args, Type[] types) {
         Callback<Object> callback = null;
         Type resultType = Void.class;
         if (args.length > 0 && args[args.length - 1] instanceof Callback) {
@@ -43,6 +41,6 @@ public class JudoCallbackAdapter implements JudoAdapter {
             newArgs = null;
         }
 
-        return new MethodInfo(callback, resultType, newArgs);
+        return new MethodInfo(callback, resultType, newArgs, null);
     }
 }

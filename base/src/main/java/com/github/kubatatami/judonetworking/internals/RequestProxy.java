@@ -197,7 +197,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                     rpc.startRequest(request);
                     return rpc.getRequestConnector().call(request);
                 } else {
-                    MethodInfo methodInfo = getMethodInfo(m.getReturnType(), args, ReflectionCache.getGenericParameterTypes(m));
+                    MethodInfo methodInfo = getMethodInfo(m.getGenericReturnType(), args, ReflectionCache.getGenericParameterTypes(m));
                     request = new RequestImpl(id, rpc, m, name, ann, methodInfo.getArgs(), methodInfo.getResultType(),
                             timeout, methodInfo.getCallback(), rpc.getProtocolController().getAdditionalRequestData());
                     ann.modifier().newInstance().modify(request);
@@ -208,7 +208,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                     rpc.startRequest(request);
                     performAsyncRequest(request);
 
-                    return request;
+                    return methodInfo.getReturnObject() == null ? request : methodInfo.getReturnObject();
                 }
             } else {
                 try {
@@ -269,12 +269,13 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     }
 
     @SuppressWarnings("unchecked")
-    private MethodInfo getMethodInfo(Class<?> returnType, Object[] args, Type[] types) {
-        JudoAdapter adapter = rpc.getAdapters().get(returnType);
-        if (adapter == null) {
-            throw new JudoException("No adapter register for type " + returnType.getName());
+    private MethodInfo getMethodInfo(Type returnType, Object[] args, Type[] types) {
+        for (JudoAdapter adapter : rpc.getAdapters()) {
+            if (adapter.canHandle(returnType)) {
+                return adapter.getMethodInfo(returnType, args, types);
+            }
         }
-        return adapter.getMethodInfo(args, types);
+        throw new JudoException("No adapter register for type " + returnType.toString());
     }
 
     public void callBatch() {

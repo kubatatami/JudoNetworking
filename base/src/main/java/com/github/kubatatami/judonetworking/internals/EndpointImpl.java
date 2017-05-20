@@ -95,7 +95,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     private HashMap<Class, VirtualServerInfo> virtualServers = new HashMap<>();
 
-    private HashMap<Class, JudoAdapter> adapters = new HashMap<>();
+    private List<JudoAdapter> adapters = new ArrayList<>();
 
     private Map<Integer, RequestImpl> singleCallMethods = new HashMap<>();
 
@@ -650,12 +650,10 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     @Override
     public void registerAdapter(JudoAdapter adapter) {
-        for (Class<?> clazz : adapter.getReturnClass()) {
-            adapters.put(clazz, adapter);
-        }
+        adapters.add(adapter);
     }
 
-    public HashMap<Class, JudoAdapter> getAdapters() {
+    public List<JudoAdapter> getAdapters() {
         return adapters;
     }
 }

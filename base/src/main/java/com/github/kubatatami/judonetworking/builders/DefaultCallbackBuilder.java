@@ -17,6 +17,8 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
 
     protected DualOperator<CacheInfo, AsyncResult> onStart;
 
+    protected DualOperator<Integer, AsyncResult> onProgressWithAsyncResult;
+
     protected DualOperator<T, CacheInfo> onSuccessWithCacheInfo;
 
     public DefaultCallbackBuilder() {
@@ -37,6 +39,11 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
         return (Z) this;
     }
 
+    public Z onProgressWithAsyncResult(DualOperator<Integer, AsyncResult> val) {
+        onProgressWithAsyncResult = val;
+        return (Z) this;
+    }
+
     public LambdaCallback<T> build() {
         return new LambdaCallback<>(this);
     }
@@ -52,6 +59,8 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
         private BinaryOperator<JudoException> onError;
 
         private BinaryOperator<Integer> onProgress;
+
+        private DualOperator<Integer, AsyncResult> onProgressWithAsyncResult;
 
         private VoidOperator onStartWithoutParams;
 
@@ -69,6 +78,7 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
             onSuccessWithAsyncResult = builder.onSuccessWithAsyncResult;
             onError = builder.onError;
             onProgress = builder.onProgress;
+            onProgressWithAsyncResult = builder.onProgressWithAsyncResult;
             onStartWithoutParams = builder.onStartWithoutParams;
             onStart = builder.onStart;
             onFinish = builder.onFinish;
@@ -92,6 +102,9 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
             super.onProgress(progress);
             if (onProgress != null) {
                 onProgress.invoke(progress);
+            }
+            if (onProgressWithAsyncResult != null) {
+                onProgressWithAsyncResult.invoke(progress, getAsyncResult());
             }
         }
 
