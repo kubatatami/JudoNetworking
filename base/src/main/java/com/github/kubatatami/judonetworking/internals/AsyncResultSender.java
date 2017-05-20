@@ -248,11 +248,10 @@ public class AsyncResultSender implements Runnable {
                 callback.onStart(cacheInfo, request);
                 break;
             case RESULT:
-                doneRequest();
                 callback.onSuccess(result);
+                doneRequest();
                 break;
             case ERROR:
-                doneRequest();
                 Method handleMethod = findHandleMethod(callback.getClass(), e.getClass());
                 logError(request.getName(), e);
                 if (handleMethod != null) {
@@ -264,6 +263,7 @@ public class AsyncResultSender implements Runnable {
                 } else {
                     callback.onError(e);
                 }
+                doneRequest();
                 break;
             case PROGRESS:
                 callback.onProgress(progress);
