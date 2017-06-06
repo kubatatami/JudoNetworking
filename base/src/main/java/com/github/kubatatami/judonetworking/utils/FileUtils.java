@@ -1,5 +1,7 @@
 package com.github.kubatatami.judonetworking.utils;
 
+import com.github.kubatatami.judonetworking.internals.streams.CountOutputStream;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +43,14 @@ public class FileUtils {
             }
         }
         outstream.flush();
+    }
+
+    public static void copyStreamOrCountBytes(OutputStream outputStream, InputStream inputStream, long length) throws IOException {
+        if (outputStream instanceof CountOutputStream && length > 0) {
+            ((CountOutputStream) outputStream).addBytes(length);
+        } else {
+            copyStream(outputStream, inputStream, length);
+        }
     }
 
     public static String convertStreamToString(InputStream is) {

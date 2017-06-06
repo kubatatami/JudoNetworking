@@ -44,7 +44,7 @@ public class FilePartFormData implements RequestMultipartEntity.PartFormData {
 
     @Override
     public void write(OutputStream outputStream) throws IOException {
-        FileUtils.copyStream(outputStream, inputStream, getSize());
+        FileUtils.copyStreamOrCountBytes(outputStream, inputStream, getSize());
     }
 
     @Override

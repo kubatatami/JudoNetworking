@@ -37,7 +37,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     private final EndpointImpl rpc;
 
-    private Callback<Object> callback;
+    private Callback<?> callback;
 
     private final String name;
 
@@ -80,7 +80,7 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     private long totalTimeMillis;
 
     public RequestImpl(Integer id, EndpointImpl rpc, Method method, String name, RequestMethod ann,
-                       Object[] args, Type returnType, int timeout, Callback<Object> callback,
+                       Object[] args, Type returnType, int timeout, Callback<?> callback,
                        Serializable additionalControllerData) {
         this.id = id;
         this.name = name;
@@ -383,8 +383,9 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
         return max;
     }
 
+    @SuppressWarnings("unchecked")
     public Callback<Object> getCallback() {
-        return callback;
+        return (Callback<Object>) callback;
     }
 
     public boolean isBatchFatal() {
