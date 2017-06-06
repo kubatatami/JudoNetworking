@@ -45,8 +45,6 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
 
     protected final EndpointImpl rpc;
 
-    protected int id = 0;
-
     protected boolean batchEnabled = false;
 
     protected boolean batchFatal = true;
@@ -187,7 +185,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 }
 
                 if (!ann.async()) {
-                    request = new RequestImpl(getNextId(), rpc, m, name, ann, args, m.getReturnType(),
+                    request = new RequestImpl(rpc, m, name, ann, args, m.getReturnType(),
                             timeout, null, rpc.getProtocolController().getAdditionalRequestData());
                     ann.modifier().newInstance().modify(request);
                     rpc.filterNullArgs(request);
@@ -198,7 +196,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                     return rpc.getRequestConnector().call(request);
                 } else {
                     MethodInfo methodInfo = getMethodInfo(m.getGenericReturnType(), args, ReflectionCache.getGenericParameterTypes(m));
-                    request = new RequestImpl(id, rpc, m, name, ann, methodInfo.getArgs(), methodInfo.getResultType(),
+                    request = new RequestImpl(rpc, m, name, ann, methodInfo.getArgs(), methodInfo.getResultType(),
                             timeout, methodInfo.getCallback(), rpc.getProtocolController().getAdditionalRequestData());
                     ann.modifier().newInstance().modify(request);
                     rpc.filterNullArgs(request);
@@ -262,10 +260,6 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
             }
         }
         return false;
-    }
-
-    protected synchronized int getNextId() {
-        return ++id;
     }
 
     @SuppressWarnings("unchecked")
