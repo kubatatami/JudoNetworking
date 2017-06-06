@@ -23,5 +23,12 @@ public class JudoException extends RuntimeException {
         super(message);
     }
 
+    public boolean isConnectionException() {
+        return this instanceof ConnectionException && !(this instanceof HttpException);
+    }
+
+    public boolean isWrongCredentialsException() {
+        return this instanceof HttpException && ((HttpException) this).getCode() == 401;
+    }
 
 }

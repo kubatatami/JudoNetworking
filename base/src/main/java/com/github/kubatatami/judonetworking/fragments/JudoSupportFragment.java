@@ -34,13 +34,13 @@ public abstract class JudoSupportFragment extends DialogFragment implements Stat
     public void onDestroyView() {
         super.onDestroyView();
         viewDestroyed = true;
+        StatefulCache.removeAll(getWho(), isRemoving());
     }
 
     @Override
     public boolean isViewDestroyed() {
         return viewDestroyed;
     }
-
 
     @Override
     public void onResume() {
@@ -53,7 +53,7 @@ public abstract class JudoSupportFragment extends DialogFragment implements Stat
     public void onPause() {
         super.onPause();
         active = false;
-        StatefulCache.removeAllControllersCallbacks(getWho());
+        StatefulCache.removeAll(getWho(), isRemoving());
     }
 
     @Override
@@ -63,9 +63,7 @@ public abstract class JudoSupportFragment extends DialogFragment implements Stat
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (isRemoving()) {
-            StatefulCache.removeAllStatefulCallbacks(getWho());
-        }
+        StatefulCache.removeAll(getWho(), isRemoving());
     }
 
     protected <T> StatefulCallback<T> generateCallback(Callback<T> callback) {

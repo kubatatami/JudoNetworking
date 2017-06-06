@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.activity;
+package com.github.kubatatami.judonetworking.activities;
 
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;

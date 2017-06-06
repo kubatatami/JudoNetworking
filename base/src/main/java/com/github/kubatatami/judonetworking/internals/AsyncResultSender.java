@@ -203,12 +203,14 @@ public class AsyncResultSender implements Runnable {
                 transaction.onStart(requestProxy);
                 break;
             case RESULT:
+                requestProxy.calcTime();
                 transaction.onSuccess(results);
                 doneBatch(transaction);
                 break;
             case ERROR:
                 Method handleMethod = findHandleMethod(transaction.getClass(), e.getClass());
                 logError("Batch", e);
+                requestProxy.calcTime();
                 if (handleMethod != null) {
                     try {
                         handleMethod.invoke(transaction, e);

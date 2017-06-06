@@ -8,6 +8,8 @@ import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.Endpoint;
 import com.github.kubatatami.judonetworking.EndpointClassic;
 import com.github.kubatatami.judonetworking.Request;
+import com.github.kubatatami.judonetworking.adapters.JudoAdapter;
+import com.github.kubatatami.judonetworking.adapters.JudoCallbackAdapter;
 import com.github.kubatatami.judonetworking.annotations.IgnoreNullParam;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.batches.Batch;
@@ -93,6 +95,8 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     private HashMap<Class, VirtualServerInfo> virtualServers = new HashMap<>();
 
+    private List<JudoAdapter> adapters = new ArrayList<>();
+
     private Map<Integer, RequestImpl> singleCallMethods = new HashMap<>();
 
     private Set<Integer> requestIds = Collections.synchronizedSet(new HashSet<Integer>());
@@ -127,6 +131,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
         this.statFile = new File(context.getCacheDir(), "stats");
         this.memoryCache = new DefaultMemoryCache(context);
         this.diskCache = new DefaultDiskCache(context);
+        registerAdapter(new JudoCallbackAdapter());
     }
 
     public HashMap<Class, VirtualServerInfo> getVirtualServers() {
@@ -641,5 +646,14 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @Override
     public Map<String, MethodStat> getTimeProfilerStats() {
         return stats;
+    }
+
+    @Override
+    public void registerAdapter(JudoAdapter adapter) {
+        adapters.add(adapter);
+    }
+
+    public List<JudoAdapter> getAdapters() {
+        return adapters;
     }
 }

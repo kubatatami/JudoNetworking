@@ -6,7 +6,7 @@ import java.io.OutputStream;
 
 public class CountOutputStream extends OutputStream {
 
-    private int count = 0;
+    private long count = 0;
 
     @Override
     public void write(byte[] b) throws IOException {
@@ -23,7 +23,11 @@ public class CountOutputStream extends OutputStream {
         count++;
     }
 
-    public int getCount() {
+    public long getCount() {
         return count;
+    }
+
+    public void addBytes(long bytes) {
+        count += bytes;
     }
 }

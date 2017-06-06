@@ -1,4 +1,4 @@
-package com.github.kubatatami.judonetworking.observers;
+package com.github.kubatatami.judonetworking.adapters;
 
 import android.content.Context;
 import android.os.Build;
@@ -6,6 +6,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Filter;
+
+import com.github.kubatatami.judonetworking.observers.ExceptionHandler;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -67,11 +69,11 @@ public class ObserverAdapter<T> extends ArrayAdapter<T> implements Iterable<T> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        return adapterHelper.getView(resource[getItemViewType(position)], getItem(position), convertView, parent);
+        return adapterHelper.getView(resource[getItemViewType(position)], convertView, parent);
     }
 
     public View getView(int position, View convertView, ViewGroup parent, Class<?> holderClass) {
-        return adapterHelper.getView(resource[getItemViewType(position)], getItem(position), convertView, parent, holderClass);
+        return adapterHelper.getView(resource[getItemViewType(position)], convertView, parent, holderClass);
     }
 
     @Override

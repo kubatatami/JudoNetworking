@@ -508,11 +508,9 @@ public class RequestConnector {
         }
     }
 
-    private MethodStat getStat(String method) {
-        MethodStat stat;
-        if (rpc.getStats().containsKey(method)) {
-            stat = rpc.getStats().get(method);
-        } else {
+    private synchronized MethodStat getStat(String method) {
+        MethodStat stat = rpc.getStats().get(method);
+        if (stat == null) {
             stat = new MethodStat();
             rpc.getStats().put(method, stat);
         }

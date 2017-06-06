@@ -19,9 +19,14 @@ public class StatefulCache {
         }
         Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(who);
         if (fragmentCallbackMap.containsKey(id)) {
-            fragmentCallbackMap.get(id).tryCancel();
+            clearAndCancelCallback(fragmentCallbackMap.get(id));
         }
         fragmentCallbackMap.put(id, statefulCallback);
+    }
+
+    private static void clearAndCancelCallback(Stateful stateful) {
+        stateful.setCallback(null);
+        stateful.tryCancel();
     }
 
     public static void endStatefulCallback(String who, int id) {
@@ -33,6 +38,13 @@ public class StatefulCache {
         }
     }
 
+    public static void removeAll(String who, boolean isRemoving) {
+        if (isRemoving) {
+            StatefulCache.removeAllStatefulCallbacks(who);
+        } else {
+            StatefulCache.removeAllControllersCallbacks(who);
+        }
+    }
 
     public static void removeAllControllersCallbacks(String who) {
         if (callbacksMap.containsKey(who)) {
@@ -47,7 +59,7 @@ public class StatefulCache {
         if (callbacksMap.containsKey(who)) {
             Map<Integer, Stateful> fragmentCallbackMap = callbacksMap.get(who);
             for (Map.Entry<Integer, Stateful> entry : fragmentCallbackMap.entrySet()) {
-                entry.getValue().tryCancel();
+                clearAndCancelCallback(entry.getValue());
             }
             callbacksMap.remove(who);
         }

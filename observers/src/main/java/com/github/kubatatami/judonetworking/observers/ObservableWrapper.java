@@ -14,20 +14,37 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class ObservableWrapper<T> extends DefaultCallback<T> {
+
     protected T object = null;
+
     protected final Handler handler = new Handler(Looper.getMainLooper());
-    protected final List<WrapObserver<T>> observers = new ArrayList<>();
+
+    protected final List<WrapperObserver<T>> observers = new ArrayList<>();
+
     protected ObservableWrapperListener<T> listener = null;
+
     protected boolean notifyInUiThread = true;
+
     protected long dataSetTime = 0;
+
     protected long updateTime = 0;
+
+    protected boolean notifyOnError = true;
+
     protected boolean notifyOnNull = false;
+
     protected boolean forceUpdateOnNetworkStateChange = false;
+
     protected boolean checkNetworkState = false;
+
     protected boolean checkUpdateOnGet = false;
+
     protected boolean firstNetworkState = true;
+
     protected boolean setOnlyWhenDifferentHash = false;
+
     protected long period = 0;
+
     protected Timer timer;
 
     protected NetworkUtils.NetworkStateListener networkStateListener = new NetworkUtils.NetworkStateListener() {
@@ -49,7 +66,14 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
 
     @Override
     public void onSuccess(T result) {
-        set(result);
+        set(result, !notifyOnError);
+    }
+
+    @Override
+    public void onFinish() {
+        if (notifyOnError && !getAsyncResult().isCancelled()) {
+            notifyObservers();
+        }
     }
 
     protected final Runnable updateRunnable = new Runnable() {
@@ -63,11 +87,11 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         return true;
     }
 
-    public void addObserver(WrapObserver<T> observer) {
-        addObserver(observer, true);
+    public AddObserverResult addObserver(WrapperObserver<T> observer) {
+        return addObserver(observer, false);
     }
 
-    public void addObserver(WrapObserver<T> observer, boolean notify) {
+    public AddObserverResult addObserver(WrapperObserver<T> observer, boolean notify) {
         boolean add = true;
         if (listener != null) {
             add = listener.onAddObserver(this, observer);
@@ -77,19 +101,22 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
             if (notify) {
                 T obj = get();
                 if (obj != null || notifyOnNull) {
-                    observer.update(obj);
+                    observer.onUpdate(obj);
                 }
             }
         }
+        return new AddObserverResult<>(this, observer);
     }
 
-    public void deleteObserver(WrapObserver<T> observer) {
+    public void deleteObserver(WrapperObserver<T> observer) {
         boolean delete = true;
         if (listener != null) {
             delete = listener.onDeleteObserver(this, observer);
         }
         if (delete) {
-            observers.remove(observer);
+            if (!observers.remove(observer)) {
+                throw new IllegalStateException("This is not the observer added earlier.");
+            }
         }
     }
 
@@ -114,8 +141,9 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         return checkUpdateOnGet;
     }
 
-    public void setCheckUpdateOnGet(boolean checkUpdateOnGet) {
+    public ObservableWrapper<T> setCheckUpdateOnGet(boolean checkUpdateOnGet) {
         this.checkUpdateOnGet = checkUpdateOnGet;
+        return this;
     }
 
     public boolean isSet() {
@@ -178,13 +206,14 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         transaction.add(this, object);
     }
 
-    public void startCheckUpdatePeriodically(long period) {
+    public ObservableWrapper<T> startCheckUpdatePeriodically(long period) {
         startCheckUpdatePeriodically(period, false);
+        return this;
     }
 
-    public void startCheckUpdatePeriodically(long period, final boolean forceUpdate) {
+    public ObservableWrapper<T> startCheckUpdatePeriodically(long period, final boolean forceUpdate) {
         if (timer != null && this.period == period) {
-            return;
+            return this;
         }
         stopCheckUpdatePeriodically();
         timer = new Timer(true);
@@ -199,14 +228,16 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
                 }
             }
         }, period, period);
+        return this;
     }
 
-    public void stopCheckUpdatePeriodically() {
+    public ObservableWrapper<T> stopCheckUpdatePeriodically() {
         if (timer != null) {
             timer.cancel();
             timer.purge();
             timer = null;
         }
+        return this;
     }
 
     public long getDataSetTime() {
@@ -224,7 +255,7 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
                     @Override
                     public void run() {
                         for (int i = observers.size() - 1; i >= 0; i--) {
-                            observers.get(i).update(object);
+                            observers.get(i).onUpdate(object);
                         }
                     }
                 };
@@ -240,8 +271,22 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         }
     }
 
-    public void setListener(ObservableWrapperListener<T> listener) {
+    public ObservableWrapper<T> connect(ObservableController controller, WrapperObserver<T> observer) {
+        return connect(controller, observer, false);
+    }
+
+    public ObservableWrapper<T> connectAndNotify(ObservableController controller, WrapperObserver<T> observer) {
+        return connect(controller, observer, true);
+    }
+
+    private ObservableWrapper<T> connect(ObservableController controller, WrapperObserver<T> observer, boolean notify) {
+        addObserver(observer, notify).deleteOnDestroy(controller);
+        return this;
+    }
+
+    public ObservableWrapper<T> setListener(ObservableWrapperListener<T> listener) {
         this.listener = listener;
+        return this;
     }
 
     public int getObserversCount() {
@@ -252,23 +297,36 @@ public class ObservableWrapper<T> extends DefaultCallback<T> {
         return updateTime;
     }
 
-    public void setUpdateTime(long updateTime) {
+    public ObservableWrapper<T> setUpdateTime(long updateTime) {
         this.updateTime = updateTime;
+        return this;
     }
 
     public boolean isNotifyOnNull() {
         return notifyOnNull;
     }
 
-    public void setNotifyOnNull(boolean notifyOnNull) {
+    public ObservableWrapper<T> setNotifyOnNull(boolean notifyOnNull) {
         this.notifyOnNull = notifyOnNull;
+        return this;
     }
 
-    public void setOnlyWhenDifferentHash(boolean setOnlyWhenDifferentHash) {
+    public ObservableWrapper<T> setOnlyWhenDifferentHash(boolean setOnlyWhenDifferentHash) {
         this.setOnlyWhenDifferentHash = setOnlyWhenDifferentHash;
+        return this;
     }
 
-    public void setNotifyInUiThread(boolean notifyInUiThread) {
+    public ObservableWrapper<T> setNotifyInUiThread(boolean notifyInUiThread) {
         this.notifyInUiThread = notifyInUiThread;
+        return this;
+    }
+
+    public boolean isNotifyOnError() {
+        return notifyOnError;
+    }
+
+    public ObservableWrapper<T> setNotifyOnError(boolean notifyOnError) {
+        this.notifyOnError = notifyOnError;
+        return this;
     }
 }

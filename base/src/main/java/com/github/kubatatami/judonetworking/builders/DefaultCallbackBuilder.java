@@ -13,7 +13,11 @@ import com.github.kubatatami.judonetworking.stateful.StatefulCache;
 @SuppressWarnings("unchecked")
 public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends ResultBuilder<T, Z> implements CallbackBuilder<T> {
 
+    protected VoidOperator onStartWithoutParams;
+
     protected DualOperator<CacheInfo, AsyncResult> onStart;
+
+    protected DualOperator<Integer, AsyncResult> onProgressWithAsyncResult;
 
     protected DualOperator<T, CacheInfo> onSuccessWithCacheInfo;
 
@@ -25,8 +29,18 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
         return (Z) this;
     }
 
+    public Z onStart(VoidOperator val) {
+        onStartWithoutParams = val;
+        return (Z) this;
+    }
+
     public Z onStart(DualOperator<CacheInfo, AsyncResult> val) {
         onStart = val;
+        return (Z) this;
+    }
+
+    public Z onProgressWithAsyncResult(DualOperator<Integer, AsyncResult> val) {
+        onProgressWithAsyncResult = val;
         return (Z) this;
     }
 
@@ -46,6 +60,10 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
 
         private BinaryOperator<Integer> onProgress;
 
+        private DualOperator<Integer, AsyncResult> onProgressWithAsyncResult;
+
+        private VoidOperator onStartWithoutParams;
+
         private DualOperator<CacheInfo, AsyncResult> onStart;
 
         private VoidOperator onFinish;
@@ -60,6 +78,8 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
             onSuccessWithAsyncResult = builder.onSuccessWithAsyncResult;
             onError = builder.onError;
             onProgress = builder.onProgress;
+            onProgressWithAsyncResult = builder.onProgressWithAsyncResult;
+            onStartWithoutParams = builder.onStartWithoutParams;
             onStart = builder.onStart;
             onFinish = builder.onFinish;
             onFinishWithAsyncResult = builder.onFinishWithAsyncResult;
@@ -69,6 +89,9 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
         @Override
         public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
             super.onStart(cacheInfo, asyncResult);
+            if (onStartWithoutParams != null) {
+                onStartWithoutParams.invoke();
+            }
             if (onStart != null) {
                 onStart.invoke(cacheInfo, asyncResult);
             }
@@ -79,6 +102,9 @@ public class DefaultCallbackBuilder<T, Z extends ResultBuilder<T, ?>> extends Re
             super.onProgress(progress);
             if (onProgress != null) {
                 onProgress.invoke(progress);
+            }
+            if (onProgressWithAsyncResult != null) {
+                onProgressWithAsyncResult.invoke(progress, getAsyncResult());
             }
         }
 
