@@ -208,10 +208,10 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     public <T> AsyncResult sendAsyncRequest(String url, String name, RequestOptions requestOptions, Callback<T> callback, Object... args) {
         Type returnType = ((ParameterizedType) callback.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
         RequestImpl request = new RequestImpl(
-                ++id, this, null,
+                this, null,
                 name, requestOptions, args,
                 returnType, getRequestConnector().getMethodTimeout(),
-                (Callback<Object>) callback, getProtocolController().getAdditionalRequestData());
+                callback, getProtocolController().getAdditionalRequestData());
         request.setCustomUrl(url);
         request.setApiKeyRequired(requestOptions.apiKeyRequired());
         filterNullArgs(request);
@@ -222,7 +222,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     @SuppressWarnings("unchecked")
     public <T> T sendRequest(String url, String name, Type returnType, RequestOptions requestOptions, Object... args) throws JudoException {
-        RequestImpl request = new RequestImpl(++id, this, null, name, requestOptions, args,
+        RequestImpl request = new RequestImpl(this, null, name, requestOptions, args,
                 returnType,
                 getRequestConnector().getMethodTimeout(),
                 null, getProtocolController().getAdditionalRequestData());
@@ -592,6 +592,10 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     public void setUrlModifier(UrlModifier urlModifier) {
         this.urlModifier = urlModifier;
+    }
+
+    public int getNextId() {
+        return ++id;
     }
 
     enum BatchMode {
