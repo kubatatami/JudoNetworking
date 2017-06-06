@@ -79,10 +79,10 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
 
     private long totalTimeMillis;
 
-    public RequestImpl(Integer id, EndpointImpl rpc, Method method, String name, RequestMethod ann,
+    public RequestImpl(EndpointImpl rpc, Method method, String name, RequestMethod ann,
                        Object[] args, Type returnType, int timeout, Callback<?> callback,
                        Serializable additionalControllerData) {
-        this.id = id;
+        this.id = rpc.getNextId();
         this.name = name;
         this.timeout = timeout;
         this.method = method;
