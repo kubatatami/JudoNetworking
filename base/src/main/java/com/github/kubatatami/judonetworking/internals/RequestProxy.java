@@ -185,7 +185,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 }
 
                 if (!ann.async()) {
-                    request = new RequestImpl(rpc, m, name, ann, args, m.getReturnType(),
+                    request = new RequestImpl(rpc, m, name, ann, args, m.getGenericReturnType(),
                             timeout, null, rpc.getProtocolController().getAdditionalRequestData());
                     ann.modifier().newInstance().modify(request);
                     rpc.filterNullArgs(request);
