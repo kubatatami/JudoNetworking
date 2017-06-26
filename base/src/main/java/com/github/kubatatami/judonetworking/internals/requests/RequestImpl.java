@@ -516,4 +516,9 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return "id=" + id + " name=" + name;
+    }
 }

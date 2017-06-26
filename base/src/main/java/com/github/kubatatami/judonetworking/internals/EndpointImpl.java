@@ -99,9 +99,7 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
 
     private Map<Integer, RequestImpl> singleCallMethods = new HashMap<>();
 
-    private Set<Integer> requestIds = Collections.synchronizedSet(new HashSet<Integer>());
-
-    private Set<String> requestNames = Collections.synchronizedSet(new HashSet<String>());
+    private Map<Integer, Request> requests = Collections.synchronizedMap(new HashMap<Integer, Request>());
 
     private int id = 0;
 
@@ -165,11 +163,11 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     @Override
     public boolean isIdleNow() {
         if ((getDebugFlags() & Endpoint.INTERNAL_DEBUG) > 0) {
-            for (String name : requestNames) {
-                JudoLogger.longLog("Request in progress", name, JudoLogger.LogLevel.DEBUG);
+            for (Request request : requests.values()) {
+                JudoLogger.longLog("Request in progress", request.toString(), JudoLogger.LogLevel.DEBUG);
             }
         }
-        return requestIds.size() == 0;
+        return requests.size() == 0;
     }
 
     @Override
@@ -363,27 +361,23 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     public void startRequest(Request request) {
-        requestIds.add(request.getId());
         JudoLogger.log("Add request(" + request.getName() + ":" + request.getId() + ")", JudoLogger.LogLevel.VERBOSE);
-        requestNames.add(request.getName());
+        requests.put(request.getId(), request);
         if (onRequestEventListener != null) {
-            onRequestEventListener.onStart(request, requestIds.size());
+            onRequestEventListener.onStart(request, requests.size());
         }
     }
 
     public void stopRequest(final Request request) {
-        if (!requestIds.remove(request.getId())) {
-            throw new RuntimeException("Trying to stop unstarted request id:" + request.getId() + " started requests" + requestIds);
-        }
-        if (!requestNames.remove(request.getName())) {
-            throw new RuntimeException("Trying to stop unstarted request name:" + request.getName() + " started requests" + requestNames);
+        if (!requests.containsKey(request.getId())) {
+            throw new RuntimeException("Trying to stop unstarted request " + request + " started requests" + requests);
         }
         JudoLogger.log("Remove request(" + request.getName() + ":" + request.getId() + ")", JudoLogger.LogLevel.VERBOSE);
         if (onRequestEventListener != null) {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    onRequestEventListener.onStop(request, requestIds.size());
+                    onRequestEventListener.onStop(request, requests.size());
                 }
             });
         }
