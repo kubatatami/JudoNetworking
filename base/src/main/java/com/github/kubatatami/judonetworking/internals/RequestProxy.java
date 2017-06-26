@@ -184,8 +184,9 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                     timeout = ann.timeout();
                 }
 
+                Type returnType = m.getGenericReturnType();
                 if (!ann.async()) {
-                    request = new RequestImpl(rpc, m, name, ann, args, m.getGenericReturnType(),
+                    request = new RequestImpl(rpc, m, name, ann, args, returnType,
                             timeout, null, rpc.getProtocolController().getAdditionalRequestData());
                     ann.modifier().newInstance().modify(request);
                     rpc.filterNullArgs(request);
@@ -195,7 +196,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                     rpc.startRequest(request);
                     return rpc.getRequestConnector().call(request);
                 } else {
-                    MethodInfo methodInfo = getMethodInfo(m.getGenericReturnType(), args, ReflectionCache.getGenericParameterTypes(m));
+                    MethodInfo methodInfo = getMethodInfo(returnType, args, ReflectionCache.getGenericParameterTypes(m));
                     request = new RequestImpl(rpc, m, name, ann, methodInfo.getArgs(), methodInfo.getResultType(),
                             timeout, methodInfo.getCallback(), rpc.getProtocolController().getAdditionalRequestData());
                     ann.modifier().newInstance().modify(request);
