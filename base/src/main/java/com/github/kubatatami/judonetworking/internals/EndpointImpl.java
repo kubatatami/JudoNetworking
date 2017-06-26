@@ -369,10 +369,12 @@ public class EndpointImpl implements Endpoint, EndpointClassic {
     }
 
     public void stopRequest(final Request request) {
-        if (!requests.containsKey(request.getId())) {
+        Integer id = request.getId();
+        if (!requests.containsKey(id)) {
             throw new RuntimeException("Trying to stop unstarted request " + request + " started requests" + requests);
         }
-        JudoLogger.log("Remove request(" + request.getName() + ":" + request.getId() + ")", JudoLogger.LogLevel.VERBOSE);
+        requests.remove(id);
+        JudoLogger.log("Remove request: " + request, JudoLogger.LogLevel.VERBOSE);
         if (onRequestEventListener != null) {
             handler.post(new Runnable() {
                 @Override
