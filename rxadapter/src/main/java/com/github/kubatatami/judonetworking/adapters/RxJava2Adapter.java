@@ -13,7 +13,7 @@ import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 
 @SuppressWarnings("unchecked")
-public class RxAdapter implements JudoAdapter {
+public class RxJava2Adapter implements JudoAdapter {
 
     @Override
     public boolean canHandle(Type type) {

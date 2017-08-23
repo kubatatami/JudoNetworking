@@ -26,7 +26,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:' + rootProject.ext.jacksonVersion
     compile 'com.fasterxml.jackson.dataformat:jackson-dataformat-smile:' + rootProject.ext.jacksonVersion
     compile 'com.google.android.support:wearable:1.4.0'
-    compile 'com.google.android.gms:play-services-wearable:10.0.1'
+    compile 'com.google.android.gms:play-services-wearable:11.0.4'
     compile project(':base')
 }
 
