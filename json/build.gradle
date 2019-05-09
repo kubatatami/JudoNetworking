@@ -24,10 +24,10 @@ android {
 }
 
 dependencies {
-    compile 'com.fasterxml.jackson.core:jackson-core:' + rootProject.ext.jacksonVersion
-    compile 'com.fasterxml.jackson.core:jackson-annotations:' + rootProject.ext.jacksonVersion
-    compile 'com.fasterxml.jackson.core:jackson-databind:' + rootProject.ext.jacksonVersion
-    compile project(':base')
+    api 'com.fasterxml.jackson.core:jackson-core:' + rootProject.ext.jacksonVersion
+    api 'com.fasterxml.jackson.core:jackson-annotations:' + rootProject.ext.jacksonVersion
+    api 'com.fasterxml.jackson.core:jackson-databind:' + rootProject.ext.jacksonVersion
+    api project(':base')
 }
 
 task sourcesJar(type: Jar) {

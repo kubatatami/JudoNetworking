@@ -24,7 +24,7 @@ android {
 }
 
 dependencies {
-    compile project(':base')
+    api project(':base')
 }
 
 task sourcesJar(type: Jar) {

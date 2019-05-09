@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="jj_request_proxy">jj_request_proxy</string>
-    <string-array name="android_wear_capabilities">
-        <item>@string/jj_request_proxy</item>
-    </string-array>
-</resources>
