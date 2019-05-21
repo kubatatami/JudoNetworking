@@ -54,7 +54,7 @@ public class RxJava2Adapter implements JudoAdapter {
         final Observable<RxRequestStatus> observable = subject.doOnDispose(new Action() {
             @Override
             public void run() {
-                if (getAsyncResult() != null) getAsyncResult().cancel();
+                if (getAsyncResult() != null && !subject.hasComplete()) getAsyncResult().cancel();
             }
         });
 
@@ -88,7 +88,7 @@ public class RxJava2Adapter implements JudoAdapter {
         final Observable<Object> observable = subject.doOnDispose(new Action() {
             @Override
             public void run() {
-                if (getAsyncResult() != null) getAsyncResult().cancel();
+                if (getAsyncResult() != null && !subject.hasComplete()) getAsyncResult().cancel();
             }
         });
 
