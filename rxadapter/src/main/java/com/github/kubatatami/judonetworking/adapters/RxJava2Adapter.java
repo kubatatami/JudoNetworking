@@ -3,21 +3,15 @@ package com.github.kubatatami.judonetworking.adapters;
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.callbacks.DefaultCallback;
-import com.github.kubatatami.judonetworking.exceptions.CancelException;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.MethodInfo;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.NoSuchElementException;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.ObservableSource;
 import io.reactivex.Single;
 import io.reactivex.functions.Action;
-import io.reactivex.functions.Function;
 import io.reactivex.subjects.PublishSubject;
 
 @SuppressWarnings("unchecked")
@@ -34,34 +28,28 @@ public class RxJava2Adapter implements JudoAdapter {
 
     @Override
     public MethodInfo getMethodInfo(Type returnType, Object[] args, Type[] types) {
-        Type observableType = ((ParameterizedType) returnType).getActualTypeArguments()[0];
-        boolean single = ((ParameterizedType)returnType).getRawType().equals(Single.class);
-        if ((observableType instanceof ParameterizedType) && ((ParameterizedType) observableType).getRawType().equals(RxRequestStatus.class)) {
-            Type resultType = ((ParameterizedType) observableType).getActualTypeArguments()[0];
-            RxRequestStatusSubjectCallback callback = new RxRequestStatusSubjectCallback(single);
-            return new MethodInfo(callback, resultType, args, prepareReturnObject(callback.observable, single));
+        ParameterizedType observableType = (ParameterizedType) ((ParameterizedType)returnType).getActualTypeArguments()[0];
+        if (observableType.getRawType().equals(RxRequestStatus.class)) {
+            Type resultType = observableType.getActualTypeArguments()[0];
+            RxRequestStatusSubjectCallback callback = new RxRequestStatusSubjectCallback();
+            return new MethodInfo(callback, resultType, args, prepareReturnObject(callback.observable, returnType));
         } else {
-            SimpleSubjectCallback callback = new SimpleSubjectCallback(single);
-            return new MethodInfo(callback, observableType, args, prepareReturnObject(callback.observable, single));
+            Type resultType = observableType.getRawType();
+            SimpleSubjectCallback callback = new SimpleSubjectCallback();
+            return new MethodInfo(callback, resultType, args, prepareReturnObject(callback.observable, returnType));
         }
 
     }
 
-    private Object prepareReturnObject(Observable subject, boolean single) {
-        if (single) {
-            return subject.hide().singleOrError();
-        } else {
+    private Object prepareReturnObject(Observable subject, Type observableType) {
+        if (observableType.equals(Observable.class)) {
             return subject.hide();
+        } else {
+            return subject.hide().firstOrError();
         }
     }
 
     private static class RxRequestStatusSubjectCallback extends DefaultCallback {
-
-        private boolean single;
-
-        private RxRequestStatusSubjectCallback(boolean single) {
-            this.single = single;
-        }
 
         private final PublishSubject<RxRequestStatus> subject = PublishSubject.create();
         final Observable<RxRequestStatus> observable = subject.doOnDispose(new Action() {
@@ -80,16 +68,13 @@ public class RxJava2Adapter implements JudoAdapter {
         @Override
         public void onSuccess(Object result) {
             subject.onNext(new RxRequestStatus(getAsyncResult(), result));
+            subject.onComplete();
         }
 
         @Override
         public void onError(JudoException e) {
             subject.onError(e);
-        }
-
-        @Override
-        public void onFinish() {
-            if (!single) subject.onComplete();
+            subject.onComplete();
         }
 
         @Override
@@ -99,12 +84,6 @@ public class RxJava2Adapter implements JudoAdapter {
     }
 
     private static class SimpleSubjectCallback extends DefaultCallback {
-
-        private boolean single;
-
-        private SimpleSubjectCallback(boolean single) {
-            this.single = single;
-        }
 
         private final PublishSubject<Object> subject = PublishSubject.create();
         final Observable<Object> observable = subject.doOnDispose(new Action() {
@@ -117,16 +96,13 @@ public class RxJava2Adapter implements JudoAdapter {
         @Override
         public void onSuccess(Object result) {
             subject.onNext(result);
+            subject.onComplete();
         }
 
         @Override
         public void onError(JudoException e) {
             subject.onError(e);
-        }
-
-        @Override
-        public void onFinish() {
-            if (!single) subject.onComplete();
+            subject.onComplete();
         }
     }
 }
