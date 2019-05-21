@@ -6,5 +6,5 @@ import java.lang.reflect.Type;
 
 public interface JudoAdapter {
     boolean canHandle(Type type);
-    MethodInfo getMethodInfo(Type returnType, Object[] args, Type[] types);
+    MethodInfo getMethodInfo(Type returnType, Object[] args, Type[] types, Runnable run);
 }

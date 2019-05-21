@@ -98,6 +98,23 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
         this.paramNames = ann.paramNames();
     }
 
+    public RequestImpl(EndpointImpl rpc, Method method, String name, RequestMethod ann, int timeout, Serializable additionalControllerData) {
+        this.id = rpc.getNextId();
+        this.name = name;
+        this.timeout = timeout;
+        this.method = method;
+        if (method != null) {
+            this.apiInterface = method.getDeclaringClass();
+        }
+        this.rpc = rpc;
+        this.ann = ann;
+        this.callback = new DefaultCallback<>();
+        this.additionalControllerData = additionalControllerData;
+        this.paramNames = ann.paramNames();
+    }
+
+
+
     @Override
     public void run() {
         try {
@@ -224,6 +241,14 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     @Override
     public void setArgs(Object[] args) {
         this.args = args;
+    }
+
+    public void setCallback(Callback<?> callback) {
+        this.callback = callback;
+    }
+
+    public void setReturnType(Type returnType) {
+        this.returnType = returnType;
     }
 
     @Override

@@ -28,14 +28,14 @@ public class RxJava2Adapter implements JudoAdapter {
     }
 
     @Override
-    public MethodInfo getMethodInfo(Type returnType, Object[] args, Type[] types) {
+    public MethodInfo getMethodInfo(Type returnType, Object[] args, Type[] types, Runnable run) {
         Type resultType = ((ParameterizedType) returnType).getActualTypeArguments()[0];
         if (resultType instanceof ParameterizedType && ((ParameterizedType) resultType).getRawType().equals(RxRequestStatus.class)) {
-            RxCallback callback = new RxCallback(true);
+            RxCallback callback = new RxCallback(true, run);
             return new MethodInfo(callback, ((ParameterizedType) resultType).getActualTypeArguments()[0],
                     args, prepareReturnObject(callback, returnType));
         } else {
-            RxCallback callback = new RxCallback(false);
+            RxCallback callback = new RxCallback(false, run);
             return new MethodInfo(callback, resultType, args, prepareReturnObject(callback, returnType));
         }
 
@@ -54,9 +54,11 @@ public class RxJava2Adapter implements JudoAdapter {
         private ObservableEmitter emitter;
         private SingleEmitter singleEmitter;
         private boolean fullRequest;
+        private Runnable run;
 
-        private RxCallback(boolean fullRequest) {
+        private RxCallback(boolean fullRequest, Runnable run) {
             this.fullRequest = fullRequest;
+            this.run = run;
         }
 
         @Override
@@ -91,6 +93,7 @@ public class RxJava2Adapter implements JudoAdapter {
                     if (getAsyncResult() != null) getAsyncResult().cancel();
                 }
             });
+            run.run();
         }
 
         @Override
@@ -102,6 +105,7 @@ public class RxJava2Adapter implements JudoAdapter {
                     if (getAsyncResult() != null) getAsyncResult().cancel();
                 }
             });
+            run.run();
         }
     }
 }

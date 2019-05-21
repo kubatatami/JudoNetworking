@@ -131,7 +131,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         return stackTrace[0];
     }
 
-    protected AsyncResult performAsyncRequest(RequestImpl request) throws Exception {
+    protected AsyncResult performAsyncRequest(RequestImpl request) {
         synchronized (batchRequests) {
             if (batchEnabled) {
                 request.setBatchFatal(batchFatal);
@@ -196,17 +196,23 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                     rpc.startRequest(request);
                     return rpc.getRequestConnector().call(request);
                 } else {
-                    MethodInfo methodInfo = getMethodInfo(returnType, args, ReflectionCache.getGenericParameterTypes(m));
-                    request = new RequestImpl(rpc, m, name, ann, methodInfo.getArgs(), methodInfo.getResultType(),
-                            timeout, methodInfo.getCallback(), rpc.getProtocolController().getAdditionalRequestData());
+                    request = new RequestImpl(rpc, m, name, ann, timeout, rpc.getProtocolController().getAdditionalRequestData());
+                    final RequestImpl finalRequest = request;
+                    MethodInfo methodInfo = getMethodInfo(returnType, args, ReflectionCache.getGenericParameterTypes(m), new Runnable() {
+                        @Override
+                        public void run() {
+                            rpc.startRequest(finalRequest);
+                            performAsyncRequest(finalRequest);
+                        }
+                    });
+                    request.setArgs(methodInfo.getArgs());
+                    request.setReturnType(methodInfo.getResultType());
+                    request.setCallback(methodInfo.getCallback());
                     ann.modifier().newInstance().modify(request);
                     rpc.filterNullArgs(request);
                     if (registerSingleCallMethod(m, request, name)) {
                         return request;
                     }
-                    rpc.startRequest(request);
-                    performAsyncRequest(request);
-
                     return methodInfo.getReturnObject() == null ? request : methodInfo.getReturnObject();
                 }
             } else {
@@ -264,10 +270,10 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
     }
 
     @SuppressWarnings("unchecked")
-    private MethodInfo getMethodInfo(Type returnType, Object[] args, Type[] types) {
+    private MethodInfo getMethodInfo(Type returnType, Object[] args, Type[] types, Runnable run) {
         for (JudoAdapter adapter : rpc.getAdapters()) {
             if (adapter.canHandle(returnType)) {
-                return adapter.getMethodInfo(returnType, args, types);
+                return adapter.getMethodInfo(returnType, args, types, run);
             }
         }
         throw new JudoException("No adapter register for type " + returnType.toString());
