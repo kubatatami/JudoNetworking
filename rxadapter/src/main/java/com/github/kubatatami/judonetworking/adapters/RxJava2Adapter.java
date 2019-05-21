@@ -28,13 +28,12 @@ public class RxJava2Adapter implements JudoAdapter {
 
     @Override
     public MethodInfo getMethodInfo(Type returnType, Object[] args, Type[] types) {
-        ParameterizedType observableType = (ParameterizedType) ((ParameterizedType)returnType).getActualTypeArguments()[0];
-        if (observableType.getRawType().equals(RxRequestStatus.class)) {
-            Type resultType = observableType.getActualTypeArguments()[0];
+        Type resultType = ((ParameterizedType) returnType).getActualTypeArguments()[0];
+        if (resultType instanceof ParameterizedType && ((ParameterizedType) resultType).getRawType().equals(RxRequestStatus.class)) {
             RxRequestStatusSubjectCallback callback = new RxRequestStatusSubjectCallback();
-            return new MethodInfo(callback, resultType, args, prepareReturnObject(callback.observable, returnType));
+            return new MethodInfo(callback, ((ParameterizedType) resultType).getActualTypeArguments()[0],
+                    args, prepareReturnObject(callback.observable, returnType));
         } else {
-            Type resultType = observableType.getRawType();
             SimpleSubjectCallback callback = new SimpleSubjectCallback();
             return new MethodInfo(callback, resultType, args, prepareReturnObject(callback.observable, returnType));
         }
