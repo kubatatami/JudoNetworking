@@ -1,7 +1,5 @@
 package com.github.kubatatami.judonetworking.adapters;
 
-import com.github.kubatatami.judonetworking.AsyncResult;
-import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.callbacks.DefaultCallback;
 import com.github.kubatatami.judonetworking.exceptions.JudoException;
 import com.github.kubatatami.judonetworking.internals.MethodInfo;
@@ -10,9 +8,12 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Single;
-import io.reactivex.functions.Action;
-import io.reactivex.subjects.PublishSubject;
+import io.reactivex.SingleEmitter;
+import io.reactivex.SingleOnSubscribe;
+import io.reactivex.functions.Cancellable;
 
 @SuppressWarnings("unchecked")
 public class RxJava2Adapter implements JudoAdapter {
@@ -30,78 +31,77 @@ public class RxJava2Adapter implements JudoAdapter {
     public MethodInfo getMethodInfo(Type returnType, Object[] args, Type[] types) {
         Type resultType = ((ParameterizedType) returnType).getActualTypeArguments()[0];
         if (resultType instanceof ParameterizedType && ((ParameterizedType) resultType).getRawType().equals(RxRequestStatus.class)) {
-            RxRequestStatusSubjectCallback callback = new RxRequestStatusSubjectCallback();
+            RxCallback callback = new RxCallback(true);
             return new MethodInfo(callback, ((ParameterizedType) resultType).getActualTypeArguments()[0],
-                    args, prepareReturnObject(callback.observable, returnType));
+                    args, prepareReturnObject(callback, returnType));
         } else {
-            SimpleSubjectCallback callback = new SimpleSubjectCallback();
-            return new MethodInfo(callback, resultType, args, prepareReturnObject(callback.observable, returnType));
+            RxCallback callback = new RxCallback(false);
+            return new MethodInfo(callback, resultType, args, prepareReturnObject(callback, returnType));
         }
 
     }
 
-    private Object prepareReturnObject(Observable subject, Type observableType) {
+    private Object prepareReturnObject(RxCallback source, Type observableType) {
         if (observableType.equals(Observable.class)) {
-            return subject.hide();
+            return Observable.create(source);
         } else {
-            return subject.hide().firstOrError();
+            return Single.create(source);
         }
     }
 
-    private static class RxRequestStatusSubjectCallback extends DefaultCallback {
+    private static class RxCallback extends DefaultCallback implements ObservableOnSubscribe, SingleOnSubscribe {
 
-        private final PublishSubject<RxRequestStatus> subject = PublishSubject.create();
-        final Observable<RxRequestStatus> observable = subject.doOnDispose(new Action() {
-            @Override
-            public void run() {
-                if (getAsyncResult() != null && !subject.hasComplete()) getAsyncResult().cancel();
-            }
-        });
+        private ObservableEmitter emitter;
+        private SingleEmitter singleEmitter;
+        private boolean fullRequest;
 
-        @Override
-        public void onStart(CacheInfo cacheInfo, AsyncResult asyncResult) {
-            super.onStart(cacheInfo, asyncResult);
-            subject.onNext(new RxRequestStatus(asyncResult, 0));
+        private RxCallback(boolean fullRequest) {
+            this.fullRequest = fullRequest;
         }
 
         @Override
         public void onSuccess(Object result) {
-            subject.onNext(new RxRequestStatus(getAsyncResult(), result));
-            subject.onComplete();
+            if (fullRequest) result = new RxRequestStatus(getAsyncResult(), result);
+            if (emitter != null) emitter.onNext(result);
+            else if (singleEmitter != null) singleEmitter.onSuccess(result);
         }
 
         @Override
         public void onError(JudoException e) {
-            subject.onError(e);
-            subject.onComplete();
+            if (emitter != null) emitter.tryOnError(e);
+            else if (singleEmitter != null) singleEmitter.tryOnError(e);
         }
 
         @Override
         public void onProgress(int progress) {
-            subject.onNext(new RxRequestStatus(getAsyncResult(), progress));
-        }
-    }
-
-    private static class SimpleSubjectCallback extends DefaultCallback {
-
-        private final PublishSubject<Object> subject = PublishSubject.create();
-        final Observable<Object> observable = subject.doOnDispose(new Action() {
-            @Override
-            public void run() {
-                if (getAsyncResult() != null && !subject.hasComplete()) getAsyncResult().cancel();
-            }
-        });
-
-        @Override
-        public void onSuccess(Object result) {
-            subject.onNext(result);
-            subject.onComplete();
+            if (emitter != null && fullRequest) emitter.onNext(new RxRequestStatus(getAsyncResult(), progress));
         }
 
         @Override
-        public void onError(JudoException e) {
-            subject.onError(e);
-            subject.onComplete();
+        public void onFinish() {
+            if (emitter != null) emitter.onComplete();
+        }
+
+        @Override
+        public void subscribe(ObservableEmitter emitter) {
+            this.emitter = emitter;
+            emitter.setCancellable(new Cancellable() {
+                @Override
+                public void cancel() {
+                    if (getAsyncResult() != null) getAsyncResult().cancel();
+                }
+            });
+        }
+
+        @Override
+        public void subscribe(SingleEmitter emitter) {
+            this.singleEmitter = emitter;
+            emitter.setCancellable(new Cancellable() {
+                @Override
+                public void cancel() {
+                    if (getAsyncResult() != null) getAsyncResult().cancel();
+                }
+            });
         }
     }
 }
