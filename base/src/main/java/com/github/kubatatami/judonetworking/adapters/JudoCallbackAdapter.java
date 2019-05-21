@@ -17,7 +17,7 @@ public class JudoCallbackAdapter implements JudoAdapter {
 
     @SuppressWarnings("unchecked")
     @Override
-    public MethodInfo getMethodInfo(Type returnType, Object[] args, Type[] types) {
+    public MethodInfo getMethodInfo(Type returnType, Object[] args, Type[] types, Runnable run) {
         Callback<Object> callback = null;
         Type resultType = Void.class;
         if (args.length > 0 && args[args.length - 1] instanceof Callback) {
@@ -41,6 +41,6 @@ public class JudoCallbackAdapter implements JudoAdapter {
             newArgs = null;
         }
 
-        return new MethodInfo(callback, resultType, newArgs, null);
+        return new MethodInfo(callback, resultType, newArgs, null, true);
     }
 }

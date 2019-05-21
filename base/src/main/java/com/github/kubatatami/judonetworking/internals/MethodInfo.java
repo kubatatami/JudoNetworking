@@ -10,12 +10,14 @@ public class MethodInfo {
     private final Type resultType;
     private final Object[] args;
     private final Object returnObject;
+    private final boolean runImmediately;
 
-    public MethodInfo(Callback<?> callback, Type resultType, Object[] args, Object returnObject) {
+    public MethodInfo(Callback<?> callback, Type resultType, Object[] args, Object returnObject, boolean runImmediately) {
         this.callback = callback;
         this.resultType = resultType;
         this.args = args;
         this.returnObject = returnObject;
+        this.runImmediately = runImmediately;
     }
 
     public Callback<?> getCallback() {
@@ -32,5 +34,9 @@ public class MethodInfo {
 
     public Object getReturnObject() {
         return returnObject;
+    }
+
+    public boolean isRunImmediately() {
+        return runImmediately;
     }
 }

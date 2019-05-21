@@ -33,10 +33,10 @@ public class RxJava2Adapter implements JudoAdapter {
         if (resultType instanceof ParameterizedType && ((ParameterizedType) resultType).getRawType().equals(RxRequestStatus.class)) {
             RxCallback callback = new RxCallback(true, run);
             return new MethodInfo(callback, ((ParameterizedType) resultType).getActualTypeArguments()[0],
-                    args, prepareReturnObject(callback, returnType));
+                    args, prepareReturnObject(callback, returnType), false);
         } else {
             RxCallback callback = new RxCallback(false, run);
-            return new MethodInfo(callback, resultType, args, prepareReturnObject(callback, returnType));
+            return new MethodInfo(callback, resultType, args, prepareReturnObject(callback, returnType), false);
         }
 
     }
