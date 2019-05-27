@@ -5,6 +5,7 @@ import android.util.Pair;
 import com.github.kubatatami.judonetworking.AsyncResult;
 import com.github.kubatatami.judonetworking.CacheInfo;
 import com.github.kubatatami.judonetworking.Endpoint;
+import com.github.kubatatami.judonetworking.Request;
 import com.github.kubatatami.judonetworking.adapters.JudoAdapter;
 import com.github.kubatatami.judonetworking.annotations.LocalCache;
 import com.github.kubatatami.judonetworking.annotations.NamePrefix;
@@ -644,6 +645,9 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
 
     public void clearBatchCallback() {
         batchCallback = null;
+        for (Request request : batchRequests) {
+            rpc.stopRequest(request);
+        }
     }
 
     public void calcTime() {
