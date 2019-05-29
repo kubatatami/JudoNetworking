@@ -7,6 +7,9 @@ import com.github.kubatatami.judonetworking.internals.MethodInfo;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
+import io.reactivex.Completable;
+import io.reactivex.CompletableEmitter;
+import io.reactivex.CompletableOnSubscribe;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
@@ -24,7 +27,7 @@ public class RxJava2Adapter implements JudoAdapter {
     }
 
     private boolean isSupportedType(Type type) {
-        return type.equals(Observable.class) || type.equals(Single.class);
+        return type.equals(Observable.class) || type.equals(Single.class) || type.equals(Completable.class);
     }
 
     @Override
@@ -44,15 +47,19 @@ public class RxJava2Adapter implements JudoAdapter {
     private Object prepareReturnObject(RxCallback source, Type observableType) {
         if (observableType.equals(Observable.class)) {
             return Observable.create(source);
-        } else {
+        } else if (observableType.equals(Single.class)) {
             return Single.create(source);
+        } else {
+            return Completable.create(source);
         }
     }
 
-    private static class RxCallback extends DefaultCallback implements ObservableOnSubscribe, SingleOnSubscribe {
+    private static class RxCallback extends DefaultCallback implements ObservableOnSubscribe,
+            SingleOnSubscribe, CompletableOnSubscribe {
 
         private ObservableEmitter emitter;
         private SingleEmitter singleEmitter;
+        private CompletableEmitter completableEmitter;
         private boolean fullRequest;
         private Runnable run;
 
@@ -66,12 +73,14 @@ public class RxJava2Adapter implements JudoAdapter {
             if (fullRequest) result = new RxRequestStatus(getAsyncResult(), result);
             if (emitter != null) emitter.onNext(result);
             else if (singleEmitter != null) singleEmitter.onSuccess(result);
+            else if (completableEmitter != null) completableEmitter.onComplete();
         }
 
         @Override
         public void onError(JudoException e) {
             if (emitter != null) emitter.tryOnError(e);
             else if (singleEmitter != null) singleEmitter.tryOnError(e);
+            else if (completableEmitter != null) completableEmitter.tryOnError(e);
         }
 
         @Override
@@ -99,6 +108,18 @@ public class RxJava2Adapter implements JudoAdapter {
         @Override
         public void subscribe(SingleEmitter emitter) {
             this.singleEmitter = emitter;
+            emitter.setCancellable(new Cancellable() {
+                @Override
+                public void cancel() {
+                    if (getAsyncResult() != null) getAsyncResult().cancel();
+                }
+            });
+            run.run();
+        }
+
+        @Override
+        public void subscribe(CompletableEmitter emitter) {
+            this.completableEmitter = emitter;
             emitter.setCancellable(new Cancellable() {
                 @Override
                 public void cancel() {
