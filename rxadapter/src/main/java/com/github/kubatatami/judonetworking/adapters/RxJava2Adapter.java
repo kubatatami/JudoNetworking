@@ -23,11 +23,11 @@ public class RxJava2Adapter implements JudoAdapter {
 
     @Override
     public boolean canHandle(Type type) {
-        return type instanceof ParameterizedType && isSupportedType(((ParameterizedType) type).getRawType());
+        return (type instanceof ParameterizedType && isSupportedType(((ParameterizedType) type).getRawType())) || type.equals(Completable.class);
     }
 
     private boolean isSupportedType(Type type) {
-        return type.equals(Observable.class) || type.equals(Single.class) || type.equals(Completable.class);
+        return type.equals(Observable.class) || type.equals(Single.class);
     }
 
     @Override
