@@ -44,10 +44,10 @@ public class RxJava2Adapter implements JudoAdapter {
 
     }
 
-    private Object prepareReturnObject(RxCallback source, Type observableType) {
-        if (observableType.equals(Observable.class)) {
+    private Object prepareReturnObject(RxCallback source, Type type) {
+        if (type instanceof ParameterizedType && ((ParameterizedType) type).getRawType().equals(Observable.class)) {
             return Observable.create(source);
-        } else if (observableType.equals(Single.class)) {
+        } else if (type instanceof ParameterizedType && ((ParameterizedType) type).getRawType().equals(Single.class)) {
             return Single.create(source);
         } else {
             return Completable.create(source);
