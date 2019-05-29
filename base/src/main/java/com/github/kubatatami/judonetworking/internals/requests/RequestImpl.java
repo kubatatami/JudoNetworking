@@ -546,4 +546,11 @@ public class RequestImpl implements Runnable, Comparable<RequestImpl>, ProgressO
     public String toString() {
         return "id=" + id + " name=" + name;
     }
+
+    public void reset() {
+        this.done = false;
+        this.running = false;
+        this.cancelled = false;
+        this.progress = 0;
+    }
 }
