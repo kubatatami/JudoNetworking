@@ -645,9 +645,6 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
 
     public void clearBatchCallback() {
         batchCallback = null;
-        for (Request request : batchRequests) {
-            rpc.stopRequest(request);
-        }
     }
 
     public void calcTime() {
