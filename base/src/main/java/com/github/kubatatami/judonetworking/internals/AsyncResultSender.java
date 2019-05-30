@@ -170,12 +170,6 @@ public class AsyncResultSender implements Runnable {
         }
     }
 
-    private void sendStopRequest() {
-        JudoLogger.log("Send stop request event(" + request.getName() + ":" + request.getId() + ")", JudoLogger.LogLevel.VERBOSE);
-        rpc.stopRequest(request);
-
-    }
-
     private void removeFromSingleCallMethods() {
         if (methodId != null) {
             synchronized (rpc.getSingleCallMethods()) {
@@ -270,6 +264,7 @@ public class AsyncResultSender implements Runnable {
         callback.onFinish();
         request.done();
         removeFromSingleCallMethods();
+        rpc.stopRequest(request);
     }
 
     protected void logError(String requestName, Exception ex) {
