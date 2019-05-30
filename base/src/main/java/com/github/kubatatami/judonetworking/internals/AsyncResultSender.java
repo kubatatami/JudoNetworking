@@ -158,11 +158,6 @@ public class AsyncResultSender implements Runnable {
         }
     }
 
-    private void cleanRequestResources() {
-        removeFromSingleCallMethods();
-        sendStopRequest();
-    }
-
     private void sendRequestsEvent() {
         for (RequestImpl batchRequest : requests) {
             if (batchRequest.getCallback() != null) {
@@ -274,7 +269,7 @@ public class AsyncResultSender implements Runnable {
     private void doneRequest() {
         callback.onFinish();
         request.done();
-        cleanRequestResources();
+        removeFromSingleCallMethods();
     }
 
     protected void logError(String requestName, Exception ex) {
