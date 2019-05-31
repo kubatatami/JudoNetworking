@@ -264,7 +264,7 @@ public class AsyncResultSender implements Runnable {
         callback.onFinish();
         request.done();
         removeFromSingleCallMethods();
-        rpc.stopRequest(request);
+        if (!request.isCancelled()) rpc.stopRequest(request);
     }
 
     protected void logError(String requestName, Exception ex) {
