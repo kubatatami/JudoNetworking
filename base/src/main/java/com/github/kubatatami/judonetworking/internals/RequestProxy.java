@@ -202,6 +202,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                     Runnable run = new Runnable() {
                         @Override
                         public void run() {
+                            finalRequest.reset();
                             rpc.startRequest(finalRequest);
                             performAsyncRequest(finalRequest);
                         }
