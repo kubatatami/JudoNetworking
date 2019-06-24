@@ -160,27 +160,8 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
         try {
             RequestMethod ann = ReflectionCache.getAnnotation(m, RequestMethod.class);
             if (ann != null) {
-                String name = createMethodName(m, ann);
+                final String name = createMethodName(m, ann);
                 int timeout = rpc.getRequestConnector().getMethodTimeout();
-
-
-                if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
-                    try {
-                        StackTraceElement stackTraceElement = getExternalStacktrace(Thread.currentThread().getStackTrace());
-                        if (batchEnabled && mode == EndpointImpl.BatchMode.MANUAL) {
-                            JudoLogger.log("In batch request " + name + " from " +
-                                    stackTraceElement.getClassName() +
-                                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")", JudoLogger.LogLevel.DEBUG);
-                        } else {
-                            JudoLogger.log("Request " + name + " from " +
-                                    stackTraceElement.getClassName() +
-                                    "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")", JudoLogger.LogLevel.DEBUG);
-                        }
-                    } catch (Exception ex) {
-                        JudoLogger.log("Can't log stacktrace", JudoLogger.LogLevel.ASSERT);
-                    }
-                }
-
                 if (ann.timeout() != 0) {
                     timeout = ann.timeout();
                 }
@@ -202,6 +183,7 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                     Runnable run = new Runnable() {
                         @Override
                         public void run() {
+                            logLine(name);
                             finalRequest.reset();
                             rpc.startRequest(finalRequest);
                             performAsyncRequest(finalRequest);
@@ -239,6 +221,25 @@ public class RequestProxy implements InvocationHandler, AsyncResult {
                 });
             }
             throw e;
+        }
+    }
+
+    private void logLine(String name) {
+        if ((rpc.getDebugFlags() & Endpoint.REQUEST_LINE_DEBUG) > 0) {
+            try {
+                StackTraceElement stackTraceElement = getExternalStacktrace(Thread.currentThread().getStackTrace());
+                if (batchEnabled && mode == EndpointImpl.BatchMode.MANUAL) {
+                    JudoLogger.log("In batch request " + name + " from " +
+                            stackTraceElement.getClassName() +
+                            "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")", JudoLogger.LogLevel.DEBUG);
+                } else {
+                    JudoLogger.log("Request " + name + " from " +
+                            stackTraceElement.getClassName() +
+                            "(" + stackTraceElement.getFileName() + ":" + stackTraceElement.getLineNumber() + ")", JudoLogger.LogLevel.DEBUG);
+                }
+            } catch (Exception ex) {
+                JudoLogger.log("Can't log stacktrace", JudoLogger.LogLevel.ASSERT);
+            }
         }
     }
 
